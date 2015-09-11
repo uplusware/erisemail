@@ -1,0 +1,1578 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<LINK rel="Bookmark" href="erisemail.ico" >
+<LINK rel="Shortcut Icon" href="erisemail.ico" />
+<link href="css.css" rel="stylesheet" type="text/css">
+<script type="text/javascript" src="inc.js"></script>
+<script type="text/javascript" src="ui.js"></script>
+<title>...:::欢迎访问易睿邮件系统:::...</title>
+
+<script language="JavaScript">
+	var sending_status = false;
+	var sent_status = false;
+	var saving_status = false;
+	var uploading_status = false;
+
+	var uploaded_file_list = new Array();
+	
+	function uploading( status )
+	{
+		uploading_status = status;
+		toggle_onbeforeunload(uploading_status);
+	}
+	
+	function toggle_onbeforeunload(val)
+	{
+		if(val)
+		{
+			window.onbeforeunload = function(e)
+			{
+				if(sending_status || sent_status || saving_status || uploading_status)
+				{
+					return ("邮件正在处理中，确实要退出吗？");
+				}
+				else if(isChange)
+				{
+					return ("邮件尚未发送或保存，确实要退出吗？");
+				}
+				else
+				{
+					return ("确实要退出吗？");
+				}
+			}
+		}
+		else
+		{
+			if(!isChange)
+				window.onbeforeunload = null;
+		}
+	}
+
+	function RTC(strid)
+	{
+		if(navigator.appName != "Netscape")
+		{
+			return this.document.frames[strid].document;
+		}
+		else
+		{
+			return this.document.getElementById(strid).contentWindow.document;
+		}
+	}
+		
+	var arrColor = [
+		['000000','993300','333300','003300','003366','000080','333399','333333'],
+		['800000','FF6600','808000','008000','008080','0000FF','666699','808080'],
+		['FF0000','FF9900','99CC00','339966','33CCCC','3366FF','800080','999999'],
+		['FF00FF','FFCC00','FFFF00','00FF00','00FFFF','00CCFF','993366','C0C0C0'],
+		['FF99CC','FFCC99','FFFF99','CCFFCC','CCFFFF','99CCFF','CC99FF','FFFFFF']
+		];
+
+	function colorCmd(cmd, divid, color)
+	{
+		RTC("richeditor").execCommand(cmd, false ,color);
+
+		$(divid).style.display = "none";
+	}
+
+	function sizeCmd(size)
+	{
+		if(size == '0' || size == 0) 
+			return;
+		RTC("richeditor").execCommand('FontSize', false, size);
+
+		$('fontSizeTbl').style.display = "none";
+	}
+	
+	function paintColorDiv(cmd, divid)
+	{
+	  var Str="<table width='100%' border='0' cellspacing='2' cellpadding='2'><tbody>";
+	   for(var i = 0; i < arrColor.length; i++)
+	   	{
+	      Str+="<tr>";
+	      for(var j = 0; j < arrColor[i].length;j++)
+		  {
+	         Str+="<td class='td' style='background-color:#" + arrColor[i][j] + ";border:1px solid #f6f6f6;'"
+	         + " onmouseover='this.mousepoint = 99; this.style.cursor =\"pointer\";' onmouseout='this.mousepoint = 99;this.style.cursor =\"default\";'"
+	         + " onclick='colorCmd(\"" + cmd + "\", \"" + divid + "\", \"#" + arrColor[i][j] + "\")'>"
+	         + "<img style='width:12px;height:12px' "+" style='background-color:#"+arrColor[i][j]+";border:solid 1px #cccccc'/></td>";
+	      }
+	      Str+="</tr>";
+	   }
+	   Str+="</tbody></table>";
+	   return Str;
+	}
+
+	function paintSizeDiv(cmd, divid)
+	{
+		var Str="<table width='100%' border='0' cellspacing='2' cellpadding='2'><tbody>";
+		Str+="<tr><td bgcolor=\"#EEEEEE\" onclick='sizeCmd(\"1\");' onmouseover='this.mousepoint = 99; this.style.cursor =\"pointer\"; this.style.background=\"#FFFFCC\"' onmouseout='this.mousepoint = 99;this.style.cursor =\"default\"; this.style.background=\"#EEEEEE\"'><font size='1'>T</font></td></tr>";
+		Str+="<tr><td bgcolor=\"#EEEEEE\" onclick='sizeCmd(\"2\");' onmouseover='this.mousepoint = 99; this.style.cursor =\"pointer\"; this.style.background=\"#FFFFCC\"' onmouseout='this.mousepoint = 99;this.style.cursor =\"default\"; this.style.background=\"#EEEEEE\"'><font size='2'>T</font></td></tr>";
+		Str+="<tr><td bgcolor=\"#EEEEEE\" onclick='sizeCmd(\"3\");' onmouseover='this.mousepoint = 99; this.style.cursor =\"pointer\"; this.style.background=\"#FFFFCC\"' onmouseout='this.mousepoint = 99;this.style.cursor =\"default\"; this.style.background=\"#EEEEEE\"'><font size='3'>T</font></td></tr>";
+		Str+="<tr><td bgcolor=\"#EEEEEE\" onclick='sizeCmd(\"4\");' onmouseover='this.mousepoint = 99; this.style.cursor =\"pointer\"; this.style.background=\"#FFFFCC\"' onmouseout='this.mousepoint = 99;this.style.cursor =\"default\"; this.style.background=\"#EEEEEE\"'><font size='4'>T</font></td></tr>";
+		Str+="<tr><td bgcolor=\"#EEEEEE\" onclick='sizeCmd(\"5\");' onmouseover='this.mousepoint = 99; this.style.cursor =\"pointer\"; this.style.background=\"#FFFFCC\"' onmouseout='this.mousepoint = 99;this.style.cursor =\"default\"; this.style.background=\"#EEEEEE\"'><font size='5'>T</font></td></tr>";
+		Str+="<tr><td bgcolor=\"#EEEEEE\" onclick='sizeCmd(\"6\");' onmouseover='this.mousepoint = 99; this.style.cursor =\"pointer\"; this.style.background=\"#FFFFCC\"' onmouseout='this.mousepoint = 99;this.style.cursor =\"default\"; this.style.background=\"#EEEEEE\"'><font size='6'>T</font></td></tr>";
+		Str+="<tr><td bgcolor=\"#EEEEEE\" onclick='sizeCmd(\"7\");' onmouseover='this.mousepoint = 99; this.style.cursor =\"pointer\"; this.style.background=\"#FFFFCC\"' onmouseout='this.mousepoint = 99;this.style.cursor =\"default\"; this.style.background=\"#EEEEEE\"'><font size='7'>T</font></td></tr>";
+		Str+="</tbody></table>";
+		return Str;
+	}
+
+	function popforeDiv()
+	{
+		if($('foreColorTbl').style.display == 'block')
+			$('foreColorTbl').style.display='none'; 
+		else 
+			$('foreColorTbl').style.display='block';
+		
+		$('backColorTbl').style.display='none'; 
+		$('fontSizeTbl').style.display='none'; 
+		
+		$('foreColorTbl').style.left = 89;
+		$('foreColorTbl').style.top = 258;
+	}
+
+	function popbackDiv()
+	{
+		if($('backColorTbl').style.display == 'block')
+			$('backColorTbl').style.display='none'; 
+		else 
+			$('backColorTbl').style.display='block';
+
+		$('foreColorTbl').style.display='none';
+		$('fontSizeTbl').style.display='none'; 
+		
+		$('backColorTbl').style.left = 115;
+		$('backColorTbl').style.top = 258;
+	}
+
+	function popsizeDiv()
+	{
+		if($('fontSizeTbl').style.display == 'block')
+			$('fontSizeTbl').style.display='none'; 
+		else 
+			$('fontSizeTbl').style.display='block';
+
+		$('foreColorTbl').style.display='none';
+		$('backColorTbl').style.display='none'; 
+		
+		$('fontSizeTbl').style.left = 150;
+		$('fontSizeTbl').style.top = 258;
+	}
+
+	function ontimer()
+	{	
+		if($("CONTENT").value != $('richeditor').contentWindow.document.body.innerHTML)
+		{
+			isChange = true;
+
+			toggle_onbeforeunload(isChange)
+				
+			$("CONTENT").value = $('richeditor').contentWindow.document.body.innerHTML;
+		}
+		
+		setTimeout('ontimer()',1000);
+	}
+		
+	function init()
+	{
+		sending_status = false;
+		sent_status = false;
+		saving_status = false;
+		uploading_status = false;
+		isChange = false;
+		
+		$('GLOBALPATH').innerHTML = (Request.QueryString('GPATH') == null? ("/草稿箱") : decodeURIComponent(Request.QueryString('GPATH')));
+
+		strID = Request.QueryString('ID');
+		strType = Request.QueryString('TYPE');
+		
+		if((strID != null)&&(strType != null))
+		{			
+			read_mail(strID, strType);
+		}
+		else
+		{
+			$('TO_ADDRS').value = Request.QueryString('TOADDRS') == null ? "" : Request.QueryString('TOADDRS');
+		}
+
+		$('foreColorTbl').innerHTML = paintColorDiv("ForeColor", "foreColorTbl");
+		$('backColorTbl').innerHTML = paintColorDiv("BackColor", "backColorTbl");
+		$('fontSizeTbl').innerHTML = paintSizeDiv("FontSize", "fontSizeTbl");
+
+		$("CONTENT").value = $('richeditor').contentWindow.document.body.innerHTML;
+		
+		ontimer();
+	}
+		
+	function upfile()
+	{
+		isChange = true;
+		toggle_onbeforeunload(isChange);
+	}
+	
+	function delmail(force)
+	{
+		if($('DRAFTID').value == null || $('DRAFTID').value == "" || $('DRAFTID').value == -1)
+		{
+			alert("此草稿尚未保存")
+			return false;
+		}
+		do_trashmail();
+
+		if(window.opener.refresh)
+			window.opener.refresh();
+		
+		isChange = false;
+		window.onbeforeunload = null;
+
+		window.close();
+	}
+	
+	function do_delsentmail()
+	{
+		if($('DRAFTID').value == null || $('DRAFTID').value == "" || $('DRAFTID').value == -1)
+		{
+			return;
+		}
+		
+		isChange = false;
+		toggle_onbeforeunload(isChange);
+		
+		var qUrl = "/api/delmail.xml?MAILID=" + $('DRAFTID').value;
+		var xmlHttp = initxmlhttp();
+		xmlHttp.open("GET", qUrl , false);
+		xmlHttp.send("");
+		
+		if (xmlHttp.status == 200)
+		{
+			var xmldom = xmlHttp.responseXML;
+			xmldom.documentElement.normalize();
+			var responseNode = xmldom.documentElement.childNodes.item(0);
+			if(responseNode.tagName == "response")
+			{
+				var errno = responseNode.getAttribute("errno")
+				if(errno == "0" || errno == 0)
+				{
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	function do_trashmail()
+	{
+		if($('DRAFTID').value == null || $('DRAFTID').value == "" || $('DRAFTID').value == -1)
+		{
+			return;
+		}
+		
+		isChange = false;
+		toggle_onbeforeunload(isChange);
+		var qUrl = "/api/trashmail.xml?MAILID=" + $('DRAFTID').value;
+		var xmlHttp = initxmlhttp();
+		xmlHttp.open("GET", qUrl , false);
+		xmlHttp.send("");
+		
+		if (xmlHttp.status == 200)
+		{
+			var xmldom = xmlHttp.responseXML;
+			xmldom.documentElement.normalize();
+			var responseNode = xmldom.documentElement.childNodes.item(0);
+			if(responseNode.tagName == "response")
+			{
+				var errno = responseNode.getAttribute("errno")
+				if(errno == "0" || errno == 0)
+				{
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+	
+	
+	function flag_mail(flag)
+	{
+		if(Request.QueryString('ID') == null || Request.QueryString('ID') == "")
+		{
+			alert("此草稿尚未保存")
+			return;
+		}
+		
+		if(flag ==  true)
+			strFlag="yes";
+		else
+			strFlag = "no";
+			
+		var qUrl = "/api/flagmail.xml?ID=" + Request.QueryString('ID') + "&FLAG=" + strFlag;
+		var xmlHttp = initxmlhttp();
+	    xmlHttp.onreadystatechange = function()
+		{
+			if (xmlHttp.readyState==4 && xmlHttp.status== 200)
+			{
+				var xmldom = xmlHttp.responseXML;
+				xmldom.documentElement.normalize();
+				var responseNode = xmldom.documentElement.childNodes.item(0);
+				if(responseNode.tagName == "response")
+				{
+					var errno = responseNode.getAttribute("errno")
+					if(errno == "0")
+					{
+						
+					}
+				}
+			}
+		}
+		xmlHttp.open("GET", qUrl , true);
+		xmlHttp.send("");
+	}
+
+	function seen_mail(flag)
+	{
+		if(Request.QueryString('ID') == null || Request.QueryString('ID') == "")
+		{
+			alert("此草稿尚未保存")
+			return;
+		}
+		
+		if(flag ==  true)
+			strFlag="yes";
+		else
+			strFlag = "no";
+			
+		var qUrl = "/api/seenmail.xml?ID=" + Request.QueryString('ID') + "&SEEN=" + strFlag;
+		var xmlHttp = initxmlhttp();
+	    xmlHttp.onreadystatechange = function()
+		{
+			if (xmlHttp.readyState==4 && xmlHttp.status== 200)
+			{
+				var xmldom = xmlHttp.responseXML;
+				xmldom.documentElement.normalize();
+				var responseNode = xmldom.documentElement.childNodes.item(0);
+				if(responseNode.tagName == "response")
+				{
+					var errno = responseNode.getAttribute("errno")
+					if(errno == "0" || errno == 0)
+					{
+						
+					}
+				}
+			}
+		}
+		xmlHttp.open("GET", qUrl , true);
+		xmlHttp.send("");
+	}
+	
+	function close_processing_div()
+	{
+		$('PROCESSING_DIV').style.zIndex = 9;
+		$('PROCESSING_DIV').style.display = "none";
+		
+	}
+	
+	function do_savesent()
+	{
+		var uploadedfiles = "";
+		for(var x = 0; x < document.getElementsByName('TMPFILENAME').length; x++)
+		{
+			uploadedfiles += document.getElementsByName('TMPFILENAME')[x].value;
+			uploadedfiles += "*"
+		}
+		$("CONTENT").value = $('richeditor').contentWindow.document.body.innerHTML;
+		var strPostData = "TO_ADDRS=" + encodeURIComponent($('TO_ADDRS').value) + "&";
+		strPostData += "CC_ADDRS=" + encodeURIComponent($('CC_ADDRS').value) + "&";
+		strPostData += "BCC_ADDRS=" + encodeURIComponent($('BCC_ADDRS').value) + "&";
+		strPostData += "SUBJECT=" + encodeURIComponent($('SUBJECT').value) + "&";
+		strPostData += "CONTENT=" + encodeURIComponent($('CONTENT').value) + "&";
+		strPostData += "ATTACHFILES=" + encodeURIComponent(uploadedfiles);
+		
+		var qUrl = "api/savesent.xml";
+		
+		var xmlHttp = initxmlhttp();
+		xmlHttp.onreadystatechange = function()
+		{
+			if (xmlHttp.readyState==4)
+			{
+				sent_status = false;
+				toggle_onbeforeunload(sent_status);
+				if(xmlHttp.status == 200)
+				{
+					var xmldom = xmlHttp.responseXML;
+					xmldom.documentElement.normalize();
+					var responseNode = xmldom.documentElement.childNodes.item(0);
+					if(responseNode.tagName == "response")
+					{
+						var errno = responseNode.getAttribute("errno")
+						if(errno == "0" || errno == 0)
+						{
+							do_delsentmail();
+
+							$('PROCESSING_DIV').style.zIndex = 18;
+							$('PROCESSING_DIV').style.display = "block";
+							$('PROCESSING_TBL').rows[0].cells[0].innerHTML = "保存邮件到已发送邮件文件夹成功";
+				
+
+							if(window.opener && window.opener.refresh)
+								window.opener.refresh();
+							else if(window.opener && window.opener.childframe1 && window.opener.childframe1.refresh)
+								window.opener.childframe1.refresh();
+								
+							
+							isChange = false;
+							window.onbeforeunload = null;
+							
+							window.close();
+						}
+						else
+						{
+							$('PROCESSING_DIV').style.zIndex = 18;
+							$('PROCESSING_DIV').style.display = "block";
+							$('PROCESSING_TBL').rows[0].cells[0].innerHTML = "<font color='#FF0000'>保存邮件到已发送邮件文件夹失败</font>";
+						}
+					}
+				}
+				else
+				{
+					$('PROCESSING_DIV').style.zIndex = 18;
+					$('PROCESSING_DIV').style.display = "block";
+					$('PROCESSING_TBL').rows[0].cells[0].innerHTML = "<font color='#FF0000'>保存邮件到已发送邮件文件夹失败</font>";
+				}
+			}
+			else
+			{
+				sent_status = true;
+				toggle_onbeforeunload(sent_status);
+
+				$('PROCESSING_DIV').style.zIndex = 18;
+				$('PROCESSING_DIV').style.display = "block";
+				$('PROCESSING_TBL').rows[0].cells[0].innerHTML = "正在保存邮件到发件箱 - <img src=\"waiting.gif\" />";
+			}
+		}
+
+		xmlHttp.open("POST", qUrl , true);
+		xmlHttp.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+		xmlHttp.send(strPostData);
+		
+	}
+
+	function send_mail()
+	{
+		do_send_mail();	
+	}
+	
+	function do_send_mail()
+	{
+		if($('TO_ADDRS').value == "")
+		{
+			alert("收件人不能为空");
+			return;
+		}
+		
+		if($('SUBJECT').value == "")
+		{
+			if(confirm("信件主题为空，您要继续吗？") == false)
+				return;
+		}
+		
+		var uploadedfiles = "";
+		for(var x = 0; x < document.getElementsByName('TMPFILENAME').length; x++)
+		{
+			uploadedfiles += document.getElementsByName('TMPFILENAME')[x].value;
+			uploadedfiles += "*"
+		}
+		$("CONTENT").value = $('richeditor').contentWindow.document.body.innerHTML;
+		var strPostData = "TO_ADDRS=" + encodeURIComponent($('TO_ADDRS').value) + "&";
+		strPostData += "CC_ADDRS=" + encodeURIComponent($('CC_ADDRS').value) + "&";
+		strPostData += "BCC_ADDRS=" + encodeURIComponent($('BCC_ADDRS').value) + "&";
+		strPostData += "SUBJECT=" + encodeURIComponent($('SUBJECT').value) + "&";
+		strPostData += "CONTENT=" + encodeURIComponent($('CONTENT').value) + "&";
+		strPostData += "ATTACHFILES=" + encodeURIComponent(uploadedfiles);
+		var qUrl = "api/sendmail.xml";
+		
+		var xmlHttp = initxmlhttp();
+		xmlHttp.onreadystatechange = function()
+		{
+			if (xmlHttp.readyState==4)
+			{
+				sending_status = false;
+				toggle_onbeforeunload(sending_status);
+				if(xmlHttp.status== 200)
+				{
+					var xmldom = xmlHttp.responseXML;
+					xmldom.documentElement.normalize();
+					var responseNode = xmldom.documentElement.childNodes.item(0);
+					if(responseNode.tagName == "response")
+					{
+						var errno = responseNode.getAttribute("errno")
+						if(errno == "0")
+						{
+							isChange = false;
+							toggle_onbeforeunload(isChange);
+							$('PROCESSING_DIV').style.zIndex = 18;
+							$('PROCESSING_DIV').style.display = "block";
+							$('PROCESSING_TBL').rows[0].cells[0].innerHTML = "发送邮件成功";
+							
+							do_savesent();
+						}
+						else
+						{
+							$('PROCESSING_DIV').style.zIndex = 18;
+							$('PROCESSING_DIV').style.display = "block";
+							$('PROCESSING_TBL').rows[0].cells[0].innerHTML = "<font color='#FF0000'>发送邮件失败(邮件太大)</font>";
+						}
+					}
+				}
+				else
+				{
+					$('PROCESSING_DIV').style.zIndex = 18;
+					$('PROCESSING_DIV').style.display = "block";
+					$('PROCESSING_TBL').rows[0].cells[0].innerHTML = "<font color='#FF0000'>发送邮件失败</font>";
+				}
+			}
+			else
+			{
+				sending_status = true;
+				toggle_onbeforeunload(sending_status);
+				$('PROCESSING_DIV').style.zIndex = 18;
+				$('PROCESSING_DIV').style.display = "block";
+				$('PROCESSING_TBL').rows[0].cells[0].innerHTML = "正在发送邮件 - <img src=\"waiting.gif\" />";
+			}
+		}
+		xmlHttp.open("POST", qUrl , true);
+		xmlHttp.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+		xmlHttp.send(strPostData);
+	}
+
+	function save_draft()
+	{
+		if(isChange == true)
+		{
+			do_savedraft();
+		}
+	}
+	
+	function do_savedraft()
+	{
+		var uploadedfiles = "";
+		for(var x = 0; x < document.getElementsByName('TMPFILENAME').length; x++)
+		{
+			uploadedfiles += document.getElementsByName('TMPFILENAME')[x].value;
+			uploadedfiles += "*"
+		}
+		$("CONTENT").value = $('richeditor').contentWindow.document.body.innerHTML;
+		var strPostData = "DRAFTID=" + $('DRAFTID').value + "&";
+		strPostData += "TO_ADDRS=" + encodeURIComponent($('TO_ADDRS').value) + "&";
+		strPostData += "CC_ADDRS=" + encodeURIComponent($('CC_ADDRS').value) + "&";
+		strPostData += "BCC_ADDRS=" + encodeURIComponent($('BCC_ADDRS').value) + "&";
+		strPostData += "SUBJECT=" + encodeURIComponent($('SUBJECT').value) + "&";
+		strPostData += "CONTENT=" + encodeURIComponent($('CONTENT').value) + "&";
+		strPostData += "ATTACHFILES=" + encodeURIComponent(uploadedfiles);
+		var qUrl = "api/savedraft.xml";
+
+		var xmlHttp = initxmlhttp();
+		xmlHttp.onreadystatechange = function()
+		{
+			if(xmlHttp.readyState==4)
+			{
+				saving_status = false;
+				toggle_onbeforeunload(saving_status);
+				if(xmlHttp.status== 200)
+				{
+					var xmldom = xmlHttp.responseXML;
+					xmldom.documentElement.normalize();
+					var responseNode = xmldom.documentElement.childNodes.item(0);
+					if(responseNode.tagName == "response")
+					{
+						var errno = responseNode.getAttribute("errno")
+						if(errno == "0")
+						{
+							isChange = false;
+							toggle_onbeforeunload(isChange);
+
+							var bodyList = responseNode.childNodes;
+							for(var i = 0; i < bodyList.length; i++)
+							{
+								if(bodyList.item(i).tagName == "draftid")
+								{
+									$('DRAFTID').value = bodyList.item(i).childNodes[0].nodeValue;
+								}
+							}
+							
+							$('PROCESSING_DIV').style.zIndex = 18;
+							$('PROCESSING_DIV').style.display = "block";
+							$('PROCESSING_TBL').rows[0].cells[0].innerHTML = "保存草稿成功";
+							
+						}
+						else
+						{
+							
+							$('PROCESSING_DIV').style.zIndex = 18;
+							$('PROCESSING_DIV').style.display = "block";
+							$('PROCESSING_TBL').rows[0].cells[0].innerHTML = "<font color='#FF0000'>保存草稿出错(邮件太大)</font>";
+
+
+						}
+					}
+				}
+				else
+				{
+
+					$('PROCESSING_DIV').style.zIndex = 18;
+					$('PROCESSING_DIV').style.display = "block";
+					$('PROCESSING_TBL').rows[0].cells[0].innerHTML = "<font color='#FF0000'>保存草稿出错</font>";
+
+
+				}
+				//document.body.style.cursor = "default";
+			}
+			else
+			{
+				saving_status = true;
+				toggle_onbeforeunload(saving_status);
+				$('PROCESSING_DIV').style.zIndex = 18;
+				$('PROCESSING_DIV').style.display = "block";
+				$('PROCESSING_TBL').rows[0].cells[0].innerHTML = "正在保存草稿 - <img src=\"waiting.gif\" />";
+			}
+		}
+		
+		xmlHttp.open("POST", qUrl , true);
+		xmlHttp.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+		xmlHttp.send(strPostData);
+		
+	}
+	
+	function read_mail(strID, strType)
+	{
+		var qUrl = "/api/readmail.xml?EDIT=yes&ID=" + strID;
+		var xmlHttp = initxmlhttp();
+	    xmlHttp.onreadystatechange = function()
+		{
+			if (xmlHttp.readyState==4)
+			{
+				if(xmlHttp.status== 200)
+				{
+					var xmldom = xmlHttp.responseXML;
+					xmldom.documentElement.normalize();
+					var responseNode = xmldom.documentElement.childNodes.item(0);
+					if(responseNode.tagName == "response")
+					{
+						var errno = responseNode.getAttribute("errno");
+						
+						if(errno == "0")
+						{
+							var strFrom, strTo, strCc, strSubject, strTextContent, strHtmlContent, strAttach;
+							strFrom = "";
+							strTo = "";
+							strCc = "";
+							strSubject = "";
+							strTextContent = "";
+							strHtmlContent = "";
+							
+							var bodyList = responseNode.childNodes;
+							for(var i = 0; i < bodyList.length; i++)
+							{
+								if(bodyList.item(i).tagName == "from")
+								{
+									strFrom = bodyList.item(i).childNodes[0] == null ? "" : bodyList.item(i).childNodes[0].nodeValue;
+								}
+								else if(bodyList.item(i).tagName == "to")
+								{
+									strTo = bodyList.item(i).childNodes[0] == null ? "" : bodyList.item(i).childNodes[0].nodeValue;
+								}
+								else if(bodyList.item(i).tagName == "cc")
+								{
+									strCc = bodyList.item(i).childNodes[0] == null ? "" : bodyList.item(i).childNodes[0].nodeValue;
+								}
+								else if(bodyList.item(i).tagName == "date")
+								{
+									strDate = bodyList.item(i).childNodes[0] == null ? "" : bodyList.item(i).childNodes[0].nodeValue;
+								}
+								else if(bodyList.item(i).tagName == "subject")
+								{
+									strSubject = bodyList.item(i).childNodes[0] == null ? "" : bodyList.item(i).childNodes[0].nodeValue;
+								}
+								else if(bodyList.item(i).tagName == "text_content")
+								{
+									strTextContent += bodyList.item(i).childNodes[0] == null ? "" : bodyList.item(i).childNodes[0].nodeValue;
+									strTextContent = TextToHTML(strTextContent);
+								}
+								else if(bodyList.item(i).tagName == "html_content")
+								{
+									strHtmlContent += bodyList.item(i).childNodes[0] == null ? "" : bodyList.item(i).childNodes[0].nodeValue;
+								}
+								else if(bodyList.item(i).tagName == "attach")
+								{
+									strAttach = bodyList.item(i).childNodes[0] == null ? "" : bodyList.item(i).childNodes[0].nodeValue;
+								}
+							}
+							
+							if(strType == "4")
+							{
+								$('DRAFTID').value = strID;
+							
+								$("TO_ADDRS").value = strTo;
+								$("CC_ADDRS").value = strCc;
+								$("SUBJECT").value = strSubject;
+								$("CONTENT").value = (strHtmlContent!= "" ? strHtmlContent : strTextContent);
+								$('richeditor').contentWindow.document.body.innerHTML = $("CONTENT").value;
+								$("CONTENT").value = $('richeditor').contentWindow.document.body.innerHTML;
+								if(strAttach != "")
+								{
+									extract_att(strID);	
+								}
+								
+							}
+							else if(strType == "3")
+							{
+								$("SUBJECT").value = "Fwd: " + strSubject;
+								
+								$("CONTENT").value = (strHtmlContent!= "" ? strHtmlContent : strTextContent);
+								$('richeditor').contentWindow.document.body.innerHTML = $("CONTENT").value;
+								
+								strReply = "<br><br><br><br><hr>";
+								strReply += "<table border='0' bgcolor='#EFEFEF' bordercolorlight='#C0C0C0' bordercolordark='#FFFFFF' cellpadding='5' cellspacing='1' width='100%'>";
+								strReply += "<tr><td bgcolor='#EFEFEF' align='right' width='80'><b>发件人:</b></td><td bgcolor='#FFFFFF' align='left' width='910'>" + TextToHTML(strFrom) + "</td></tr>";
+								strReply += "<tr><td bgcolor='#EFEFEF' align='right' width='80'><b>收件人:</b></td><td bgcolor='#FFFFFF' align='left' width='910'>" + TextToHTML(strTo) + "</td></tr>";
+								if(strCc != "")
+									strReply += "<tr><td bgcolor='#EFEFEF' align='right' width='80'><b>抄送:</b></td><td bgcolor='#FFFFFF' align='left' width='910'>" + TextToHTML(strCc) + "</td></tr>";
+								strReply += "<tr><td bgcolor='#EFEFEF' align='right' width='80'><b>时间:</b></td><td bgcolor='#FFFFFF' align='left' width='910'>" + TextToHTML(strDate) + "</td></tr>";
+								strReply += "<tr><td bgcolor='#EFEFEF' align='right' width='80'><b>主题:</b></td><td bgcolor='#FFFFFF' align='left' width='910'>" + TextToHTML(strSubject) + "</td></tr>";
+								strReply += "</table>";
+
+								strReply += $('richeditor').contentWindow.document.body.innerHTML;
+								
+								$("CONTENT").value = strReply;
+								
+								$('richeditor').contentWindow.document.body.innerHTML = $("CONTENT").value;
+								$("CONTENT").value = $('richeditor').contentWindow.document.body.innerHTML;
+								
+								if(strAttach != "")
+								{
+									extract_att(strID);	
+								}
+								
+							}
+							else if(strType == "2")
+							{
+								var to_addrs = strFrom + "," + strTo;								
+								var to_addrs_arr = to_addrs.split(",");
+								var to_addrs_result = new Array();
+								to_addrs = "";
+								for(var x = 0; x < to_addrs_arr.length; x++)
+								{
+									var res = retrieve(to_addrs_arr[x]);
+									if(res != null)
+									{
+										var same = false;
+										for(var a = 0; a < to_addrs_result.length; a++)
+										{
+											if(res == to_addrs_result[a])
+											{
+												same = true;
+												break;
+											}
+										}
+										if(!same)
+										{
+											to_addrs_result.push(res);
+											if(to_addrs != "")
+												to_addrs += ",";
+											to_addrs += res;
+										}
+									}
+								}
+								
+								var cc_addrs = strCc;
+								var cc_addrs_arr = cc_addrs.split(",");
+								var cc_addrs_result = new Array();
+								cc_addrs = "";
+								for(var x = 0; x < cc_addrs_arr.length; x++)
+								{
+									var res = retrieve(cc_addrs_arr[x]);
+									if(res != null)
+									{
+										var same = false;
+										for(var a = 0; a < cc_addrs_result.length; a++)
+										{
+											if(res == cc_addrs_result[a])
+											{
+												same = true;
+												break;
+											}
+										}
+
+										for(var a = 0; a < to_addrs_result.length; a++)
+										{
+											if(res == to_addrs_result[a])
+											{
+												same = true;
+												break;
+											}
+										}
+										
+										if(!same)
+										{
+											cc_addrs_result.push(res);
+											if(cc_addrs != "")
+												cc_addrs += ","
+											cc_addrs += res;
+										}
+									}
+								}
+								
+								$("TO_ADDRS").value = to_addrs;
+								$("CC_ADDRS").value = cc_addrs;
+								
+								$("SUBJECT").value = "Re: " + strSubject;
+								
+								$("CONTENT").value = (strHtmlContent!= "" ? strHtmlContent : strTextContent);
+								$('richeditor').contentWindow.document.body.innerHTML = $("CONTENT").value;
+								
+								strReply = "<br><br><br><br><hr>";
+								strReply += "<table border='0' bgcolor='#EFEFEF' bordercolorlight='#C0C0C0' bordercolordark='#FFFFFF' cellpadding='5' cellspacing='1' width='100%'>";
+								strReply += "<tr><td bgcolor='#EFEFEF' align='right' width='80'><b>发件人:</b></td><td bgcolor='#FFFFFF' align='left' width='910'>" + TextToHTML(strFrom) + "</td></tr>";
+								strReply += "<tr><td bgcolor='#EFEFEF' align='right' width='80'><b>收件人:</b></td><td bgcolor='#FFFFFF' align='left' width='910'>" + TextToHTML(strTo) + "</td></tr>";
+								if(strCc != "")
+									strReply += "<tr><td bgcolor='#EFEFEF' align='right' width='80'><b>抄送:</b></td><td bgcolor='#FFFFFF' align='left' width='910'>" + TextToHTML(strCc) + "</td></tr>";
+								strReply += "<tr><td bgcolor='#EFEFEF' align='right' width='80'><b>时间:</b></td><td bgcolor='#FFFFFF' align='left' width='910'>" + TextToHTML(strDate) + "</td></tr>";
+								strReply += "<tr><td bgcolor='#EFEFEF' align='right' width='80'><b>主题:</b></td><td bgcolor='#FFFFFF' align='left' width='910'>" + TextToHTML(strSubject) + "</td></tr>";
+								strReply += "</table>";
+
+								strReply += $('richeditor').contentWindow.document.body.innerHTML;
+								
+								$("CONTENT").value = strReply;
+								
+								$('richeditor').contentWindow.document.body.innerHTML = $("CONTENT").value;
+								$("CONTENT").value = $('richeditor').contentWindow.document.body.innerHTML;
+								
+							}
+							else if(strType == "1")
+							{
+								$("TO_ADDRS").value = strFrom;
+								$("SUBJECT").value = "Re: " + strSubject;
+
+								$("CONTENT").value = (strHtmlContent!= "" ? strHtmlContent : strTextContent);
+								$('richeditor').contentWindow.document.body.innerHTML = $("CONTENT").value;
+								
+								strReply = "<br><br><br><br><hr>";
+								strReply += "<table border='0' bgcolor='#EFEFEF' bordercolorlight='#C0C0C0' bordercolordark='#FFFFFF' cellpadding='5' cellspacing='1' width='100%'>";
+								strReply += "<tr><td bgcolor='#EFEFEF' align='right' width='80'><b>发件人:</b></td><td bgcolor='#FFFFFF' align='left' width='910'>" + TextToHTML(strFrom) + "</td></tr>";
+								strReply += "<tr><td bgcolor='#EFEFEF' align='right' width='80'><b>收件人:</b></td><td bgcolor='#FFFFFF' align='left' width='910'>" + TextToHTML(strTo) + "</td></tr>";
+								if(strCc != "")
+									strReply += "<tr><td bgcolor='#EFEFEF' align='right' width='80'><b>抄送:</b></td><td bgcolor='#FFFFFF' align='left' width='910'>" + TextToHTML(strCc) + "</td></tr>";
+								strReply += "<tr><td bgcolor='#EFEFEF' align='right' width='80'><b>时间:</b></td><td bgcolor='#FFFFFF' align='left' width='910'>" + TextToHTML(strDate) + "</td></tr>";
+								strReply += "<tr><td bgcolor='#EFEFEF' align='right' width='80'><b>主题:</b></td><td bgcolor='#FFFFFF' align='left' width='910'>" + TextToHTML(strSubject) + "</td></tr>";
+								strReply += "</table>";
+
+								strReply += $('richeditor').contentWindow.document.body.innerHTML;
+								
+								$("CONTENT").value = strReply;
+								
+								$('richeditor').contentWindow.document.body.innerHTML = $("CONTENT").value;
+								$("CONTENT").value = $('richeditor').contentWindow.document.body.innerHTML;
+								
+							}
+						}
+					}
+				}
+			}
+		}
+		xmlHttp.open("GET", qUrl , true);
+		xmlHttp.send("");
+	}
+	
+	function extract_att(strID)
+	{
+		var qUrl = "/api/extractattach.xml?ID=" + strID;
+		var xmlHttp = initxmlhttp();
+	    xmlHttp.onreadystatechange = function()
+		{
+			if (xmlHttp.readyState==4)
+			{
+				if(xmlHttp.status== 200)
+				{
+					var xmldom = xmlHttp.responseXML;
+					xmldom.documentElement.normalize();
+					var responseNode = xmldom.documentElement.childNodes.item(0);
+					if(responseNode.tagName == "response")
+					{
+						var errno = responseNode.getAttribute("errno");
+						
+						if(errno == "0")
+						{
+							var strTmpname, strFilename;
+							var attList = responseNode.childNodes;
+							for(var i = 0; i < attList.length; i++)
+							{
+								if(attList.item(i).tagName == "attach")
+								{
+									strTmpname = attList.item(i).getAttribute("tmpname") == null ? "" : attList.item(i).getAttribute("tmpname");
+									strFilename = attList.item(i).getAttribute("filename") == null ? "" : attList.item(i).getAttribute("filename");
+									nAttsize = attList.item(i).getAttribute("attsize") == null ? 0 : attList.item(i).getAttribute("attsize");
+									if(strTmpname != "" && strFilename != "")
+									{
+										show_attachs(strTmpname, strFilename, nAttsize);
+									}
+								}
+							}
+							$('attach_flag').innerHTML = "";
+						}
+						else
+						{
+							$('attach_flag').innerHTML = "<img src=\"alert.gif\">";	
+						}
+					}
+				}
+				else
+				{
+					$('attach_flag').innerHTML = "<img src=\"alert.gif\">";	
+				}
+			}
+			else
+			{
+				$('attach_flag').innerHTML = "<img src=\"loading.gif\">";
+			}
+		}
+		xmlHttp.open("GET", qUrl , true);
+		xmlHttp.send("");
+	}
+	
+	function del_attach(selfid, tmpname)
+	{
+		if(del_uploaded(tmpname))
+		{
+			var tObj = $('SHOW_UPLOADEDFILES');
+			tObj.deleteRow($(selfid).rowIndex);	
+		}
+	}
+	
+	function del_uploaded(tmpname)
+	{
+		var qUrl = "/api/deluploaded.xml?UPLOADEDFILE=" + tmpname;
+		var xmlHttp = initxmlhttp();
+		xmlHttp.open("GET", qUrl , false);
+		xmlHttp.send("");
+		if(xmlHttp.status== 200)
+		{
+			var xmldom = xmlHttp.responseXML;
+			xmldom.documentElement.normalize();
+			var responseNode = xmldom.documentElement.childNodes.item(0);
+			if(responseNode.tagName == "response")
+			{
+				var errno = responseNode.getAttribute("errno");
+				if(errno == "0")
+				{
+					return true
+				}
+			}
+		}
+		xmlHttp = null;
+		return false;
+	}
+	
+	function show_attachs(tmpname, showname, attsize)
+	{
+		var tObj = $('SHOW_UPLOADEDFILES');
+		tr = tObj.insertRow(tObj.rows.length);
+		tr.setAttribute("id", "file" + tr.rowIndex);
+		var td1 = tr.insertCell(0);
+        td1.innerHTML = "<input name=\"TMPFILENAME\" id=\"TMPFILENAME\" type=\"hidden\" value=\"" + tmpname + "\"><input type=\"image\" src=\"delete.gif\" onclick=\"del_attach('" + tr.getAttribute('id') + "','" + tmpname + "')\">";
+        var td2 = tr.insertCell(1);
+        td2.innerHTML = "<a href=\"/api/gettmpfile.cgi?TMPFILENAME=" + tmpname + "\" target=\"_blank\">" + TextToHTML(decodeURIComponent(showname)) + "</a>(" + ( attsize == 0 ? "0" : (Math.round(attsize/1024*100)/100 == 0 ? "0.01" : Math.round(attsize/1024*100)/100)) + "KB)";
+	}
+	
+	function uninit()
+	{
+		for(var x = 0; x < uploaded_file_list.length; x++)
+		{
+			del_uploaded(uploaded_file_list[x]);
+		}
+		return true;
+	}
+	
+	function sel_alluser(sel)
+	{
+		for(var x = 0; x < document.getElementsByName('seluser').length; x++)
+		{
+			document.getElementsByName('seluser')[x].checked = sel;
+		}
+	}
+	
+	function append_addrs()
+	{
+		for(var x = 0; x < document.getElementsByName('seluser').length; x++)
+		{
+			if(document.getElementsByName('seluser')[x].checked == true)
+			{
+				isChange = true;
+				toggle_onbeforeunload(isChange)
+				if($('ADDR_BOOK_DIV').getAttribute("who") == "1")
+				{
+					if($('TO_ADDRS').value != "")
+						$('TO_ADDRS').value += ", "
+					$('TO_ADDRS').value += document.getElementsByName('seluser')[x].value;
+					
+				}
+				else if($('ADDR_BOOK_DIV').getAttribute("who") == "2")
+				{
+					if($('CC_ADDRS').value != "")
+						$('CC_ADDRS').value += ", "
+					$('CC_ADDRS').value += document.getElementsByName('seluser')[x].value;
+					
+				}	
+				else if($('ADDR_BOOK_DIV').getAttribute("who") == "3")
+				{
+					if($('BCC_ADDRS').value != "")
+						$('BCC_ADDRS').value += ", "
+					$('BCC_ADDRS').value += document.getElementsByName('seluser')[x].value;
+				}	
+			}
+		}
+	}
+	
+	function load_users(who, orderby, desc)
+	{
+		var qUrl = "/api/listusers.xml?ORDER_BY=" + orderby + "&DESC=" + (desc == null ? '' : desc);
+		var xmlHttp = initxmlhttp();
+
+		xmlHttp.open("GET", qUrl , false);
+		xmlHttp.send("");
+		
+	    if(xmlHttp.status == 200)
+		{
+			var xmldom = xmlHttp.responseXML;
+			xmldom.documentElement.normalize();
+			var responseNode = xmldom.documentElement.childNodes.item(0);
+			if(responseNode.tagName == "response")
+			{
+				var errno = responseNode.getAttribute("errno")
+				if(errno == "0")
+				{
+					var strTmp;
+					var userList = responseNode.childNodes;
+
+					clear_table_without_header($('USERTBL'));
+						
+					for(var i = 0; i < userList.length; i++)
+					{
+						if(userList.item(i).tagName == "user")
+						{
+							var image;
+							if(userList.item(i).getAttribute("status") == "Active")
+							{
+								if(userList.item(i).getAttribute("role") == "Administrator")
+									image = "admin.gif";
+								else
+								{
+									if(userList.item(i).getAttribute("type") == "Group")
+										image = "group.gif";
+									else		
+										image = "member.gif";
+								}
+							}
+							else
+							{
+								if(userList.item(i).getAttribute("type") == "Group")
+									image = "inactive_group.gif";
+								else		
+									image = "inactive_member.gif";
+							}
+
+							tr = $('USERTBL').insertRow($('USERTBL').rows.length);
+
+							
+							var td0 = tr.insertCell(0);
+							td0.valign="middle";
+							td0.align="center";
+							td0.height="22";
+							setStyle(td0, "TD.gray");
+					        td0.innerHTML = "<input type=\"checkbox\" name=\"seluser\" id=\"seluser\" value=\"" + userList.item(i).getAttribute("name") + "@" + userList.item(i).getAttribute("domain") + "\">";
+
+							var td1 = tr.insertCell(1);
+							td1.valign="middle";
+							td1.align="center";
+							td1.height="22";
+							setStyle(td1, "TD.gray");
+					        td1.innerHTML = "<img src=\""+image +"\" />";
+							
+							var td2 = tr.insertCell(2);
+							td2.valign="middle";
+							td2.align="left";
+							td2.height="22";
+							setStyle(td2, "TD.gray");
+					        td2.innerHTML = userList.item(i).getAttribute("name");
+
+							var td3 = tr.insertCell(3);
+							td3.valign="middle";
+							td3.align="left";
+							td3.height="22";
+							setStyle(td3, "TD.gray");
+					        td3.innerHTML = userList.item(i).getAttribute("alias");
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	function showbook(who, x, y, orderby)
+	{	
+		sel_alluser(false);
+		$('ADDR_BOOK_DIV').setAttribute("who", who);
+		
+		$('selalluser').checked = false;
+
+		if($('ADDR_BOOK_DIV').getAttribute("loaded") != "true")
+		{
+			$('USERTBL').setAttribute('orderby', orderby);
+			load_users($('USERTBL').getAttribute('orderby'), $('USERTBL').getAttribute($('USERTBL').getAttribute('orderby')));
+			
+			$('ADDR_BOOK_DIV').setAttribute("loaded", "true");
+		}
+
+		$('ADDR_BOOK_DIV').style.display = "block";
+
+		$('ADDR_BOOK_DIV').style.left = x;
+		$('ADDR_BOOK_DIV').style.top = y;
+	}
+
+	function do_copy_mail(mid, todirs)
+	{
+		var qUrl = "/api/copymail.xml?MAILID=" + mid + "&TODIRS=" + todirs;
+		var xmlHttp = initxmlhttp();
+		
+		xmlHttp.onreadystatechange = function()
+		{
+			var strmid = "mailtr" + mid;
+			var trid = window.opener.$(strmid);
+
+			if(trid == null)
+				return false;
+			
+			if (xmlHttp.readyState == 4 && xmlHttp.status== 200)
+			{	
+				var xmldom = xmlHttp.responseXML;
+				xmldom.documentElement.normalize();
+				var responseNode = xmldom.documentElement.childNodes.item(0);
+				if(responseNode.tagName == "response")
+				{
+					var errno = responseNode.getAttribute("errno")
+					if(errno == "0" || errno == 0)
+					{
+						if(window.opener && window.opener.refresh)
+								window.opener.refresh();
+						$('PROCESSING_DIV').style.display = "none";
+						return true;
+					}
+					else
+					{
+						return false;
+					}
+				}
+			}
+			else
+			{
+				$('PROCESSING_DIV').style.zIndex = 18;
+				$('PROCESSING_DIV').style.display = "block";
+				$('PROCESSING_TBL').rows[0].cells[0].innerHTML = "正在复制，请等待...";
+			}
+		}
+		xmlHttp.open("GET", qUrl , true);
+		xmlHttp.send("");
+		
+		return true;
+	}
+	
+	function copy_mail(todir)
+	{	
+		if($('DRAFTID').value == null || $('DRAFTID').value == "" || $('DRAFTID').value == -1)
+		{
+			alert("此草稿尚未保存");
+			return;
+		}
+		do_copy_mail($('DRAFTID').value, todir);
+	}
+
+	function do_move_mail(mid, todirs)
+	{
+		var qUrl = "/api/movemail.xml?MAILID=" + mid + "&TODIRS=" + todirs;
+		var xmlHttp = initxmlhttp();
+		
+	    xmlHttp.onreadystatechange = function()
+		{
+			var strmid = "mailtr" + mid;
+			var trid = window.opener.$(strmid);
+
+			if(trid == null)
+				return false;
+			
+			if (xmlHttp.readyState == 4 && xmlHttp.status== 200)
+			{
+				var xmldom = xmlHttp.responseXML;
+				xmldom.documentElement.normalize();
+				var responseNode = xmldom.documentElement.childNodes.item(0);
+				if(responseNode.tagName == "response")
+				{
+					var errno = responseNode.getAttribute("errno")
+					if(errno == "0" || errno == 0)
+					{
+						$('PROCESSING_DIV').style.display = "none";
+						
+						window.opener.delete_maillist_row(mid);
+	
+						if(window.opener.refresh)
+								window.opener.refresh();
+					}
+					else
+					{
+					}
+				}
+			}
+			else
+			{
+				$('PROCESSING_DIV').style.zIndex = 18;
+				$('PROCESSING_DIV').style.display = "block";
+				$('PROCESSING_TBL').rows[0].cells[0].innerHTML = "正在移动，请等待...";
+			}
+
+		}
+		xmlHttp.open("GET", qUrl , true);
+		xmlHttp.send("");
+				
+		return true;
+	}
+	
+	function move_mail(todir)
+	{	
+		if($('DRAFTID').value == null || $('DRAFTID').value == "" || $('DRAFTID').value == -1)
+		{
+			alert("此草稿尚未保存");
+			return;
+		}
+		do_copy_mail($('DRAFTID').value, todir);
+	}
+
+	function init_editor()
+	{
+		if(navigator.appName != "Netscape")
+		{
+			document.frames['richeditor'].document.designMode = 'on';
+		}
+		else
+		{
+			document.getElementById('richeditor').contentWindow.document.designMode = 'on';
+			document.getElementById('richeditor').contentWindow.document.body.contentEditable = 'true';
+		}
+	}
+	
+	var isChange = false;
+	
+	function ok_copy_mail()
+	{
+		var strDirs = "";
+		for(var x = 0; x < document.getElementsByName('seldir1').length; x++)
+		{
+			if(document.getElementsByName('seldir1')[x].checked == true )
+			{
+				strDirs += document.getElementsByName('seldir1')[x].value + "*";
+			}
+		}
+		if(strDirs == "")
+		{
+			alert('没有选择目的文件夹');
+			return;
+		}
+		copy_mail(strDirs);
+	}
+	
+	function ok_move_mail()
+	{
+		var strDirs = "";
+		for(var x = 0; x < document.getElementsByName('seldir2').length; x++)
+		{
+			if(document.getElementsByName('seldir2')[x].checked == true )
+			{
+				strDirs += document.getElementsByName('seldir2')[x].value + "*";
+			}
+		}
+		if(strDirs == "")
+		{
+			alert('没有选择目的文件夹');
+			return;
+		}
+		move_mail(strDirs);
+	}
+	
+	function show_copy_mail_dir_div()
+	{
+		$('DIRS_DIV2').style.display = "none";
+		
+		var Pos = GetObjPos($('COPYMAIL'))
+		show_dirs($('DIRS_DIV1'), $('DIRTBL1'), Pos.x, Pos.y + Pos.h + 2, "seldir1");
+	}
+
+	function show_move_mail_dir_div()
+	{
+		$('DIRS_DIV1').style.display = "none";
+		
+		var Pos = GetObjPos($('MOVEMAIL'))
+		show_dirs($('DIRS_DIV2'), $('DIRTBL2'), Pos.x, Pos.y + Pos.h + 2, "seldir2");
+	}
+
+	function sort_users(who, orderby)
+	{
+		$('selalluser').checked = false;
+		
+		$('USERTBL').setAttribute('orderby', orderby);
+
+		clear_table_without_header($('USERTBL'));
+
+		if($('USERTBL').getAttribute(orderby) == 'true')
+			$('USERTBL').setAttribute(orderby, 'false');
+		else
+			$('USERTBL').setAttribute(orderby, 'true');
+
+		load_users(who, $('USERTBL').getAttribute('orderby'), $('USERTBL').getAttribute($('USERTBL').getAttribute('orderby')));
+	}
+</script>
+</head>
+
+<body onLoad="init()" onUnload="uninit()">
+
+<div id="PROCESSING_DIV" class="div1" style="display:none; width: 380; height:100; left:300; top:200; background-color: #FFFFCC;">
+	<table border="0" width="100%" bordercolorlight="#C0C0C0" cellpadding="0" cellspacing="0" bordercolordark="#FFFFFF">
+		<tr height="22"><td class="gray">
+			<table width="100%" height="100%" border="0" cellpadding="1" cellspacing="1" background="titlebg.gif">
+				<tr>
+					<td width="16" align="left" valign="middle"><img src="writemail.gif"></td>
+					<td align="center" valign="middle" onMouseOver="this.mousepoint = 99;this.style.cursor = 'move';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onMouseDown="return drag($('PROCESSING_DIV'), (event ? event : window.event));"><font color="#FFFFFF"><b>写邮件</b></font></td>
+					<td align="right" width="16" height="22"><input type="image" src="close.gif" onClick="close_processing_div()"></td>
+				</tr>
+			</table>
+		</td></tr>
+	</table>
+	<table id="PROCESSING_TBL" width="100%" height="70" border="0" cellpadding="0" cellspacing="0">
+		<tr><td align="center" valign="middle"></td></tr>
+	</table>	
+</div>
+
+<div class="div1" id="DIRS_DIV1" style="display:none; z-Index:20; width:220px; height:200px;">
+  <table border="0" cellspacing="0" cellpadding="1" width="100%" bordercolorlight="#C0C0C0" bordercolordark="#FFFFFF" class="gray">
+	<tr>
+      <td align="left" valign="top" class="gray" bgcolor="#FFFFFF" height="160">
+      	<div style="overflow:auto; width:100%; height:100%; background-color: #FFFFFF;"><table id="DIRTBL1" bgcolor="#FFFFFF" border="0" cellspacing="0" cellpadding="0" width="100%"></table></div>
+      </td>
+    </tr>
+    <tr><td bgcolor="#EDF1F8" height="32">
+    	<table width="100%" border="0" cellspacing="1" cellpadding="1">
+          <tr>
+            <td align="center" valign="middle"><input type="image" src="ok.gif" onMouseOver="this.src='ok2.gif'" onMouseOut="this.src='ok.gif'" onClick="ok_copy_mail();$('DIRS_DIV1').style.display = 'none';"></td>
+            <td align="center" valign="middle"><input type="image" src="cancel.gif" onMouseOver="this.src='cancel2.gif'" onMouseOut="this.src='cancel.gif'" onClick="$('DIRS_DIV1').style.display = 'none';"></td>
+          </tr>
+        </table>
+     </td></tr>
+  </table>
+</div>
+<div class="div1" id="DIRS_DIV2" style="display:none; z-Index:20; width:220px; height:200px;">
+  <table border="0" cellspacing="0" cellpadding="1" width="100%" bordercolorlight="#C0C0C0" bordercolordark="#FFFFFF" class="gray">
+  	<tr>
+      <td align="left" valign="top" class="gray" bgcolor="#FFFFFF" height="160">
+      	<div style="overflow:auto; width:100%; height:100%; background-color: #FFFFFF;"><table id="DIRTBL2" bgcolor="#FFFFFF" border="0" cellspacing="0" cellpadding="0" width="100%"></table></div>
+      </td>
+    </tr>
+    <tr><td bgcolor="#EDF1F8" height="32">
+    	 <table width="100%" border="0" cellspacing="1" cellpadding="1">
+          <tr>
+            <td align="center" valign="middle"><input type="image" src="ok.gif" onMouseOver="this.src='ok2.gif'" onMouseOut="this.src='ok.gif'" onClick="ok_move_mail();$('DIRS_DIV2').style.display = 'none';"></td>
+            <td align="center" valign="middle"><input type="image" src="cancel.gif" onMouseOver="this.src='cancel2.gif'" onMouseOut="this.src='cancel.gif'" onClick="$('DIRS_DIV2').style.display = 'none';"></td>
+          </tr>
+        </table>
+    </td></tr>
+  </table>
+</div>
+
+<div class="div1" id="ADDR_BOOK_DIV" style="display:none; z-Index:20; width:500px; height:326px;">
+	<table id="USERTOPTBL" border="0" cellpadding="0" cellspacing="0" bgcolor="#EDF1F8">
+		<tr><td class="title" height="25">
+			<table border="0" width="100%" bordercolorlight="#C0C0C0" cellpadding="0" cellspacing="0" bordercolordark="#FFFFFF" background="pathbg.gif">
+				<tr height="25">
+					<td width="22" align="right"><img src="book.gif"></td>
+					<td align="center" valign="middle" onMouseOver="this.mousepoint = 99;this.style.cursor = 'move';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onMouseDown="return drag($('ADDR_BOOK_DIV'), (event ? event : window.event));"><font color="#FFFFFF"><b>地址簿</b></font></td>
+					<td width="22" align="left"><input type="image" src="close.gif" onClick="$('ADDR_BOOK_DIV').style.display='none'"></td>
+				</tr>
+			</table>
+		</td></tr>
+		<tr><td height="260">
+			<div style="overflow:auto; width:100%; height:100%; background-color: #FFFFFF;">
+				<table id="USERTBL" border="0" bordercolorlight="#C0C0C0" cellpadding="0" cellspacing="0" bordercolordark="#FFFFFF" bgcolor="#FFFFFF" class="gray">
+				<tr bgcolor="#FFFFCC">
+					<td class="gray" width="22" align="left"><input type="checkbox" name="selalluser" id="selalluser" onClick="sel_alluser(this.checked)"></td>
+					<td class="gray" width="22" align="left"><img src="pad.gif"></td>
+					<td class="gray" height="22" width="150" align="center" onMouseOver="this.mousepoint = 99;this.style.cursor = 'pointer';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onClick="sort_users($('ADDR_BOOK_DIV').getAttribute('who'), 'uname')"><b>账号</b></td>
+					<td class="gray" height="22" width="350" align="center" onMouseOver="this.mousepoint = 99;this.style.cursor = 'pointer';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onClick="sort_users($('ADDR_BOOK_DIV').getAttribute('who'), 'ualias')"><b>名称</b></td>
+				</tr>
+				</table>
+			</div>
+		</td></tr>
+		<tr><td height="32">
+			<table border="0" width="100%" bordercolorlight="#C0C0C0" cellpadding="0" cellspacing="0" bordercolordark="#FFFFFF">
+			<tr><td>
+				<table border="0" width="100%" cellspacing="1" cellpadding="1">
+				<tr>
+					<td align="center" valign="middle"><input type="image" src="ok.gif" onMouseOver="this.src='ok2.gif'" onMouseOut="this.src='ok.gif'" onClick="append_addrs();$('ADDR_BOOK_DIV').style.display='none';"></td>
+					<td align="center" valign="middle"><input type="image" src="cancel.gif" onMouseOver="this.src='cancel2.gif'" onMouseOut="this.src='cancel.gif'" onClick="$('ADDR_BOOK_DIV').style.display='none'"></td>
+				</tr>
+				</table>
+			</td></tr>
+			</table>
+		</td></tr>
+	</table>
+</div>
+
+              	
+<table border="0" width="900" cellpadding="0" cellspacing="0" bgcolor="#FFFFFF">
+	<tr>
+		<td valign="top">
+		<table border="0" width="100%" bordercolorlight="#C0C0C0" cellpadding="0" cellspacing="0" bordercolordark="#FFFFFF">
+		<tr><td class="title">
+			<table background="pathbg.gif" border="0" width="100%" bordercolorlight="#C0C0C0" cellspacing="0" cellpadding="2" bordercolordark="#FFFFFF"><tr valign="middle" height="25"><td align="center" width="22"><img src="writemail.gif"></td><td align="center"><b><font color="#FFFFFF"><div id="GLOBALPATH"></div></font></b></td><td width="20"><input type="image" src="close.gif" onClick="window.close()"></td></tr></table>
+		</td></tr>
+		</table>
+		<table border="0" width="900" cellpadding="0" cellspacing="0" background="toptitlebg.gif">
+			<tr><td>
+				<table id="MAILBAR" style="display:block">
+					<tr>
+					  <td><input type="image" src="sendmail.gif" onMouseOver="this.src='sendmail2.gif'" onMouseOut="this.src='sendmail.gif'"onclick="send_mail()"></td>
+					  <td><input type="image" src="savedraft.gif" onMouseOver="this.src='savedraft2.gif'" onMouseOut="this.src='savedraft.gif'"onclick="save_draft()"></td>		
+					  <td><input id="FLAG" name="FLAG" type="image" src="flag.gif" onMouseOver="this.src='flag2.gif'" onMouseOut="this.src='flag.gif'" onClick="flag_mail(true)"></td>
+					  <td><input id="UNFLAG" name="UNFLAG" type="image" src="unflag.gif" onMouseOver="this.src='unflag2.gif'" onMouseOut="this.src='unflag.gif'" onClick="flag_mail(false)"></td>
+					  <td><input id="SEEN" name="SEEN" type="image" src="toseen.gif" onMouseOver="this.src='toseen2.gif'" onMouseOut="this.src='toseen.gif'" onClick="seen_mail(true)"></td>
+					  <td><input id="UNSEEN" name="UNSEEN" type="image" src="tounseen.gif" onMouseOver="this.src='tounseen2.gif'" onMouseOut="this.src='tounseen.gif'" onClick="seen_mail(false)"></td>
+					  <td><input id="COPYMAIL" name="COPYMAIL" type="image" src="copy.gif" onMouseOver="this.src='copy2.gif'" onMouseOut="this.src='copy.gif'" onClick="show_copy_mail_dir_div();"></td>
+					  <td><input id="MOVEMAIL" name="MOVEMAIL" type="image" src="move.gif" onMouseOver="this.src='move2.gif'" onMouseOut="this.src='move.gif'" onClick="show_move_mail_dir_div();"></td>
+					  <td><input id="DELMAIL" name="DELMAIL" type="image" src="delmail.gif" onMouseOver="this.src='delmail2.gif'" onMouseOut="this.src='delmail.gif'" onClick="delmail();"></td>
+					</tr>
+				</table>
+			</td></tr>
+		</table> 
+		<table width="100%" border="0" bordercolorlight="#C0C0C0" cellspacing="0" bordercolordark="#FFFFFF" class="gray">
+		<tr valign="middle">
+			<td class="gray" bgcolor="#EFEFEF" align="right" width="100"><b>收件人:</b></td>
+			<td class="gray">
+				<table border="0" cellspacing="0" cellpadding="0">
+					<tr>
+						<td><input type="text" value="" size="80" id="TO_ADDRS" name="TO_ADDRS" onChange="isChange = true;toggle_onbeforeunload(isChange)"></td>
+						<td width="100" align="center"><input type="image" src="showbook.gif" onMouseOver="this.src='showbook2.gif'" onMouseOut="this.src='showbook.gif'" onClick="Pos = GetObjPos($('TO_ADDRS')); showbook(1, Pos.x, Pos.y + Pos.h + 2 ,'uname')"></td>
+					</tr>
+				</table>
+			</td>
+		</tr>
+		
+		<tr valign="middle">
+			<td class="gray" bgcolor="#EFEFEF" align="right" width="100"><b>抄送:</b></td>
+			<td class="gray">
+				<table border="0" cellspacing="0" cellpadding="0">
+					<tr>
+						<td><input type="text" value="" size="80" id="CC_ADDRS" name="CC_ADDRS" onChange="isChange = true;toggle_onbeforeunload(isChange)"></td>
+						<td width="100" align="center"><input type="image" src="showbook.gif" onMouseOver="this.src='showbook2.gif'" onMouseOut="this.src='showbook.gif'" onClick="Pos = GetObjPos($('CC_ADDRS')); showbook(2, Pos.x, Pos.y + Pos.h + 2 ,'uname')"></td>
+					</tr>
+				</table>
+			</td>
+		</tr>
+		
+		<tr valign="middle">
+			<td class="gray" bgcolor="#EFEFEF" align="right" width="100"><b>密抄:</b></td>
+			<td class="gray">
+				<table border="0"  cellspacing="0" cellpadding="0">
+					<tr>
+						<td><input type="text" value="" size="80" id="BCC_ADDRS" name="BCC_ADDRS" onChange="isChange = true;toggle_onbeforeunload(isChange)"></td>
+						<td width="100" align="center"><input type="image" src="showbook.gif" onMouseOver="this.src='showbook2.gif'" onMouseOut="this.src='showbook.gif'" onClick="Pos = GetObjPos($('BCC_ADDRS')); showbook(3, Pos.x, Pos.y + Pos.h + 2 ,'uname')"></td>
+					</tr>
+				</table>
+			</td>
+		</tr>
+		
+		<tr valign="middle">
+			<td class="gray" bgcolor="#EFEFEF" align="right" width="100"><b>主题:</b></td>
+			<td class="gray">
+				<table border="0"  cellspacing="0" cellpadding="0">
+					<tr>
+						<td><input type="text" value="" size="80" id="SUBJECT" name="SUBJECT" onChange="isChange = true;toggle_onbeforeunload(isChange)"></td>
+					</tr>
+				</table>
+			</td>
+		</tr>
+		
+		<tr valign="middle" id="attachid">
+			<td class="gray" bgcolor="#EFEFEF" width="100" align="right" valign="middle" height="32" >
+				<table border="0"><tr><td><div id="attach_flag"></div></td><td><b>附件:</b></td></tr></table>
+			</td>
+			<td class="gray">
+				<input type="hidden" id="DRAFTID" name="DRAFTID" value="-1">
+				<iframe name="attachframe" title="...:::欢迎访问易睿邮件系统:::..." src="attach.html" width="100%" height="32" scrolling="no" marginwidth="0" marginheight="0" border="0" frameborder="0">
+
+				</iframe>
+				<table id="SHOW_UPLOADEDFILES">
+				</table>
+			</td>
+		</tr>
+		
+		<tr>
+			<td class="gray" align="left" colspan="2">
+				<table border="0"  cellspacing="0" cellpadding="3"><tr>
+				<td valign="middle"><input type="image" src="undo.gif" style="border:1px solid #FFFFFF" onMouseOver="this.style.border='1px solid #81a9ce'" onMouseOut="this.style.border='1px solid #FFFFFF'"  onclick="RTC('richeditor').execCommand('Undo', false, null);"></td>
+				<td valign="middle"><input type="image" src="redo.gif" style="border:1px solid #FFFFFF" onMouseOver="this.style.border='1px solid #81a9ce'" onMouseOut="this.style.border='1px solid #FFFFFF'"  onclick="RTC('richeditor').execCommand('Redo', false, null);"></td>
+				<td valign="middle"><input type="image" src="bold.gif" style="border:1px solid #FFFFFF" onMouseOver="this.style.border='1px solid #81a9ce'" onMouseOut="this.style.border='1px solid #FFFFFF'"  onclick="RTC('richeditor').execCommand('Bold', false, null);"></td>
+				<td valign="middle"><input type="image" src="italic.gif" style="border:1px solid #FFFFFF" onMouseOver="this.style.border='1px solid #81a9ce'" onMouseOut="this.style.border='1px solid #FFFFFF'"  onclick="RTC('richeditor').execCommand('Italic', false, null);"></td>
+				<td valign="middle"><input type="image" src="underline.gif" style="border:1px solid #FFFFFF" onMouseOver="this.style.border='1px solid #81a9ce'" onMouseOut="this.style.border='1px solid #FFFFFF'"  onclick="RTC('richeditor').execCommand('Underline', false, null);"></td>
+				<td valign="middle"><input type="image" src="frontcolor.gif" style="border:1px solid #FFFFFF" onMouseOver="this.style.border='1px solid #81a9ce'" onMouseOut="this.style.border='1px solid #FFFFFF'"  onclick="popforeDiv()"></td>
+				<td valign="middle"><input type="image" src="backcolor.gif" style="border:1px solid #FFFFFF" onMouseOver="this.style.border='1px solid #81a9ce'" onMouseOut="this.style.border='1px solid #FFFFFF'"  onclick="popbackDiv()"></td>
+				<td valign="middle">
+					<select class='sel1' onclick="$('foreColorTbl').style.display='none';$('backColorTbl').style.display='none'; "onChange="sizeCmd(this.value); this.value='0'">
+						<option value="0" selected>字号</option>
+						<option value="1">1</option>
+						<option value="2">2</option>
+						<option value="3">3</option>
+						<option value="4">4</option>
+						<option value="5">5</option>
+						<option value="6">6</option>
+						<option value="7">7</option>
+					</select>
+				</td>
+				<td valign="middle"><input type="image" src="left.gif" style="border:1px solid #FFFFFF" onMouseOver="this.style.border='1px solid #81a9ce'" onMouseOut="this.style.border='1px solid #FFFFFF'"  onclick="RTC('richeditor').execCommand('JustifyLeft', false, null);"></td>
+				<td valign="middle"><input type="image" src="center.gif" style="border:1px solid #FFFFFF" onMouseOver="this.style.border='1px solid #81a9ce'" onMouseOut="this.style.border='1px solid #FFFFFF'"  onclick="RTC('richeditor').execCommand('JustifyCenter', false, null);"></td>
+				<td valign="middle"><input type="image" src="right.gif" style="border:1px solid #FFFFFF" onMouseOver="this.style.border='1px solid #81a9ce'" onMouseOut="this.style.border='1px solid #FFFFFF'"  onclick="RTC('richeditor').execCommand('JustifyRight', false, null);"></td>
+				<td valign="middle"><input type="image" src="indent.gif" style="border:1px solid #FFFFFF" onMouseOver="this.style.border='1px solid #81a9ce'" onMouseOut="this.style.border='1px solid #FFFFFF'"  onclick="RTC('richeditor').execCommand('Indent', false, null);"></td>
+				<td valign="middle"><input type="image" src="outdent.gif" style="border:1px solid #FFFFFF" onMouseOver="this.style.border='1px solid #81a9ce'" onMouseOut="this.style.border='1px solid #FFFFFF'"  onclick="RTC('richeditor').execCommand('Outdent', false, null);"></td>
+				<td valign="middle"><input type="image" src="orderlist.gif" style="border:1px solid #FFFFFF" onMouseOver="this.style.border='1px solid #81a9ce'" onMouseOut="this.style.border='1px solid #FFFFFF'"  onclick="RTC('richeditor').execCommand('InsertOrderedList', false, null);"></td>
+				<td valign="middle"><input type="image" src="unorderlist.gif" style="border:1px solid #FFFFFF" onMouseOver="this.style.border='1px solid #81a9ce'" onMouseOut="this.style.border='1px solid #FFFFFF'"  onclick="RTC('richeditor').execCommand('InsertUnorderedList', false, null);"></td>
+				</tr></table>
+			</td>
+		</tr>
+		<tr>
+			<td class="gray" align="left" colspan="2">
+				<textarea style="display: none; height:0px; width:0px;" id="CONTENT" name="CONTENT" class=".area1" onChange="isChange = true;toggle_onbeforeunload(isChange)"></textarea>
+				<iframe name="richeditor" id="richeditor" src="about:blank" style="height:390; width:100%; background:#ffffff;" scrolling="auto" marginwidth="2" marginheight="2" border="1" frameborder="0" onload="init_editor()"></iframe>
+			</td>
+		</tr>
+		</table>
+	</td>
+	</tr>
+	<tr>
+    	<td><p align="center">copyright &copy; <a href="http://www.uplusware.com" target="_blank">uplusware</a> 2009, all right reserved</td>
+    </tr>
+</table>
+
+
+<div name="foreColorTbl" id="foreColorTbl" class="div1" style="z-index:100; border:solid 1px #cccccc; display:none; width:200px; height:120px;"></div>
+<div name="backColorTbl" id="backColorTbl" class="div1" style="z-index:100; border:solid 1px #cccccc; display:none; width:200px; height:120px;"></div>
+<div name="fontSizeTbl" id="fontSizeTbl" class="div1" style="z-index:100; border:solid 1px #cccccc; display:none; width:70px; height:231px;"></div>
+
+</body>
+
+</html>
+

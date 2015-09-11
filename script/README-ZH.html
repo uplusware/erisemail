@@ -1,0 +1,432 @@
+﻿<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>e-risemail server readme</title>
+<style type="text/css">
+<!--
+body {
+	font-family: "Times New Roman", "Times", "serif";
+	font-size: 16px;
+}
+a:link {
+	font-style: normal;
+	color: #FF0000;
+	text-decoration: underline;
+}
+a:hover {
+	color: #0000FF;
+	font-style: normal;
+	font-weight: bold;
+}
+a:visited {
+	color: #FF0000;
+}
+a:active {
+	color: #0000FF;
+}
+table {
+	font-size: 16px;
+	border: none;
+}
+h1 {
+	font-size: 36px;
+}
+h2 {
+	font-size: 24px;
+}
+h3 {
+	font-size: 18px;
+}
+td {
+	border: 1px solid #999999;
+}
+.STYLE2 {
+	color: #0000FF;
+	font-weight: bold;
+}
+.STYLE3 {font-family: "Book Antiqua"}
+.STYLE5 {	color: #0000FF;
+	font-style: italic;
+	font-weight: bold;
+}
+.STYLE7 {color: #FF0000}
+.STYLE8 {color: #0000FF}
+-->
+</style>
+</head>
+
+<body>
+<h1 class="STYLE3"> eRisemail Server v1.6安装使用手册</h1>
+<hr>
+<h2 class="STYLE3">关于 e-risemail server</h2>
+<ul class="STYLE3">
+  <li>支持Linux/Solaris的免费的邮件服务器</li>
+  <li>完全自主开发，非第三方系统集成，所以安装配置过程简单，但功能强大 </li>
+  <li>无需另外安装其他模块即可拥有邮件服务系统的全部功能 </li>
+  <li>支持GB2312, UTF-8和UCS2编码格式  </li>
+  <li>安装后就同时支持SMTP(SSL/TLS), POP3(SSL/TLS), IMAP4(SSL/TLS), WebMail(HTTP/HTTPS) </li>
+  <li>支持邮件组，支持自定义用户策略，支持外发邮件审核，支持Web后台管理系统, </li>
+  <li>运行的平台Linux和MySQL均为免费平台(支持32位和64位平台) </li>
+  <li>支持当前流行的邮件客户端程序(Outlook, Thunderbird ...) </li>
+  <li>支持iCalendar格式(RFC2445) / Mozilla Thunderbird Lightning 插件 </li>
+  <li>支持多种安全加密认证机制 </li>
+  <li>支持大附件邮件( 最大支持2G大小的邮件 ) </li>
+  <li>支持邮件快速索引，摘要和缓存，访问大小邮件无明显区别 </li>
+  <li>支持动态扩充加载反垃圾邮件引擎，支持反垃圾引擎的二次开发 </li>
+  <li>数据存储基于MySQL，很容易通过编写脚本程序维护备份系统数据 </li>
+  <li class="STYLE2">部署中小规模邮件系统的最好选择 </li>
+  <li>推荐安装环境为<strong><em>Ubutun 9.10/OpenSolaris 2009.06 + MySQL 5.0</em></strong></li>
+  <li>官方发布网址 <a href="http://www.uplusware.com" target="_blank">www.uplusware.com</a></li>
+  <li>如有任何疑问请发信垂询<a href="mailto:erisesoft@gmail.com">uplusware@gmail.com</a></li>
+</ul>
+<h2 class="STYLE3">全新安装</h2>
+<blockquote class="STYLE3"> 
+  <h3>步骤 1:</h3>
+  <ul>
+    <li>准备MySQL Server和客户端运行库.</li>
+    <li>建议根据您的需求修改<font color="#0000FF">max_connections </font>的值（ <font color="#0000FF">/etc/mysql/my.cnf 
+      </font>）(一般值应该大于 <strong><em>MaxConnPerProtocal</em></strong><em> * 8 + 
+      <strong>NumOfForwardTask</strong></em>) </li>
+    <li>安装系统程序，系统提供两种安装方式
+      。一种是通过安装脚本安装，另外一种是通过deb安装包安装
+      <ul>
+        <li><strong>安装脚本：</strong>运行安装脚本复制文件到本地计算机: <font color="#0000FF"><strong><em>sudo ./install.sh</em></strong></font></li>
+        <li><strong>deb安装包：例如: </strong> <span class="STYLE5">sudo dpkg -i erisemail-bin-cn-gb2312-i686.deb</span></li>
+      </ul>
+    </li>
+  </ul>
+  <h3>步骤 2:</h3>
+  <ul>
+    <li>复制<strong><em>erise-root.crt erise-server.crt erise-server.key</em></strong> 
+      到安全的位置(例如<strong> <em>/var/ca-certificates/erisemail</em></strong>) 
+      ，并把文件权限改为400。</li>
+    <li>本程序提供的证书文件为演示版，如果有自己的证书文件，请使用自己的。</li>
+  </ul>
+  <h3>步骤 3:</h3>
+  <ul>
+    <li>修改配置文件<strong> <em>/etc/erisemail/erisemail.conf</em></strong>（请参考下面<a href="#erisemail_conf">erisemail.conf</a>内容介绍）</li>
+  </ul>
+  <h3>步骤 4:</h3>
+  <ul>
+    <li>运行<strong><font color="#0000FF"><em>sudo eriseutil --install</em></font></strong> 
+      安装存储邮件的数据库。</li>
+    <li>安装数据库后管理员账号降会被默认添加. 默认账号是<strong><em>admin</em></strong>, 默认密码为<strong><em>admin</em></strong>. 
+      请立即通过<font color="#0000FF"><em><strong>erisepasswd</strong></em></font>命令修改管理员密码<font color="#0000FF"><em>。</em></font></li>
+  </ul>
+  <h3>步骤 5:</h3>
+  <ul>
+    <li>运行<strong><font color="#0000FF"><em>sudo /etc/init.d/erisemail start</em></font></strong></li>
+    <li> 为了以后卸载程序方便，请备份<strong><em>uninstall.sh</em></strong></li>
+  </ul>
+</blockquote>
+<h2 class="STYLE3">从v1.3版本升级</h2>
+<ul class="STYLE3">
+  <li>    先备份数据库</li>
+  <li>    运行<strong><em><font color="#0000FF">sudo eriseutil --upgrade</font></em></strong></li>
+  <li>    执行全新安装步骤（忽略步骤4）</li>
+</ul>
+<h2 class="STYLE3">从v1.4版本升级</h2>
+<ul class="STYLE3">
+  <li>    执行全新安装步骤（忽略步骤4）</li>
+</ul>
+<h2 class="STYLE3">卸载</h2>
+<ul class="STYLE3">
+  <li>如果您希望连数据库一起卸载请运行<em><font color="#0000FF"><strong> ./eriseutil --uninstall</strong></font></em>.（注意:以前的信件将全部丢失）</li>
+  <li>删除程序，同样系统提供两种卸载程序方式：
+    <ul>
+      <li><strong>卸载脚本:</strong> <font color="#0000FF"><em><strong>sudo /var/erisemail/uninstall.sh </strong></em></font>删除程序文件</li>
+      <li><strong>deb:</strong> <span class="STYLE5">sudo dpkg -r erisemail</span>
+        <ul>
+          <li>注意: 卸载过程中出现以下告警信息是正常的.请不要试图删除 <span class="STYLE7">&quot;/var/erisemail/private/</span>&quot;，本目录存储了邮件数据.
+            <ul>
+                <li><span class="STYLE8">dpkg - warning: while removing erisemail, directory `/var/erisemail/private/eml' not empty so not removed.<br>
+                  dpkg - warning: while removing erisemail, directory `/var/erisemail/private' not empty so not removed.<br>
+                  dpkg - warning: while removing erisemail, directory `/var/erisemail' not empty so not removed.</span></li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+</ul>
+<h2 class="STYLE3">Introducation of erisemail.conf<a name="erisemail_conf"></a></h2>
+<blockquote class="STYLE3"> 
+  <table width="1000" border="1" cellspacing="2" cellpadding="2">
+    <tr> 
+      <td align="right"><strong>Encoding</strong></td>
+      <td><p>系统存储采取的编码格式(只支持UTF-8 , GB2312和UCS2)，默认为UTF-8</p>
+        <p><font color="#FF0000">安装eRisemail的数据库后(执行<strong><font color="#0000FF"><em>sudo eriseutil --install</em></font></strong>后)请勿修改本值</font></p>
+      <p>如要更改，请在安装数据库之前，通过工具转换所有HTML页面到对应的编码格式，并修改HTML页面charset</p>
+      <p>&lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html; charset=<span class="STYLE7"><strong>[GB2312|UTF-8|UCS2]</strong></span>&quot; /&gt;</p></td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>EmailDomainName</strong></td>
+      <td>邮件后缀</td>
+    </tr>
+    <tr> 
+      <td width="24%" align="right"><strong>LocalHostName</strong></td>
+      <td width="76%">运行邮件服务器程序本地机器名</td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>HostIP</strong></td>
+      <td>运行邮件服务器的本地IP</td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>DNSServer</strong></td>
+      <td>可用的DNS服务器IP，<strong><font color="#FF0000">不能</font></strong>为空</td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>MaxConnPerProtocal</strong></td>
+      <td>每个协议最多同时连接数</td>
+    </tr>
+    <tr> 
+      <td height="42" align="right"><strong>NumOfForwardTask</strong></td>
+      <td>转发任务数。如果您的邮件服务器每天有许多的邮件需要转发到其他的邮件服务器上，您可以根据您的机器的性能增大这个值。默认值是3.</td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>SMTPPort</strong></td>
+      <td> SMTP服务的端口号</td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>EnableSMTPTLS</strong></td>
+      <td>启用 SMTP-TLS(yes/no). 因为各邮件系统TLS版本兼容性问题，推荐设置为no.</td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>EnableRelay</strong></td>
+      <td>启用转发功能. 防止作为垃圾邮件转发中继，推荐设为 no</td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>SMTPHostNameCheck</strong></td>
+      <td>SMTP 会话反查机器名和IP是否匹配</td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>POP3Enable</strong></td>
+      <td>启用 POP3服务.(yes/no)</td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>POP3Port</strong></td>
+      <td>POP3 服务端口号</td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>EnablePOP3TLS</strong></td>
+      <td>启用POP3-TLS服务(yes/no)</td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>IMAPEnable</strong></td>
+      <td>启用 IMAP服务.(yes/no)</td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>IMAPPort</strong></td>
+      <td>IMAP服务端口号</td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>EnableIMAPTLS</strong></td>
+      <td>启用 IMAP-TLS服务(yes/no)</td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>SMTPSEnable</strong></td>
+      <td>启用 SMTPS服务.(yes/no)</td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>SMTPSPort</strong></td>
+      <td>POP3服务端口号</td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>POP3SEnable</strong></td>
+      <td>启用 POP3S服务.(yes/no)</td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>POP3SPort</strong></td>
+      <td>POP3S service端口号</td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>IMAPSEnable</strong></td>
+      <td>启用 IMAPS服务.(yes/no)</td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>IMAPSPort</strong></td>
+      <td>IMAPS service端口号</td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>HTTPEnable</strong></td>
+      <td>启用 HTTP Web 服务.(yes/no)</td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>HTTPPort</strong></td>
+      <td>HTTP Web Service端口号</td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>HTTPSEnable</strong></td>
+      <td>启用 HTTPS Web 服务.(yes/no)</td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>HTTPSPort</strong></td>
+      <td>HTTP Web Service端口号</td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>PrivatePath</strong></td>
+      <td>私有临时文件所处目录，确保本目录下有eml和tmp两个子目录</td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>HTMLPath</strong></td>
+      <td>web系统的文件所处目录</td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>CARootCrt</strong></td>
+      <td>根证书位置</td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>CAServerCrt</strong></td>
+      <td>服务端证书位置</td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>CAServerKey</strong></td>
+      <td>服务端证书密钥文件位置</td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>CAPassword</strong></td>
+      <td>加密后的服务端证书口令(为了安全请用以下命令加密&quot;<font color="#0000FF">eriseutil --encode 
+        [password]</font>&quot;)</td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>DBHost</strong></td>
+      <td>MySQL Server机器名或者IP</td>
+    </tr>
+    <tr> 
+      <td height="23" align="right"><strong>DBName</strong></td>
+      <td>将要为邮件系统创建的新数据库名字</td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>DBUser</strong></td>
+      <td>MySQL Server用户名</td>
+    </tr>
+    <tr> 
+      <td height="42" align="right"><strong>DBPassword</strong></td>
+      <td>MySQL Server用户名的密码(为了安全请用以下命令加密&quot;<font color="#0000FF">eriseutil 
+        --encode [password]</font>&quot;)</td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>DBMaxConn</strong></td>
+      <td>每个服务与MySQL最大连接限制数</td>
+    </tr>
+  </table>
+</blockquote>
+<h2 class="STYLE3">Introducation of erisemail's tools</h2>
+<blockquote class="STYLE3"> 
+  <table width="1000" border="1" cellspacing="2" cellpadding="2">
+    <tr> 
+      <td width="24%" align="right"><strong>eriseadduser</strong></td>
+      <td width="76%"> <font color="#000000">添加一个用户到邮件系统</font>        <p><font color="#0000FF">Usage:eriseadduser 
+          username password alias</font></p></td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>erisedeluser</strong></td>
+      <td><p>从邮件系统删除一个用户</p>
+        <p><font color="#0000FF">Usage:erisedeluser username</font></p></td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>eriseaddgroup</strong></td>
+      <td><p>添加一个用户组到邮件系统</p>
+        <p><font color="#0000FF">Usage:eriseaddgroup groupname password alias<br>
+          Usage:eriseaddgroup groupname alias</font></p></td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>erisedelgroup</strong></td>
+      <td><p>从邮件系统删除一个邮件组</p>
+        <p><font color="#0000FF">Usage:erisedeluser groupname</font></p></td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>eriseaddusertogroup</strong></td>
+      <td><p>将已存在的用户添加到的某个邮件组</p>
+        <p><font color="#0000FF">Usage:eriseaddusertogroup username groupname</font></p></td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>erisedeluserfromgroup</strong></td>
+      <td><p>从某邮件组中移除一个邮件用户</p>
+        <p><font color="#0000FF">Usage:erisedeluserfromgroup username groupname</font></p></td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>erisepasswd</strong></td>
+      <td><p>更改邮件组或者用户密码</p>
+        <p><font color="#0000FF">Usage:erisepasswd username | groupname</font></p></td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>eriseenableuser</strong></td>
+      <td><p>激活用户</p>
+        <p><font color="#0000FF">Usage:eriseenableuser username</font></p></td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>erisedisableuser</strong></td>
+      <td><p>禁用用户</p>
+        <p><font color="#0000FF">Usage:erisedisableuser username</font></p></td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>eriseutil</strong></td>
+      <td><p>邮件系统管理工具程序</p>
+        <p><font color="#0000FF"><em>Usage:eriseutil --install<br>
+          Usage:eriseutil --uninstall<br>
+          Usage:eriseutil -a user_group_name password alias [-u|-g] [-A|-U]<br>
+          Usage:eriseutil -a user_group_name alias [-u|-g] [-A|-U]<br>
+          Usage:eriseutil -d user_group_name<br>
+          Usage:eriseutil -p username<br>
+          Usage:eriseutil -A username groupname<br>
+          Usage:eriseutil -D username groupname<br>
+          Usage:eriseutil -l --level<br>
+          Usage:eriseutil -s --level username level_id<br>
+          Usage:eriseutil -s --defaultlevel level_id<br>
+          Usage:eriseutil -a --level level_name level_description level_mailmaxsize 
+          level_boxmaxsize level_audit(yes/no) level_mailsizethreshold level_attachsizethreshold<br>
+          Usage:eriseutil -l --user<br>
+          Usage:eriseutil -l --group groupname<br>
+          Usage:eriseutil --disable user_group_name<br>
+          Usage:eriseutil --enable user_group_name<br>
+          Usage:eriseutil --encode<br>
+          Usage:eriseutil --upgrade</em></font></p></td>
+    </tr>
+  </table>
+</blockquote>
+<h2 class="STYLE3">web访问模式</h2>
+<blockquote class="STYLE3"> 
+  <ul>
+    <li>从v1.3版本开始，系统嵌入了一个web服务器，支持HTTP和HTTPS协议，所以无需安装其他web服务程序即可支持WebMail和WebMan系统</li>
+    <li>Web管理界面的Url: http://ip:port/admin</li>
+  </ul>
+</blockquote>
+<h2 class="STYLE3">MTA访问记录<em> /var/log/erisemail/MTA-*.log</em></h2>
+<blockquote class="STYLE3">
+  <ul>
+    <li>MTA访问记录，用户可以参考此日志信息找出垃圾邮件源IP或者恶意访问IP</li>
+  </ul>
+</blockquote>
+<h2 class="STYLE3">邮件允许域列表<em><strong> <em>/etc/erisemail/</em></strong>domain.list</em></h2>
+<blockquote class="STYLE3">
+  <ul>
+    <li>本地域列表</li>
+    <li>支持多域（共享账号模式，非独立账号模式）</li>
+  </ul>
+</blockquote>
+<h2 class="STYLE3">白名单 <em><strong> <em>/etc/erisemail/</em></strong>permit.list</em></h2>
+<blockquote class="STYLE3">
+<ul>
+    <li>允许访问的的IP表</li>
+</ul>
+</blockquote>
+<h2 class="STYLE3">黑名单<em><strong> <em>/etc/erisemail/</em></strong>reject.list</em></h2>
+<blockquote class="STYLE3">
+  <ul>
+    <li>拒绝访问的IP表</li>
+  </ul>
+</blockquote>
+<h2 class="STYLE3">Web管理允许IP列表<em><strong> <em>/etc/erisemail/</em></strong>webadmin.list</em></h2>
+<blockquote class="STYLE3">
+  <ul>
+    <li>允许访问web后台的的IP列表</li>
+    <li>空为不限制</li>
+  </ul>
+</blockquote>
+<hr>
+<p class="STYLE3"><br>
+</p>
+</body>
+</html>

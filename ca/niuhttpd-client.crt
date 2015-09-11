@@ -1,0 +1,49 @@
+Certificate:
+    Data:
+        Version: 1 (0x0)
+        Serial Number: 1 (0x1)
+    Signature Algorithm: md5WithRSAEncryption
+        Issuer: C=CN, ST=BJ, L=BJ, O=openheap, OU=openheap, CN=openheap/emailAddress=uplusware@gmail.com
+        Validity
+            Not Before: Aug 21 08:02:28 2015 GMT
+            Not After : Aug 18 08:02:28 2025 GMT
+        Subject: C=CN, ST=BJ, L=BJ, O=openheap, OU=openheap, CN=openheap/emailAddress=uplusware@gmail.com
+        Subject Public Key Info:
+            Public Key Algorithm: rsaEncryption
+                Public-Key: (1024 bit)
+                Modulus:
+                    00:a0:4a:27:ac:7f:fd:ce:95:fc:56:26:c3:9e:c0:
+                    e7:f1:da:02:72:65:57:9e:24:43:9a:78:75:e1:4b:
+                    94:2d:70:31:70:9b:ef:31:33:fe:65:9b:43:5a:30:
+                    69:59:e2:ed:a3:66:be:da:70:e8:64:34:fe:f7:26:
+                    b1:36:86:31:d0:65:3d:51:d8:46:31:a0:47:ec:8a:
+                    46:f1:67:de:25:ac:87:19:6f:fd:4d:ae:4a:df:b3:
+                    4d:79:f4:41:eb:14:88:01:0c:8e:de:28:54:21:e8:
+                    7b:b6:01:76:e2:39:80:b9:00:3d:59:ca:25:f6:8d:
+                    42:38:8d:50:9a:a3:ce:7b:73
+                Exponent: 65537 (0x10001)
+    Signature Algorithm: md5WithRSAEncryption
+         2e:0c:66:df:cd:5e:35:14:f8:b6:82:a2:78:4e:f3:e5:cb:1b:
+         ab:03:4f:ac:26:bb:e6:19:d8:cc:09:c6:03:1f:ec:f9:5b:24:
+         6b:7a:cd:02:b9:fa:85:61:4d:bc:cb:dd:96:8d:b8:55:e9:d7:
+         22:c5:60:db:2e:05:5b:eb:52:a2:49:55:9b:26:b7:81:89:9b:
+         dc:de:33:91:ae:01:a2:1c:7a:da:ac:3d:f0:9e:f8:d7:91:1a:
+         1c:80:bf:ea:ee:b4:92:0c:f2:fa:ce:c8:6c:a5:21:b2:3c:b1:
+         c1:04:83:09:e7:21:78:b8:0f:12:10:f4:7c:48:ae:14:cf:3c:
+         8e:bc
+-----BEGIN CERTIFICATE-----
+MIICeTCCAeICAQEwDQYJKoZIhvcNAQEEBQAwgYQxCzAJBgNVBAYTAkNOMQswCQYD
+VQQIDAJCSjELMAkGA1UEBwwCQkoxETAPBgNVBAoMCG9wZW5oZWFwMREwDwYDVQQL
+DAhvcGVuaGVhcDERMA8GA1UEAwwIb3BlbmhlYXAxIjAgBgkqhkiG9w0BCQEWE3Vw
+bHVzd2FyZUBnbWFpbC5jb20wHhcNMTUwODIxMDgwMjI4WhcNMjUwODE4MDgwMjI4
+WjCBhDELMAkGA1UEBhMCQ04xCzAJBgNVBAgMAkJKMQswCQYDVQQHDAJCSjERMA8G
+A1UECgwIb3BlbmhlYXAxETAPBgNVBAsMCG9wZW5oZWFwMREwDwYDVQQDDAhvcGVu
+aGVhcDEiMCAGCSqGSIb3DQEJARYTdXBsdXN3YXJlQGdtYWlsLmNvbTCBnzANBgkq
+hkiG9w0BAQEFAAOBjQAwgYkCgYEAoEonrH/9zpX8VibDnsDn8doCcmVXniRDmnh1
+4UuULXAxcJvvMTP+ZZtDWjBpWeLto2a+2nDoZDT+9yaxNoYx0GU9UdhGMaBH7IpG
+8WfeJayHGW/9Ta5K37NNefRB6xSIAQyO3ihUIeh7tgF24jmAuQA9Wcol9o1COI1Q
+mqPOe3MCAwEAATANBgkqhkiG9w0BAQQFAAOBgQAuDGbfzV41FPi2gqJ4TvPlyxur
+A0+sJrvmGdjMCcYDH+z5WyRres0CufqFYU28y92WjbhV6dcixWDbLgVb61KiSVWb
+JreBiZvc3jORrgGiHHrarD3wnvjXkRocgL/q7rSSDPL6zshspSGyPLHBBIMJ5yF4
+uA8SEPR8SK4UzzyOvA==
+-----END CERTIFICATE-----

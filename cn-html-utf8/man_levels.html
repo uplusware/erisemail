@@ -1,0 +1,666 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<LINK rel="Bookmark" href="erisemail.ico" >
+<LINK rel="Shortcut Icon" href="erisemail.ico" />
+<link href="css.css" rel="stylesheet" type="text/css">
+<script type="text/javascript" src="inc.js"></script>
+<title>..:::易睿邮件后台管理系统:::..</title>
+<script language="JavaScript"> 
+
+	function ontimer(trid)
+	{
+		if($(trid))
+		{
+			if($(trid).getAttribute("isOver") == "true")
+			{
+				$('LEVEL_DESCRIPTION').innerHTML = "<table border=\"0\" height=\"100%\" width=\"100%\" cellpadding=\"2\" cellspacing=\"2\" bgcolor=\"#FFFFEE\"><tr><td align=\"left\" valign=\"middle\">" + $(trid).getAttribute("description") + "</td></tr></table>";
+
+				var pos = GetObjPos($(trid));
+				
+				$('LEVEL_DESCRIPTION').style.left = pos.x - 1;
+				$('LEVEL_DESCRIPTION').style.top = pos.y + pos.h + 1;
+				
+				$('LEVEL_DESCRIPTION').style.height= 25;
+				$('LEVEL_DESCRIPTION').style.width = $('LEVELTBL').offsetWidth;
+
+				$('LEVEL_DESCRIPTION').style.display = "block";
+			}
+		}
+	}
+	
+	function load_levels()
+	{
+		var qUrl = "/api/listlevels.xml";
+		var xmlHttp = initxmlhttp();
+	    xmlHttp.onreadystatechange = function()
+		{
+			if (xmlHttp.readyState==4)
+			{
+				if(xmlHttp.status== 200)
+				{
+					var xmldom = xmlHttp.responseXML;
+					xmldom.documentElement.normalize();
+					var responseNode = xmldom.documentElement.childNodes.item(0);
+					if(responseNode.tagName == "response")
+					{
+						var errno = responseNode.getAttribute("errno")
+						if(errno == "0" || errno == 0)
+						{
+							var strTmp;
+							var levelList = responseNode.childNodes;
+							
+	
+							for(var i = 0; i < levelList.length; i++)
+							{
+								if(levelList.item(i).tagName == "level")
+								{
+									tr = $('LEVELTBL').insertRow($('LEVELTBL').rows.length);
+									tr.setAttribute("id", "LEVEL_ID_" + levelList.item(i).getAttribute("lid"));
+									tr.setAttribute("lid", levelList.item(i).getAttribute("lid"));
+									tr.setAttribute("name", levelList.item(i).getAttribute("name"));
+									tr.setAttribute("description", levelList.item(i).getAttribute("description"));
+									tr.setAttribute("mailmaxsize", levelList.item(i).getAttribute("mailmaxsize"));
+									tr.setAttribute("boxmaxsize", levelList.item(i).getAttribute("boxmaxsize"));
+									tr.setAttribute("enableaudit", levelList.item(i).getAttribute("enableaudit"));
+									tr.setAttribute("mailsizethreshold", levelList.item(i).getAttribute("mailsizethreshold"));
+									tr.setAttribute("attachsizethreshold", levelList.item(i).getAttribute("attachsizethreshold"));
+									tr.setAttribute("default", levelList.item(i).getAttribute("default"));
+									
+									tr.onmouseover = function()
+									{										
+										this.setAttribute("imagesrc", this.style.backgroundImage);
+										this.style.backgroundImage = "url('focusbg.gif')";
+										this.setAttribute("isOver", "true");
+										setTimeout("ontimer(\""+ this.getAttribute("id") +"\")",1200);
+
+										
+									}
+									tr.onmouseout = function()
+									{
+										this.style.backgroundImage = this.getAttribute("imagesrc");
+
+										$('LEVEL_DESCRIPTION').style.display = "none";
+
+										this.setAttribute("isOver", "false");
+									}
+
+									var image1 = "<img src=\"pading.gif\" />";
+
+									if(levelList.item(i).getAttribute("default") == "true")
+									{
+										image1 = "<img src=\"default.gif\" alt=\"默认策略\" />";
+									}
+
+									var image2 = "<img src=\"no.gif\" alt=\"无需审核\" />";
+
+									if(levelList.item(i).getAttribute("enableaudit") == "true")
+									{
+										image2 = "<img src=\"yes.gif\" alt=\"需要审核\" />";
+									}
+									
+									var td0 = tr.insertCell(0);
+									td0.valign="middle";
+									td0.align="center";
+									td0.height="25";
+									setStyle(td0, "TD.gray");
+							        td0.innerHTML = image1;
+
+									td0.setAttribute("lid", levelList.item(i).getAttribute("lid"));
+									
+									td0.onmouseover = function()
+									{
+										this.mousepoint = 99;
+										this.style.cursor ="pointer";
+										
+										this.setAttribute("imagesrc", this.style.backgroundImage);
+										this.style.backgroundImage = "url('activebg.gif')";
+									}
+									
+									td0.onmouseout = function()
+									{
+										this.mousepoint = 99;
+										this.style.cursor ="default";
+
+										this.style.backgroundImage = this.getAttribute("imagesrc");
+									}
+
+									td0.onclick = function()
+									{
+										set_level_deafult(this.parentNode);
+									}
+									
+									var td1 = tr.insertCell(1);
+									td1.valign="middle";
+									td1.align="left";
+									td1.height="25";
+									setStyle(td1, "TD.gray");
+							        td1.innerHTML = levelList.item(i).getAttribute("name");
+
+									var td2 = tr.insertCell(2);
+									td2.valign="middle";
+									td2.align="left";
+									td2.width="100";
+									td2.height="25";
+									setStyle(td2, "TD.gray");
+							        td2.innerHTML = Math.round(levelList.item(i).getAttribute("mailmaxsize")/1024*100)/100 + "KB";
+
+									var td3 = tr.insertCell(3);
+									td3.valign="middle";
+									td3.align="center";
+									td3.width="100";
+									td3.height="25";
+									setStyle(td3, "TD.gray");
+							        td3.innerHTML = Math.round(levelList.item(i).getAttribute("boxmaxsize")/1024) + "KB";
+
+									var td4 = tr.insertCell(4);
+									td4.valign="middle";
+									td4.align="center";
+									td4.height="25";
+									td3.width="100";
+									setStyle(td4, "TD.gray");
+							        td4.innerHTML = image2;
+									
+									var td5 = tr.insertCell(5);
+									td5.valign="middle";
+									td5.align="center";
+									td5.height="25";
+									setStyle(td5, "TD.gray");
+							        td5.innerHTML = Math.round(levelList.item(i).getAttribute("mailsizethreshold")/1024*100)/100 + "KB";
+
+									var td6 = tr.insertCell(6);
+									td6.valign="middle";
+									td6.align="center";
+									td6.height="25";
+									setStyle(td6, "TD.gray");
+							        td6.innerHTML = Math.round(levelList.item(i).getAttribute("attachsizethreshold")/1024*100)/100 + "KB";
+
+									var td7 = tr.insertCell(7);
+									td7.valign="middle";
+									td7.align="center";
+									td7.height="25";
+									setStyle(td7, "TD.gray");
+							        td7.innerHTML = "<img src=\"edit.gif\">";
+
+									td7.onclick = function()
+									{
+										$('LEVEL_DESCRIPTION').style.display = "none";										
+										show_editlevel_div(this.parentNode);
+									}
+									
+									td7.onmouseover = function()
+									{
+										this.mousepoint = 99;
+										this.style.cursor ="pointer";
+										
+										this.setAttribute("imagesrc", this.style.backgroundImage);
+										this.style.backgroundImage = "url('activebg.gif')";
+									}
+									
+									td7.onmouseout = function()
+									{
+										this.mousepoint = 99;
+										this.style.cursor ="default";
+
+										this.style.backgroundImage = this.getAttribute("imagesrc");
+									}
+
+									var td8 = tr.insertCell(8);
+									td8.valign="middle";
+									td8.align="center";
+									td8.height="25";
+									setStyle(td8, "TD.gray");
+							        td8.innerHTML = "<img src=\"delete.gif\">";
+
+									td8.onclick = function()
+									{
+										if(this.parentNode.getAttribute("default") == "true")
+											alert("默认策略，不能删除");
+										else
+										{
+											if(confirm("确定删除吗？") ==  true)
+												do_delete_level(this.parentNode.getAttribute("lid"));
+										}
+									}
+									
+									td8.onmouseover = function()
+									{
+										this.mousepoint = 99;
+										this.style.cursor ="pointer";
+										
+										this.setAttribute("imagesrc", this.style.backgroundImage);
+										this.style.backgroundImage = "url('activebg.gif')";
+									}
+									
+									td8.onmouseout = function()
+									{
+										this.mousepoint = 99;
+										this.style.cursor ="default";
+
+										this.style.backgroundImage = this.getAttribute("imagesrc");
+									}
+									
+								}
+							}
+							$("STATUS").innerHTML = "";
+							$("STATUS").style.display = "none";
+						}
+					}
+				}
+			}
+			else
+			{
+				$("STATUS").innerHTML = "<center><img src=\"waiting.gif\"></center>";
+			}
+		}
+		xmlHttp.open("GET", qUrl , true);
+		xmlHttp.send("");
+	}
+	
+	function init()
+	{
+		window.parent.change_tab("level");
+		load_levels();
+	}
+
+	function set_level_deafult(obj)
+	{
+		var qUrl = "/api/defaultlevel.xml";
+		var strPostData = "LEVELID=" + encodeURIComponent(obj.getAttribute("lid"));
+		var xmlHttp = initxmlhttp();
+	    xmlHttp.onreadystatechange = function()
+		{
+			if (xmlHttp.readyState==4 && xmlHttp.status== 200)
+			{
+				var xmldom = xmlHttp.responseXML;
+				xmldom.documentElement.normalize();
+				var responseNode = xmldom.documentElement.childNodes.item(0);
+				if(responseNode.tagName == "response")
+				{
+					var errno = responseNode.getAttribute("errno")
+					if(errno == "0" || errno == 0)
+					{ 
+						clear_table_without_header($('LEVELTBL'));
+						load_levels();
+					
+					}
+					else
+					{
+						alert("设置默认策略失败");
+					}
+				}
+			}
+		}
+		xmlHttp.open("POST", qUrl , true);
+		xmlHttp.send(strPostData);
+	}
+		
+	function show_newlevel_div()
+	{
+		$('NEW_LEVELNAME').value = "";
+		$('NEW_DESCRIPTION').value = "";
+		$('NEW_MAILMAXSIZE').value = "5000";
+		$('NEW_BOXMAXSIZE').value = "500000";
+		$('NEW_AUDIT').checked = false;
+		$('NEW_MAILSIZETHRESHOLD').value = "5000";
+		$('NEW_ATTACHSIZETHRESHOLD').value = "5000";
+		$('NEW_DEFAULT').checked = false;
+		
+		$('NEW_LEVEL_DIV').style.display = 'none';
+			
+		var Pos = GetObjPos($('TITLE_BAR'));
+											
+		$('NEW_LEVEL_DIV').style.left = Pos.x - 1;
+		$('NEW_LEVEL_DIV').style.top = Pos.y + Pos.h + 1;
+
+		$('NEW_LEVEL_DIV').style.display = "block";
+		
+		$('NEW_LEVEL_DIV').style.height= 300;
+		$('NEW_LEVEL_DIV').style.width = 500;
+
+		$('NEW_LEVEL_DIV').style.height= $('NEW_LEVEL_SIZE').offsetHeight + 2;
+		$('NEW_LEVEL_DIV').style.width = $('NEW_LEVEL_SIZE').offsetWidth + 2;
+	}
+	
+	function show_editlevel_div(obj)
+	{
+		$('EDIT_LEVEL_DIV').style.display = 'none';
+
+		$('EDIT_LEVEL_DIV').setAttribute("lid", obj.getAttribute("lid"));
+		
+		var Pos = GetObjPos(obj);
+
+		$('EDIT_LEVELNAME').value = obj.getAttribute("name");
+		$('EDIT_DESCRIPTION').value = obj.getAttribute("description");
+		$('EDIT_MAILMAXSIZE').value = Math.round(obj.getAttribute("mailmaxsize")/1024);
+		$('EDIT_BOXMAXSIZE').value = Math.round(obj.getAttribute("boxmaxsize")/1024);
+		$('EDIT_AUDIT').checked = obj.getAttribute("enableaudit") == "true" ? true : false;
+		$('EDIT_MAILSIZETHRESHOLD').value = Math.round(obj.getAttribute("mailsizethreshold")/1024);
+		$('EDIT_ATTACHSIZETHRESHOLD').value = Math.round(obj.getAttribute("attachsizethreshold")/1024);
+		$('EDIT_DEFAULT').checked = obj.getAttribute("default") == "true" ? true : false;
+									
+		$('EDIT_LEVEL_DIV').style.left = Pos.x - 1;
+		$('EDIT_LEVEL_DIV').style.top = Pos.y + Pos.h + 1;
+
+		$('EDIT_LEVEL_DIV').style.display = "block";
+		
+		$('EDIT_LEVEL_DIV').style.height= 300;
+		$('EDIT_LEVEL_DIV').style.width = 500;
+
+		$('EDIT_LEVEL_DIV').style.height= $('EDIT_LEVEL_SIZE').offsetHeight + 2;
+		$('EDIT_LEVEL_DIV').style.width = $('EDIT_LEVEL_SIZE').offsetWidth + 2;
+	}
+	
+	function do_create_level()
+	{
+		if(!isLegalID($('NEW_LEVELNAME').value) 
+			|| !isNumber($('NEW_MAILMAXSIZE').value)
+			|| !isNumber($('NEW_BOXMAXSIZE').value)
+			|| !isNumber($('NEW_MAILSIZETHRESHOLD').value)
+			|| !isNumber($('NEW_ATTACHSIZETHRESHOLD').value))
+		{
+			alert("输入字符不合法");
+			return false;
+		}
+
+		if(parseInt($('NEW_MAILMAXSIZE').value) > 1024*1024*2)
+		{
+			alert("邮件最大值不能大于 "+ 1024*1024*2 + " KB");
+			return false;
+		}
+		
+		if(parseInt($('NEW_BOXMAXSIZE').value) > 1024*1024*4)
+		{
+			alert("邮箱容量不能大于 "+ 1024*1024*4 + " KB");
+			return false;
+		}
+		var qUrl = "/api/createlevel.xml";
+		var strPostData = "NEW_LEVELNAME=" + encodeURIComponent($('NEW_LEVELNAME').value);
+		strPostData += "&NEW_DESCRIPTION=" + encodeURIComponent($('NEW_DESCRIPTION').value);
+		strPostData += "&NEW_MAILMAXSIZE=" + encodeURIComponent($('NEW_MAILMAXSIZE').value);
+		strPostData += "&NEW_BOXMAXSIZE=" + encodeURIComponent($('NEW_BOXMAXSIZE').value);
+		strPostData += "&NEW_AUDIT=" + (($('NEW_AUDIT').checked == true) ? encodeURIComponent("true") : encodeURIComponent("false")) ;
+		strPostData += "&NEW_MAILSIZETHRESHOLD=" + encodeURIComponent($('NEW_MAILSIZETHRESHOLD').value);
+		strPostData += "&NEW_ATTACHSIZETHRESHOLD=" + encodeURIComponent($('NEW_ATTACHSIZETHRESHOLD').value);
+		strPostData += "&NEW_DEFAULT=" + (($('NEW_DEFAULT').checked == true) ? encodeURIComponent("true") : encodeURIComponent("false")) ;
+		var xmlHttp = initxmlhttp();
+	    xmlHttp.onreadystatechange = function()
+		{
+			if (xmlHttp.readyState==4 && xmlHttp.status== 200)
+			{
+				var xmldom = xmlHttp.responseXML;
+				xmldom.documentElement.normalize();
+				var responseNode = xmldom.documentElement.childNodes.item(0);
+				if(responseNode.tagName == "response")
+				{
+					var errno = responseNode.getAttribute("errno")
+					if(errno == "0" || errno == 0)
+					{ 
+						clear_table_without_header($('LEVELTBL'));
+						load_levels();
+					
+					}
+					else
+					{
+						alert("创建策略失败");
+					}
+				}
+			}
+		}
+		xmlHttp.open("POST", qUrl , true);
+		xmlHttp.send(strPostData);
+
+		return true;
+	}
+
+	function do_edit_level()
+	{		
+		if(!isLegalID($('EDIT_LEVELNAME').value) 
+			|| !isNumber($('EDIT_MAILMAXSIZE').value)
+			|| !isNumber($('EDIT_BOXMAXSIZE').value)
+			|| !isNumber($('EDIT_MAILSIZETHRESHOLD').value)
+			|| !isNumber($('EDIT_ATTACHSIZETHRESHOLD').value))
+		{
+			alert("输入字符不合法");
+			return false;
+		}
+
+		if(parseInt($('EDIT_MAILMAXSIZE').value) > 1024*1024*2)
+		{
+			alert("邮件最大值不能大于 "+ 1024*1024*2 + " KB");
+			return false;
+		}
+		
+		if(parseInt($('EDIT_BOXMAXSIZE').value) > 1024*1024*4)
+		{
+			alert("邮箱容量不能大于 "+ 1024*1024*4 + " KB");
+			return false;
+		}
+		
+		var qUrl = "/api/updatelevel.xml";
+		var strPostData = "EDIT_LEVELID=" + encodeURIComponent($('EDIT_LEVEL_DIV').getAttribute("lid"));
+		strPostData += "&EDIT_LEVELNAME=" + encodeURIComponent($('EDIT_LEVELNAME').value);
+		strPostData += "&EDIT_DESCRIPTION=" + encodeURIComponent($('EDIT_DESCRIPTION').value);
+		strPostData += "&EDIT_MAILMAXSIZE=" + encodeURIComponent($('EDIT_MAILMAXSIZE').value);
+		strPostData += "&EDIT_BOXMAXSIZE=" + encodeURIComponent($('EDIT_BOXMAXSIZE').value);
+		strPostData += "&EDIT_AUDIT=" + (($('EDIT_AUDIT').checked == true) ? encodeURIComponent("true") : encodeURIComponent("false")) ;
+		strPostData += "&EDIT_MAILSIZETHRESHOLD=" + encodeURIComponent($('EDIT_MAILSIZETHRESHOLD').value);
+		strPostData += "&EDIT_ATTACHSIZETHRESHOLD=" + encodeURIComponent($('EDIT_ATTACHSIZETHRESHOLD').value);
+		strPostData += "&EDIT_DEFAULT=" + (($('EDIT_DEFAULT').checked == true) ? encodeURIComponent("true") : encodeURIComponent("false")) ;
+		
+		var xmlHttp = initxmlhttp();
+	    xmlHttp.onreadystatechange = function()
+		{
+			if (xmlHttp.readyState==4 && xmlHttp.status== 200)
+			{
+				var xmldom = xmlHttp.responseXML;
+				xmldom.documentElement.normalize();
+				var responseNode = xmldom.documentElement.childNodes.item(0);
+				if(responseNode.tagName == "response")
+				{
+					var errno = responseNode.getAttribute("errno")
+					if(errno == "0" || errno == 0)
+					{ 
+						clear_table_without_header($('LEVELTBL'));
+						load_levels();
+					
+					}
+					else
+					{
+						alert("更新策略失败");
+					}
+				}
+			}
+		}
+		xmlHttp.open("POST", qUrl , true);
+		xmlHttp.send(strPostData);
+
+		return true;
+	}
+
+	function do_delete_level(levelid)
+	{		
+		var qUrl = "/api/deletelevel.xml";
+		var strPostData = "LEVELID=" + encodeURIComponent(levelid);
+		var xmlHttp = initxmlhttp();
+	    xmlHttp.onreadystatechange = function()
+		{
+			if (xmlHttp.readyState==4 && xmlHttp.status== 200)
+			{
+				var xmldom = xmlHttp.responseXML;
+				xmldom.documentElement.normalize();
+				var responseNode = xmldom.documentElement.childNodes.item(0);
+				if(responseNode.tagName == "response")
+				{
+					var errno = responseNode.getAttribute("errno")
+					if(errno == "0" || errno == 0)
+					{ 
+						clear_table_without_header($('LEVELTBL'));
+						load_levels();
+					}
+					else
+					{
+						alert("删除策略失败");
+					}
+				}
+			}
+		}
+		xmlHttp.open("POST", qUrl , true);
+		xmlHttp.send(strPostData);
+
+		return true;
+	}
+		
+</script>
+</head>
+
+<body onLoad="init()" onUnload="">
+
+<div class="div1" id="NEW_LEVEL_DIV" style="display:none">
+	<table id="NEW_LEVEL_SIZE" bgcolor="#EDF1F8" border="0" cellspacing="0" cellpadding="0">
+	<tr><td>
+		<table id="NEW_LEVEL_TBL" border="0" backcolor="#FFFFFF" bordercolorlight="#C0C0C0" cellspacing="0" cellpadding="1" bordercolordark="#FFFFFF" class="gray" bgcolor="#FFFFFF">
+		<tr height="25">
+			<td class="blue" colspan="2">
+			<table border="0" width="100%" cellpadding="2" cellspacing="2" onMouseOver="this.mousepoint = 99;this.style.cursor = 'move';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';"  onMouseDown="return drag($('NEW_LEVEL_DIV'), (event ? event : window.event));"><tr>
+				<td align="left" width="16"><img src="append.gif"></td><td align="left"><b><font color="#FFFFFF"><b>创建策略</b></font></b></td>
+			</tr></table>
+			</td>
+		</tr>
+		<tr>
+		<td  class="gray"align="right">策略名:</td>
+		<td  class="gray"align="left"><input type="text" name="NEW_LEVELNAME" id="NEW_LEVELNAME" size="16" onPaste="this.value=this.value.replace(/[^a-zA-Z0-9\-_\.]/g,'');" onKeyup="this.value=this.value.replace(/[^a-zA-Z0-9\-_\.]/g,'');" onBlur="this.value=this.value.replace(/[^a-zA-Z0-9\-_\.]/g,'');"></td>
+		</tr>
+		<tr>
+		<td  class="gray"align="right">描述:</td>
+		<td  class="gray"align="left"><input type="text" name="NEW_DESCRIPTION" id="NEW_DESCRIPTION" size="32"></td>
+		</tr>
+		<tr>
+		<td  class="gray"align="right">单封邮件最大:</td>
+		<td  class="gray"align="left"><input type="text" name="NEW_MAILMAXSIZE" id="NEW_MAILMAXSIZE"  value="5000" size="16" onPaste="this.value=this.value.replace(/[^0-9]/g,'');" onKeyup="this.value=this.value.replace(/[^0-9]/g,'');" onBlur="this.value=this.value.replace(/[^0-9]/g,'');"> KB</td>
+		</tr>
+		<tr>
+		<td  class="gray"align="right">邮箱大小:</td>
+		<td  class="gray"align="left"><input type="text" name="NEW_BOXMAXSIZE" id="NEW_BOXMAXSIZE"  value="500000" size="16" onPaste="this.value=this.value.replace(/[^0-9]/g,'');" onKeyup="this.value=this.value.replace(/[^0-9]/g,'');" onBlur="this.value=this.value.replace(/[^0-9]/g,'');"> KB</td>
+		</tr>
+		<tr>
+		<td  class="gray"align="right">是否审核:</td>
+		<td  class="gray"align="left"><input type="checkbox" name="NEW_AUDIT" id="NEW_AUDIT"></td>
+		</tr>
+		<tr>
+		<td  class="gray"align="right" width="150">邮件大小审核限值:</td>
+		<td  class="gray"align="left" width="260"><input type="text" name="NEW_MAILSIZETHRESHOLD" id="NEW_MAILSIZETHRESHOLD"  value="5000" size="16" onPaste="this.value=this.value.replace(/[^0-9]/g,'');" onKeyup="this.value=this.value.replace(/[^0-9]/g,'');" onBlur="this.value=this.value.replace(/[^0-9]/g,'');"> KB</td>
+		</tr>
+		<tr>
+		<td  class="gray"align="right">附件大小审核限值:</td>
+		<td  class="gray"align="left"><input type="text" name="NEW_ATTACHSIZETHRESHOLD" id="NEW_ATTACHSIZETHRESHOLD"  value="5000" size="16" onPaste="this.value=this.value.replace(/[^0-9]/g,'');" onKeyup="this.value=this.value.replace(/[^0-9]/g,'');" onBlur="this.value=this.value.replace(/[^0-9]/g,'');"> KB</td>
+		</tr>
+		<tr>
+		<td  class="gray"align="right">默认策略:</td>
+		<td  class="gray"align="left"><input type="checkbox" name="NEW_DEFAULT" id="NEW_DEFAULT"></td>
+		</tr>
+		</table>
+	</td><tr>
+	<tr><td>	
+		<table border="0" cellpadding="2" cellspacing="2" width="100%"><tr>
+		<td align="center"><input type="image" src="ok.gif" onMouseOver="this.src='ok2.gif'" onMouseOut="this.src='ok.gif'" onClick="if(do_create_level())$('NEW_LEVEL_DIV').style.display='none';"></td>
+		<td align="center"><input type="image" src="cancel.gif" onMouseOver="this.src='cancel2.gif'" onMouseOut="this.src='cancel.gif'" onClick="$('NEW_LEVEL_DIV').style.display='none'"></td>
+		</tr></table>
+	</td></tr>
+	</table>
+</div>
+
+<div class="div1" id="EDIT_LEVEL_DIV" style="display:none">
+	<table id="EDIT_LEVEL_SIZE" bgcolor="#EDF1F8" border="0" cellspacing="0" cellpadding="0">
+	<tr><td>
+		<table id="EDIT_LEVEL_TBL" border="0" backcolor="#FFFFFF" bordercolorlight="#C0C0C0" cellspacing="0" cellpadding="1" bordercolordark="#FFFFFF" class="gray"  bgcolor="#FFFFFF">
+		<tr height="25">
+			<td class="blue" colspan="2">
+			<table border="0" width="100%" cellpadding="2" cellspacing="2" onMouseOver="this.mousepoint = 99;this.style.cursor = 'move';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onMouseDown="return drag($('EDIT_LEVEL_DIV'), (event ? event : window.event));"><tr>
+				<td align="left" width="16"><img src="edit.gif"></td><td align="left"><b><font color="#FFFFFF"><b>编辑策略</b></font></b></td>
+			</tr></table>
+			</td>
+		</tr>
+		<tr>
+		<td class="gray" align="right">策略名:</td>
+		<td class="gray" align="left"><input type="text" name="EDIT_LEVELNAME" id="EDIT_LEVELNAME" size="16" onPaste="this.value=this.value.replace(/[^a-zA-Z0-9\-_\.]/g,'');" onKeyup="this.value=this.value.replace(/[^a-zA-Z0-9\-_\.]/g,'');" onBlur="this.value=this.value.replace(/[^a-zA-Z0-9\-_\.]/g,'');"></td>
+		</tr>
+		<tr>
+		<td class="gray" align="right">描述:</td>
+		<td class="gray" align="left"><input type="text" name="EDIT_DESCRIPTION" id="EDIT_DESCRIPTION" size="32"></td>
+		</tr>
+		<tr>
+		<td class="gray" align="right">单封邮件最大:</td>
+		<td class="gray" align="left"><input type="text" name="EDIT_AILMAXSIZE" id="EDIT_MAILMAXSIZE" size="16" onPaste="this.value=this.value.replace(/[^0-9]/g,'');" onKeyup="this.value=this.value.replace(/[^0-9]/g,'');" onBlur="this.value=this.value.replace(/[^0-9]/g,'');"> KB</td>
+		</tr>
+		<tr>
+		<td class="gray" align="right">邮箱大小:</td>
+		<td class="gray" align="left"><input type="text" name="EDIT_BOXMAXSIZE" id="EDIT_BOXMAXSIZE" size="16" onPaste="this.value=this.value.replace(/[^0-9]/g,'');" onKeyup="this.value=this.value.replace(/[^0-9]/g,'');" onBlur="this.value=this.value.replace(/[^0-9]/g,'');"> KB</td>
+		</tr>
+		<tr>
+		<td class="gray" align="right">是否审核:</td>
+		<td class="gray" align="left"><input type="checkbox" name="EDIT_AUDIT" id="EDIT_AUDIT"></td>
+		</tr>
+		<tr>
+		<td class="gray" align="right" width="150">邮件大小审核限值:</td>
+		<td class="gray" align="left" width="260"><input type="text" name="EDIT_MAILSIZETHRESHOLD" id="EDIT_MAILSIZETHRESHOLD" size="16" onPaste="this.value=this.value.replace(/[^0-9]/g,'');" onKeyup="this.value=this.value.replace(/[^0-9]/g,'');" onBlur="this.value=this.value.replace(/[^0-9]/g,'');"> KB</td>
+		</tr>
+		<tr>
+		<td class="gray" align="right">附件大小审核限值:</td>
+		<td class="gray" align="left"><input type="text" name="EDIT_ATTACHSIZETHRESHOLD" id="EDIT_ATTACHSIZETHRESHOLD" size="16" onPaste="this.value=this.value.replace(/[^0-9]/g,'');" onKeyup="this.value=this.value.replace(/[^0-9]/g,'');" onBlur="this.value=this.value.replace(/[^0-9]/g,'');"> KB</td>
+		</tr>
+		<tr>
+		<td class="gray" align="right">默认策略:</td>
+		<td class="gray" align="left"><input type="checkbox" name="EDIT_DEFAULT" id="EDIT_DEFAULT"></td>
+		</tr>
+		</table>
+	</td><tr>
+	<tr><td>
+		<table border="0" cellpadding="2" cellspacing="2" width="100%"><tr>
+			<td align="center"><input type="image" src="ok.gif" onMouseOver="this.src='ok2.gif'" onMouseOut="this.src='ok.gif'" onClick="if(do_edit_level())$('EDIT_LEVEL_DIV').style.display='none';"></td>
+			<td align="center"><input type="image" src="cancel.gif" onMouseOver="this.src='cancel2.gif'" onMouseOut="this.src='cancel.gif'" onClick="$('EDIT_LEVEL_DIV').style.display='none'"></td>
+		</tr></table>
+	</td></tr>
+	</table>
+</div>
+
+<div id="LEVEL_DESCRIPTION" class="div1" style="display:none" ></div>
+<table border="0" width="100%" bordercolorlight="#C0C0C0" cellpadding="0" cellspacing="0" bordercolordark="#FFFFFF">
+<tr><td class="title">
+
+<table name="TITLE_BAR" id="TITLE_BAR" border="0" width="100%" bordercolorlight="#C0C0C0" cellpadding="2" cellspacing="0" bordercolordark="#FFFFFF">
+  <tr align="center" valign="middle" height="32">
+    <td width="22" background="topbg.gif"><img src="append.gif"></td>
+    <td align="left" background="topbg.gif"><a href="javascript:show_newlevel_div();"><font color="#FFFFFF"><b>增加策略</b></font></a></td>
+  </tr>
+</table>
+
+</td></tr>
+</table>
+
+<table border="0" width="100%" bordercolorlight="#C0C0C0" cellpadding="2" cellspacing="0" bordercolordark="#FFFFFF">
+  <tr>
+		<td valign="top">
+			<table id="LEVELTBL" border="0" width="100%" bordercolorlight="#C0C0C0" cellspacing="0" cellpadding="1" bordercolordark="#FFFFFF" class="gray">
+			<tr height= "25">
+				<td width="22" align="center" valign="middle" height="25" class="blue"><img src="man_level_titleicon.gif"></td>
+				<td height="22" align="center" class="blue"><font color="#FFFFFF"><b>名称</b></font></td>
+				<td height="22" align="center" class="blue"><font color="#FFFFFF"><b>单封邮件最大</b></font></td>
+				<td height="22" align="center" class="blue"><font color="#FFFFFF"><b>邮箱大小</b></font></td>
+				<td height="22" align="center" class="blue"><font color="#FFFFFF"><b>是否审核</b></font></td>
+				<td height="22" align="center" class="blue"><font color="#FFFFFF" width="120"><b>邮件大小审核限值</b></font></td>
+				<td height="22" align="center" class="blue"><font color="#FFFFFF" width="120"><b>附件大小审核限值</b></font></td>
+				<td height="22" align="center" class="blue"><font color="#FFFFFF"><b>编辑</b></font></td>
+				<td height="22" align="center" class="blue"><font color="#FFFFFF"><b>删除</b></font></td>
+			</tr>
+			</table>
+			<div id="STATUS"></div>
+		</td>
+	</tr>
+</table>
+
+</body>
+
+</html>

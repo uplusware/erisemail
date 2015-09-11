@@ -1,0 +1,19 @@
+#!/bin/bash
+
+if [ `id -u` -ne 0 ]; then
+        echo "You need root privileges to run this script"
+        exit 1
+fi
+path=$(dirname $0)
+oldpwd=$(pwd)
+cd ${path}
+path=$(pwd)
+
+if [ $# = 1 ]
+then
+	${path}/eriseutil -p $1 
+else
+	echo "Usage:erisepasswd username | groupname"
+fi
+
+cd ${oldpwd}

@@ -1,0 +1,212 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<LINK rel="Bookmark" href="erisemail.ico" >
+<LINK rel="Shortcut Icon" href="erisemail.ico" />
+<link href="css.css" rel="stylesheet" type="text/css">
+<script type="text/javascript" src="inc.js"></script>
+<title>...:::欢迎访问易睿邮件系统:::...</title>
+<script language="JavaScript">
+	function load_users(orderby, desc)
+	{
+		var qUrl = "/api/listusers.xml?ORDER_BY=" + orderby + "&DESC=" + (desc == null ? '' : desc);
+		var xmlHttp = initxmlhttp();
+	    xmlHttp.onreadystatechange = function()
+		{
+			if (xmlHttp.readyState==4)
+			{
+				if(xmlHttp.status== 200)
+				{
+					var xmldom = xmlHttp.responseXML;
+					xmldom.documentElement.normalize();
+					var responseNode = xmldom.documentElement.childNodes.item(0);
+					if(responseNode.tagName == "response")
+					{
+						var errno = responseNode.getAttribute("errno")
+						if(errno == "0" || errno == 0)
+						{
+							var strTmp;
+							var userList = responseNode.childNodes;
+							
+	
+							for(var i = 0; i < userList.length; i++)
+							{
+								if(userList.item(i).tagName == "user")
+								{
+									var image;
+									if(userList.item(i).getAttribute("status") == "Active")
+									{
+										if(userList.item(i).getAttribute("role") == "Administrator")
+											image = "admin.gif";
+										else
+										{
+											if(userList.item(i).getAttribute("type") == "Group")
+												image = "group.gif";
+											else		
+												image = "member.gif";
+										}
+									}
+									else
+									{
+										if(userList.item(i).getAttribute("type") == "Group")
+											image = "inactive_group.gif";
+										else		
+											image = "inactive_member.gif";
+									}
+
+									tr = $('USERTBL').insertRow($('USERTBL').rows.length);
+									
+									tr.onmouseover = function()
+									{
+										this.mousepoint = 99;
+										this.style.cursor ="pointer";
+										
+										this.setAttribute("imagesrc", this.style.backgroundImage);
+										this.style.backgroundImage = "url('focusbg.gif')";
+									}
+									tr.onmouseout = function()
+									{
+										this.mousepoint = 99;
+										this.style.cursor ="default";
+										
+										this.style.backgroundImage = this.getAttribute("imagesrc");
+									}
+
+									tr.setAttribute("selflink", "writemail.html?TOADDRS=" + userList.item(i).getAttribute("name") + "@" + userList.item(i).getAttribute("domain"));
+									
+									tr.onclick = function ()
+									{
+										show_mail_detail(this.getAttribute("selflink"));
+										
+										this.style.backgroundImage = this.getAttribute("imagesrc");
+									}
+									
+									var td0 = tr.insertCell(0);
+									td0.valign="middle";
+									td0.align="center";
+									td0.height="25";
+									setStyle(td0, "TD.gray");
+							        td0.innerHTML = "<img src=\""+image +"\" />";
+
+									var td1 = tr.insertCell(1);
+									td1.valign="middle";
+									td1.align="left";
+									td1.height="25";
+									setStyle(td1, "TD.gray");
+							        td1.innerHTML = userList.item(i).getAttribute("name");
+
+									var td2 = tr.insertCell(2);
+									td2.valign="middle";
+									td2.align="left";
+									td2.width="500";
+									td2.height="25";
+									setStyle(td2, "TD.gray");
+							        td2.innerHTML = userList.item(i).getAttribute("alias");
+
+									var td3 = tr.insertCell(3);
+									td3.valign="middle";
+									td3.align="center";
+									td3.width="50";
+									td3.height="25";
+									setStyle(td3, "TD.gray");
+							        td3.innerHTML = userList.item(i).getAttribute("type") == "Group" ? "邮件组" : "用户" ;
+
+									var td4 = tr.insertCell(4);
+									td4.valign="middle";
+									td4.align="center";
+									td4.height="25";
+									setStyle(td4, "TD.gray");
+							        td4.innerHTML = userList.item(i).getAttribute("role") == "Administrator" ? "管理员" : "普通用户" ;
+									
+									var td5 = tr.insertCell(5);
+									td5.valign="middle";
+									td5.align="center";
+									td5.height="25";
+									setStyle(td5, "TD.gray");
+							        td5.innerHTML = userList.item(i).getAttribute("status") == "Active" ? "有效" : "禁用";
+
+							        if(userList.item(i).getAttribute("status") != "Active")
+							        	tr.disabled = "true";
+								}
+							}
+							$("STATUS").innerHTML = "";
+							$("STATUS").style.display = "none";
+						}
+					}
+				}
+			}
+			else
+			{
+				$("STATUS").innerHTML = "<center><img src=\"waiting.gif\"></center>";
+			}
+		}
+		xmlHttp.open("GET", qUrl , true);
+		xmlHttp.send("");
+	}
+
+	function init()
+	{		
+		window.parent.$('MAILBAR').style.display = "none";
+		window.parent.$('DIRBAR').style.display = "none";
+		window.parent.$('CALBAR').style.display = "none";
+		window.parent.$('READCALBAR').style.display = "none";
+		window.parent.$('NULLBAR').style.display = "block";
+		
+	}
+
+	function uninit()
+	{
+	
+	}
+	
+	function show_mail_detail(url)
+	{	
+		window.open(url);
+	}
+
+	function sort_users(orderby)
+	{
+		$('USERTBL').setAttribute('orderby', orderby);
+
+		clear_table_without_header($('USERTBL'));
+
+		if($('USERTBL').getAttribute(orderby) == 'true')
+			$('USERTBL').setAttribute(orderby, 'false');
+		else
+			$('USERTBL').setAttribute(orderby, 'true');
+
+		load_users($('USERTBL').getAttribute('orderby'), $('USERTBL').getAttribute($('USERTBL').getAttribute('orderby')))
+	}
+</script>
+</head>
+
+<body onLoad="init();$('USERTBL').setAttribute('orderby', 'utime');load_users($('USERTBL').getAttribute('orderby'), $('USERTBL').getAttribute($('USERTBL').getAttribute('orderby')));" onUnload="uninit()" bgcolor="#FFFFFF">
+
+<table border="0" width="100%" cellpadding="0" cellspacing="0" height="100%" bgcolor="#FFFFFF">
+	<tr>
+		<td valign="top">
+			<table id="USERTBL" border="0" width="100%" bordercolorlight="#C0C0C0" cellspacing="0" cellpadding="1" bordercolordark="#FFFFFF" class="gray">
+			<tr height= "25">
+				<td class="title" width="22" background="titlebg.gif" align="center" valign="middle" height="25"><img src="book.gif"></td>
+				<td class="title" height="22" align="center" background="titlebg.gif" onMouseOver="this.mousepoint = 99;this.style.cursor = 'pointer';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onClick="sort_users('uname')"><font color="#FFFFFF"><b>账号</b></font></td>
+				<td class="title" height="22" align="center" background="titlebg.gif" onMouseOver="this.mousepoint = 99;this.style.cursor = 'pointer';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onClick="sort_users('ualias')"><font color="#FFFFFF"><b>名称</b></font></td>
+				<td class="title" height="22" align="center" background="titlebg.gif" onMouseOver="this.mousepoint = 99;this.style.cursor = 'pointer';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onClick="sort_users('utype')"><font color="#FFFFFF"><b>类型</b></font></td>
+				<td class="title" height="22" align="center" background="titlebg.gif" onMouseOver="this.mousepoint = 99;this.style.cursor = 'pointer';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onClick="sort_users('urole')"><font color="#FFFFFF"><b>级别</b></font></td>
+				<td class="title" height="22" align="center" background="titlebg.gif" onMouseOver="this.mousepoint = 99;this.style.cursor = 'pointer';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onClick="sort_users('ustatus')"><font color="#FFFFFF"><b>状态</b></font></td>
+			</tr>
+			</table>
+			<div id="STATUS"></div>
+		</td>
+	</tr>
+	<tr>
+		<td valign="top">
+			<div id="STATUS"></div>
+		</td>
+	</tr>
+</table>
+
+</body>
+
+</html>

@@ -1,0 +1,248 @@
+td 
+{
+	font-family: "宋体";
+	font-size: 10pt;
+	color: #000066;
+}
+
+TABLE.blue
+{
+	color:#FFFFFF;
+	background-color:#0099cc;
+	border-top:1px solid #99ffff;
+	border-left:1px solid #99ffff;
+	border-right:1px solid #003366;
+	border-bottom:1px solid #003366;
+	border-collapse: collapse;
+}
+
+TD.white
+{
+	background-color:#DDDDDD;
+	border-left:1px solid #EEEEEE;
+	border-top:1px solid #EEEEEE;
+	border-right:1px solid #AAAAAA;
+	border-bottom:1px solid #AAAAAA;
+	padding:1px;
+}
+
+TD.lightblue
+{
+	background-color:#DFEEFF;
+	border-left:1px solid #ECF5FF;
+	border-top:1px solid #ECF5FF;
+	border-right:1px solid #CCE4FF;
+	border-bottom:1px solid #CCE4FF;
+	padding:1px;
+}
+
+TD.blue
+{
+	background-color:#0099cc;
+	border-left:1px solid #00ccff;
+	border-top:1px solid #00ccff;
+	border-right:1px solid #006699;
+	border-bottom:1px solid #006699;
+	padding:1px;
+}
+
+TD.golden 
+{
+	background-color:#00CC00;
+	border-left:1px solid #00aa00;
+	border-top:1px solid #00aa00;
+	border-right:1px solid #003300;
+	border-bottom:1px solid #003300;
+	padding:1px;
+}
+
+TD.green
+{
+	background-color:#99CC99;
+	border-left:1px solid #99DD99;
+	border-top:1px solid #99DD99;
+	border-right:1px solid #99AA99;
+	border-bottom:1px solid #99AA99;
+	padding:1px;
+}
+
+TD.actived
+{
+	background-color:#00CC00;
+	border-left:1px solid #00DD00;
+	border-top:1px solid #00DD00;
+	border-right:1px solid #00AA00;
+	border-bottom:1px solid #00AA00;
+	padding:1px;
+}
+
+TABLE.wfont
+{
+	color:#FFFFFF;
+}
+
+TD.title
+{
+	border-left:1px solid #0099cc;
+	border-top:1px solid #0099cc;
+	border-right:1px solid #006699;
+	border-bottom:1px solid #006699;
+	padding:1px;
+}
+
+TABLE.gray
+{
+	border-collapse: collapse;
+	padding:1px;
+}
+
+TR.gray
+{
+	border-style:solid;
+	border-width:1px;
+	border-color:#C0C0C0;
+}
+
+TD.gray
+{
+	border-left:1px solid #C0C0C0;
+	border-top:1px solid #C0C0C0;
+	border-right:1px solid #C0C0C0;
+	border-bottom:1px solid #C0C0C0;
+	padding:1px;
+}
+
+a {	text-decoration: none; }
+a:link { color:#0000FF }
+a:visited { color:#0000FF; }
+a:hover, a:active, a:focus { font-size: 10pt;color:#FF0000; }
+
+.clearit{clear:both;}
+
+.but1{ border-width: 1px; background: #99CC33; border-color: #D0D0D0; padding: 2px; color:#FFFFFF}
+.but2{ border-width: 1px; background: #996633; border-color: #D0D0D0; padding: 2px; color:#FFFFFF}
+
+.div1{
+	font-family: "宋体";
+	font-size: 10pt;
+	color: #000066;
+	border: 1px solid #999999;
+	position: absolute;
+	z-index:1;
+	background-color: #EDF1F8;
+	left: 90px;
+	top: 33px;
+	width: 500px;
+	height: 30px;
+	overflow: auto;
+	text-align: center;
+	vertical-align: top;
+}
+
+.div2{
+	font-family: "宋体";
+	font-size: 10pt;
+	color: #000066;
+	border: 0px solid #999999;
+	position: relative;
+	z-index:1;
+	background-color: #FFFFFF;
+	left: 0;
+	top: 0;
+	width: 920px;
+	height: 546px;
+	overflow: auto;
+	text-align: left;
+	vertical-align: top;
+}
+
+.div3{
+	font-family: "宋体";
+	font-size: 10pt;
+	color: #000066;
+	border: 0px solid #999999;
+	position: relative;
+	z-index:1;
+	background-color: #FFFFFF;
+	left: 0;
+	top: 0;
+	width: 920px;
+	height: 546px;
+	overflow: auto;
+	text-align: center;
+	vertical-align: middle;
+}
+
+.div4{
+	font-family: "宋体";
+	font-size: 10pt;
+	color: #000066;
+	border: 0px solid #999999;
+	position: relative;
+	z-index:1;
+	background-color: #FFFFFF;
+	left: 0;
+	top: 0;
+	width: 920px;
+	height: 480px;
+	overflow: auto;
+	text-align: left;
+	vertical-align: top;
+}
+
+.div5{
+	font-family: "宋体";
+	font-size: 10pt;
+	color: #000066;
+	border: 0px solid #999999;
+	position: relative;
+	z-index:1;
+	background-color: #FFFFFF;
+	left: 0;
+	top: 0;
+	width: 500px;
+	height: 220px;
+	overflow: auto;
+	text-align: left;
+	vertical-align: top;
+}
+
+.file1{border-width: 1px; background: #FFFFFF; border-color: #DDD; padding: 2px; color:#000066}
+
+.checkbox1{
+}
+
+.text1{
+	background: #FFFFFF;
+	padding: 2px;
+	color:#000066;
+	border: none;
+	text-align: center;
+	vertical-align: middle;
+}
+
+.text2{
+	background: #FFFFFF;
+	color:#000066;
+	border: 1px solid #DDD;
+}
+
+.text3{
+	background: #FFFFCC;
+	padding: 2px;
+	color:#000066;
+	border: none;
+	text-align: left;
+	vertical-align: middle;
+}
+
+.area1 {
+	height: 100%;
+	width: 100%;
+	border: 1px solid;
+}
+
+.sel1{
+	font-size: 12px;
+	height: 20px;
+}

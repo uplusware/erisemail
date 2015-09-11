@@ -1,0 +1,464 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<LINK rel="Bookmark" href="erisemail.ico" >
+<LINK rel="Shortcut Icon" href="erisemail.ico" />
+<link href="css.css" rel="stylesheet" type="text/css">
+<script type="text/javascript" src="inc.js"></script>
+<script type="text/javascript" src="ui.js"></script>
+<title>...:::欢迎访问易睿邮件系统:::...</title>
+<script language="javascript">
+
+	function logout()
+	{
+		var qUrl = "/api/logout.xml";
+		var xmlHttp = initxmlhttp();
+	    xmlHttp.onreadystatechange = function()
+		{
+			if (xmlHttp.readyState==4 && xmlHttp.status== 200)
+			{
+				var xmldom = xmlHttp.responseXML;
+				xmldom.documentElement.normalize();
+				var responseNode = xmldom.documentElement.childNodes.item(0);
+				if(responseNode.tagName == "response")
+				{
+					var errno = responseNode.getAttribute("errno")
+						if(errno == "0" || errno == 0)
+						{
+							window.location = "/";
+						}
+				}
+			}
+		}
+		xmlHttp.open("GET", qUrl , true);
+		xmlHttp.send("");
+	}
+	
+	function create_label(dirname, dirid)
+	{
+		if(dirname == '')
+			return;
+		
+		var qUrl = "/api/createlabel.xml";
+		var strPostData = "NEW_LABEL=" + encodeURIComponent(dirname) + "&DIRID=" + encodeURIComponent(dirid);
+		var xmlHttp = initxmlhttp();
+	    xmlHttp.onreadystatechange = function()
+		{
+			if (xmlHttp.readyState==4 && xmlHttp.status== 200)
+			{
+				var xmldom = xmlHttp.responseXML;
+				xmldom.documentElement.normalize();
+				var responseNode = xmldom.documentElement.childNodes.item(0);
+				if(responseNode.tagName == "response")
+				{
+					var errno = responseNode.getAttribute("errno")
+					if(errno == "0" || errno == 0)
+					{
+						clear_table(window.parent.leftmenuframe.$('DIRTBL'));
+						window.parent.leftmenuframe.load_dirs(-1, '', 'common', -1, 0);
+					}
+					else
+					{
+						alert("创建'" + dirname + "'失败");
+					}
+				}
+			}
+		}
+		xmlHttp.open("POST", qUrl , true);
+		xmlHttp.send(strPostData);
+	}
+	
+	function login_username()
+	{
+		var qUrl = "/api/currentusername.xml";
+		var xmlHttp = initxmlhttp();
+	    xmlHttp.onreadystatechange = function()
+		{
+			if (xmlHttp.readyState==4 && xmlHttp.status== 200)
+			{
+				var xmldom = xmlHttp.responseXML;
+				xmldom.documentElement.normalize();
+				var responseNode = xmldom.documentElement.childNodes.item(0);
+				if(responseNode.tagName == "response")
+				{
+					var errno = responseNode.getAttribute("errno")
+					if(errno == "0" || errno == 0)
+					{
+						var strTmp;
+						var LoginUsername = responseNode.childNodes;
+						for(var i = 0; i < LoginUsername.length; i++)
+						{
+							if(LoginUsername.item(i).tagName == "loginusername")
+							{
+								strTmp = LoginUsername.item(i).childNodes[0] == null ? "" : LoginUsername.item(i).childNodes[0].nodeValue;
+							}
+						}
+							
+						$('LOGIN_USERNAME').innerHTML = "<b>[" + strTmp + "]</b>的文件夹";
+					}
+				}
+			}
+		}
+		xmlHttp.open("GET", qUrl , true);
+		xmlHttp.send("");
+	}
+	
+	function init()
+	{	
+		show_frame1_view("listmails.html");
+		
+		login_username();
+	}
+
+	function refresh_dir()
+	{
+		clear_table(window.parent.leftmenuframe.$('DIRTBL'));
+		window.parent.leftmenuframe.load_dirs(-1, '', 'common', -1, 0);
+	}
+
+	function delmail()
+	{
+		if(confirm("确定删除选定文件吗？") ==  true)
+		{
+			window.parent.childframe1.delmail(false);
+		}
+	}
+	
+	function remail()
+	{
+		window.parent.childframe1.remail();
+	}
+	
+	function remail_all()
+	{
+		window.parent.childframe1.remail_all();
+	}
+	
+	function sel_all(sel)
+	{
+		window.parent.childframe1.sel_all(sel);
+	}
+	
+	function flag_mail(flag)
+	{
+		window.parent.childframe1.flag_mail(flag);
+	}
+	
+	function forward_mail()
+	{
+		window.parent.childframe1.forward_mail();
+	}
+
+	function seen_mail(flag)
+	{
+		window.parent.childframe1.seen_mail(flag);
+	}
+	
+	function ok_copy_mail()
+	{
+		var strDirs = "";
+		for(var x = 0; x < document.getElementsByName('seldir1').length; x++)
+		{
+			if(document.getElementsByName('seldir1')[x].checked == true )
+			{
+				strDirs += document.getElementsByName('seldir1')[x].value + "*";
+			}
+		}
+		if(strDirs == "")
+		{
+			alert('没有选择目的文件夹');
+			return;
+		}
+		window.parent.childframe1.copy_mail(strDirs);
+	}
+
+	function ok_move_mail()
+	{
+		var strDirs = "";
+		for(var x = 0; x < document.getElementsByName('seldir2').length; x++)
+		{
+			if(document.getElementsByName('seldir2')[x].checked == true )
+			{
+				strDirs += document.getElementsByName('seldir2')[x].value + "*";
+			}
+		}
+		if(strDirs == "")
+		{
+			alert('没有选择目的文件夹');
+			return;
+		}
+		window.parent.childframe1.move_mail(strDirs);
+	}
+
+	function ok_create_label()
+	{
+		var strDirs = "";
+		var c = 0;
+		for(var x = 0; x < document.getElementsByName('seldir3').length; x++)
+		{
+			if(document.getElementsByName('seldir3')[x].checked == true )
+			{
+				strDirs = document.getElementsByName('seldir3')[x].value;
+				c++;
+			}
+		}
+		if(c <= 1)
+		{
+			need_reload($('DIRS_DIV3'));
+			create_label($('NEW_LABEL').value, strDirs);
+			$('NEW_LABEL').value = "";
+		}
+		else
+		{
+			alert("不能选择多个目的文件夹");
+		}
+	}
+	
+	function show_copy_mail_dir_div()
+	{
+		$('DIRS_DIV2').style.display = "none";
+		$('DIRS_DIV3').style.display = "none";
+		var Pos = GetObjPos($('COPYMAIL'))
+		show_dirs($('DIRS_DIV1'), $('DIRTBL1'), Pos.x, Pos.y + Pos.h + 2, "seldir1");
+	}
+
+	function show_move_mail_dir_div()
+	{
+		$('DIRS_DIV1').style.display = "none";
+		$('DIRS_DIV3').style.display = "none";
+		
+		var Pos = GetObjPos($('MOVEMAIL'))
+		show_dirs($('DIRS_DIV2'), $('DIRTBL2'), Pos.x, Pos.y + Pos.h + 2, "seldir2");
+	}
+
+	function newmail()
+	{
+		show_popup_view("writemail.html");
+	}
+	
+	function show_add_dir_div()
+	{
+		$('DIRS_DIV1').style.display = "none";
+		$('DIRS_DIV2').style.display = "none";
+		var Pos = GetObjPos($('NEW_LABEL'))
+		show_dirs($('DIRS_DIV3'), $('DIRTBL3'), Pos.x, Pos.y + Pos.h + 2, "seldir3");
+	}
+
+	function show_frame1_view(url)
+	{
+		window.childframe1.location.href = url;
+	}
+
+	function show_popup_view(url)
+	{
+		window.open(url);
+		
+	}
+	
+</script>
+</head>
+<body leftmargin="0" topmargin="0" marginwidth="0" marginheight="0" onLoad="init()">
+<div class="div1" id="DIRS_DIV1" style="display:none; z-Index:20; width:220px; height:200px;">
+  <table border="0" cellspacing="0" cellpadding="1" width="100%" bordercolorlight="#C0C0C0" bordercolordark="#FFFFFF" class="gray">
+	<tr>
+      <td align="left" valign="top" class="gray" bgcolor="#FFFFFF" height="160">
+      	<div style="overflow:auto; width:100%; height:100%; background-color: #FFFFFF;"><table id="DIRTBL1" bgcolor="#FFFFFF" border="0" cellspacing="0" cellpadding="0" width="100%"></table></div>
+      </td>
+    </tr>
+    <tr><td bgcolor="#EDF1F8" height="32">
+    	<table width="100%" border="0" cellspacing="1" cellpadding="1">
+          <tr>
+            <td align="center" valign="middle"><input type="image" src="ok.gif" onMouseOver="this.src='ok2.gif'" onMouseOut="this.src='ok.gif'" onClick="ok_copy_mail();$('DIRS_DIV1').style.display = 'none';"></td>
+            <td align="center" valign="middle"><input type="image" src="cancel.gif" onMouseOver="this.src='cancel2.gif'" onMouseOut="this.src='cancel.gif'" onClick="$('DIRS_DIV1').style.display = 'none';"></td>
+          </tr>
+        </table>
+     </td></tr>
+  </table>
+</div>
+<div class="div1" id="DIRS_DIV2" style="display:none; z-Index:20; width:220px; height:200px;">
+  <table border="0" cellspacing="0" cellpadding="1" width="100%" bordercolorlight="#C0C0C0" bordercolordark="#FFFFFF" class="gray">
+  	<tr>
+      <td align="left" valign="top" class="gray" bgcolor="#FFFFFF" height="160">
+      	<div style="overflow:auto; width:100%; height:100%; background-color: #FFFFFF;"><table id="DIRTBL2" bgcolor="#FFFFFF" border="0" cellspacing="0" cellpadding="0" width="100%"></table></div>
+      </td>
+    </tr>
+    <tr><td bgcolor="#EDF1F8" height="32">
+    	 <table width="100%" border="0" cellspacing="1" cellpadding="1">
+          <tr>
+            <td align="center" valign="middle"><input type="image" src="ok.gif" onMouseOver="this.src='ok2.gif'" onMouseOut="this.src='ok.gif'" onClick="ok_move_mail();$('DIRS_DIV2').style.display = 'none';"></td>
+            <td align="center" valign="middle"><input type="image" src="cancel.gif" onMouseOver="this.src='cancel2.gif'" onMouseOut="this.src='cancel.gif'" onClick="$('DIRS_DIV2').style.display = 'none';"></td>
+          </tr>
+        </table>
+    </td></tr>
+  </table>
+</div>
+<div class="div1" id="DIRS_DIV3" style="display:none; z-Index:20; width:220px; height:200px;">
+  <table border="0" cellspacing="0" cellpadding="1" width="100%" bordercolorlight="#C0C0C0" bordercolordark="#FFFFFF" class="gray">
+  	<tr>
+      <td align="left" valign="top" class="gray" bgcolor="#FFFFFF" height="160">
+      <div style="overflow:auto; width:100%; height:100%; background-color: #FFFFFF;"><table id="DIRTBL3" bgcolor="#FFFFFF" border="0" cellspacing="0" cellpadding="0" width="100%"></table></div>
+      </td>
+    </tr>
+    <tr><td bgcolor="#EDF1F8" height="32">
+    	 <table width="100%" border="0" cellspacing="1" cellpadding="1">
+          <tr>
+            <td align="center" valign="middle"><input type="image" src="ok.gif" onMouseOver="this.src='ok2.gif'" onMouseOut="this.src='ok.gif'" onClick="ok_create_label();$('DIRS_DIV3').style.display = 'none';"></td>
+            <td align="center" valign="middle"><input type="image" src="cancel.gif" onMouseOver="this.src='cancel2.gif'" onMouseOut="this.src='cancel.gif'" onClick="$('DIRS_DIV3').style.display = 'none';"></td>
+          </tr>
+        </table>
+    </td></tr>
+  </table>
+</div>
+<table border="0" width="1150" height="732" bordercolorlight="#000000" bordercolordark="#6699FF" cellpadding="0">
+  <tr height="60">
+    <td><table width="100%">
+        <tr>
+          <td align="left" width="202"><img border="0" src="erise-logo.gif" /></td>
+          <td align="center"><img border="0" src="banner.gif" /></td>
+        </tr>
+      </table></td>
+  </tr>
+  <tr>
+    <td>
+    	<table border="0" width="100%" cellpadding="0" cellspacing="1" height="100%" >
+        <tr>
+          <td width="202" valign="top" background="basebg.gif"><table border="0" width="100%" cellpadding="1" cellspacing="1">
+              <tr align="center" valign="top">
+                <td>
+                <table border="0" width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td width="202" height="26" align="center" background="headerbg.gif"><font color="#FFFFFF" size="2"><b>文&nbsp件&nbsp夹</b></font></td>
+                    </tr>
+                    <tr>
+                      <td width="202" height="22" align="left" bgcolor="#FFFFFF"><table>
+                          <tr>
+                            <td><input type="image" src="refreshdirs.gif" onClick="refresh_dir()" alt="刷新文件目录"></td>
+                            <td><div name="LOGIN_USERNAME" id="LOGIN_USERNAME"></div></td>
+                          </tr>
+                        </table></td>
+                    </tr>
+                    <tr>
+                      <td><iframe name="leftmenuframe" longdesc="...:::欢迎访问易睿邮件系统:::..." src="leftmenu.html" width="100%" height="300" scrolling="auto" marginwidth="1" marginheight="1" border="0" frameborder="0"></iframe></td>
+                    </tr>
+                    <tr>
+                      <td width="202" height="22" align="left" bgcolor="#FFFFFF"><table border="0" cellpadding="2" cellspacing="0">
+                          <tr>
+                            <td align="right"><img src="addfolder.gif" alt="增添文件夹"></td>
+                            <td align="left"><input type="text" name="NEW_LABEL" id="NEW_LABEL" size="12"></td>
+                            <td align="left"><a href="javascript:show_add_dir_div();"> 增加 </a></td>
+                          <tr>
+                        </table></td>
+                    </tr>
+                  </table></td>
+              </tr>
+              <tr align="center" valign="top">
+                <td><table border="0" width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td width="202" height="26" align="center" background="headerbg.gif"><font color="#FFFFFF" size="2"><b>工&nbsp&nbsp&nbsp&nbsp具</b></font></td>
+                    </tr>
+                    <tr>
+                      <td bgcolor="#FFFFFF" bordercolorlight="#C0C0C0" bordercolordark="#FFFFFF" align="left"><table>
+                          <tr>
+                            <td><img src="user.gif"></td>
+                            <td><a href="customize.html" target="childframe1">设置</a></td>
+                          </tr>
+                        </table></td>
+                    </tr>
+                    <tr>
+                      <td bgcolor="#FFFFFF" bordercolorlight="#C0C0C0" bordercolordark="#FFFFFF" align="left"><table>
+                          <tr>
+                            <td><img src="lfolder.gif"></td>
+                            <td><a href="listdirs.html" target="childframe1">文件夹</a></td>
+                          </tr>
+                        </table></td>
+                    </tr>
+                    <tr>
+                      <td bgcolor="#FFFFFF" bordercolorlight="#C0C0C0" bordercolordark="#FFFFFF" align="left"><table>
+                          <tr>
+                            <td><img src="book.gif"></td>
+                            <td><a href="listusers.html" target="childframe1">地址簿</a></td>
+                          </tr>
+                        </table></td>
+                    </tr>
+                    <tr>
+                      <td bgcolor="#FFFFFF" bordercolorlight="#C0C0C0" bordercolordark="#FFFFFF" align="left"><table>
+                          <tr>
+                            <td><img src="exit.gif"></td>
+                            <td><a href="javascript:logout();">退出</a></td>
+                          </tr>
+                        </table></td>
+                    </tr>
+                  </table></td>
+              </tr>
+            </table>
+          </td>
+          <td valign="top" background="basebg.gif" ><table border="0" cellpadding="0" cellspacing="1" bordercolorlight="#C0C0C0" bordercolordark="#FFFFFF" width="100%" height="100%">
+              <tr height="22">
+                <td background="topbg.gif">
+					<table id="MAILBAR" style="display:block">
+						<tr>
+						  <td><input id="NEWMAIL" name="NEWMAIL" type="image" src="newmail.gif" onMouseOver="this.src='newmail2.gif'" onMouseOut="this.src='newmail.gif'" onClick="newmail()"></td>
+						  <td><input id="REMAIL" name="REMAIL" type="image" src="remail.gif" onMouseOver="this.src='remail2.gif'" onMouseOut="this.src='remail.gif'" onClick="remail();"></td>
+						  <td><input id="RETOALL" name="RETOALL" type="image" src="retoall.gif" onMouseOver="this.src='retoall2.gif'" onMouseOut="this.src='retoall.gif'" onClick="remail_all()"></td>
+						  <td><input id="FORWARD" name="FORWARD" type="image" src="forward.gif" onMouseOver="this.src='forward2.gif'" onMouseOut="this.src='forward.gif'" onClick="forward_mail()"></td>
+						  <td><input id="FLAG" name="FLAG" type="image" src="flag.gif" onMouseOver="this.src='flag2.gif'" onMouseOut="this.src='flag.gif'" onClick="flag_mail(true)"></td>
+						  <td><input id="UNFLAG" name="UNFLAG" type="image" src="unflag.gif" onMouseOver="this.src='unflag2.gif'" onMouseOut="this.src='unflag.gif'" onClick="flag_mail(false)"></td>
+						  <td><input id="SEEN" name="SEEN" type="image" src="toseen.gif" onMouseOver="this.src='toseen2.gif'" onMouseOut="this.src='toseen.gif'" onClick="seen_mail(true)"></td>
+						  <td><input id="UNSEEN" name="UNSEEN" type="image" src="tounseen.gif" onMouseOver="this.src='tounseen2.gif'" onMouseOut="this.src='tounseen.gif'" onClick="seen_mail(false)"></td>
+						  <td><input id="COPYMAIL" name="COPYMAIL" type="image" src="copy.gif" onMouseOver="this.src='copy2.gif'" onMouseOut="this.src='copy.gif'" onClick="show_copy_mail_dir_div();"></td>
+						  <td><input id="MOVEMAIL" name="MOVEMAIL" type="image" src="move.gif" onMouseOver="this.src='move2.gif'" onMouseOut="this.src='move.gif'" onClick="show_move_mail_dir_div();"></td>
+						  <td><input id="DELMAIL" name="DELMAIL" type="image" src="delmail.gif" onMouseOver="this.src='delmail2.gif'" onMouseOut="this.src='delmail.gif'" onClick="delmail();"></td>
+						</tr>
+                  	</table>
+					
+					<table id="DIRBAR" style="display:none">
+						<tr>
+						  <td><input id="NEWDIR" name="NEWDIR" type="image" src="newdir.gif" onMouseOver="this.src='newdir2.gif'" onMouseOut="this.src='newdir.gif'" onClick="window.parent.childframe1.create_root_dir()"></td>
+						</tr>
+                  	</table>
+					
+					<table id="CALBAR" style="display:none">
+						<tr>
+						  <td><input id="TODAY" name="TODAY" type="image" src="todaymode.gif" onMouseOver="this.src='todaymode2.gif'" onMouseOut="this.src='todaymode.gif'" onClick="window.parent.childframe1.toTodayMode()"></td>
+						  <td><input id="DAY" name="DAY" type="image" src="daymode.gif" onMouseOver="this.src='daymode2.gif'" onMouseOut="this.src='daymode.gif'" onClick="window.parent.childframe1.toDayMode()"></td>
+						  <td><input id="WORKWEEK" name="WORKWEEK" type="image" src="workweekmode.gif" onMouseOver="this.src='workweekmode2.gif'" onMouseOut="this.src='workweekmode.gif'" onClick="window.parent.childframe1.toWorkWeekMode()"></td>
+						  <td><input id="WEEK" name="WEEK" type="image" src="weekmode.gif" onMouseOver="this.src='weekmode2.gif'" onMouseOut="this.src='weekmode.gif'" onClick="window.parent.childframe1.toWeekMode()"></td>
+						  <td><input id="MONTH" name="MONTH" type="image" src="monthmode.gif" onMouseOver="this.src='monthmode2.gif'" onMouseOut="this.src='monthmode.gif'" onClick="window.parent.childframe1.toMonthMode()"></td>
+						</tr>
+                  	</table>
+					
+					<table id="READCALBAR" style="display:none">
+						<tr>
+						  <td><input id="ACCEPT" name="ACCEPT" type="image" src="accept.gif" onMouseOver="this.src='accept2.gif'" onMouseOut="this.src='accept.gif'" onClick="window.parent.childframe1.toTodayMode()"></td>
+						  <td><input id="TENTATIVE" name="TENTATIVE" type="image" src="tentative.gif" onMouseOver="this.src='tentative2.gif'" onMouseOut="this.src='tentative.gif'" onClick="window.parent.childframe1.toDayMode()"></td>
+						  <td><input id="DECLINE" name="DECLINE" type="image" src="decline.gif" onMouseOver="this.src='decline2.gif'" onMouseOut="this.src='decline.gif'" onClick="window.parent.childframe1.toWorkWeekMode()"></td>
+						  <td><input id="PROPOSE" name="PROPOSE" type="image" src="propose.gif" onMouseOver="this.src='propose2.gif'" onMouseOut="this.src='propose.gif'" onClick="window.parent.childframe1.toWeekMode()"></td>
+						  <td><input id="FORWARD" name="FORWARD" type="image" src="forward.gif" onMouseOver="this.src='forward2.gif'" onMouseOut="this.src='forward.gif'" onClick="window.parent.childframe1.toMonthMode()"></td>
+						</tr>
+                  	</table>
+                  	
+					<table id="NULLBAR" style="display:none">
+						<tr>
+						  <td><img src="nullbar.gif"></td>
+						</tr>
+                  	</table>
+					
+				  </td>
+              </tr>
+              <tr>
+                <td valign="top">
+            		<iframe id="childframe1" name="childframe1" style="display:block" longdesc="...:::欢迎访问易睿邮件系统:::..." width="100%" height="100%" scrolling="auto" marginwidth="1" marginheight="1" border="0" frameborder="0" title="...:::欢迎访问易睿邮件系统:::..." src="" ></iframe>
+                </td>
+              </tr>
+            </table></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td><p align="center">copyright &copy; <a href="http://www.uplusware.com" target="_blank">uplusware</a> 2009, all right reserved</td>
+        </tr>
+      </table></td>
+  </tr>
+</table>
+</body>
+</html>

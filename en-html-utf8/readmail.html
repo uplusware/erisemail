@@ -1,0 +1,666 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<LINK rel="Bookmark" href="erisemail.ico" >
+<LINK rel="Shortcut Icon" href="erisemail.ico" />
+<link href="css.css" rel="stylesheet" type="text/css">
+<script type="text/javascript" src="inc.js"></script>
+<script type="text/javascript" src="ui.js"></script>
+<script type="text/javascript" src="calendar.js"></script>
+<title>...::: Welcome to eRisemail System :::...</title>
+<script language="JavaScript">
+
+	function delmail(force)
+	{ 
+		var qUrl;
+		if(Request.QueryString('TOP_USAGE') == "trash")
+		{
+			qUrl = "/api/delmail.xml?MAILID=" + Request.QueryString('ID');
+		}
+		else
+		{
+			qUrl = "/api/trashmail.xml?MAILID=" + Request.QueryString('ID');
+		}
+		
+		var xmlHttp = initxmlhttp();
+		xmlHttp.open("GET", qUrl , false);
+		xmlHttp.send();
+		
+		if (xmlHttp.status== 200)
+		{
+			var xmldom = xmlHttp.responseXML;
+			xmldom.documentElement.normalize();
+			var responseNode = xmldom.documentElement.childNodes.item(0);
+			if(responseNode.tagName == "response")
+			{
+				var errno = responseNode.getAttribute("errno")
+				if(errno == "0" || errno == 0)
+				{
+					window.opener.delete_maillist_row(Request.QueryString('ID'));
+					window.close();
+				}
+			}
+		}
+	}
+	
+	function remail()
+	{
+		var url = "writemail.html?TYPE=1&ID=" + Request.QueryString('ID');
+		window.location.href = url;
+	}
+	
+	function remail_all()
+	{
+		var url = "writemail.html?TYPE=2&ID=" + Request.QueryString('ID');
+		window.location.href = url;
+	}
+	
+	function forward_mail()
+	{
+		var url = "writemail.html?TYPE=3&ID=" + Request.QueryString('ID');
+		window.location.href = url;
+	}
+	
+	function flag_mail(flag)
+	{
+		if(flag ==  true)
+			strFlag="yes";
+		else
+			strFlag = "no";
+			
+		var qUrl = "/api/flagmail.xml?ID=" + Request.QueryString('ID') + "&FLAG=" + strFlag;
+		var xmlHttp = initxmlhttp();
+	    xmlHttp.onreadystatechange = function()
+		{
+			if (xmlHttp.readyState==4 && xmlHttp.status== 200)
+			{
+				var xmldom = xmlHttp.responseXML;
+				xmldom.documentElement.normalize();
+				var responseNode = xmldom.documentElement.childNodes.item(0);
+				if(responseNode.tagName == "response")
+				{
+					var errno = responseNode.getAttribute("errno")
+					if(errno == "0" || errno == 0)
+					{
+						window.opener.update_mail_flag(Request.QueryString('ID'), flag);
+					}
+				}
+			}
+		}
+		xmlHttp.open("GET", qUrl , true);
+		xmlHttp.send("");
+	}
+
+	function seen_mail(flag)
+	{
+		if(flag ==  true)
+			strFlag="yes";
+		else
+			strFlag = "no";
+			
+		var qUrl = "/api/seenmail.xml?ID=" + Request.QueryString('ID') + "&SEEN=" + strFlag;
+		var xmlHttp = initxmlhttp();
+	    xmlHttp.onreadystatechange = function()
+		{
+			if (xmlHttp.readyState==4 && xmlHttp.status== 200)
+			{
+				var xmldom = xmlHttp.responseXML;
+				xmldom.documentElement.normalize();
+				var responseNode = xmldom.documentElement.childNodes.item(0);
+				if(responseNode.tagName == "response")
+				{
+					var errno = responseNode.getAttribute("errno")
+					if(errno == "0" || errno == 0)
+					{
+						window.opener.update_mail_seen(Request.QueryString('ID'), flag);
+					}
+				}
+			}
+		}
+		xmlHttp.open("GET", qUrl , true);
+		xmlHttp.send("");
+	}
+	
+	function ok_copy_mail()
+	{
+		var strDirs = "";
+		for(var x = 0; x < document.getElementsByName('seldir1').length; x++)
+		{
+			if(document.getElementsByName('seldir1')[x].checked == true )
+			{
+				strDirs += document.getElementsByName('seldir1')[x].value + "*";
+			}
+		}
+		if(strDirs == "")
+		{
+			alert('Not choose any folder yet');
+			return;
+		}
+		copy_mail(strDirs);
+	}
+	
+	function ok_move_mail()
+	{
+		var strDirs = "";
+		for(var x = 0; x < document.getElementsByName('seldir2').length; x++)
+		{
+			if(document.getElementsByName('seldir2')[x].checked == true )
+			{
+				strDirs += document.getElementsByName('seldir2')[x].value + "*";
+			}
+		}
+		if(strDirs == "")
+		{
+			alert('Not choose any folder yet');
+			return;
+		}
+		move_mail(strDirs);
+	}
+	
+	function do_copy_mail(mid, todirs)
+	{
+		var qUrl = "/api/copymail.xml?MAILID=" + mid + "&TODIRS=" + todirs;
+		var xmlHttp = initxmlhttp();
+		xmlHttp.onreadystatechange = function()
+		{
+			var strmid = "mailtr" + mid;
+			var trid = window.opener.$(strmid);
+
+			if(trid == null)
+				return false;
+			
+			if (xmlHttp.readyState == 4 && xmlHttp.status== 200)
+			{	
+				var xmldom = xmlHttp.responseXML;
+				xmldom.documentElement.normalize();
+				var responseNode = xmldom.documentElement.childNodes.item(0);
+				if(responseNode.tagName == "response")
+				{
+					var errno = responseNode.getAttribute("errno")
+					if(errno == "0" || errno == 0)
+					{
+						window.opener.refresh();
+						$('PROCESSING_DIV').style.display = "none";
+						return true;
+					}
+					else
+					{
+						return false;
+					}
+				}
+			}
+			else
+			{
+				$('PROCESSING_DIV').style.zIndex = 18;
+				$('PROCESSING_DIV').style.display = "block";
+				$('PROCESSING_TBL').rows[0].cells[1].innerHTML = "Processing, please wait...";
+			}
+		}
+		xmlHttp.open("GET", qUrl , true);
+		xmlHttp.send("");
+		
+		return true;
+	}
+		
+	function show_copy_mail_dir_div()
+	{
+		$('DIRS_DIV2').style.display = "none";
+		var Pos = GetObjPos($('COPYMAIL'))
+		show_dirs($('DIRS_DIV1'), $('DIRTBL1'), Pos.x, Pos.y + Pos.h + 2, "seldir1");
+	}
+
+	function show_move_mail_dir_div()
+	{
+		$('DIRS_DIV1').style.display = "none";
+		
+		var Pos = GetObjPos($('MOVEMAIL'))
+		show_dirs($('DIRS_DIV2'), $('DIRTBL2'), Pos.x, Pos.y + Pos.h + 2, "seldir2");
+	}
+	
+	function copy_mail(todirs)
+	{	
+		do_copy_mail(Request.QueryString('ID'), todirs);
+	}
+
+	function do_move_mail(mid, todirs)
+	{
+		var qUrl = "/api/movemail.xml?MAILID=" + mid + "&TODIRS=" + todirs;
+		var xmlHttp = initxmlhttp();
+	    xmlHttp.onreadystatechange = function()
+		{
+			var strmid = "mailtr" + mid;
+			var trid = window.opener.$(strmid);
+
+			if(trid == null)
+				return false;
+			
+			if (xmlHttp.readyState == 4 && xmlHttp.status== 200)
+			{				
+				var xmldom = xmlHttp.responseXML;
+				xmldom.documentElement.normalize();
+				var responseNode = xmldom.documentElement.childNodes.item(0);
+				if(responseNode.tagName == "response")
+				{
+					var errno = responseNode.getAttribute("errno")
+					if(errno == "0" || errno == 0)
+					{
+						$('PROCESSING_DIV').style.display = "none";
+
+						window.opener.delete_maillist_row(mid);
+						
+						window.opener.refresh();
+					}
+					else
+					{
+					}
+				}
+			}
+			else
+			{
+				$('PROCESSING_DIV').style.zIndex = 18;
+				$('PROCESSING_DIV').style.display = "block";
+				$('PROCESSING_TBL').rows[0].cells[1].innerHTML = "Processing, please wait...";
+			}
+
+		}
+		xmlHttp.open("GET", qUrl , true);
+		xmlHttp.send("");
+				
+		return true;
+	}
+	
+	function move_mail(todirs)
+	{	
+		do_move_mail(Request.QueryString('ID'), todirs);
+	}
+	
+	function TableFormat(arrText)
+	{
+		
+		var strTbl = "<table border=\"0\" cellpadding=\"2\" cellspacing=\"2\"><tr>";
+		for(var c = 0; c < arrText.length; c++)
+		{
+			if(arrText[c] == null)
+				arrText[c] = "";
+				
+			strTbl += "<td>" + (arrText[c]) + "</td>";
+		}
+		strTbl += "</tr></table>";
+		return strTbl;					
+	}
+	
+	function read_mail(strID)
+	{
+		var qUrl = "/api/readmail.xml?ID=" + strID;
+		var xmlHttp = initxmlhttp();
+	    xmlHttp.onreadystatechange = function()
+		{
+			if (xmlHttp.readyState == 4)
+			{
+				if(xmlHttp.status== 200)
+				{
+					var xmldom = xmlHttp.responseXML;
+					xmldom.documentElement.normalize();
+					var responseNode = xmldom.documentElement.childNodes.item(0);
+					if(responseNode.tagName == "response")
+					{
+						var errno = responseNode.getAttribute("errno")
+						if(errno == "0" || errno == 0)
+						{
+							var strTextContent, strHtmlContent, strCalendarContent, strFrom, strTo, strCc, strBcc, strDate, strSubject, strAttach;
+							strFrom = "";
+							strTo = "";
+							strCc = "";
+							strDate = "";
+							strSubject = "";
+							strAttach = "";
+							strTextContent = "";
+							strHtmlContent = "";
+							strCalendarContent = "";
+							
+							var calDetail = null;
+							
+							var bodyList = responseNode.childNodes;
+							for(var i = 0; i < bodyList.length; i++)
+							{
+								if(bodyList.item(i).tagName == "from")
+								{
+									strFrom = bodyList.item(i).childNodes[0]== null ? "" : bodyList.item(i).childNodes[0].nodeValue;
+								}
+								else if(bodyList.item(i).tagName == "to")
+								{
+									strTo = bodyList.item(i).childNodes[0] == null ? "" : bodyList.item(i).childNodes[0].nodeValue;
+								}
+								else if(bodyList.item(i).tagName == "cc")
+								{
+									strCc = bodyList.item(i).childNodes[0] == null ? "" : bodyList.item(i).childNodes[0].nodeValue;
+								}
+								else if(bodyList.item(i).tagName == "date")
+								{
+									strDate = bodyList.item(i).childNodes[0] == null ? "" : bodyList.item(i).childNodes[0].nodeValue;
+								}
+								else if(bodyList.item(i).tagName == "subject")
+								{
+									strSubject = bodyList.item(i).childNodes[0] == null ? "" : bodyList.item(i).childNodes[0].nodeValue;
+								}
+								else if(bodyList.item(i).tagName == "attach")
+								{
+									strAttach = bodyList.item(i).childNodes[0] == null ? "" : bodyList.item(i).childNodes[0].nodeValue;
+								}
+								else if(bodyList.item(i).tagName == "text_content")
+								{
+									strTextContent += bodyList.item(i).childNodes[0] == null ? "" : bodyList.item(i).childNodes[0].nodeValue; 
+								}
+								else if(bodyList.item(i).tagName == "html_content")
+								{
+									strHtmlContent += bodyList.item(i).childNodes[0] == null ? "" : bodyList.item(i).childNodes[0].nodeValue;
+								}
+								else if(bodyList.item(i).tagName == "calendar_content")
+								{
+									strCalendarContent = bodyList.item(i).childNodes[0] == null ? "" : bodyList.item(i).childNodes[0].nodeValue;
+								}
+							}
+							if(strCc == "")
+							{
+								$("cccol").style.display = "none";	
+							}
+
+							$("mailcontent").style.width = $('mailcontentframe').offsetWidth - 5;
+							$("mailcontent").style.height = $('mailcontentframe').offsetHeight - 5;
+							
+							if(strCalendarContent != "")
+							{
+								var vCal = new vCalendar();
+								calDetail = vCal.Parse(strCalendarContent);
+								strCalendarContent = "<table border=\"0\" width=\"100%\" bordercolorlight=\"#C0C0C0\" cellpadding=\"0\" cellspacing=\"0\" bordercolordark=\"#FFFFFF\" class=\"gray\"><tr bgcolor=\"#FFFFCC\"><td class=\"gray\">";
+								strCalendarContent += "<table border=\"0\"><tr height=\"22\"><td width=\"22\" valign=\"middle\"><img src=\"calendar.gif\"></td><td valign=\"middle\"><b>" + (calDetail.get("METHOD") == "REQUEST" ? "Event Request" : "Event Replay" )+ "</b></td></tr></table>";
+								strCalendarContent += "</td></tr></table>";
+								
+								strCalendarContent += "<table border=\"0\" width=\"100%\" bordercolorlight=\"#C0C0C0\" cellpadding=\"0\" cellspacing=\"0\" bordercolordark=\"#FFFFFF\" class=\"gray\">";
+								strCalendarContent += "<tr height=\"22\"><td class=\"gray\" align=\"right\" valign=\"middle\" bgcolor=\"#F0F0F0\" width=\"90\"><b>Summary:</b></td><td class=\"gray\">" + TableFormat(Array(TextToHTML(calDetail.get("VEVENT/SUMMARY")))) + "</td></tr>";
+								strCalendarContent += "<tr height=\"22\"><td class=\"gray\" align=\"right\" valign=\"middle\" bgcolor=\"#F0F0F0\" width=\"90\"><b>Location:</b></td><td class=\"gray\">" + TableFormat(Array(TextToHTML(calDetail.get("VEVENT/LOCATION")))) + "</td></tr>";
+								strCalendarContent += "<tr height=\"22\"><td class=\"gray\" align=\"right\" valign=\"middle\" bgcolor=\"#F0F0F0\" width=\"90\"><b>Created:</b></td><td class=\"gray\">" + TableFormat(Array(TextToHTML(calDetail.get("VEVENT/CREATED")), "[" + TextToHTML(calDetail.get("VTIMEZONE/TZID")) + "]")) + "</td></tr>";
+								strCalendarContent += "<tr height=\"22\"><td class=\"gray\" class=\"gray\"align=\"right\" valign=\"middle\" bgcolor=\"#F0F0F0\" width=\"90\"><b>Modified:</b></td><td class=\"gray\">" + TableFormat(Array(TextToHTML(calDetail.get("VEVENT/LAST-MODIFIED")), "[" + TextToHTML(calDetail.get("VTIMEZONE/TZID")) + "]")) + "</td></tr>";
+								strCalendarContent += "<tr height=\"22\"><td class=\"gray\" align=\"right\" valign=\"middle\" bgcolor=\"#F0F0F0\" width=\"90\"><b>Start:</b></td><td class=\"gray\">" + TableFormat(Array(TextToHTML(calDetail.get("VEVENT/DTSTART/DT")), "[" + TextToHTML(calDetail.get("VEVENT/DTSTART/TZID")) + "]")) + "</td></tr>";
+								strCalendarContent += "<tr height=\"22\"><td class=\"gray\" align=\"right\" valign=\"middle\" bgcolor=\"#F0F0F0\" width=\"90\"><b>End:</b></td><td class=\"gray\">" + TableFormat(Array(TextToHTML(calDetail.get("VEVENT/DTEND/DT")), "[" + TextToHTML(calDetail.get("VEVENT/DTEND/TZID")) + "]")) + "</td></tr>";
+								
+								var strORGANIZERbl = "<table border=\"0\" width=\"100%\" bordercolorlight=\"#C0C0C0\" cellpadding=\"0\" cellspacing=\"0\" bordercolordark=\"#FFFFFF\" class=\"gray\">";
+									var ORGANIZERPeople = calDetail.get("VEVENT/ORGANIZER").split(";");
+									for(var q = 0; q < ORGANIZERPeople.length; q++)
+									{
+										var tmp = ORGANIZERPeople[q].split("|");
+										if(tmp[1] == "ACCEPTED" || tmp[1] == "DELEGATED")
+										{
+										strORGANIZERbl += "<tr height=\"22\" bgcolor=\"#99FF99\"><td class=\"gray\">" + TableFormat(Array(TextToHTML(tmp[0]))) + "</td></tr>";
+										}
+										else if(tmp[1] == "DECLINED")
+										{
+										strORGANIZERbl += "<tr height=\"22\" bgcolor=\"#FF0000\"><td class=\"gray\">" + TableFormat(Array("<font color=\"#FFFFFF\">" + TextToHTML(tmp[0]) + "</font>")) + "</td></tr>";
+										}
+										else if(tmp[1] == "TENTATIVE")
+										{
+										strORGANIZERbl += "<tr height=\"22\" bgcolor=\"#FFFFCC\"><td class=\"gray\">" + TableFormat(Array(TextToHTML(tmp[0]))) + "</td></tr>";	
+										}
+										else
+										{
+										strORGANIZERbl += "<tr height=\"22\" bgcolor=\"#FFFFFF\"><td class=\"gray\">" + TableFormat(Array(TextToHTML(tmp[0]))) + "</td></tr>";
+										}
+									}
+									strORGANIZERbl += "</table>";
+									
+									
+								var strATTENDEETbl = "<table border=\"0\" width=\"100%\" bordercolorlight=\"#C0C0C0\" cellpadding=\"0\" cellspacing=\"0\" bordercolordark=\"#FFFFFF\" class=\"gray\">";
+									var ATTENDEEPeople = calDetail.get("VEVENT/ATTENDEE").split(";");
+									for(var q = 0; q < ATTENDEEPeople.length; q++)
+									{
+										var tmp = ATTENDEEPeople[q].split("|");
+										if(tmp[1] == "ACCEPTED" || tmp[1] == "DELEGATED")
+										{
+										strATTENDEETbl += "<tr height=\"22\" bgcolor=\"#99FF99\"><td class=\"gray\">" + TableFormat(Array(TextToHTML(tmp[0]))) + "</td></tr>";
+										}
+										else if(tmp[1] == "DECLINED")
+										{
+										strATTENDEETbl += "<tr height=\"22\" bgcolor=\"#FF0000\"><td class=\"gray\">" + TableFormat(Array("<font color=\"#FFFFFF\">" + TextToHTML(tmp[0]) + "</font>")) + "</td></tr>";
+										}
+										else if(tmp[1] == "TENTATIVE")
+										{
+										strATTENDEETbl += "<tr height=\"22\" bgcolor=\"#FFFFCC\"><td class=\"gray\">" + TableFormat(Array(TextToHTML(tmp[0]))) + "</td></tr>";	
+										}
+										else
+										{
+										strATTENDEETbl += "<tr height=\"22\" bgcolor=\"#FFFFFF\"><td class=\"gray\">" + TableFormat(Array(TextToHTML(tmp[0]))) + "</td></tr>";	
+										}
+									}
+									strATTENDEETbl += "</table>";
+								
+								strCalendarContent += "<tr height=\"22\"><td class=\"gray\" align=\"right\" valign=\"middle\" bgcolor=\"#F0F0F0\" width=\"90\"><b>Organizer:</b></td><td class=\"gray\">" + strORGANIZERbl + "</td></tr>";
+								strCalendarContent += "<tr height=\"22\"><td class=\"gray\" align=\"right\" valign=\"middle\" bgcolor=\"#F0F0F0\" width=\"90\"><b>Attendee:</b></td><td class=\"gray\">" + strATTENDEETbl + "</td></tr>";								
+								strCalendarContent += "</table>";
+								
+								strCalendarContent += "<table border=\"0\" width=\"100%\" bordercolorlight=\"#C0C0C0\" cellpadding=\"0\" cellspacing=\"0\" bordercolordark=\"#FFFFFF\">";
+								strCalendarContent += "<tr><td>" + TableFormat(Array(TextToHTML(calDetail.get("VEVENT/DESCRIPTION")))) + "</td></tr>"
+								strCalendarContent += "</table>";
+							}
+									
+							var strPreview = "";
+							
+							var attachs = strAttach.split("*");
+							var att_count = 0;
+							for(var x = 0; x < attachs.length; x++)
+							{
+								if(attachs[x] !="")
+								{
+									att_count ++;
+									
+									var filename;
+									var filetype;
+									var detail = attachs[x].split("|");
+									filename = detail[0];
+									filetype = detail[1];
+
+									var imgsrc = "/api/attachment.cgi?ID=" + strID + "&FILENAME=" + encodeURIComponent(filename);
+									
+									if(filetype == "image" || filetype == "Image")
+									{
+										strPreview += "<table border=\"0\" cellpadding=\"1\" cellspacing=\"1\"><tr><td width='16'><img src=\"attach.gif\"></td><td align='left'><a href='" + imgsrc + "' target='_blank' >" + TextToHTML(filename) + "</a></td></tr><tr><td colspan='2'><a href='" + imgsrc + "' target='_blank' ><img src='" + imgsrc + "' border='0' width=\"100\" onload='DrawImage(this)'></a></td></tr></table>"
+									}
+									else
+									{
+										strPreview += "<table border=\"0\" cellpadding=\"1\" cellspacing=\"1\"><tr><td width='16'><img src=\"attach.gif\"></td><td align='left'><a href='" + imgsrc + "' target='_blank' >" + TextToHTML(filename) + "</a></td></tr></table>";
+									}
+									
+								}
+							}							
+							
+							$("mailfrom").innerHTML = "<input class=\"text3\" size=\"110\" type=\"text\" value=\"" + TextToHTML(strFrom) + "\" readonly>";
+							$("mailto").innerHTML = "<input class=\"text3\" size=\"110\" type=\"text\" value=\"" + TextToHTML(strTo) + "\" readonly>";
+							$("mailcc").innerHTML = "<input class=\"text3\" size=\"110\" type=\"text\" value=\"" + TextToHTML(strCc) + "\" readonly>";
+							$("maildate").innerHTML = "<input class=\"text3\" size=\"110\" type=\"text\" value=\"" + TextToHTML(strDate) + "\" readonly>";
+							$("mailsubject").innerHTML = "<input class=\"text3\" size=\"110\" type=\"text\" value=\"" + (strSubject == "" ? "No Subject" : TextToHTML(strSubject)) + "\" readonly>";
+
+							var strrpl = "/api/attachment.cgi?ID=";
+							strrpl += strID;
+							strrpl += "&CONTENTID=";
+							
+							var regS1 = new RegExp("cid:","gi");
+							strHtmlContent = strHtmlContent.replace(regS1, strrpl);
+							if(strCalendarContent == "")
+							{
+								$("mailcontent").innerHTML = (strHtmlContent != "" ? strHtmlContent : TextToHTML(strTextContent)) + (strPreview != "" ? ("<p></p><hr><b>" + att_count + " attachment(s)</b>" + strPreview) : "");
+							}
+							else
+							{
+								$("timecol").style.display = "none";
+								
+								$("mailcontent").innerHTML = strCalendarContent + (strPreview != "" ? ("<p></p><hr><b>" + att_count + " attachment(s)</b>" + strPreview) : "");
+							}
+						}
+						else
+						{
+							$("mailcontent").innerHTML = "<table border=\"0\"><tr><td><img src=\"alert.gif\"></td><td>Fail to load</td></tr></table>";
+						}
+					}
+				}
+				else
+				{
+					$("mailcontent").innerHTML = "<table border=\"0\"><tr><td><img src=\"alert.gif\"></td><td>Fail to load</td></tr></table>";
+				}
+			}
+			else
+			{
+				$("mailfrom").innerHTML = "<img src=\"loading.gif\">";
+				$("mailto").innerHTML = "<img src=\"loading.gif\">";
+				$("mailcc").innerHTML = "<img src=\"loading.gif\">";
+				$("maildate").innerHTML = "<img src=\"loading.gif\">";
+				$("mailsubject").innerHTML = "<img src=\"loading.gif\">";
+				$("mailcontent").innerHTML = "<img src=\"loading.gif\">";
+			}
+		}
+		xmlHttp.open("GET", qUrl , true);
+		xmlHttp.send("");
+	}
+
+	function refresh()
+	{
+
+	}
+		
+	function init()
+	{
+		
+		$('GLOBALPATH').innerHTML = (Request.QueryString('GPATH') == null ? ("/Inbox") : decodeURIComponent(Request.QueryString('GPATH')));
+							
+		read_mail(Request.QueryString('ID'));
+	}
+
+	function uninit()
+	{
+	}
+	
+</script>
+</head>
+
+<body onLoad="init()">
+
+<div id="PROCESSING_DIV" class="div1" style="display:none; width: 300; height:100; left:300; top:200;background-color: #FFFFCC;">
+	<table id="PROCESSING_TBL" width="100%" height="100%">
+		<tr><td align="right"><img src="busy.gif"></td><td align="left"></td></tr>
+	</table>	
+</div>
+
+<div class="div1" id="DIRS_DIV1" style="display:none; z-Index:20; width:220px; height:200px;">
+  <table border="0" cellspacing="0" cellpadding="1" width="100%" bordercolorlight="#C0C0C0" bordercolordark="#FFFFFF" class="gray">
+    <tr>
+      <td align="left" valign="top" class="gray" bgcolor="#FFFFFF" height="160">
+      	<div style="overflow:auto; width:100%; height:100%; background-color: #FFFFFF;"><table id="DIRTBL1" bgcolor="#FFFFFF" border="0" cellspacing="0" cellpadding="0" width="100%"></table></div>
+      </td>
+    </tr>
+    <tr><td bgcolor="#EDF1F8" height="32">
+    	<table width="100%" border="0" cellspacing="1" cellpadding="1">
+          <tr>
+            <td align="center" valign="middle"><input type="image" src="ok.gif" onMouseOver="this.src='ok2.gif'" onMouseOut="this.src='ok.gif'" onClick="ok_copy_mail();$('DIRS_DIV1').style.display = 'none';"></td>
+            <td align="center" valign="middle"><input type="image" src="cancel.gif" onMouseOver="this.src='cancel2.gif'" onMouseOut="this.src='cancel.gif'" onClick="$('DIRS_DIV1').style.display = 'none';"></td>
+          </tr>
+        </table>
+     </td></tr>
+  </table>
+</div>
+<div class="div1" id="DIRS_DIV2" style="display:none; z-Index:20; width:220px; height:200px;">
+  <table border="0" cellspacing="0" cellpadding="1" width="100%" bordercolorlight="#C0C0C0" bordercolordark="#FFFFFF" class="gray">
+    <tr>
+      <td align="left" valign="top" class="gray" bgcolor="#FFFFFF" height="160">
+      	<div style="overflow:auto; width:100%; height:100%; background-color: #FFFFFF;"><table id="DIRTBL2" bgcolor="#FFFFFF" border="0" cellspacing="0" cellpadding="0" width="100%"></table></div>
+      </td>
+    </tr>
+    <tr><td bgcolor="#EDF1F8" height="32">
+    	 <table width="100%" border="0" cellspacing="1" cellpadding="1">
+          <tr>
+            <td align="center" valign="middle"><input type="image" src="ok.gif" onMouseOver="this.src='ok2.gif'" onMouseOut="this.src='ok.gif'" onClick="ok_move_mail();$('DIRS_DIV2').style.display = 'none';"></td>
+            <td align="center" valign="middle"><input type="image" src="cancel.gif" onMouseOver="this.src='cancel2.gif'" onMouseOut="this.src='cancel.gif'" onClick="$('DIRS_DIV2').style.display = 'none';"></td>
+          </tr>
+        </table>
+    </td></tr>
+  </table>
+</div>   
+
+<table border="0" width="900" height="600" cellpadding="0" cellspacing="0" bgcolor="#FFFFFF">
+<tr>
+    <td valign="top">
+    	<table border="0" cellpadding="0" cellspacing="0" width="100%" height="100%">
+        <tr valign="top" height="10"> 
+          <td>
+          	<table border="0" width="100%" bordercolorlight="#C0C0C0" cellpadding="0" cellspacing="0" bordercolordark="#FFFFFF">
+			<tr><td class="title">
+          		<table background="pathbg.gif" border="0" width="100%" bordercolorlight="#C0C0C0" cellspacing="0" cellpadding="2" bordercolordark="#FFFFFF"><tr valign="middle" height="25"><td align="center" width="26"><img src="readmail.gif"></td><td align="center"><b><font color="#FFFFFF"><div id="GLOBALPATH"></div></font></b></td><td width="20"><input type="image" src="close.gif" onClick="window.close()"></td></tr></table>
+          	</td></tr>
+			</table>
+			<table border="0" width="100%" cellpadding="0" cellspacing="0" background="toptitlebg.gif">
+				<tr><td>
+					<table id="MAILBAR" style="display:block;  z-Index:20">
+						<tr>
+						  <td><input id="REMAIL" name="REMAIL" type="image" src="remail.gif" onMouseOver="this.src='remail2.gif'" onMouseOut="this.src='remail.gif'" onClick="remail();"></td>
+						  <td><input id="RETOALL" name="RETOALL" type="image" src="retoall.gif" onMouseOver="this.src='retoall2.gif'" onMouseOut="this.src='retoall.gif'" onClick="remail_all()"></td>
+						  <td><input id="FORWARD" name="FORWARD" type="image" src="forward.gif" onMouseOver="this.src='forward2.gif'" onMouseOut="this.src='forward.gif'" onClick="forward_mail()"></td>		  
+						  <td><input id="FLAG" name="FLAG" type="image" src="flag.gif" onMouseOver="this.src='flag2.gif'" onMouseOut="this.src='flag.gif'" onClick="flag_mail(true)"></td>
+						  <td><input id="UNFLAG" name="UNFLAG" type="image" src="unflag.gif" onMouseOver="this.src='unflag2.gif'" onMouseOut="this.src='unflag.gif'" onClick="flag_mail(false)"></td>
+						  <td><input id="SEEN" name="SEEN" type="image" src="toseen.gif" onMouseOver="this.src='toseen2.gif'" onMouseOut="this.src='toseen.gif'" onClick="seen_mail(true)"></td>
+						  <td><input id="UNSEEN" name="UNSEEN" type="image" src="tounseen.gif" onMouseOver="this.src='tounseen2.gif'" onMouseOut="this.src='tounseen.gif'" onClick="seen_mail(false)"></td>
+						  <td><input id="COPYMAIL" name="COPYMAIL" type="image" src="copy.gif" onMouseOver="this.src='copy2.gif'" onMouseOut="this.src='copy.gif'" onClick="show_copy_mail_dir_div();"></td>
+						  <td><input id="MOVEMAIL" name="MOVEMAIL" type="image" src="move.gif" onMouseOver="this.src='move2.gif'" onMouseOut="this.src='move.gif'" onClick="show_move_mail_dir_div();"></td>
+						  <td><input id="DELMAIL" name="DELMAIL" type="image" src="delmail.gif" onMouseOver="this.src='delmail2.gif'" onMouseOut="this.src='delmail.gif'" onClick="delmail();"></td>
+						</tr>
+					</table>
+				</td></tr>
+			</table>
+          	<table border="0" width="100%" bordercolorlight="#C0C0C0" cellspacing="0" bordercolordark="#FFFFFF" class="gray">
+              <tr id="fromcol" height="30"> 
+                <td class="gray" bgcolor="#EFEFEF" width="95" align="right"><b>From:</b></td>
+                <td class="gray"  bgcolor="#FFFFCC"><div id="mailfrom"></div></td>
+              </tr>
+              <tr id="tocol" height="30"> 
+                <td class="gray" bgcolor="#EFEFEF" width="95" align="right"><b>To:</b></td>
+                <td class="gray"  bgcolor="#FFFFCC"><div id="mailto"></div></td>
+              </tr>
+              <tr id="cccol" height="30" > 
+                <td class="gray" bgcolor="#EFEFEF" width="95"  align="right"><b>CC:</b></td>
+                <td class="gray"  bgcolor="#FFFFCC"><div id="mailcc"></div></td>
+              </tr>
+              <tr id="timecol" height="30" > 
+                <td class="gray" bgcolor="#EFEFEF" width="95" align="right"><b>Date:</b></td>
+                <td class="gray" bgcolor="#FFFFCC"><div id="maildate"></div></td>
+              </tr>
+              <tr id="subjectcol" height="30" > 
+                <td class="gray" bgcolor="#EFEFEF" width="95" align="right"><b>Subject:</b></td>
+                <td class="gray" bgcolor="#FFFFCC"><div id="mailsubject"></div></td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        <tr> 
+          <td>
+          	<table border="0" width="100%" height="100%" bordercolorlight="#C0C0C0" cellpadding="0" cellspacing="0" bordercolordark="#FFFFFF" class="gray">
+              <tr bgcolor="#FFFFFF" height="100%"> 
+                <td class="gray" valign="top">
+                	<table width="100%" height="100%" border="0" cellspacing="0" cellpadding="0">
+					  <tr>
+					    <td width="100%" height="100%" id="mailcontentframe"><div id="mailcontent" class="div2"></div></td>
+					  </tr>
+					</table>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+     </td>
+  </tr>
+  	<tr>
+    	<td><p align="center">copyright &copy; <a href="http://www.uplusware.com" target="_blank">uplusware</a> 2009, all right reserved</td>
+    </tr>
+</table>
+
+</body>
+
+</html>

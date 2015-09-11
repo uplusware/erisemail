@@ -1,0 +1,454 @@
+﻿<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>e-risemail server readme</title>
+<style type="text/css">
+<!--
+body {
+	font-family: "Times New Roman", "Times", "serif";
+	font-size: 16px;
+}
+a:link {
+	font-style: normal;
+	color: #FF0000;
+	text-decoration: underline;
+}
+a:hover {
+	color: #0000FF;
+	font-style: normal;
+	font-weight: bold;
+}
+a:visited {
+	color: #FF0000;
+}
+a:active {
+	color: #0000FF;
+}
+table {
+	font-size: 16px;
+	border: none;
+}
+h1 {
+	font-size: 36px;
+}
+h2 {
+	font-size: 24px;
+}
+h3 {
+	font-size: 18px;
+}
+td {
+	border: 1px solid #999999;
+}
+.STYLE2 {
+	color: #FF0000;
+	font-weight: bold;
+}
+.STYLE3 {
+	color: #0000FF;
+	font-weight: bold;
+}
+.STYLE4 {font-family: "Book Antiqua"}
+.STYLE5 {
+	color: #0000FF;
+	font-style: italic;
+	font-weight: bold;
+}
+.STYLE7 {color: #FF0000}
+.STYLE8 {color: #0000FF}
+-->
+</style>
+</head>
+
+<body>
+<h1 class="STYLE4">eRisemail Server v1.6 Manual</h1>
+<hr>
+<h2 class="STYLE4">About e-risemail server</h2>
+<ul class="STYLE4">
+  <li>Free e-mail server  which supports Linux/Solaris </li>
+  <li>Independently develop, not integrate with any third party systems. Easy installation and configuration, but powerful function. </li>
+  <li>Support GB2312, UTF-8 and UCS2 Format </li>
+  <li>Upon installation, SMTP(SSL/TLS), POP3(SSL/TLS), IMAP4(SSL/TLS) and WebMail(HTTP/HTTPS) is ready. </li>
+  <li>Based on Linux(support 32bit and 64bit ) and MySQL, both are free </li>
+  <li>Support Mail Group, Customize User Policy, Mail Audit and Web Managemant UI </li>
+  <li>Support popular email client( Outlook, Thunderbird ...) </li>
+  <li>Support iCalendar Format(RFC2445) / Mozilla Thunderbird Lightning Plugin </li>
+  <li>Support the mail with huge size attachment( Maximum size is 2G ) </li>
+  <li>Support mail rapid index, cache and access </li>
+  <li>Support loading and extending anti-junkmail engine dynamically and support to redevelop the engine </li>
+  <li>Storage is based on MySQL. So it's easy to maintain and backup mail data via scripts. </li>
+  <li class="STYLE3">The best selection for small and medium-sized E-mail application. </li>
+  <li>Recommend <em>to</em> install the sytem at <strong><em>Ubutun 9.10/OpenSolaris 2009.06  + MySQL 5.0</em></strong></li>
+  <li>The lastest version can be get at <a href="http://www.uplusware.com" target="_blank">www.uplusware.com</a></li>
+  <li>Any question please mail to <a href="mailto:uplusware@gmail.com">uplusware@gmail.com</a>  </li>
+</ul>
+<h2 class="STYLE4">New Installation</h2>
+<blockquote class="STYLE4"> 
+  <h3>Step 1:</h3>
+  <ul>
+    <li>Prepare the of <em>MySQL Client Library</em> and <em>MySQL Server</em>.</li>
+    <li>Recommend to change the value of <font color="#0000FF">max_connections</font> 
+      in <font color="#0000FF">/etc/mysql/my.cnf </font>according your requirement. 
+      (Most often，the value should ve more than <strong><em>MaxConnPerProtocal</em></strong><em> 
+      * 8 + <strong>NumOfForwardTask</strong></em>) </li>
+    <li>Copy the program to local system, two ways are provided. One is installation script, the other is deb.
+      <ul>
+        <li><strong>Installation script:</strong> Run the install shell script to copy the mail system files to your local 
+          computer: <font color="#0000FF"><strong><em>sudo ./install.sh</em></strong></font></li>
+        <li><strong>deb:</strong> eg.: <span class="STYLE5">sudo dpkg -i erisemail-bin-en-utf8-i686.deb</span></li>
+      </ul>
+    </li>
+  </ul>
+  <h3>Step 2:</h3>
+  <ul>
+    <li>Copy the <strong><em>erise-root.crt erise-server.crt erise-server.key</em></strong> 
+      to a safety location(eg. <strong> <em>/var/ca-certificates/erisemail</em></strong>) 
+      and chmod them to 400.</li>
+    <li>If you have your ownself certification files, please use them. Because 
+      the certification files provided by the installation package is just for 
+      demo.</li>
+  </ul>
+  <h3>Step 3:</h3>
+  <ul>
+    <li>Configurate the<strong> <em>/etc/erisemail/erisemail.conf </em></strong>. 
+      Please refer the <a href="#erisemail_conf">Introducation of erisemail.conf</a></li>
+  </ul>
+  <h3>Step 4:</h3>
+  <ul>
+    <li>Run <strong><font color="#0000FF"><em>sudo eriseutil --install</em></font></strong> 
+      to setup the database for mail system.</li>
+    <li>After intsallation, adminisarator acount will be append. It's <strong><em>admin</em></strong>, 
+      and password is also <strong><em>admin</em></strong>. Please change the 
+      password at once via <font color="#0000FF"><em><strong>erisepasswd</strong></em></font></li>
+  </ul>
+  <h3>Step 5:</h3>
+  <ul>
+    <li>Run <strong><font color="#0000FF"><em>sudo /etc/init.d/erisemail start</em></font></strong></li>
+    <li> If you want to delete the installation files, please backup the <strong><em>uninstall.sh</em></strong></li>
+  </ul>
+</blockquote>
+<h2 class="STYLE4">Upgrade from v1.3</h2>
+<ul class="STYLE4">
+  <li>    Please backup erisemail database firstly before upgrading</li>
+  <li>    Run <strong><font color="#0000FF"><em>sudo eriseutil --upgrade</em></font></strong></li>
+  <li>     Following the steps of New Installation (Ignore step 4) </li>
+</ul>
+<blockquote class="STYLE4">
+  <ul>
+  </ul>
+</blockquote>
+<h2 class="STYLE4">Upgrade from v1.4</h2>
+<ul class="STYLE4">
+  <li>    Following the steps of New Installation (Ignore step 4)  </li>
+</ul>
+<h2 class="STYLE4">Uninstallation</h2>
+<ul class="STYLE4">
+  <li>if you want to delete the database of erisemail, please run<em><font color="#0000FF"><strong> 
+    ./eriseutil --uninstall</strong></font></em>.  </li>
+  <li>Remove the program from system. Same as installation, two ways are provided.
+    <ul>
+      <li> <strong>Uninstall script: </strong>Delete the program's source files:<font color="#0000FF"><em><strong>sudo /var/erisemail/uninstall.sh</strong></em></font></li>
+      <li><strong>deb: </strong><span class="STYLE5">sudo dpkg -r erisemail</span>
+        <ul>
+          <li><span class="STYLE2">Note</span>: The following warnning is correct in remove process. Please don't remove the
+            <span class="STYLE7">&quot;/var/erisemail/private/</span>&quot; because the mail data storage there.
+
+            <ul>
+              <li><span class="STYLE8">dpkg - warning: while removing erisemail, directory `/var/erisemail/private/eml' not empty so not removed.<br>
+                dpkg - warning: while removing erisemail, directory `/var/erisemail/private' not empty so not removed.<br>
+                dpkg - warning: while removing erisemail, directory `/var/erisemail' not empty so not removed.</span><br>
+              </li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+</ul>
+<h2 class="STYLE4">Introducation of erisemail.conf<a name="erisemail_conf" id="erisemail_conf"></a></h2>
+<blockquote class="STYLE4"> 
+  <table width="1000" border="1" cellpadding="2" cellspacing="2">
+    <tr> 
+      <td align="right"><strong>Encoding</strong></td>
+      <td><p>The encoding way of storage in MySQL(just only support GB2312, UTF-8 and UCS2)，and the default value is UTF-8.</p>
+      <p><span class="STYLE2">Please don't change this key's value after installing database of eRisemail</span> （after running <strong><font color="#0000FF"><em>sudo eriseutil --install</em></font></strong>）</p>
+      <p>If need change this key's value, please convert the HTML files to corresponding format via tools and modify the charset in all HTML files' content before installing the eRisemail database.</p>
+      <p>&lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html; charset=<span class="STYLE7"><strong>[GB2312|UTF-8|UCS2]</strong></span>&quot; /&gt;</p></td>
+    </tr>
+    <tr> 
+      <td width="24%" align="right"><strong>EmailDomainName</strong></td>
+      <td width="76%">the postfix of your email.</td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>LocalHostName</strong></td>
+      <td>the hostname of local computer</td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>HostIP</strong></td>
+      <td>the ip of localhost, can be empty</td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>DNSServer</strong></td>
+      <td>the ip of a usable dns server, can <font color="#FF0000"><strong>not</strong></font> 
+        be empty</td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>MaxConnPerProtocal</strong></td>
+      <td>maximum number of connection for each protocal</td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>NumOfForwardTask</strong></td>
+      <td>the number of forwarding task, if your mail server has a large of email 
+        to forward to others mail server every day. You can increase the valuse 
+        by depending your local computer's performance. The default value is 3.</td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>SMTPPort</strong></td>
+      <td>the port of SMTP service</td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>EnableSMTPTLS</strong></td>
+      <td>enable TLS for SMTP(yes/no). recommend to set no.</td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>EnableRelay</strong></td>
+      <td>enable relay function. recommend to set no, for reject junk mail.</td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>SMTPHostNameCheck</strong></td>
+      <td>enable checking the match of client's hostname and ip at SMTP session</td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>POP3Enable</strong></td>
+      <td>enable POP3 service.(yes/no)</td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>POP3Port</strong></td>
+      <td>the port of POP3 service</td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>EnablePOP3TLS</strong></td>
+      <td>enable TLS for POP3(yes/no)</td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>IMAPEnable</strong></td>
+      <td>enable IMAP service.(yes/no)</td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>IMAPPort</strong></td>
+      <td>the port of IMAP service</td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>EnableIMAPTLS</strong></td>
+      <td>enable TLS for IMAP(yes/no)</td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>SMTPSEnable</strong></td>
+      <td>enable SMTPS service.(yes/no)</td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>SMTPSPort</strong></td>
+      <td>the port of POP3 service</td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>POP3SEnable</strong></td>
+      <td>enable POP3S service.(yes/no)</td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>POP3SPort</strong></td>
+      <td>the port of POP3S service</td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>IMAPSEnable</strong></td>
+      <td>enable IMAPS service.(yes/no)</td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>IMAPSPort</strong></td>
+      <td>the port of IMAPS service</td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>HTTPEnable</strong></td>
+      <td>enable HTTP Web service.(yes/no)</td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>HTTPPort</strong></td>
+      <td>the port of HTTP web service</td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>HTTPSEnable</strong></td>
+      <td>enable HTTPS Web service.(yes/no)</td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>HTTPSPort</strong></td>
+      <td>the port of HTTPS Web service</td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>PrivatePath</strong></td>
+      <td>The directory path of private temporary files，and make sure <em><font color="#0000FF">tmp</font></em> 
+        and <font color="#0000FF"><em>eml</em></font> exist in this directory</td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>HTMLPath</strong></td>
+      <td>The directory path of web files</td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>CARootCrt</strong></td>
+      <td>the root certification</td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>CAServerCrt</strong></td>
+      <td>the server's certification</td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>CAServerKey</strong></td>
+      <td>the key file for server's certification</td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>CAPassword</strong></td>
+      <td>the encoded password of server's certification(for safety, it SHOULD 
+        be generated by &quot;<font color="#0000FF">eriseutil --encode [password]</font>&quot;)</td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>DBHost</strong></td>
+      <td>the MySQL database server's hostname or ip</td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>DBName</strong></td>
+      <td>the database name for your system which will be created</td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>DBUser</strong></td>
+      <td>the user of MySQL Server</td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>DBPassword</strong></td>
+      <td>the user's password(for safety, it SHOULD be generated by &quot;<font color="#0000FF">eriseutil 
+        --encode [password]</font>&quot;)</td>
+    </tr>
+	 <tr> 
+      <td align="right"><strong>DBMaxConn</strong></td>
+      <td>The Maximum limited number of connection with MySQL for every service</td>
+    </tr>
+  </table>
+</blockquote>
+<h2 class="STYLE4">Introducation of erisemail's tools</h2>
+<blockquote class="STYLE4"> 
+  <table width="1000" border="1" cellspacing="2" cellpadding="2">
+    <tr> 
+      <td width="24%" align="right"><strong>eriseadduser</strong></td>
+      <td width="76%"><p>add a user to the system except for &quot;admin&quot;(it's 
+          the default administrator account id)</p>
+        <p><font color="#0000FF">Usage:eriseadduser username password alias</font></p></td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>erisedeluser</strong></td>
+      <td><p>remove a user from the system</p>
+        <p><font color="#0000FF">Usage:erisedeluser username</font></p></td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>eriseaddgroup</strong></td>
+      <td><p>add a group to the system(the group name dpn't permit to be same 
+          as appended user name)</p>
+        <p><font color="#0000FF">Usage:eriseaddgroup groupname password alias<br>
+          Usage:eriseaddgroup groupname alias</font></p></td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>erisedelgroup</strong></td>
+      <td><p>remove a group from the system</p>
+        <p><font color="#0000FF">Usage:erisedeluser groupname</font></p></td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>eriseaddusertogroup</strong></td>
+      <td><p>insert a user to a mail group</p>
+        <p><font color="#0000FF">Usage:eriseaddusertogroup username groupname</font></p></td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>erisedeluserfromgroup</strong></td>
+      <td><p>remove a user from a mail group</p>
+        <p><font color="#0000FF">Usage:erisedeluserfromgroup username groupname</font></p></td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>erisepasswd</strong></td>
+      <td><p>update the password of user or group </p>
+        <p><font color="#0000FF">Usage:erisepasswd username | groupname</font></p></td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>eriseenableuser</strong></td>
+      <td><p>active the user</p>
+        <p><font color="#0000FF">Usage:eriseenableuser username</font></p></td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>erisedisableuser</strong></td>
+      <td><p>disable the user</p>
+        <p><font color="#0000FF">Usage:erisedisableuser username</font></p></td>
+    </tr>
+    <tr> 
+      <td align="right"><strong>eriseutil</strong></td>
+      <td><p>The utility of erisemail system</p>
+        <p><font color="#0000FF"><em>Usage:eriseutil --install<br>
+          Usage:eriseutil --uninstall<br>
+          Usage:eriseutil -a user_group_name password alias [-u|-g] [-A|-U]<br>
+          Usage:eriseutil -a user_group_name alias [-u|-g] [-A|-U]<br>
+          Usage:eriseutil -d user_group_name<br>
+          Usage:eriseutil -p username<br>
+          Usage:eriseutil -A username groupname<br>
+          Usage:eriseutil -D username groupname<br>
+          Usage:eriseutil -l --level<br>
+          Usage:eriseutil -s --level username level_id<br>
+          Usage:eriseutil -s --defaultlevel level_id<br>
+          Usage:eriseutil -a --level level_name level_description level_mailmaxsize 
+          level_boxmaxsize level_audit(yes/no) level_mailsizethreshold level_attachsizethreshold<br>
+          Usage:eriseutil -l --user<br>
+          Usage:eriseutil -l --group groupname<br>
+          Usage:eriseutil --disable user_group_name<br>
+          Usage:eriseutil --enable user_group_name<br>
+          Usage:eriseutil --encode<br>
+          Usage:eriseutil --upgrade</em></font></p></td>
+    </tr>
+  </table>
+</blockquote>
+<h2 class="STYLE4">Introducation web components</h2>
+<blockquote class="STYLE4"> 
+  <ul>
+    <li> Siance v1.3, the system has an embedded web server, and it both supports HTTP and HTTPS. So user no need 
+      install and configuate any other web server</li>
+    <li>Web management UI's Url: http://IP:port/admin</li>
+  </ul>
+</blockquote>
+<h2 class="STYLE4">Introducation of <em> /var/log/erisemail/MTA-*.log</em></h2>
+<ul class="STYLE4">
+  <li>MTA access list named by date of each day</li>
+  <li>User can refer the information of the log file to find out the IP which 
+    should be appended in <strong><em>/etc/erisemail/reject.list</em></strong></li>
+</ul>
+<h2 class="STYLE4">Introducation of <em><strong> <em>/etc/erisemail/</em></strong>domain.list</em></h2>
+<ul class="STYLE4">
+  <li>Local domains list</li>
+  <li>Support multiple domains, share account id, non-independed</li>
+</ul>
+<h2 class="STYLE4">Introducation of <em><strong> <em>/etc/erisemail/</em></strong>permit.list</em></h2>
+<ul class="STYLE4">
+  <li>User can add the permited IP(s) to the file. And can be used * to match 
+    any substring.</li>
+</ul>
+<h2 class="STYLE4">Introducation of <em><strong> <em>/etc/erisemail/</em></strong>reject.list</em></h2>
+<blockquote class="STYLE4"> 
+  <ul>
+    <li>User can add the rejected IP(s) to the file. And can be used * to match 
+      any substring. </li>
+  </ul>
+</blockquote>
+<h2 class="STYLE4">Introducation of <em><strong> <em>/etc/erisemail/</em></strong>webadmin.list</em></h2>
+<blockquote class="STYLE4"> 
+  <ul>
+    <li>The list of IPs which can access the management web UI. And can be used 
+      * to match any substring. </li>
+  </ul>
+</blockquote>
+<hr>
+<span class="STYLE4"><br>
+</span>
+<blockquote class="STYLE4">&nbsp;</blockquote>
+</body>
+</html>

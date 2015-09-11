@@ -1,0 +1,643 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<LINK rel="Bookmark" href="erisemail.ico" >
+<LINK rel="Shortcut Icon" href="erisemail.ico" />
+<link href="css.css" rel="stylesheet" type="text/css">
+<script type="text/javascript" src="inc.js"></script>
+<title>..:::易睿邮件后台管理系统:::..</title>
+<script language="JavaScript">
+
+	function load_levels_to_option(selobj)
+	{
+		var qUrl = "/api/listlevels.xml";
+		var xmlHttp = initxmlhttp();
+		xmlHttp.open("GET", qUrl , false);
+		xmlHttp.send("");
+
+		if(xmlHttp.status== 200)
+		{
+			var xmldom = xmlHttp.responseXML;
+			xmldom.documentElement.normalize();
+			var responseNode = xmldom.documentElement.childNodes.item(0);
+			if(responseNode.tagName == "response")
+			{
+				var errno = responseNode.getAttribute("errno")
+				if(errno == "0" || errno == 0)
+				{
+					var strTmp;
+					var levelList = responseNode.childNodes;
+					
+					for(var i = 0; i < levelList.length; i++)
+					{
+						if(levelList.item(i).tagName == "level")
+						{
+							var varItem = new Option(levelList.item(i).getAttribute("name"), levelList.item(i).getAttribute("lid"));
+							if(levelList.item(i).getAttribute("default") == "true")
+							{
+								$('NEW_USER_DIV').setAttribute("defaultlevel", levelList.item(i).getAttribute("lid"));
+								varItem.selected = true;
+							}
+					        selobj.options.add(varItem);
+					    }
+					}
+
+					$("STATUS").innerHTML = "";
+					$("STATUS").style.display = "none";
+				}
+			}
+		}
+	}
+	
+	function show_edituser_div(username, obj)
+	{
+		if($('EDIT_USER_DIV').getAttribute("loaded") != "true")
+		{
+			load_levels_to_option($('EDIT_LEVEL'));
+			$('EDIT_USER_DIV').setAttribute("loaded", "true")
+		}
+
+		$('NEW_USER_DIV').style.display='none';
+		
+		$('EDIT_USERNAME').value = obj.getAttribute("username");
+		$('EDIT_ALIAS').value = obj.getAttribute("alias");
+		
+		for (var i = 0; i < $('EDIT_LEVEL').options.length; i++) 
+		{
+			if ($('EDIT_LEVEL').options[i].value == obj.getAttribute("level"))
+			{
+				$('EDIT_LEVEL').options[i].selected = true;            
+            	break;        
+        	}        
+
+		}
+
+		if(obj.getAttribute("type") == "Group" || obj.getAttribute("type") == "group")
+		{
+			$('EDIT_LEVEL').disabled = true;
+		}
+		else
+		{
+			$('EDIT_LEVEL').disabled = false;
+		}
+		
+		$('EDIT_USER_STATUS').checked = (obj.getAttribute("status") == "Active") ? false : true;
+									
+		
+		Pos = GetObjPos(obj); 
+											
+		$('NEW_USER_DIV').style.display= 'none';
+		
+		$('EDIT_USER_DIV').style.left = Pos.x - 1;
+		$('EDIT_USER_DIV').style.top = Pos.y + Pos.h + 1;
+		
+		$('EDIT_USER_DIV').style.display = "block";
+
+		$('EDIT_USER_DIV').style.height= 300;
+		$('EDIT_USER_DIV').style.width = 300;
+
+		$('EDIT_USER_DIV').style.height = $('EDIT_USER_SIZE').offsetHeight + 2;
+		$('EDIT_USER_DIV').style.width = $('EDIT_USER_SIZE').offsetWidth + 2;
+		
+		$('EDIT_USER_DIV').setAttribute("username", username);
+	}
+
+	function show_newuser_div()
+	{
+		document.getElementsByName('NEW_TYPE')[0].checked = true;
+
+		$('NEW_USERNAME').value = "";
+		
+		$('NEW_USERPWD').disabled = false;
+		$('NEW_USERPWD2').disabled = false;
+
+		$('NEW_LEVEL').disabled = false;
+
+		$('NEW_USERPWD').value = "";
+		$('NEW_USERPWD2').value = "";
+
+		$('NEW_ALIAS').value = "";
+	
+		if($('NEW_USER_DIV').getAttribute("loaded") != "true")
+		{
+			load_levels_to_option($('NEW_LEVEL'));
+			$('NEW_USER_DIV').setAttribute("loaded", "true")
+		}
+
+		$('NEW_LEVEL').value = $('NEW_USER_DIV').getAttribute("defaultlevel");
+		
+		$('EDIT_USER_DIV').style.display='none';
+			
+		var Pos = GetObjPos($('TITLE_BAR'));
+											
+		$('NEW_USER_DIV').style.left = Pos.x - 1;
+		$('NEW_USER_DIV').style.top = Pos.y + Pos.h + 1;
+		
+		$('NEW_USER_DIV').style.display = "block";
+
+		$('NEW_USER_DIV').style.height= 300;
+		$('NEW_USER_DIV').style.width = 300;
+
+		$('NEW_USER_DIV').style.height = $('NEW_USER_SIZE').offsetHeight + 2;
+		$('NEW_USER_DIV').style.width = $('NEW_USER_SIZE').offsetWidth + 2;
+	}
+
+	function do_delete_user(uname)
+	{
+		var qUrl = "/api/deluser.xml?USERNAME=" + encodeURIComponent(uname);
+		var xmlHttp = initxmlhttp();
+	    xmlHttp.onreadystatechange = function()
+		{
+			if (xmlHttp.readyState==4 && xmlHttp.status== 200)
+			{
+				var xmldom = xmlHttp.responseXML;
+				xmldom.documentElement.normalize();
+				var responseNode = xmldom.documentElement.childNodes.item(0);
+				if(responseNode.tagName == "response")
+				{
+					var errno = responseNode.getAttribute("errno")
+					if(errno == "0" || errno == 0)
+					{ 
+						clear_table_without_header($('USERTBL'));
+						load_users($('USERTBL').getAttribute('orderby'), $('USERTBL').getAttribute($('USERTBL').getAttribute('orderby')));
+					
+					}
+					else
+					{
+						alert("删除账号失败");
+					}
+				}
+			}
+		}
+		xmlHttp.open("GET", qUrl , true);
+		xmlHttp.send("");
+	}
+	
+	function load_users(orderby, desc)
+	{
+		var qUrl = "/api/listusers.xml?ORDER_BY=" + orderby + "&DESC=" + (desc == null ? '' : desc);
+		var xmlHttp = initxmlhttp();
+	    xmlHttp.onreadystatechange = function()
+		{
+			if (xmlHttp.readyState==4)
+			{
+				if(xmlHttp.status== 200)
+				{
+					var xmldom = xmlHttp.responseXML;
+					xmldom.documentElement.normalize();
+					var responseNode = xmldom.documentElement.childNodes.item(0);
+					if(responseNode.tagName == "response")
+					{
+						var errno = responseNode.getAttribute("errno")
+						if(errno == "0" || errno == 0)
+						{
+							var strTmp;
+							var userList = responseNode.childNodes;
+
+							for(var i = 0; i < userList.length; i++)
+							{
+								if(userList.item(i).tagName == "user")
+								{
+									var image;
+									if(userList.item(i).getAttribute("status") == "Active")
+									{
+										if(userList.item(i).getAttribute("role") == "Administrator")
+											image = "admin.gif";
+										else
+										{
+											if(userList.item(i).getAttribute("type") == "Group")
+												image = "group.gif";
+											else		
+												image = "member.gif";
+										}
+									}
+									else
+									{
+										if(userList.item(i).getAttribute("type") == "Group")
+											image = "inactive_group.gif";
+										else		
+											image = "inactive_member.gif";
+									}
+
+									tr = $('USERTBL').insertRow($('USERTBL').rows.length);
+									if(userList.item(i).getAttribute("type") == "Group")
+									{
+										tr.style.backgroundColor = "#FFFFEE";
+									}
+									tr.onmouseover = function()
+									{	
+										this.setAttribute("imagesrc", this.style.backgroundImage);
+										this.style.backgroundImage = "url('focusbg.gif')";
+									}
+									tr.onmouseout = function()
+									{
+										this.style.backgroundImage = this.getAttribute("imagesrc");
+									}
+
+									tr.setAttribute("username", userList.item(i).getAttribute("name"));
+									tr.setAttribute("alias", userList.item(i).getAttribute("alias"));
+									tr.setAttribute("level", userList.item(i).getAttribute("level"));
+									tr.setAttribute("status", userList.item(i).getAttribute("status"));
+									tr.setAttribute("type", userList.item(i).getAttribute("type"));
+									
+									var td0 = tr.insertCell(0);
+									td0.valign="middle";
+									td0.align="center";
+									td0.height="25";
+									setStyle(td0, "TD.gray");
+							        td0.innerHTML = "<img src=\""+image +"\" />";
+
+									var td1 = tr.insertCell(1);
+									td1.valign="middle";
+									td1.align="left";
+									td1.height="25";
+									setStyle(td1, "TD.gray");
+							        td1.innerHTML = userList.item(i).getAttribute("name");
+
+									var td2 = tr.insertCell(2);
+									td2.valign="middle";
+									td2.align="left";
+									td2.width="398";
+									td2.height="25";
+									setStyle(td2, "TD.gray");
+							        td2.innerHTML = userList.item(i).getAttribute("alias");
+
+									var td3 = tr.insertCell(3);
+									td3.valign="middle";
+									td3.align="left";
+									td3.height="25";
+									setStyle(td3, "TD.gray");
+							        td3.innerHTML = userList.item(i).getAttribute("lname");
+									
+									var td4 = tr.insertCell(4);
+									td4.valign="middle";
+									td4.align="center";
+									td4.width="50";
+									td4.height="25";
+									setStyle(td4, "TD.gray");
+							        td4.innerHTML = userList.item(i).getAttribute("type") == "Group" ? "邮件组" : "用户" ;
+
+									var td5 = tr.insertCell(5);
+									td5.valign="middle";
+									td5.align="center";
+									td5.height="25";
+									setStyle(td5, "TD.gray");
+							        td5.innerHTML = userList.item(i).getAttribute("role") == "Administrator" ? "管理员" : "普通用户" ;
+									
+									var td6 = tr.insertCell(6);
+									td6.valign="middle";
+									td6.align="center";
+									td6.height="25";
+									setStyle(td6, "TD.gray");
+							        td6.innerHTML = userList.item(i).getAttribute("status") == "Active" ? "有效" : "禁用";
+
+									var td7 = tr.insertCell(7);
+									td7.valign="middle";
+									td7.align="center";
+									td7.height="25";
+									
+									td7.setAttribute("username", userList.item(i).getAttribute("name"));
+							        td7.innerHTML = "<img src=\"edit.gif\">";
+
+									td7.onclick = function()
+									{
+										show_edituser_div(this.getAttribute("username"), this.parentNode);
+									}
+									
+									td7.onmouseover = function()
+									{
+										this.mousepoint = 99;
+										this.style.cursor ="pointer";
+										
+										this.setAttribute("imagesrc", this.style.backgroundImage);
+										this.style.backgroundImage = "url('activebg.gif')";
+									}
+									
+									td7.onmouseout = function()
+									{
+										this.mousepoint = 99;
+										this.style.cursor ="default";
+
+										this.style.backgroundImage = this.getAttribute("imagesrc");
+									}
+
+									setStyle(td7, "TD.gray");
+									
+									var td8 = tr.insertCell(8);
+									td8.valign="middle";
+									td8.align="center";
+									td8.height="25";
+									setStyle(td8, "TD.gray");
+									td8.setAttribute("username", userList.item(i).getAttribute("name"));
+							        td8.innerHTML = "<img src=\"delete.gif\">";
+
+									td8.onclick = function()
+									{
+										if(confirm("确定删除吗？") ==  true)
+											do_delete_user(this.parentNode.getAttribute('username'));
+									}
+									
+									td8.onmouseover = function()
+									{
+										this.mousepoint = 99;
+										this.style.cursor ="pointer";
+										
+										this.setAttribute("imagesrc", this.style.backgroundImage);
+										this.style.backgroundImage = "url('activebg.gif')";
+									}
+									
+									td8.onmouseout = function()
+									{
+										this.mousepoint = 99;
+										this.style.cursor ="default";
+
+										this.style.backgroundImage = this.getAttribute("imagesrc");
+									}
+								}
+							}
+							$("STATUS").innerHTML = "";
+							$("STATUS").style.display = "none";
+						}
+					}
+				}
+			}
+			else
+			{
+				$("STATUS").innerHTML = "<center><img src=\"waiting.gif\"></center>";
+			}
+		}
+		xmlHttp.open("GET", qUrl , true);
+		xmlHttp.send("");
+	}
+
+	function init()
+	{
+		window.parent.change_tab("user");
+		$('USERTBL').setAttribute('orderby', 'utime');
+		load_users($('USERTBL').getAttribute('orderby'), $('USERTBL').getAttribute($('USERTBL').getAttribute('orderby')));
+	}
+
+	function do_add_user()
+	{
+		if($('NEW_USERPWD').value != $('NEW_USERPWD2').value)
+		{
+			alert("两次输入的密码不一样.");
+			return;
+		}
+
+		var strType;
+		if(document.getElementsByName('NEW_TYPE')[0].checked)
+			strType = "member";
+		else if(document.getElementsByName('NEW_TYPE')[1].checked)
+			strType = "group";
+		
+		var qUrl = "/api/adduser.xml";
+		var strPostData = "NEW_USERNAME=" + encodeURIComponent($('NEW_USERNAME').value);
+		strPostData += "&NEW_USERPWD=" + encodeURIComponent($('NEW_USERPWD').value);
+		strPostData += "&NEW_ALIAS=" + encodeURIComponent($('NEW_ALIAS').value);
+		strPostData += "&NEW_TYPE=" + encodeURIComponent(strType);
+		strPostData += "&NEW_LEVEL=" + encodeURIComponent($('NEW_LEVEL').value);
+		var xmlHttp = initxmlhttp();
+	    xmlHttp.onreadystatechange = function()
+		{
+			if (xmlHttp.readyState==4 && xmlHttp.status== 200)
+			{
+				var xmldom = xmlHttp.responseXML;
+				xmldom.documentElement.normalize();
+				var responseNode = xmldom.documentElement.childNodes.item(0);
+				if(responseNode.tagName == "response")
+				{
+					var errno = responseNode.getAttribute("errno")
+					if(errno == "0" || errno == 0)
+					{ 
+						clear_table_without_header($('USERTBL'));
+						load_users($('USERTBL').getAttribute('orderby'), $('USERTBL').getAttribute($('USERTBL').getAttribute('orderby')));
+					
+					}
+					else
+					{
+						alert("创建账号失败");
+					}
+				}
+			}
+		}
+		xmlHttp.open("POST", qUrl , true);
+		xmlHttp.setRequestHeader("Content-Type","text/html;application/x-www-form-urlencoded");
+		xmlHttp.send(strPostData);
+
+		$('NEW_USERNAME').value = "";
+		$('NEW_USERPWD').value = "";
+		$('NEW_USERPWD2').value = "";
+		$('NEW_ALIAS').value = "";
+	}
+
+	function do_edit_user()
+	{
+		var qUrl = "/api/edituser.xml";
+		var strPostData = "EDIT_USERNAME=" + encodeURIComponent($('EDIT_USERNAME').value);
+		strPostData += "&EDIT_ALIAS=" + encodeURIComponent($('EDIT_ALIAS').value);
+		strPostData += "&EDIT_LEVEL=" + encodeURIComponent($('EDIT_LEVEL').value);
+		strPostData += "&EDIT_USER_STATUS=" + encodeURIComponent($('EDIT_USER_STATUS').checked == true ? "Disable" : "Active");
+		var xmlHttp = initxmlhttp();
+		
+	    xmlHttp.onreadystatechange = function()
+		{
+			if (xmlHttp.readyState==4 && xmlHttp.status== 200)
+			{
+				var xmldom = xmlHttp.responseXML;
+				xmldom.documentElement.normalize();
+				var responseNode = xmldom.documentElement.childNodes.item(0);
+				if(responseNode.tagName == "response")
+				{
+					var errno = responseNode.getAttribute("errno")
+					if(errno == "0" || errno == 0)
+					{ 
+						clear_table_without_header($('USERTBL'));
+						load_users($('USERTBL').getAttribute('orderby'), $('USERTBL').getAttribute($('USERTBL').getAttribute('orderby')));
+					
+					}
+					else
+					{
+						alert("编辑账号失败");
+					}
+				}
+			}
+		}
+		xmlHttp.open("POST", qUrl , true);
+		xmlHttp.setRequestHeader("Content-Type","text/html;application/x-www-form-urlencoded");
+		xmlHttp.send(strPostData);
+	}
+
+	function sort_users(orderby)
+	{
+		$('USERTBL').setAttribute('orderby', orderby);
+
+		clear_table_without_header($('USERTBL'));
+
+		if($('USERTBL').getAttribute(orderby) == 'true')
+			$('USERTBL').setAttribute(orderby, 'false');
+		else
+			$('USERTBL').setAttribute(orderby, 'true');
+
+		load_users($('USERTBL').getAttribute('orderby'), $('USERTBL').getAttribute($('USERTBL').getAttribute('orderby')))
+	}
+
+	function switch_id_type()
+	{
+
+		if(document.getElementsByName('NEW_TYPE')[0].checked)
+		{
+			$('NEW_USERPWD').disabled = false;
+			$('NEW_USERPWD2').disabled = false;
+
+			$('NEW_LEVEL').disabled = false;
+
+			$('NEW_USERPWD').value = "";
+			$('NEW_USERPWD2').value = "";
+
+			
+		}
+		else if(document.getElementsByName('NEW_TYPE')[1].checked)
+		{
+			$('NEW_USERPWD').disabled = true;
+			$('NEW_USERPWD2').disabled = true;
+
+			$('NEW_LEVEL').disabled = true;
+
+			$('NEW_USERPWD').value = randpwd();
+			$('NEW_USERPWD2').value = $('NEW_USERPWD').value;
+
+			$('NEW_LEVEL').value = $('NEW_USER_DIV').getAttribute("defaultlevel");
+		}
+	}
+</script>
+</head>
+
+<body onLoad="init()" onUnload="">
+
+<div class="div1" id="NEW_USER_DIV" style="display:none">
+	<table id="NEW_USER_SIZE" bgcolor="#EDF1F8" border="0" cellspacing="0" cellpadding="0">
+	<tr><td>
+		<table id="NEW_USER_TBL" border="0" bordercolorlight="#C0C0C0" cellspacing="0" cellpadding="1" bordercolordark="#FFFFFF" class="gray" bgcolor="#FFFFFF">
+		<tr height="28">
+			<td colspan="2" class="blue">
+			<table border="0" width="100%" cellpadding="2" cellspacing="2" onMouseOver="this.mousepoint = 99;this.style.cursor = 'move';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onMouseDown="return drag($('NEW_USER_DIV'), (event ? event : window.event));"><tr>
+				<td align="left" width="16"><img src="append.gif"></td><td align="left"><b><font color="#FFFFFF"><b>创建账号</b></font></b></td>
+			</tr></table>
+			</td>
+		</tr>
+		<tr>
+		<td class="gray" align="right">类型:</td>
+		<td class="gray" align="left"><input type="radio" name="NEW_TYPE" id="NEW_TYPE" value="member" checked onClick="switch_id_type()">用户<input type="radio" name="NEW_TYPE" id="NEW_TYPE" value="group" onClick="switch_id_type()">邮件组</td>
+		</tr>
+		<tr>
+		<td class="gray" align="right" width="100">邮件账号:</td>
+		<td class="gray" align="left" width="170"><input type="text" name="NEW_USERNAME" id="NEW_USERNAME" size="16" onPaste="this.value=this.value.replace(/[^a-zA-Z0-9\-_\.]/g,'');" onKeyup="this.value=this.value.replace(/[^a-zA-Z0-9\-_\.]/g,'');" onBlur="this.value=this.value.replace(/[^a-zA-Z0-9\-_\.]/g,'');"></td>
+		</tr>
+		<tr>
+		<td class="gray" align="right">密码:</td>
+		<td class="gray" align="left"><input type="password" name="NEW_USERPWD" id="NEW_USERPWD" size="16"></td>
+		</tr>
+		<tr>
+		<td class="gray" align="right">验证密码:</td>
+		<td class="gray" align="left"><input type="password" name="NEW_USERPWD2" id="NEW_USERPWD2" size="16"></td>
+		</tr>
+		<tr>
+		<td class="gray" align="right">别名:</td>
+		<td class="gray" align="left"><input type="text" name="NEW_ALIAS" id="NEW_ALIAS" size="16"></td>
+		</tr>
+		<tr>
+		<td class="gray" align="right">策略组:</td>
+		<td class="gray" align="left"><select nam="NEW_LEVEL" id="NEW_LEVEL"></select></td>
+		</tr>
+		</table>
+	</td><tr>
+	<tr><td>
+		<table border="0" cellpadding="2" cellspacing="2" width="100%" bgcolor="#EDF1F8"><tr>
+		<td align="center"><input type="image" src="ok.gif" onMouseOver="this.src='ok2.gif'" onMouseOut="this.src='ok.gif'" onClick="do_add_user(); $('NEW_USER_DIV').style.display='none';"></td>
+		<td align="center"><input type="image" src="cancel.gif" onMouseOver="this.src='cancel2.gif'" onMouseOut="this.src='cancel.gif'" onClick="$('NEW_USER_DIV').style.display='none'"></td>
+		</tr></table>
+	</td></tr>
+	</table>
+</div>
+
+<div class="div1" id="EDIT_USER_DIV" style="display:none">
+	<table  id="EDIT_USER_SIZE" bgcolor="#EDF1F8" border="0" cellspacing="0" cellpadding="0">
+	<tr><td>
+		<table id="EDIT_USER_TBL" border="0" bordercolorlight="#C0C0C0" cellspacing="0" cellpadding="1" bordercolordark="#FFFFFF" class="gray" bgcolor="#FFFFFF">
+		<tr height="28">
+			<td colspan="2" class="blue">
+			<table border="0" width="100%" cellpadding="2" cellspacing="2" onMouseOver="this.mousepoint = 99;this.style.cursor = 'move';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onMouseDown="return drag($('EDIT_USER_DIV'), (event ? event : window.event));"><tr>
+				<td align="left" width="16"><img src="edit.gif"></td><td align="left"><b><font color="#FFFFFF"><b>编辑账号</b></font></b></td>
+			</tr></table>
+			</td>
+		</tr>
+		<tr>
+		<td class="gray" align="right" width="100">邮件账号:</td>
+		<td class="gray" align="left" width="170"><input type="text" name="EDIT_USERNAME" id="EDIT_USERNAME" size="16" readonly="true"></td>
+		</tr>
+		<tr>
+		<tr>
+		<td class="gray" align="right">别名:</td>
+		<td class="gray" align="left"><input type="text" name="EDIT_ALIAS" id="EDIT_ALIAS" size="16"></td>
+		</tr>
+		<tr>
+		<td class="gray" align="right">策略组:</td>
+		<td class="gray" align="left"><select name="EDIT_LEVEL" id="EDIT_LEVEL"></select></td>
+		</tr>
+		<tr>
+		<td class="gray" align="right">禁用:</td>
+		<td class="gray" align="left"><input type="checkbox" name="EDIT_USER_STATUS" id="EDIT_USER_STATUS"></td>
+		</tr>
+		</table>
+	</td><tr>
+	<tr><td>
+		<table border="0" cellpadding="2" cellspacing="2" width="100%">
+			<td align="center"><input type="image" src="ok.gif" onMouseOver="this.src='ok2.gif'" onMouseOut="this.src='ok.gif'" onClick="do_edit_user(); $('EDIT_USER_DIV').style.display='none';"></td>
+			<td align="center"><input type="image" src="cancel.gif" onMouseOver="this.src='cancel2.gif'" onMouseOut="this.src='cancel.gif'" onClick="$('EDIT_USER_DIV').style.display='none'"></td>
+		</table>
+	</td></tr>
+	</table>
+</div>
+<table border="0" width="100%" bordercolorlight="#C0C0C0" cellpadding="0" cellspacing="0" bordercolordark="#FFFFFF">
+<tr><td class="title">
+
+<table name="TITLE_BAR" id="TITLE_BAR" border="0" width="100%" bordercolorlight="#C0C0C0" cellpadding="2" cellspacing="0" bordercolordark="#FFFFFF">
+  <tr align="center" valign="middle" height="32">
+    <td width="22" background="topbg.gif"><img src="append.gif"></td>
+    <td align="left" background="topbg.gif"><a href="javascript:show_newuser_div();"><font color="#FFFFFF"><b>增加账号</b></font></a></td>
+  </tr>
+</table>
+</td></tr>
+</table>
+<table border="0" width="100%" bordercolorlight="#C0C0C0" cellpadding="2" cellspacing="0" bordercolordark="#FFFFFF">
+  <tr>
+		<td valign="top">
+			<table id="USERTBL" border="0" width="100%" bordercolorlight="#C0C0C0" cellspacing="0" cellpadding="1" bordercolordark="#FFFFFF" class="gray">
+			<tr height= "25">
+				<td width="22" class="blue" align="center" valign="middle" height="25"><img src="book.gif"></td>
+				<td height="25" align="center" class="blue" onMouseOver="this.mousepoint = 99;this.style.cursor = 'pointer';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onClick="sort_users('uname')"><font color="#FFFFFF"><b>账号</b></font></td>
+				<td height="25" align="center" class="blue" onMouseOver="this.mousepoint = 99;this.style.cursor = 'pointer';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onClick="sort_users('ualias')"><font color="#FFFFFF"><b>名称</b></font></td>
+				<td height="25" align="center" class="blue" onMouseOver="this.mousepoint = 99;this.style.cursor = 'pointer';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onClick="sort_users('ulevel')"><font color="#FFFFFF"><b>策略组</b></font></td>
+				<td height="25" align="center" class="blue" onMouseOver="this.mousepoint = 99;this.style.cursor = 'pointer';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onClick="sort_users('utype')"><font color="#FFFFFF"><b>类型</b></font></td>
+				<td height="25" align="center" class="blue" onMouseOver="this.mousepoint = 99;this.style.cursor = 'pointer';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onClick="sort_users('urole')"><font color="#FFFFFF"><b>级别</b></font></td>
+				<td height="25" align="center" class="blue" onMouseOver="this.mousepoint = 99;this.style.cursor = 'pointer';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onClick="sort_users('ustatus')"><font color="#FFFFFF"><b>状态</b></font></td>
+				<td height="25" align="center" class="blue"><font color="#FFFFFF"><b>编辑</b></font></td>
+				<td height="25" align="center" class="blue"><font color="#FFFFFF"><b>删除</b></font></td>
+			</tr>
+			</table>
+			<div id="STATUS"></div>
+		</td>
+	</tr>
+	<tr>
+		<td valign="top">
+			<div id="STATUS"></div>
+		</td>
+	</tr>
+</table>
+
+</body>
+
+</html>

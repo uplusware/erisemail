@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<language>
+	<text name="reject" value="Rejected"/>
+	<text name="uploaderror1" value="File is too large"/>
+	<text name="uploaderror2" value="Upload file failed"/>
+	<text name="uploaderror3" value="The size of attachment is 0"/>
+</language>

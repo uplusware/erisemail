@@ -1,0 +1,188 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<LINK rel="Bookmark" href="erisemail.ico" >
+<LINK rel="Shortcut Icon" href="erisemail.ico" />
+<link href="css.css" rel="stylesheet" type="text/css">
+<script type="text/javascript" src="inc.js"></script>
+<title>..:::易睿邮件后台管理系统:::..</title>
+</head>
+<script language="JavaScript"> 
+	function logout()
+	{
+		var qUrl = "/api/logout.xml";
+		var xmlHttp = initxmlhttp();
+	    xmlHttp.onreadystatechange = function()
+		{
+			if (xmlHttp.readyState==4 && xmlHttp.status== 200)
+			{
+				var xmldom = xmlHttp.responseXML;
+				xmldom.documentElement.normalize();
+				var responseNode = xmldom.documentElement.childNodes.item(0);
+				if(responseNode.tagName == "response")
+				{
+					var errno = responseNode.getAttribute("errno")
+						if(errno == "0" || errno == 0)
+						{
+							window.location = "/admin";
+						}
+				}
+			}
+		}
+		xmlHttp.open("GET", qUrl , true);
+		xmlHttp.send("");
+	}	
+
+	function change_tab(tabname)
+	{
+		if(tabname == "status")
+		{
+			$('imgstatus').src = "manstatus.gif";
+			$('imglevel').src = "manlevel2.gif";
+			$('imgmail').src = "manmail2.gif";
+			$('imguser').src = "manuser2.gif";
+			$('imggroup').src = "mangroup2.gif";
+			$('imgaccess').src = "manaccess2.gif";
+			$('imglog').src = "manlog2.gif";
+			
+		}
+		else if(tabname == "level")
+		{
+			$('imgstatus').src = "manstatus2.gif";
+			$('imglevel').src = "manlevel.gif";
+			$('imgmail').src = "manmail2.gif";
+			$('imguser').src = "manuser2.gif";
+			$('imggroup').src = "mangroup2.gif";
+			$('imgaccess').src = "manaccess2.gif";
+			$('imglog').src = "manlog2.gif";
+		}
+		else if(tabname == "mail")
+		{
+			$('imgstatus').src = "manstatus2.gif";
+			$('imglevel').src = "manlevel2.gif";
+			$('imgmail').src = "manmail.gif";
+			$('imguser').src = "manuser2.gif";
+			$('imggroup').src = "mangroup2.gif";
+			$('imgaccess').src = "manaccess2.gif";
+			$('imglog').src = "manlog2.gif";
+		}
+		else if(tabname == "user")
+		{
+			$('imgstatus').src = "manstatus2.gif";
+			$('imglevel').src = "manlevel2.gif";
+			$('imgmail').src = "manmail2.gif";
+			$('imguser').src = "manuser.gif";
+			$('imggroup').src = "mangroup2.gif";
+			$('imgaccess').src = "manaccess2.gif";
+			$('imglog').src = "manlog2.gif";
+		}
+		else if(tabname == "group")
+		{
+			$('imgstatus').src = "manstatus2.gif";
+			$('imglevel').src = "manlevel2.gif";
+			$('imgmail').src = "manmail2.gif";
+			$('imguser').src = "manuser2.gif";
+			$('imggroup').src = "mangroup.gif";
+			$('imgaccess').src = "manaccess2.gif";
+			$('imglog').src = "manlog2.gif";
+		}
+		else if(tabname == "access")
+		{
+			$('imgstatus').src = "manstatus2.gif";
+			$('imglevel').src = "manlevel2.gif";
+			$('imgmail').src = "manmail2.gif";
+			$('imguser').src = "manuser2.gif";
+			$('imggroup').src = "mangroup2.gif";
+			$('imgaccess').src = "manaccess.gif";
+			$('imglog').src = "manlog2.gif";
+		}
+		else if(tabname == "log")
+		{
+			$('imgstatus').src = "manstatus2.gif";
+			$('imglevel').src = "manlevel2.gif";
+			$('imgmail').src = "manmail2.gif";
+			$('imguser').src = "manuser2.gif";
+			$('imggroup').src = "mangroup2.gif";
+			$('imgaccess').src = "manaccess2.gif";
+			$('imglog').src = "manlog.gif";
+		}
+	}
+</script>
+<body>
+<table width="1000" border="0" cellspacing="1" cellpadding="1" height="700">
+  <tr>
+    <td width="160" bgcolor="#FFFFFF" valign="top">
+		<table width="100%" height="100%" border="0" cellspacing="1" cellpadding="1">
+		  <tr height="62">
+          	<td valign="top" align="center"><img src="man-erise-logo.gif" width="135" height="60">
+            </td>
+          </tr>
+		  <tr ><td  valign="top" >
+				 <table width="100%" border="0" cellspacing="0" cellpadding="0">
+				          <tr align="center">
+							<td><img src="man_menutop.gif"></td>
+						  </tr>
+						  
+						  <tr><td>
+							<table width="100%" border="0" cellspacing="6" cellpadding="0" background="man_menubg.gif">
+								<tr align="center">
+									<td ><input type="image" src="manstatus_btn.gif" onMouseOver="this.src='manstatus_btn2.gif'" onMouseOut="this.src='manstatus_btn.gif'" onClick="window.parent.childframe.location.href='man_status.html'"></td>
+								  </tr>
+								  <tr align="center">
+									<td ><input type="image"  src="manlevel_btn.gif" onMouseOver="this.src='manlevel_btn2.gif'" onMouseOut="this.src='manlevel_btn.gif'" onClick="window.parent.childframe.location.href='man_levels.html'"></td>
+								  </tr>
+								  <tr align="center">
+									<td ><input type="image"  src="manmail_btn.gif" onMouseOver="this.src='manmail_btn2.gif'" onMouseOut="this.src='manmail_btn.gif'" onClick="window.parent.childframe.location.href='man_mails.html'"></td>
+								  </tr>
+								  <tr align="center">
+									<td ><input type="image"  src="manuser_btn.gif" onMouseOver="this.src='manuser_btn2.gif'" onMouseOut="this.src='manuser_btn.gif'" onClick="window.parent.childframe.location.href='man_users.html'"></td>
+								  </tr>
+								   <tr align="center">
+									<td ><input type="image"  src="mangroup_btn.gif" onMouseOver="this.src='mangroup_btn2.gif'" onMouseOut="this.src='mangroup_btn.gif'" onClick="window.parent.childframe.location.href='man_groups.html'"></td>
+								  </tr>
+								   <tr align="center">
+									<td ><input type="image"  src="manaccess_btn.gif" onMouseOver="this.src='manaccess_btn2.gif'" onMouseOut="this.src='manaccess_btn.gif'" onClick="window.parent.childframe.location.href='man_access.html'"></td>
+								  </tr>
+								   <tr align="center">
+									<td ><input type="image"  src="manlog_btn.gif" onMouseOver="this.src='manlog_btn2.gif'" onMouseOut="this.src='manlog_btn.gif'" onClick="window.parent.childframe.location.href='man_logs.html'"></td>
+								  </tr>
+								  <tr align="center">
+									<td ><input type="image"  src="manexit_btn.gif" onMouseOver="this.src='manexit_btn2.gif'" onMouseOut="this.src='manexit_btn.gif'" onClick="logout()"></td>
+								  </tr>
+							</table>
+						  </td></tr>
+						  <tr align="center">
+							<td><img src="man_menubot.gif"></td>
+						  </tr>
+				</table>
+		  </td></tr>
+		</table>
+	</td>
+    <td  bgcolor="#FFFFFF" valign="top" align="left">
+    	<table border="0" cellspacing="1" cellpadding="0">
+			 <tr align="left">
+		        <td ><img name="imgstatus" id="imgstatus" src="manstatus2.gif" ></td>
+				<td ><img name="imglevel" id="imglevel" src="manlevel2.gif"></td>
+				<td ><img name="imgmail" id="imgmail" src="manmail2.gif" ></td>
+				<td ><img name="imguser" id="imguser" src="manuser2.gif"></td>
+				<td ><img name="imggroup" id="imggroup" src="mangroup2.gif"></td>
+				<td ><img name="imgaccess" id="imgaccess" src="manaccess2.gif"></td>
+				<td ><img name="imglog" id="imglog" src="manlog2.gif"></td>
+			 </tr>
+		</table>
+							
+	<iframe name="childframe" longdesc="..:::易睿邮件后台管理系统:::.." src="man_status.html" width="100%" height="700" scrolling="auto" marginwidth="1" marginheight="1" border="0" frameborder="0" title="..:::易睿邮件后台管理系统:::..">
+	</iframe>	
+	</td>
+  </tr>
+</table>
+<table width="100%" border="0" cellspacing="2" cellpadding="2">
+  <tr>
+    <td><p align="center">copyright &copy; <a href="http://www.uplusware.com" target="_blank">uplusware</a> 2009, all right reserved</td>
+  </tr>
+</table>
+
+
+</body>
+</html>

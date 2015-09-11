@@ -1,0 +1,6686 @@
+#include "imap.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/types.h>          /* See NOTES */
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <time.h>
+#include "util/base64.h"
+#include "util/md5.h"
+#include "letter.h"
+#include "tinyxml/tinyxml.h"
+#include "mime.h"
+#include "service.h"
+
+static const char* USER_PRI_TBL[] = { "READ-ONLY", "READ-WRITE", NULL };
+
+static char CHAR_TBL[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890=/";
+
+CMailImap::CMailImap(int sockfd, const char* clientip, StorageEngine* storage_engine, BOOL isSSL)
+{
+	m_sockfd = sockfd;
+	m_clientip = clientip;
+	m_lsockfd = NULL;
+	m_lssl = NULL;
+	
+	m_storageEngine = storage_engine;
+	
+	m_ssl = NULL;
+	m_ssl_ctx = NULL;
+	
+	m_isSSL = isSSL;
+	if(isSSL)
+	{	
+		X509* client_cert;
+		SSL_METHOD* meth;
+		SSL_load_error_strings();
+		OpenSSL_add_ssl_algorithms();
+		meth = (SSL_METHOD*)SSLv23_server_method();
+		m_ssl_ctx = SSL_CTX_new(meth);
+		if(!m_ssl_ctx)
+			return;
+		SSL_CTX_set_verify(m_ssl_ctx, SSL_VERIFY_PEER, NULL);
+		
+		SSL_CTX_load_verify_locations(m_ssl_ctx, m_ca_crt_root.c_str(), NULL);
+		if(SSL_CTX_use_certificate_file(m_ssl_ctx, m_ca_crt_server.c_str(), SSL_FILETYPE_PEM) <= 0)
+		{
+			printf("SSL_CTX_use_certificate_file: %s\n", ERR_error_string(ERR_get_error(),NULL));
+			throw new string(ERR_error_string(ERR_get_error(), NULL));
+			return;
+		}
+		SSL_CTX_set_default_passwd_cb_userdata(m_ssl_ctx, (char*)m_ca_password.c_str());
+
+		//m_ssl_ctx->default_passwd_callback_userdata = (char*)m_ca_password.c_str();
+		if(SSL_CTX_use_PrivateKey_file(m_ssl_ctx, m_ca_key_server.c_str(), SSL_FILETYPE_PEM) <= 0)
+		{
+			printf("SSL_CTX_use_certificate_file: %s\n", ERR_error_string(ERR_get_error(),NULL));
+			throw new string(ERR_error_string(ERR_get_error(), NULL));
+			return;
+		}
+		if(!SSL_CTX_check_private_key(m_ssl_ctx))
+		{
+			printf("SSL_CTX_use_certificate_file: %s\n", ERR_error_string(ERR_get_error(),NULL));
+			throw new string(ERR_error_string(ERR_get_error(), NULL));
+
+			return;
+		}
+		SSL_CTX_set_cipher_list(m_ssl_ctx,"RC4-MD5");
+		SSL_CTX_set_mode(m_ssl_ctx, SSL_MODE_AUTO_RETRY);
+		
+		m_ssl = SSL_new(m_ssl_ctx);
+		if(!m_ssl)
+		{
+			throw new string(ERR_error_string(ERR_get_error(), NULL));
+			return;
+		}
+		SSL_set_fd(m_ssl, m_sockfd);
+		int err = SSL_accept(m_ssl);
+		if(err == -1)
+		{
+			printf("SSL_accept: %s\n", ERR_error_string(ERR_get_error(),NULL));
+			throw new string(ERR_error_string(ERR_get_error(), NULL));
+			return;
+		}
+		if(m_enableclientcacheck)
+		{
+			X509* client_cert;
+			client_cert = SSL_get_peer_certificate (m_ssl);
+			if (client_cert != NULL)
+			{
+				X509_free (client_cert);
+			}
+			else
+			{
+				if(m_ssl)
+					SSL_shutdown(m_ssl);
+				if(m_ssl)
+					SSL_free(m_ssl);
+				if(m_ssl_ctx)
+					SSL_CTX_free(m_ssl_ctx);
+				m_ssl = NULL;
+				m_ssl_ctx = NULL;
+				throw new string(ERR_error_string(ERR_get_error(), NULL));
+			}
+		}
+
+		int flags = fcntl(m_sockfd, F_GETFL, 0); 
+		fcntl(m_sockfd, F_SETFL, flags | O_NONBLOCK); 
+
+		m_lssl = new linessl(m_sockfd, m_ssl);
+	}
+	else
+	{
+		int flags = fcntl(m_sockfd, F_GETFL, 0); 
+		fcntl(m_sockfd, F_SETFL, flags | O_NONBLOCK); 
+
+		m_lsockfd = new linesock(m_sockfd);
+	}
+	
+	m_global_uid++;
+
+	On_Service_Ready();
+}
+
+CMailImap::~CMailImap()
+{
+	if(m_ssl)
+		SSL_shutdown(m_ssl);
+	if(m_ssl)
+		SSL_free(m_ssl);
+	if(m_ssl_ctx)
+		SSL_CTX_free(m_ssl_ctx);
+
+	m_ssl = NULL;
+	m_ssl_ctx = NULL;
+
+	if(m_sockfd > 0)
+	{
+		close(m_sockfd);
+		m_sockfd = -1;
+	}
+	if(m_lsockfd)
+		delete m_lsockfd;
+	if(m_lssl)
+		delete m_lssl;	
+}
+
+int CMailImap::ImapSend(const char* buf, int len)
+{
+	//printf("%s", buf);
+	if(m_isSSL)
+		if(m_ssl)
+			return SSLWrite(m_sockfd, m_ssl, buf, len);
+		else
+			return -1;
+	else
+		return Send( m_sockfd, buf, len);
+}
+
+int CMailImap::ImapRecv(char* buf, int len)
+{
+	if(m_isSSL)
+		if(m_ssl)
+			return m_lssl->drecv(buf, len);
+		else
+			return -1;
+	else
+		return m_lsockfd->drecv(buf, len);
+}
+
+int CMailImap::ProtRecv(char* buf, int len)
+{
+	if(m_isSSL)
+		if(m_ssl)
+			return m_lssl->lrecv(buf, len);
+		else
+			return -1;
+	else
+	{
+		return m_lsockfd->lrecv(buf,len);
+	}
+}
+
+
+void CMailImap::On_Unknown(char* text)
+{
+	char cmd[512];
+	string strTag;
+	strcut(text, NULL, " ", strTag);
+	
+	sprintf(cmd, "%s BAD command unknown or arguments invailid\r\n", strTag.c_str());
+	ImapSend( cmd, strlen(cmd));
+}
+
+void CMailImap::On_Service_Ready()
+{
+	char cmd[1024];
+	sprintf(cmd, "* OK %s IMAP4rev1 Server is ready by eRisemail-%s powered by Uplusware\r\n", m_localhostname.c_str(), m_sw_version.c_str());
+	ImapSend(cmd, strlen(cmd));
+
+}
+
+void CMailImap::On_Capability(char* text)
+{
+	char cmd[1024];
+	string strTag;
+	strcut(text, NULL, " ", strTag);
+	
+	sprintf(cmd, "* CAPABILITY IMAP4rev1 STARTTLS AUTH=CRAM-MD5 AUTH=DIGEST-MD5\r\n");
+	ImapSend(cmd, strlen(cmd));
+	sprintf(cmd, "%s OK CAPABILITY completed\r\n", strTag.c_str());
+	ImapSend(cmd, strlen(cmd));
+}
+
+void CMailImap::On_Noop(char* text)
+{	
+	char cmd[1024];
+	string strTag;
+	strcut(text, NULL, " ", strTag);
+	if((m_status&STATUS_AUTHED) == STATUS_AUTHED)
+	{
+		if((m_status & STATUS_SELECT) == STATUS_SELECT)
+		{			
+			MailStorage* mailStg;
+			StorageEngineInstance stgengine_instance(m_storageEngine, &mailStg);
+			if(!mailStg)
+			{
+				printf("%s::%s Get Storage Engine Failed!\n", __FILE__, __FUNCTION__);
+				return;
+			}
+			mailStg->ListMailByDir((char*)m_username.c_str(), m_maillisttbl, (char*)m_strSelectedDir.c_str());
+			
+			unsigned int nExist = 0;
+			unsigned int nRecent = 0;
+			unsigned int nUnseen = 0;
+			unsigned int firstUnseen = 0;
+			nExist = m_maillisttbl.size();
+			for(int i = 0; i < m_maillisttbl.size(); i++)
+			{
+				if( (time(NULL) - m_maillisttbl[i].mtime)  > RECENT_MSG_TIME )
+				{
+					nRecent++;
+				}
+				if( (m_maillisttbl[i].mstatus & MSG_ATTR_SEEN) != MSG_ATTR_SEEN )
+				{
+					if(firstUnseen == 0)
+						firstUnseen = i;
+					nUnseen++;
+				}
+			}
+			
+			sprintf(cmd, 
+				"* %u EXISTS\r\n"
+				"* %u RECENT\r\n"
+				"* FLAGS (\\Answered \\Flagged \\Deleted \\Seen \\Draft)\r\n"
+				"%s OK NOOP completed\r\n",
+				nExist, nRecent, strTag.c_str());
+		}
+		else
+		{
+			sprintf(cmd, "%s OK NOOP Complated\r\n", strTag.c_str());
+		}
+	}
+	else
+	{
+		sprintf(cmd, "%s OK NOOP completed\r\n", strTag.c_str());	
+	}
+	ImapSend(cmd, strlen(cmd));
+}
+
+void CMailImap::On_Logout(char* text)
+{
+	char cmd[1024];
+	string strTag;
+	strcut(text, NULL, " ", strTag);
+	
+	sprintf(cmd, "* BYE IMAP4rev1 Server Logout\r\n");
+	ImapSend(cmd, strlen(cmd));
+	sprintf(cmd, "%s BYE LOGOUT completed\r\n", strTag.c_str());
+	ImapSend(cmd, strlen(cmd));
+}
+
+BOOL CMailImap::On_Authenticate(char* text)
+{
+	MailStorage* mailStg;
+	StorageEngineInstance stgengine_instance(m_storageEngine, &mailStg);
+	if(!mailStg)
+	{
+		printf("%s::%s Get Storage Engine Failed!\n", __FILE__, __FUNCTION__);
+		return FALSE;
+	}
+	char cmd[1024];
+	string strTag;
+	string strAuthType;
+	
+	string strText = text;
+	vector<string> vecDest;
+	ParseCommand(text, vecDest);
+	strTag = vecDest[0];
+	strAuthType = vecDest[2];
+	
+	if(strcasecmp(strAuthType.c_str(),"PLAIN") == 0)
+	{
+		return FALSE;
+	}
+	else if(strcasecmp(strAuthType.c_str(),"DIGEST-MD5") == 0)//(strAuthType == "DIGEST-MD5")
+	{
+		m_authType = atDIGEST_MD5;
+		
+		string strChallenge;
+		char cmd[512];
+		char nonce[15];
+		srand(time(NULL));
+		sprintf(nonce, "%c%c%c%08x%c%c%c",
+			CHAR_TBL[rand()%(sizeof(CHAR_TBL)-1)],
+			CHAR_TBL[rand()%(sizeof(CHAR_TBL)-1)],
+			CHAR_TBL[rand()%(sizeof(CHAR_TBL)-1)],
+			(unsigned int)time(NULL),
+			CHAR_TBL[rand()%(sizeof(CHAR_TBL)-1)],
+			CHAR_TBL[rand()%(sizeof(CHAR_TBL)-1)],
+			CHAR_TBL[rand()%(sizeof(CHAR_TBL)-1)]);
+		sprintf(cmd, "realm=\"%s\",nonce=\"%s\",qop=\"auth\",charset=utf-8,algorithm=md5-sess\n", m_localhostname.c_str(), nonce);
+		int outlen  = BASE64_ENCODE_OUTPUT_MAX_LEN(strlen(cmd));
+		char* szEncoded = (char*)malloc(outlen);
+		memset(szEncoded, 0, outlen);
+		
+		CBase64::Encode(cmd, strlen(cmd), szEncoded, &outlen);
+		sprintf(cmd, "+ ");
+		ImapSend(cmd,strlen(cmd));
+		ImapSend(szEncoded, outlen);
+		ImapSend((char*)"\r\n", 2);
+		
+		char szText[4096];
+		memset(szText, 0, 4096);
+		if(ProtRecv(szText, 4095) <= 0)
+			return FALSE;
+		
+		////////////////////////////////
+		string strEncoded;
+		string strToken;
+		strcut(szText, NULL, "\r\n",strEncoded);
+		
+		outlen = BASE64_DECODE_OUTPUT_MAX_LEN(strEncoded.length());
+		char* tmp = (char*)malloc(outlen);
+		memset(tmp, 0, outlen);
+		CBase64::Decode((char*)strEncoded.c_str(), strEncoded.length(), tmp, &outlen);
+		
+		string strRealm, strNonce, strCNonce, strDigestUri, strQop, strNc;
+		
+		string strRight;
+		strcut(tmp, "username=\"", "\"", m_username);
+		
+		strcut(tmp, "realm=\"", "\"", strRealm);
+		
+		strcut(tmp, "response=", "\n", strRight);
+		strcut(strRight.c_str(), NULL, ",", strToken);
+		
+		strcut(tmp, "nonce=\"", "\"", strNonce);
+		
+		strcut(tmp, "cnonce=\"", "\"", strCNonce);
+		
+		strcut(tmp, "digest-uri=\"", "\"", strDigestUri);
+		
+		strcut(tmp, "qop=", "\n", strRight);
+		strcut(strRight.c_str(), NULL, ",", strQop);
+		
+		strcut(tmp, "nc=", "\n", strRight);
+		strcut(strRight.c_str(), NULL, ",", strNc);
+		free(tmp);
+		
+		string strpwd;
+		mailStg->GetPassword(m_username.c_str(), strpwd);
+		
+		unsigned char digest1[16];
+		string strMD5src1;
+		strMD5src1 = m_username + ":" + strRealm + ":" + strpwd;
+		MD5_CTX md5;
+		md5.MD5Update((unsigned char*)strMD5src1.c_str(), strMD5src1.length());
+		md5.MD5Final(digest1);
+		
+		unsigned char digest2[16];
+		string strMD5src2_0 = ":";
+		strMD5src2_0 += strNonce + ":" + strCNonce;
+		
+		char* szMD5src2_1 = (char*)malloc(16 + strMD5src2_0.length() + 1);
+		memcpy(szMD5src2_1, digest1, 16);
+		memcpy(&szMD5src2_1[16], strMD5src2_0.c_str(), strMD5src2_0.length() + 1);
+		
+		md5.MD5Update((unsigned char*)szMD5src2_1, 16 + strMD5src2_0.length());
+		md5.MD5Final(digest2);
+		char szMD5Dst2[33];
+		memset(szMD5Dst2, 0, 33);
+		sprintf(szMD5Dst2,
+			"%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
+			digest2[0], digest2[1], digest2[2], digest2[3], digest2[4], digest2[5], digest2[6], digest2[7],
+			digest2[8], digest2[9], digest2[10], digest2[11], digest2[12], digest2[13], digest2[14], digest2[15]);
+		
+		////////////////////////////////////////////////////////////////////////////////////////////////////
+		//Client
+		unsigned char digest3_1[16];
+		string strMD5src3_1 = "AUTHENTICATE:";
+		strMD5src3_1 += strDigestUri;
+		if((strQop == "auth-int") || (strQop == "auth-conf"))
+			strMD5src3_1 += ":00000000000000000000000000000000";
+		
+		md5.MD5Update((unsigned char*)strMD5src3_1.c_str(), strMD5src3_1.length());
+		md5.MD5Final(digest3_1);
+		char szMD5Dst3_1[33];
+		memset(szMD5Dst3_1, 0, 33);
+		sprintf(szMD5Dst3_1,
+			"%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
+			digest3_1[0], digest3_1[1], digest3_1[2], digest3_1[3], digest3_1[4], digest3_1[5], digest3_1[6], digest3_1[7],
+			digest3_1[8], digest3_1[9], digest3_1[10], digest3_1[11], digest3_1[12], digest3_1[13], digest3_1[14], digest3_1[15]);
+		
+		unsigned char digest4_1[16];
+		string strMD5src4_1;
+		strMD5src4_1 = szMD5Dst2;
+		strMD5src4_1 += ":";
+		strMD5src4_1 += strNonce;
+		strMD5src4_1 += ":";
+		strMD5src4_1 += strNc;
+		strMD5src4_1 += ":";
+		strMD5src4_1 += strCNonce;
+		strMD5src4_1 += ":";
+		strMD5src4_1 += strQop;
+		strMD5src4_1 += ":";
+		strMD5src4_1 += szMD5Dst3_1;
+		
+		md5.MD5Update((unsigned char*)strMD5src4_1.c_str(), strMD5src4_1.length());
+		md5.MD5Final(digest4_1);
+		
+		char szMD5Dst4_1[33];
+		memset(szMD5Dst4_1, 0, 33);
+		sprintf(szMD5Dst4_1,
+			"%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
+			digest4_1[0], digest4_1[1], digest4_1[2], digest4_1[3], digest4_1[4], digest4_1[5], digest4_1[6], digest4_1[7],
+			digest4_1[8], digest4_1[9], digest4_1[10], digest4_1[11], digest4_1[12], digest4_1[13], digest4_1[14], digest4_1[15]);
+		string strTokenVerify = szMD5Dst4_1;
+		
+		if(strTokenVerify == strToken)
+		{
+			////////////////////////////////////////////////////////////////////////////////////
+			// server
+			unsigned char digest3_2[16];
+			//at server site, no need "AUTHENTICATE"
+			string strMD5src3_2 = ":";
+			strMD5src3_2 += strDigestUri;
+			if((strQop == "auth-int") || (strQop == "auth-conf"))
+				strMD5src3_2 += ":00000000000000000000000000000000";
+			
+			md5.MD5Update((unsigned char*)strMD5src3_2.c_str(), strMD5src3_2.length());
+			md5.MD5Final(digest3_2);
+			char szMD5Dst3_2[33];
+			memset(szMD5Dst3_2, 0, 33);
+			sprintf(szMD5Dst3_2,
+				"%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
+				digest3_2[0], digest3_2[1], digest3_2[2], digest3_2[3], digest3_2[4], digest3_2[5], digest3_2[6], digest3_2[7],
+				digest3_2[8], digest3_2[9], digest3_2[10], digest3_2[11], digest3_2[12], digest3_2[13], digest3_2[14], digest3_2[15]);
+			
+			unsigned char digest4_2[16];
+			string strMD5src4_2;
+			strMD5src4_2 = szMD5Dst2;
+			strMD5src4_2 += ":";
+			strMD5src4_2 += strNonce;
+			strMD5src4_2 += ":";
+			strMD5src4_2 += strNc;
+			strMD5src4_2 += ":";
+			strMD5src4_2 += strCNonce;
+			strMD5src4_2 += ":";
+			strMD5src4_2 += strQop;
+			strMD5src4_2 += ":";
+			strMD5src4_2 += szMD5Dst3_2;
+			
+			md5.MD5Update((unsigned char*)strMD5src4_2.c_str(), strMD5src4_2.length());
+			md5.MD5Final(digest4_2);
+			
+			char szMD5Dst4_2[33];
+			memset(szMD5Dst4_2, 0, 33);
+			sprintf(szMD5Dst4_2,
+				"%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
+				digest4_2[0], digest4_2[1], digest4_2[2], digest4_2[3], digest4_2[4], digest4_2[5], digest4_2[6], digest4_2[7],
+				digest4_2[8], digest4_2[9], digest4_2[10], digest4_2[11], digest4_2[12], digest4_2[13], digest4_2[14], digest4_2[15]);
+			
+			char cmd[512];
+			sprintf(cmd, "rspauth=%s", szMD5Dst4_2);
+			outlen = BASE64_ENCODE_OUTPUT_MAX_LEN(strlen(cmd)); //strlen(cmd)*4+1;
+			tmp = (char*)malloc(outlen);
+			memset(tmp, 0, outlen);
+			CBase64::Encode((char*)cmd, strlen(cmd), tmp, &outlen);
+			
+			sprintf(cmd,"+ ");
+			ImapSend( cmd, strlen(cmd));
+			ImapSend( tmp, outlen);
+			ImapSend( (char*)"\r\n", 2);
+			free(tmp);
+		}
+		
+		///////////////////////////////////
+		memset(szText, 0, 4096);
+		if(ProtRecv(szText, 4095) <= 0)
+			return FALSE;
+		
+		if(strToken == strTokenVerify)
+		{
+			sprintf(cmd,"%s OK User Logged in\r\n", strTag.c_str());
+			ImapSend(cmd, strlen(cmd));
+			m_status = m_status|STATUS_AUTHED;
+			return TRUE;
+		}
+		else
+		{
+			push_reject_list(m_isSSL ? stIMAPS : stIMAP, m_clientip.c_str());
+			
+			sprintf(cmd,"%s NO User Logged Failed\r\n", strTag.c_str());
+			ImapSend(cmd, strlen(cmd));
+			return FALSE;
+		}		
+	}
+	else if(strcasecmp(strAuthType.c_str(),"CRAM-MD5") == 0)
+	{
+		m_authType = atCRAM_MD5;
+		
+		char cmd[512];
+		srand(time(NULL));
+		sprintf(cmd,"<%u%u.%u@%s>", (unsigned int)(rand()%10000), (unsigned int)getpid(), (unsigned int)time(NULL), m_localhostname.c_str());
+		string strDigest = cmd;
+		int outlen  = BASE64_ENCODE_OUTPUT_MAX_LEN(strlen(cmd)); //strlen(cmd) *4 + 1;
+		char* szEncoded = (char*)malloc(outlen);
+		memset(szEncoded, 0, outlen);
+		CBase64::Encode(cmd, strlen(cmd), szEncoded, &outlen);
+		
+		sprintf(cmd, "+ %s\r\n", szEncoded);
+		free(szEncoded);
+		//printf("%s\n", cmd);
+		ImapSend(cmd,strlen(cmd));
+		
+		char szText[4096];
+		memset(szText, 0, 4096);
+		if(ProtRecv(szText, 4095) <= 0)
+			return FALSE;
+		
+		string strEncoded;
+		strcut(szText, NULL, "\r\n",strEncoded);
+		string strToken;
+		outlen = BASE64_DECODE_OUTPUT_MAX_LEN(strEncoded.length());//strEncoded.length()*4+1;
+		char* tmp = (char*)malloc(outlen);
+		memset(tmp, 0, outlen);
+		CBase64::Decode((char*)strEncoded.c_str(), strEncoded.length(), tmp, &outlen);
+		strcut(tmp, NULL, " ", m_username);
+		strcut(tmp, " ", NULL, strToken);
+		free(tmp);
+		
+		string strpwd;
+		if(mailStg->GetPassword(m_username.c_str(), strpwd) == 0)
+		{
+			unsigned char digest[16];
+			HMAC_MD5((unsigned char*)strDigest.c_str(), strDigest.length(), (unsigned char*)strpwd.c_str(), strpwd.length(), digest);
+			char szMD5dst[33];
+			memset(szMD5dst, 0, 33);
+			sprintf(szMD5dst,
+				"%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
+				digest[0], digest[1], digest[2], digest[3], digest[4], digest[5], digest[6], digest[7],
+				digest[8], digest[9], digest[10], digest[11], digest[12], digest[13], digest[14], digest[15]);
+			
+			if(strcasecmp(szMD5dst, strToken.c_str()) == 0)
+			{
+				sprintf(cmd,"%s OK User Logged in\r\n", strTag.c_str());
+				ImapSend(cmd, strlen(cmd));
+				m_status |= STATUS_AUTHED;
+				return TRUE;
+			}
+			else
+			{
+				push_reject_list(m_isSSL ? stIMAPS : stIMAP, m_clientip.c_str());
+				sprintf(cmd,"%s NO User Logged Failed\r\n", strTag.c_str());
+				ImapSend(cmd, strlen(cmd));
+				return FALSE;
+			}
+		}
+		else
+		{
+			push_reject_list(m_isSSL ? stIMAPS : stIMAP, m_clientip.c_str());
+			sprintf(cmd,"%s NO User Logged Failed\r\n", strTag.c_str());
+			ImapSend(cmd, strlen(cmd));
+			return FALSE;
+		}
+		
+	}
+	/*else if(strcasecmp(strAuthType.c_str(),"KERBEROS_V4") == 0)
+	{
+		m_authType = atKERBEROS_V4;
+		
+		srand(time(NULL));
+		m_challenge = rand();
+		unsigned int ltmp = htonl(m_challenge);
+
+		char szTmp[33];
+		int nTmp = 32;
+		CBase64::Encode((char*)&ltmp, sizeof(unsigned int), szTmp, &nTmp);
+		szTmp[nTmp] = '\0';
+		ImapSend(szTmp, nTmp);
+	}*/
+	else
+	{
+		push_reject_list(m_isSSL ? stIMAPS : stIMAP, m_clientip.c_str());
+		sprintf(cmd, "%s NO authenticate Failed: unsupported authentication mechanism, credentials rejects\r\n", strTag.c_str());
+		ImapSend(cmd, strlen(cmd));
+		return FALSE;
+	}
+	return TRUE;
+}
+
+BOOL CMailImap::On_Login(char* text)
+{
+	MailStorage* mailStg;
+	StorageEngineInstance stgengine_instance(m_storageEngine, &mailStg);
+	if(!mailStg)
+	{
+		printf("%s::%s Get Storage Engine Failed!\n", __FILE__, __FUNCTION__);
+		return FALSE;
+	}
+	BOOL retValue = TRUE;
+	char cmd[1024];
+	string strTag;
+	string password;
+	
+	string strText = text;
+	vector<string> vecDest;
+	ParseCommand(text, vecDest);
+	
+	strTag = vecDest[0];
+	m_username = vecDest[2];
+	password = vecDest[3];
+	
+	if(mailStg->CheckLogin(m_username.c_str(), password.c_str()) == 0)
+	{
+		sprintf(cmd, "%s OK LOGIN Completed\r\n", strTag.c_str());
+		m_status |= STATUS_AUTHED;
+	}
+	else
+	{
+		push_reject_list(m_isSSL ? stIMAPS : stIMAP, m_clientip.c_str());
+		
+		sprintf(cmd, "%s NO LOGIN Failed\r\n", strTag.c_str());
+		retValue = false;
+	}
+	ImapSend(cmd, strlen(cmd));
+
+	return retValue;
+}
+
+//Authenticated state
+void CMailImap::On_Select(char* text)
+{	
+	char cmd[512];
+	string strTag;
+	vector <string> vecDest;
+	ParseCommand(text, vecDest);
+	strTag = vecDest[0];
+	if((m_status&STATUS_AUTHED) == STATUS_AUTHED)
+	{
+		MailStorage* mailStg;
+		StorageEngineInstance stgengine_instance(m_storageEngine, &mailStg);
+		if(!mailStg)
+		{
+			printf("%s::%s Get Storage Engine Failed!\n", __FILE__, __FUNCTION__);
+			return;
+		}
+		m_strSelectedDir = vecDest[2];
+		User_Privilege eUserPri = upReadWrite;
+		
+		mailStg->ListMailByDir((char*)m_username.c_str(), m_maillisttbl, (char*)m_strSelectedDir.c_str());
+		
+		unsigned int nExist = 0;
+		unsigned int nRecent = 0;
+		unsigned int nUnseen = 0;
+		unsigned int firstUnseen = 0;
+		nExist = m_maillisttbl.size();
+		for(int i = 0; i < m_maillisttbl.size(); i++)
+		{
+			if( (time(NULL) - m_maillisttbl[i].mtime)  > RECENT_MSG_TIME )
+			{
+				nRecent++;
+			}
+			if( (m_maillisttbl[i].mstatus & MSG_ATTR_SEEN) != MSG_ATTR_SEEN )
+			{
+				if(firstUnseen == 0)
+					firstUnseen = i;
+				nUnseen++;
+			}
+		}
+		
+		sprintf(cmd, 
+			"* %u EXISTS\r\n"
+			"* %u RECENT\r\n"
+			"* OK [UNSEEN %u] Message %u is first unseen\r\n"
+			"* OK [UIDVALIDITY %d] UIDs valid\r\n"
+			"* FLAGS (\\Answered \\Flagged \\Deleted \\Seen \\Draft)\r\n"
+			"* OK [PERMANENTFLAGS (\\Deleted \\Seen \\*)] Limited\r\n"
+			"%s OK [%s] SELECT completed\r\n",
+			nExist, nRecent, nUnseen, firstUnseen, 1, strTag.c_str(), USER_PRI_TBL[eUserPri]);
+		
+		m_status |= STATUS_SELECT;
+	}
+	else
+	{
+		sprintf(cmd, "%s NO Need LOGIN/AUTHENCIATE\r\n", strTag.c_str());
+	}
+	ImapSend(cmd, strlen(cmd));
+}
+
+void CMailImap::On_Examine(char* text)
+{
+	char cmd[512];
+	string strTag;
+	vector <string> vecDest;
+	ParseCommand(text, vecDest);
+	strTag = vecDest[0];
+	if((m_status&STATUS_AUTHED) == STATUS_AUTHED)
+	{
+		MailStorage* mailStg;
+		StorageEngineInstance stgengine_instance(m_storageEngine, &mailStg);
+		if(!mailStg)
+		{
+			printf("%s::%s Get Storage Engine Failed!\n", __FILE__, __FUNCTION__);
+			return;
+		}
+		string strMailBoxName;
+		strMailBoxName = vecDest[2];
+		
+		mailStg->ListMailByDir((char*)m_username.c_str(), m_maillisttbl, (char*)m_strSelectedDir.c_str());
+		
+		unsigned int nExist = 0;
+		unsigned int nRecent = 0;
+		unsigned int nUnseen = 0;
+		unsigned int firstUnseen = 0;
+		nExist = m_maillisttbl.size();
+		for(int i = 0; i < m_maillisttbl.size(); i++)
+		{
+			if( (time(NULL) - m_maillisttbl[i].mtime)  > RECENT_MSG_TIME )
+			{
+				nRecent++;
+			}
+			if( (m_maillisttbl[i].mstatus & MSG_ATTR_SEEN) != MSG_ATTR_SEEN )
+			{
+				if(firstUnseen == 0)
+					firstUnseen = i;
+				nUnseen++;
+			}
+		}
+		
+		sprintf(cmd, 
+			"* %u EXISTS\r\n"
+			"* %u RECENT\r\n"
+			"* OK [UNSEEN %u] Message %u is first unseen\r\n"
+			"* OK [UIDVALIDITY %d] UIDs valid\r\n"
+			"* FLAGS (\\Answered \\Flagged \\Deleted \\Seen \\Draft)\r\n"
+			"* OK [PERMANENTFLAGS (\\Deleted \\Seen \\*)] Limited\r\n"
+			"%s OK [%s] EXAMINE completed\r\n",
+			nExist, nRecent, nUnseen, 1, strTag.c_str(), USER_PRI_TBL[0]);
+		ImapSend(cmd, strlen(cmd));
+		m_status |= STATUS_SELECT;
+	}
+	else
+	{
+		sprintf(cmd, "%s NO Need LOGIN/AUTHENCIATE\r\n", strTag.c_str());
+		ImapSend(cmd, strlen(cmd));
+	}
+}
+
+void CMailImap::On_Create(char* text)
+{	
+	char cmd[1024];
+	string strTag;
+	vector <string> vecDest;
+	ParseCommand(text, vecDest);
+	strTag = vecDest[0];
+	int dparentid = -1;
+	if((m_status&STATUS_AUTHED) == STATUS_AUTHED)
+	{
+		MailStorage* mailStg;
+		StorageEngineInstance stgengine_instance(m_storageEngine, &mailStg);
+		if(!mailStg)
+		{
+			printf("%s::%s Get Storage Engine Failed!\n", __FILE__, __FUNCTION__);
+			return;
+		}
+		string dname = vecDest[2];
+		
+		if(mailStg->CreateDir(m_username.c_str(), dname.c_str() ) == 0)
+		{
+			sprintf(cmd, "%s OK CTEARE completed\r\n", strTag.c_str());
+			ImapSend(cmd, strlen(cmd));
+		}
+		else
+		{
+			sprintf(cmd, "%s No CTEARE Failed\r\n", strTag.c_str());
+			ImapSend(cmd, strlen(cmd));
+		}
+	}
+	else
+	{
+		sprintf(cmd, "%s NO Need LOGIN/AUTHENCIATE\r\n", strTag.c_str());
+		ImapSend(cmd, strlen(cmd));
+	}
+}
+
+void CMailImap::On_Delete(char* text)
+{	
+	char cmd[1024];
+	string strTag;
+	vector <string> vecDest;
+	ParseCommand(text, vecDest);
+	strTag = vecDest[0];
+	if((m_status&STATUS_AUTHED) == STATUS_AUTHED)
+	{		
+		MailStorage* mailStg;
+		StorageEngineInstance stgengine_instance(m_storageEngine, &mailStg);
+		if(!mailStg)
+		{
+			printf("%s::%s Get Storage Engine Failed!\n", __FILE__, __FUNCTION__);
+			return;
+		}
+		if((strcasecmp(vecDest[2].c_str(), "inbox") == 0) || (strcasecmp(vecDest[2].c_str(), "drafts") == 0) || (strcasecmp(vecDest[2].c_str(), "trash") == 0) || (strcasecmp(vecDest[2].c_str(), "junk") == 0))
+		{
+			sprintf(cmd, "%s NO DELETE Failed: Forbid to Delete Reserved Directory\r\n", strTag.c_str());
+		}
+		else
+		{
+			if(mailStg->DeleteDir((char*)m_username.c_str(), vecDest[2].c_str()) == 0)
+			{
+				sprintf(cmd, "%s OK DELETE completed\r\n", strTag.c_str());
+			}
+			else
+			{
+				sprintf(cmd, "%s NO DELETE Failed\r\n", strTag.c_str());
+			}
+		}
+		ImapSend(cmd, strlen(cmd));
+	}
+	else
+	{
+		sprintf(cmd, "%s NO Need LOGIN/AUTHENCIATE\r\n", strTag.c_str());
+		ImapSend(cmd, strlen(cmd));
+	}
+}
+
+void CMailImap::On_Rename(char* text)
+{	
+	char cmd[1024];
+	string strTag;
+	vector <string> vecDest;
+	ParseCommand(text, vecDest);
+	strTag = vecDest[0];
+	if((m_status&STATUS_AUTHED) == STATUS_AUTHED)
+	{
+		MailStorage* mailStg;
+		StorageEngineInstance stgengine_instance(m_storageEngine, &mailStg);
+		if(!mailStg)
+		{
+			printf("%s::%s Get Storage Engine Failed!\n", __FILE__, __FUNCTION__);
+			return;
+		}
+		if((strcasecmp(vecDest[2].c_str(), "inbox") == 0) || (strcasecmp(vecDest[2].c_str(), "drafts") == 0) || (strcasecmp(vecDest[2].c_str(), "trash") == 0) || (strcasecmp(vecDest[2].c_str(), "junk") == 0))
+		{
+			sprintf(cmd, "%s NO RENAME Failed: Forbid to RENAME Reserved Directory\r\n", strTag.c_str());
+		}
+		else
+		{
+			if(mailStg->RenameDir(m_username.c_str(), vecDest[2].c_str(), vecDest[3].c_str()) == 0)
+			{
+				sprintf(cmd, "%s OK RENAME completed\r\n", strTag.c_str());
+			}
+			else
+			{
+				sprintf(cmd, "%s NO RENAME Failed\r\n", strTag.c_str());
+			}
+		}
+		ImapSend(cmd, strlen(cmd));
+	}
+	else
+	{
+		sprintf(cmd, "%s NO Need LOGIN/AUTHENCIATE\r\n", strTag.c_str());
+		ImapSend(cmd, strlen(cmd));
+	}
+}
+
+
+void CMailImap::On_Subscribe(char* text)
+{
+	char cmd[1024];
+	string strTag;
+	string strText = text;
+	vector<string> vecDest;
+	ParseCommand(text, vecDest);
+	strTag = vecDest[0];
+	if((m_status&STATUS_AUTHED) == STATUS_AUTHED)
+	{
+		MailStorage* mailStg;
+		StorageEngineInstance stgengine_instance(m_storageEngine, &mailStg);
+		if(!mailStg)
+		{
+			printf("%s::%s Get Storage Engine Failed!\n", __FILE__, __FUNCTION__);
+			return;
+		}
+		string strName = vecDest[2];
+		unsigned int status;
+		mailStg->GetDirStatus(m_username.c_str(), strName.c_str(), status);
+		status |= DIR_ATTR_SUBSCRIBED;
+		mailStg->SetDirStatus(m_username.c_str(),strName.c_str(), status);
+		sprintf(cmd, "%s OK SUBSCRIBE completed\r\n", strTag.c_str());
+		ImapSend(cmd, strlen(cmd));
+	}
+	else
+	{
+		sprintf(cmd, "%s NO Need LOGIN/AUTHENCIATE\r\n", strTag.c_str());
+		ImapSend(cmd, strlen(cmd));
+	}
+}
+
+void CMailImap::On_Unsubscribe(char* text)
+{	
+
+	char cmd[1024];
+	string strTag;
+	string strText = text;
+	vector<string> vecDest;
+	ParseCommand(text, vecDest);
+	strTag = vecDest[0];
+	if((m_status&STATUS_AUTHED) == STATUS_AUTHED)
+	{
+		MailStorage* mailStg;
+		StorageEngineInstance stgengine_instance(m_storageEngine, &mailStg);
+
+		if(!mailStg)
+		{
+			printf("%s::%s Get Storage Engine Failed!\n", __FILE__, __FUNCTION__);
+			return;
+		}
+		
+		string strName = vecDest[2];
+		unsigned int status;
+		mailStg->GetDirStatus(m_username.c_str(),strName.c_str(), status);
+		status = status&(~DIR_ATTR_SUBSCRIBED);
+		mailStg->SetDirStatus(m_username.c_str(),strName.c_str(), status);
+		
+		sprintf(cmd, "%s OK SUBSCRIBE completed\r\n", strTag.c_str());
+		ImapSend(cmd, strlen(cmd));
+	}
+	else
+	{
+		sprintf(cmd, "%s NO Need LOGIN/AUTHENCIATE\r\n", strTag.c_str());
+		ImapSend(cmd, strlen(cmd));
+	}
+}
+
+void CMailImap::On_List(char* text)
+{
+	char cmd[1024];
+	string strTag;
+	string strText = text;
+	vector<string> vecDest;
+	ParseCommand(text, vecDest);
+	strTag = vecDest[0];
+	if((m_status&STATUS_AUTHED) == STATUS_AUTHED)
+	{
+		MailStorage* mailStg;
+		StorageEngineInstance stgengine_instance(m_storageEngine, &mailStg);
+		if(!mailStg)
+		{
+			printf("%s::%s Get Storage Engine Failed!\n", __FILE__, __FUNCTION__);
+			return;
+		}
+		string strReference, strName;
+		strReference = vecDest[2];
+		strName = vecDest[3];
+		
+		if((strReference == "") && (strName ==  "") )
+		{
+			sprintf(cmd, "* LIST (\\Noselect) \"/\" \"\"\r\n");
+			ImapSend(cmd, strlen(cmd));
+			
+			sprintf(cmd, "%s OK LIST completed\r\n", strTag.c_str());
+			ImapSend(cmd, strlen(cmd));
+		}
+		else
+		{	
+			vector<Dir_Tree_Ex> ditbl;
+			string strDirRef = strReference + "/" + strName;
+			mailStg->TraversalListDir(m_username.c_str(), strDirRef.c_str(), ditbl);
+			int vlen = ditbl.size();
+			string strStatus;
+			for(int i = 0; i < vlen; i++)
+			{
+				strStatus = "";
+				if((ditbl[i].status & DIR_ATTR_MARKED) == DIR_ATTR_MARKED)
+				{
+					if(strStatus != "")
+						strStatus += " ";
+					strStatus = "\\Marked";
+				}
+				else
+				{
+					if(strStatus != "")
+						strStatus += " ";
+					strStatus = "\\Unmarked";
+				}
+				if((ditbl[i].status & DIR_ATTR_NOINFERIORS) == DIR_ATTR_NOINFERIORS)
+				{
+					if(strStatus != "")
+						strStatus += " ";
+					strStatus += "\\Noinferiors";
+				}
+				
+				vector<string> vecDest1;
+				vector<string> vecDest2;
+				vSplitString(strReference, vecDest1, "/", TRUE, 0x7FFFFFFF);
+				vSplitString(strReference, vecDest2, "/", TRUE, 0x7FFFFFFF);
+				int vLen1, vLen2;
+				vLen1 = vecDest1.size();
+				vLen2 = vecDest1.size();
+				if(vLen1 != vLen2)
+				{
+					if(strStatus != "")
+						strStatus += " ";
+					strStatus += "\\Noselect";
+				}
+				else
+				{
+					for(int j = 0; j < vLen1; j++)
+					{
+						if(strcasecmp(vecDest1[j].c_str(), vecDest2[j].c_str()) != 0)
+						{
+							if(strStatus != "")
+								strStatus += " ";
+							strStatus += "\\Noselect";
+							break;
+						}
+					}
+				}
+				sprintf(cmd, "* LIST (%s) \"%s\" \"%s\"\r\n",strStatus.c_str(), strReference == "" ? "/" : strReference.c_str(), ditbl[i].path.c_str());
+				ImapSend(cmd, strlen(cmd));
+				
+			} 
+			sprintf(cmd, "%s OK LIST completed\r\n", strTag.c_str());
+			ImapSend(cmd, strlen(cmd));
+		}		
+	}
+	else
+	{
+		sprintf(cmd, "%s NO Need LOGIN/AUTHENCIATE\r\n", strTag.c_str());
+		ImapSend(cmd, strlen(cmd));
+	}
+}
+
+void CMailImap::On_Listsub(char* text)
+{	
+	char cmd[1024];
+	string strTag;
+	string strText = text;
+	vector<string> vecDest;
+	ParseCommand(text, vecDest);
+	strTag = vecDest[0];
+	if((m_status&STATUS_AUTHED) == STATUS_AUTHED)
+	{
+		MailStorage* mailStg;
+		StorageEngineInstance stgengine_instance(m_storageEngine, &mailStg);
+		if(!mailStg)
+		{
+			printf("%s::%s Get Storage Engine Failed!\n", __FILE__, __FUNCTION__);
+			return;
+		}
+		string strReference, strName;
+		strReference = vecDest[2];
+		strName = vecDest[3];
+		
+		vector<Dir_Tree_Ex> ditbl;
+		string strDirRef = strReference + "/" + strName;
+		mailStg->TraversalListDir(m_username.c_str(), strDirRef.c_str(), ditbl);
+		int vlen = ditbl.size();
+		string strStatus;
+		for(int i=0; i < vlen; i++)
+		{
+			if((ditbl[i].status & DIR_ATTR_SUBSCRIBED) == DIR_ATTR_SUBSCRIBED)
+			{
+				strStatus = "";
+				if((ditbl[i].status & DIR_ATTR_MARKED) == DIR_ATTR_MARKED)
+				{
+					if(strStatus != "")
+						strStatus += " ";
+					strStatus = "\\Marked";
+				}
+				else
+				{
+					if(strStatus != "")
+						strStatus += " ";
+					strStatus = "\\Unmarked";
+				}
+				if((ditbl[i].status & DIR_ATTR_NOINFERIORS) == DIR_ATTR_NOINFERIORS)
+				{
+					if(strStatus != "")
+						strStatus += " ";
+					strStatus += "\\Noinferiors";
+				}
+				vector<string> vecDest1;
+				vector<string> vecDest2;
+				vSplitString(strReference, vecDest1, "/", TRUE, 0x7FFFFFFF);
+				vSplitString(strReference, vecDest2, "/", TRUE, 0x7FFFFFFF);
+				int vLen1, vLen2;
+				vLen1 = vecDest1.size();
+				vLen2 = vecDest1.size();
+				if(vLen1 != vLen2)
+				{
+					if(strStatus != "")
+						strStatus += " ";
+					strStatus += "\\Noselect";
+				}
+				else
+				{
+					for(int j = 0; j < vLen1; j++)
+					{
+						if(strcasecmp(vecDest1[j].c_str(), vecDest2[j].c_str()) != 0)
+						{
+							if(strStatus != "")
+								strStatus += " ";
+							strStatus += "\\Noselect";
+							break;
+						}
+					}
+				}
+				
+				sprintf(cmd, "* LSUB (%s) \"%s\" \"%s\"\r\n",strStatus.c_str(), strReference == "" ? "/" : strReference.c_str(), ditbl[i].path.c_str());
+				ImapSend(cmd, strlen(cmd));
+			}
+			
+		} 
+		sprintf(cmd, "%s OK LSUB completed\r\n", strTag.c_str());
+		ImapSend(cmd, strlen(cmd));
+	}
+	else
+	{
+		sprintf(cmd, "%s NO Need LOGIN/AUTHENCIATE\r\n", strTag.c_str());
+		ImapSend(cmd, strlen(cmd));
+	}
+}
+
+void CMailImap::On_Status(char* text)
+{	
+	char cmd[1024];
+	string strTag;
+	vector<string> vecDest;
+	ParseCommand(text, vecDest);
+	strTag = vecDest[0];
+	string strResp ="";
+	if((m_status&STATUS_AUTHED) == STATUS_AUTHED)
+	{	
+
+		MailStorage* mailStg;
+		StorageEngineInstance stgengine_instance(m_storageEngine, &mailStg);
+		
+		if(!mailStg)
+		{
+			printf("%s::%s Get Storage Engine Failed!\n", __FILE__, __FUNCTION__);
+			return;
+		}
+
+		if(mailStg->ListMailByDir((char*)m_username.c_str(), m_maillisttbl, /* m_strSelectedDir.c_str()*/ vecDest[2].c_str()) != 0)
+		{
+			printf("List Mail By Dir Failed!\n");
+			return;
+		}
+		
+		unsigned int nExist = 0;
+		unsigned int nRecent = 0;
+		unsigned int nUnseen = 0;
+		nExist = m_maillisttbl.size();
+		for(int i = 0; i < m_maillisttbl.size(); i++)
+		{
+			if( (time(NULL) - m_maillisttbl[i].mtime)  > RECENT_MSG_TIME )
+			{
+				nRecent++;
+			}
+			if( (m_maillisttbl[i].mstatus & MSG_ATTR_SEEN) != MSG_ATTR_SEEN )
+			{
+				nUnseen++;
+			}
+		}
+
+		for(int x = 3; x < vecDest.size(); x++)
+		{			strtrim(vecDest[x], ")");
+			strtrim(vecDest[x], "(");
+			
+			if(vecDest[x] == "MESSAGES")
+			{
+				sprintf(cmd, "MESSAGES %u", nExist);
+				if(strResp == "")
+				{
+					strResp += cmd;
+				}
+				else
+				{
+					strResp += " ";
+					strResp += cmd;
+				}
+			}
+			else if(vecDest[x] == "RECENT")
+			{
+				sprintf(cmd, "RECENT %u", nRecent);
+				if(strResp == "")
+				{
+					strResp += cmd;
+				}
+				else
+				{
+					strResp += " ";
+					strResp += cmd;
+				}
+			}
+			else if(vecDest[x] == "UIDNEXT")
+			{
+				if(m_maillisttbl.size() > 0)
+				{
+					sprintf(cmd, "UIDNEXT %u", m_maillisttbl[m_maillisttbl.size()-1].mid + 1);
+					
+				}
+				else
+				{
+					sprintf(cmd, "UIDNEXT %u", 0);
+				}
+				if(strResp == "")
+				{
+					strResp += cmd;
+				}
+				else
+				{
+					strResp += " ";
+					strResp += cmd;
+				}
+			}
+			else if(vecDest[x] == "UIDVALIDITY")
+			{
+				int dirID;
+				if(mailStg->GetDirID(m_username.c_str(), vecDest[2].c_str(), dirID) == -1)
+				{
+					sprintf(cmd, "%s NO STATUS Failed\r\n", strTag.c_str());
+					ImapSend(cmd, strlen(cmd));
+					return;
+				}
+				sprintf(cmd, "UIDNEXT %d", dirID);
+				if(strResp == "")
+				{
+					strResp += cmd;
+				}
+				else
+				{
+					strResp += " ";
+					strResp += cmd;
+				}
+			}
+			else if(vecDest[x] == "UNSEEN")
+			{
+				sprintf(cmd, "RECENT %u", nUnseen);
+				if(strResp == "")
+				{
+					strResp += cmd;
+				}
+				else
+				{
+					strResp += " ";
+					strResp += cmd;
+				}
+			}
+		}
+		sprintf(cmd, "* %s %s (%s)\r\n", strTag.c_str(), vecDest[2].c_str(), strResp.c_str());
+		ImapSend(cmd, strlen(cmd));
+		
+		sprintf(cmd, "%s OK STATUS Completed\r\n", strTag.c_str());
+		ImapSend(cmd, strlen(cmd));
+	}
+	else
+	{
+		sprintf(cmd, "%s NO Need LOGIN/AUTHENCIATE\r\n", strTag.c_str());
+		ImapSend(cmd, strlen(cmd));
+	}
+}
+
+void CMailImap::On_Append(char* text)
+{	
+	char cmd[1024];
+	string strTag;
+	string strText = text;
+	vector<string> vecDest;
+	ParseCommand(text, vecDest);
+	strTag = vecDest[0];
+	//printf("%s\r\n", text);
+	if((m_status&STATUS_AUTHED) == STATUS_AUTHED)
+	{
+		MailStorage* mailStg;
+		StorageEngineInstance stgengine_instance(m_storageEngine, &mailStg);
+		if(!mailStg)
+		{
+			printf("%s::%s Get Storage Engine Failed!\n", __FILE__, __FUNCTION__);
+			return;
+		}
+		sprintf(cmd, "+ Ready for literal data\r\n");
+		ImapSend(cmd, strlen(cmd));
+		
+		string dirName, strStatus, strDateTime, strLiteral;
+		dirName = vecDest[2];
+		if(vecDest.size() == 6)
+		{
+			strStatus = vecDest[3];
+			strDateTime = vecDest[4];
+			strLiteral = vecDest[5];
+		}
+		else if(vecDest.size() == 5)
+		{
+			if(strlike("(*)", vecDest[3].c_str()))
+				strStatus = vecDest[3];
+			else
+				strDateTime = vecDest[3];
+			strLiteral = vecDest[4];
+		}
+		else if (vecDest.size() == 4)
+		{
+			strLiteral = vecDest[3];
+		}
+		else
+		{
+			sprintf(cmd, "%s NO APPEND Failed, parameter error.\r\n", strTag.c_str());
+			ImapSend(cmd, strlen(cmd));
+			return;
+		}
+		unsigned int literal;
+		sscanf(strLiteral.c_str(), "{%u}", &literal);
+
+		//printf("literal: %d\r\n", literal);
+		unsigned long long usermaxsize;
+		if(mailStg->GetUserSize(m_username.c_str(), usermaxsize) == -1)
+		{
+			usermaxsize = 5000*1024;
+		}
+
+		//printf("usermaxsize: %d\r\n", usermaxsize);
+		if(literal > usermaxsize)
+		{
+			sprintf(cmd, "%s NO APPEND Failed: The size of Message is too large.\r\n", strTag.c_str());
+			ImapSend(cmd, strlen(cmd));
+			return;
+		}
+		unsigned int status = 0;
+		
+		if(strStatus.find("\\Seen", 0, strlen("\\Seen")) != string::npos)
+		{
+			status |= MSG_ATTR_SEEN;
+		}
+		if(strStatus.find("\\Answered", 0, strlen("\\Answered")) != string::npos)
+		{
+			status |= MSG_ATTR_ANSWERED;
+		}
+		if(strStatus.find("\\Flagged", 0, strlen("\\Flagged")) != string::npos)
+		{
+			status |= MSG_ATTR_FLAGGED;
+		}
+		if(strStatus.find("\\Deleted", 0, strlen("\\Deleted")) != string::npos)
+		{
+			status |= MSG_ATTR_DELETED;
+		}
+		if(strStatus.find("\\Draft", 0, strlen("\\Draft")) != string::npos)
+		{
+			status |= MSG_ATTR_DRAFT;
+		}
+		if(strStatus.find("\\Recent", 0, strlen("\\Recent")) != string::npos)
+		{
+			status |= MSG_ATTR_RECENT;
+		}
+		char newuid[256];
+		sprintf(newuid, "%08x_%08x_%016lx_%08x", time(NULL), getpid(), pthread_self(), CMailBase::m_global_uid);
+		CMailBase::m_global_uid++;
+
+		//printf("%s\r\n", newuid);
+		int DirID;
+		if(mailStg->GetDirID(m_username.c_str(), dirName.c_str(), DirID) == -1)
+		{
+			//if no corresponding dir
+			if(mailStg->CreateDir(m_username.c_str(), dirName.c_str()) == -1)
+			{
+				sprintf(cmd, "%s NO APPEND Failed, unable get the dir.\r\n", strTag.c_str());
+				ImapSend(cmd, strlen(cmd));
+				return;
+			}
+			else
+			{
+				if(mailStg->GetDirID(m_username.c_str(), dirName.c_str(), DirID) == -1)
+				{
+					sprintf(cmd, "%s NO APPEND Failed, unable get the dir.\r\n", strTag.c_str());
+					ImapSend(cmd, strlen(cmd));
+					return;
+				}
+			}
+		}
+		
+		if(mailStg->GetUserSize(m_username.c_str(), usermaxsize) == -1)
+		{
+			usermaxsize = 5000*1024;
+		}
+
+		//printf("usermaxsize: %d\r\n", usermaxsize);
+		
+		MailLetter* Letter;
+		Letter = new MailLetter(newuid, usermaxsize /*mailStg, 
+		"", "", mtLocal, newuid, DirID, status,(unsigned int)time(NULL), usermaxsize*/);
+
+		Letter_Info letter_info;
+		letter_info.mail_from = "";
+		letter_info.mail_to = "";
+		letter_info.mail_type = mtLocal;
+		letter_info.mail_uniqueid = newuid;
+		letter_info.mail_dirid = DirID;
+		letter_info.mail_status = status;
+		letter_info.mail_time = time(NULL);
+		letter_info.user_maxsize = usermaxsize;
+		letter_info.mail_id = -1;
+					
+		char buf[1449];
+		int nTotal = literal + 2;
+		BOOL isOK = TRUE;
+		while(1)
+		{
+			memset(buf, 0, 1449);
+			int nRecv = ImapRecv(buf, nTotal > 1448 ? 1448 : nTotal);
+			
+			if(nRecv <= 0)
+			{
+				isOK = FALSE;
+				break;
+			}
+			nTotal -= nRecv;
+
+			if(Letter->Write(buf, nRecv)  < 0)
+			{
+				isOK = FALSE;
+				break;
+			}
+			if(nTotal == 0)
+				break;
+		}
+		
+		if(isOK)
+			Letter->SetOK();
+		Letter->Close();
+		if(Letter->isOK())
+		{
+			mailStg->InsertMailIndex(letter_info.mail_from.c_str(), letter_info.mail_to.c_str(),letter_info.mail_time,
+						letter_info.mail_type, letter_info.mail_uniqueid.c_str(), letter_info.mail_dirid, letter_info.mail_status,
+						Letter->GetEmlName(), Letter->GetSize(), letter_info.mail_id);
+		}
+		delete Letter;
+		
+		if(isOK)
+			sprintf(cmd, "%s OK APPEND completed\r\n", strTag.c_str());
+		else
+			sprintf(cmd, "%s NO APPEND failed, too large.\r\n", strTag.c_str());
+		ImapSend(cmd, strlen(cmd));
+	}
+	else
+	{
+		sprintf(cmd, "%s NO Need LOGIN/AUTHENCIATE\r\n", strTag.c_str());
+		ImapSend(cmd, strlen(cmd));
+	}
+}
+
+//Select state
+void CMailImap::On_Check(char* text)
+{
+	char cmd[1024];
+	string strTag;
+	strcut(text, NULL, " ", strTag);
+	if((m_status&STATUS_AUTHED) == STATUS_AUTHED)
+	{
+		if((m_status&STATUS_SELECT) == STATUS_SELECT)
+		{
+			sprintf(cmd, "%s OK Check Completed\r\n", strTag.c_str());
+			ImapSend(cmd, strlen(cmd));
+		}
+		else
+		{
+			sprintf(cmd, "%s NO Need SELECT\r\n", strTag.c_str());
+			ImapSend( cmd, strlen(cmd));
+		}
+	}
+	else
+	{
+		sprintf(cmd, "%s NO Need LOGIN/AUTHENCIATE\r\n", strTag.c_str());
+		ImapSend(cmd, strlen(cmd));
+	}
+}
+void CMailImap::On_Close(char* text)
+{	
+	char cmd[1024];
+	string strTag;
+	strcut(text, NULL, " ", strTag);
+	if((m_status&STATUS_AUTHED) == STATUS_AUTHED)
+	{
+		MailStorage* mailStg;
+		StorageEngineInstance stgengine_instance(m_storageEngine, &mailStg);
+		if(!mailStg)
+		{
+			printf("%s::%s Get Storage Engine Failed!\n", __FILE__, __FUNCTION__);
+			return;
+		}
+		if((m_status&STATUS_SELECT) == STATUS_SELECT)
+		{
+			if(mailStg->ListMailByDir((char*)m_username.c_str(), m_maillisttbl, (char*)m_strSelectedDir.c_str()) == -1)
+			{
+				sprintf(cmd, "%s NO CLOSE Failed\r\n", strTag.c_str());
+				ImapSend(cmd, strlen(cmd));
+				return;
+			}
+			int vLen = m_maillisttbl.size();
+			for(int x = 0; x < vLen; x++)
+			{
+				if((m_maillisttbl[x].mstatus & MSG_ATTR_DELETED) == MSG_ATTR_DELETED)
+				{
+					mailStg->DelMail(m_username.c_str(), m_maillisttbl[x].mid);
+				}
+			}
+			sprintf(cmd, "%s OK CLOSE Completed\r\n", strTag.c_str());
+			ImapSend( cmd, strlen(cmd));
+		}
+		else
+		{
+			sprintf(cmd, "%s NO Need SELECT\r\n", strTag.c_str());
+			ImapSend( cmd, strlen(cmd));
+		}
+	}
+	else
+	{
+		sprintf(cmd, "%s NO Need LOGIN/AUTHENCIATE\r\n", strTag.c_str());
+		ImapSend( cmd, strlen(cmd));
+	}
+}
+void CMailImap::On_Expunge(char* text)
+{	
+	char cmd[1024];
+	string strTag;
+	strcut(text, NULL, " ", strTag);
+	if((m_status&STATUS_AUTHED) == STATUS_AUTHED)
+	{
+		MailStorage* mailStg;
+		StorageEngineInstance stgengine_instance(m_storageEngine, &mailStg);
+		if(!mailStg)
+		{
+			printf("%s::%s Get Storage Engine Failed!\n", __FILE__, __FUNCTION__);
+			return;
+		}
+		if((m_status&STATUS_SELECT) == STATUS_SELECT)
+		{
+			if(mailStg->ListMailByDir((char*)m_username.c_str(), m_maillisttbl, (char*)m_strSelectedDir.c_str()) == -1)
+			{
+				sprintf(cmd, "%s NO EXPUNGE Failed\r\n", strTag.c_str());
+				ImapSend( cmd, strlen(cmd));
+				return;
+			}
+			for(int x = 0; x < m_maillisttbl.size(); x++)
+			{
+				if((m_maillisttbl[x].mstatus & MSG_ATTR_DELETED) == MSG_ATTR_DELETED)
+				{
+					mailStg->DelMail(m_username.c_str(), m_maillisttbl[x].mid);
+					sprintf(cmd, "* %d EXPUNGE\r\n", x);
+				}
+			}
+			sprintf(cmd, "%s OK EXPUNGE Completed\r\n", strTag.c_str());
+			ImapSend( cmd, strlen(cmd));
+		}
+		else
+		{
+			sprintf(cmd, "%s NO Need SELECT\r\n", strTag.c_str());
+			ImapSend( cmd, strlen(cmd));
+		}
+	}
+	else
+	{
+		sprintf(cmd, "%s NO Need LOGIN/AUTHENCIATE\r\n", strTag.c_str());
+		ImapSend( cmd, strlen(cmd));
+	}
+}
+void CMailImap::On_Search(char* text)
+{
+	char cmd[1024];
+	vector<string> vCmd;
+	vSplitStringEx(text, vCmd, " ", FALSE, 2);
+	string strTag = vCmd[0];
+	string strArg = vCmd[2];
+	if((m_status&STATUS_AUTHED) == STATUS_AUTHED)
+	{
+		if((m_status&STATUS_SELECT) == STATUS_SELECT)
+		{
+			Search(strTag.c_str(), "SEARCH", strArg.c_str());
+			sprintf(cmd, "%s OK SEARCH Completed\r\n", strTag.c_str());
+			ImapSend( cmd, strlen(cmd));
+		}
+		else
+		{
+			sprintf(cmd, "%s NO Need SELECT\r\n", strTag.c_str());
+			ImapSend( cmd, strlen(cmd));
+		}
+	}
+	else
+	{
+		sprintf(cmd, "%s NO Need LOGIN/AUTHENCIATE\r\n", strTag.c_str());
+		ImapSend( cmd, strlen(cmd));
+	}
+}
+void CMailImap::On_Fetch(char* text)
+{
+	char cmd[1024];
+	vector<string> vCmd;
+	vSplitStringEx(text, vCmd, " ", FALSE, 2);
+	string strTag = vCmd[0];
+	string strArg = vCmd[2];
+	if((m_status&STATUS_AUTHED) == STATUS_AUTHED)
+	{
+		if((m_status&STATUS_SELECT) == STATUS_SELECT)
+		{
+			Fetch(strArg.c_str());
+			sprintf(cmd, "%s OK FETCH Completed\r\n", strTag.c_str());
+			ImapSend( cmd, strlen(cmd));
+		}
+		else
+		{
+			sprintf(cmd, "%s NO Need SELECT\r\n", strTag.c_str());
+			ImapSend( cmd, strlen(cmd));
+		}
+	}
+	else
+	{
+		sprintf(cmd, "%s NO Need LOGIN/AUTHENCIATE\r\n", strTag.c_str());
+		ImapSend( cmd, strlen(cmd));
+	}
+}
+void CMailImap::On_Store(char* text)
+{
+	char cmd[1024];
+	vector<string> vCmd;
+	vSplitStringEx(text, vCmd, " ", FALSE, 2);
+	string strTag = vCmd[0];
+	string strArg = vCmd[2];
+	if((m_status&STATUS_AUTHED) == STATUS_AUTHED)
+	{
+		if((m_status&STATUS_SELECT) == STATUS_SELECT)
+		{
+			Store(strArg.c_str());
+			sprintf(cmd, "%s OK STORE Completed\r\n", strTag.c_str());
+			ImapSend( cmd, strlen(cmd));
+		}
+		else
+		{
+			sprintf(cmd, "%s NO Need SELECT\r\n", strTag.c_str());
+			ImapSend( cmd, strlen(cmd));
+		}
+	}
+	else
+	{
+		sprintf(cmd, "%s NO Need LOGIN/AUTHENCIATE\r\n", strTag.c_str());
+		ImapSend( cmd, strlen(cmd));
+	}
+}
+void CMailImap::On_Copy(char* text)
+{
+	char cmd[1024];
+	vector<string> vCmd;
+	vSplitStringEx(text, vCmd, " ", FALSE, 2);
+	string strTag = vCmd[0];
+	string strArg = vCmd[2];
+	if((m_status&STATUS_AUTHED) == STATUS_AUTHED)
+	{
+		if((m_status&STATUS_SELECT) == STATUS_SELECT)
+		{
+			if(Copy(strArg.c_str()) == 0)
+			{
+				sprintf(cmd, "%s OK COPY Completed\r\n", strTag.c_str());
+			}
+			else
+			{
+				sprintf(cmd, "%s NO COPY Failed\r\n", strTag.c_str());
+			}
+			ImapSend( cmd, strlen(cmd));
+		}
+		else
+		{
+			sprintf(cmd, "%s NO Need SELECT\r\n", strTag.c_str());
+			ImapSend( cmd, strlen(cmd));
+		}
+	}
+	else
+	{
+		sprintf(cmd, "%s NO Need LOGIN/AUTHENCIATE\r\n", strTag.c_str());
+		ImapSend( cmd, strlen(cmd));
+	}
+}
+
+void CMailImap::On_UID(char* text)
+{
+	char cmd[1024];
+	string strTag;
+	string strText = text;
+	vector<string> vecDest;
+	
+	vSplitString(strText, vecDest, " ", FALSE, 3);
+	strTag = vecDest[0];
+	
+	if((m_status&STATUS_AUTHED) == STATUS_AUTHED)
+	{
+		if((m_status&STATUS_SELECT) == STATUS_SELECT)
+		{
+			if(strcasecmp(vecDest[2].c_str(), "FETCH") == 0)
+			{
+				Fetch(vecDest[3].c_str(), TRUE);
+				sprintf(cmd, "%s OK UID FETCH completed\r\n", strTag.c_str());
+				ImapSend( cmd, strlen(cmd));
+			}
+			else if(strcasecmp(vecDest[2].c_str(), "SEARCH") == 0)
+			{	
+				Search(strTag.c_str(), "UID SEARCH", vecDest[3].c_str());
+				sprintf(cmd, "%s OK UID SEARCH completed\r\n", strTag.c_str());
+				ImapSend( cmd, strlen(cmd));
+			}
+			else if(strcasecmp(vecDest[2].c_str(), "STORE") == 0)
+			{
+				Store(vecDest[3].c_str(), TRUE);
+				sprintf(cmd, "%s OK UID STORE completed\r\n", strTag.c_str());
+				ImapSend( cmd, strlen(cmd));
+			}
+			else if(strcasecmp(vecDest[2].c_str(), "COPY") == 0)
+			{
+				if(Copy(vecDest[3].c_str(), TRUE) == 0)
+					sprintf(cmd, "%s OK UID COPY completed\r\n", strTag.c_str());
+				else
+					sprintf(cmd, "%s NO UID COPY Failed\r\n", strTag.c_str());
+				ImapSend( cmd, strlen(cmd));
+			}
+			else
+			{
+				sprintf(cmd, "%s BAD command unknown or arguments invailid\r\n", strTag.c_str());
+				ImapSend( cmd, strlen(cmd));
+			}
+		}
+		else
+		{
+			sprintf(cmd, "%s NO Need SELECT\r\n", strTag.c_str());
+			ImapSend( cmd, strlen(cmd));
+		}
+	}
+	else
+	{
+		sprintf(cmd, "%s NO Need LOGIN/AUTHENCIATE\r\n", strTag.c_str());
+		ImapSend( cmd, strlen(cmd));
+	}
+}
+
+void CMailImap::On_STARTTLS(char* text)
+{
+	char cmd[1024];
+	string strTag;
+	string strText = text;
+	vector<string> vecDest;
+	
+	vSplitString(strText, vecDest, " ", FALSE);
+	strTag = vecDest[0];
+	
+	if(!m_enableimaptls)
+	{
+		sprintf(cmd, "%s BAD TLS is disabled\r\n", strTag.c_str());
+		ImapSend(cmd,strlen(cmd));
+		return;
+	}
+	if(m_isSSL == TRUE)
+	{
+		sprintf(cmd, "%s BAD Command not permitted when TLS active\r\n", strTag.c_str());
+		ImapSend(cmd,strlen(cmd));
+		return;
+	}
+	else
+	{		
+		sprintf(cmd, "%s OK Begin TLS negotiation now\r\n", strTag.c_str());
+		ImapSend(cmd,strlen(cmd));
+	}
+	
+	m_isSSL = TRUE;
+	if(m_isSSL)
+	{	
+		int flags = fcntl(m_sockfd, F_GETFL, 0); 
+		fcntl(m_sockfd, F_SETFL, flags & (~O_NONBLOCK)); 
+		
+		SSL_METHOD* meth;
+		SSL_load_error_strings();
+		OpenSSL_add_ssl_algorithms();
+		meth = (SSL_METHOD*)TLSv1_server_method();
+		m_ssl_ctx = SSL_CTX_new(meth);
+		if(!m_ssl_ctx)
+		{
+			m_isSSL = FALSE;
+			return;
+		}
+		SSL_CTX_set_verify(m_ssl_ctx, SSL_VERIFY_PEER, NULL);
+		
+		SSL_CTX_load_verify_locations(m_ssl_ctx, m_ca_crt_root.c_str(), NULL);
+		if(SSL_CTX_use_certificate_file(m_ssl_ctx, m_ca_crt_server.c_str(), SSL_FILETYPE_PEM) <= 0)
+		{
+			printf("SSL_CTX_use_certificate_file: %s\n", ERR_error_string(ERR_get_error(),NULL));
+			m_isSSL = FALSE;
+
+			if(m_ssl)
+				SSL_shutdown(m_ssl);
+			if(m_ssl)
+				SSL_free(m_ssl);
+			if(m_ssl_ctx)
+				SSL_CTX_free(m_ssl_ctx);
+			m_ssl = NULL;
+			m_ssl_ctx = NULL;
+			return;
+		}
+		//m_ssl_ctx->default_passwd_callback_userdata = (char*)m_ca_password.c_str();
+		SSL_CTX_set_default_passwd_cb_userdata(m_ssl_ctx, (char*)m_ca_password.c_str());
+
+		if(SSL_CTX_use_PrivateKey_file(m_ssl_ctx, m_ca_key_server.c_str(), SSL_FILETYPE_PEM) <= 0)
+		{
+			printf("SSL_CTX_use_PrivateKey_file: %s\n", ERR_error_string(ERR_get_error(),NULL));
+			m_isSSL = FALSE;
+			if(m_ssl)
+				SSL_shutdown(m_ssl);
+			if(m_ssl)
+				SSL_free(m_ssl);
+			if(m_ssl_ctx)
+				SSL_CTX_free(m_ssl_ctx);
+			m_ssl = NULL;
+			m_ssl_ctx = NULL;
+			return;
+		}
+		if(!SSL_CTX_check_private_key(m_ssl_ctx))
+		{
+			printf("SSL_CTX_check_private_key: %s\n", ERR_error_string(ERR_get_error(),NULL));
+			m_isSSL = FALSE;
+			if(m_ssl)
+				SSL_shutdown(m_ssl);
+			if(m_ssl)
+				SSL_free(m_ssl);
+			if(m_ssl_ctx)
+				SSL_CTX_free(m_ssl_ctx);
+			m_ssl = NULL;
+			m_ssl_ctx = NULL;
+			return;
+		}
+		SSL_CTX_set_cipher_list(m_ssl_ctx,"RC4-MD5");
+		SSL_CTX_set_mode(m_ssl_ctx, SSL_MODE_AUTO_RETRY);
+		
+		m_ssl = SSL_new(m_ssl_ctx);
+		if(!m_ssl)
+		{
+			printf("m_ssl invaild\n");
+			m_isSSL = FALSE;
+			if(m_ssl)
+				SSL_shutdown(m_ssl);
+			if(m_ssl)
+				SSL_free(m_ssl);
+			if(m_ssl_ctx)
+				SSL_CTX_free(m_ssl_ctx);
+			m_ssl = NULL;
+			m_ssl_ctx = NULL;
+			return;
+		}
+		if(SSL_set_fd(m_ssl, m_sockfd) <= 0)
+		{
+			printf("SSL_set_fd: %s\n", ERR_error_string(ERR_get_error(),NULL));
+		}
+
+		if(SSL_accept(m_ssl) <= 0)
+		{
+			printf("SSL_accept: %s\n", ERR_error_string(ERR_get_error(),NULL));
+			m_isSSL = FALSE;
+			if(m_ssl)
+				SSL_shutdown(m_ssl);
+			if(m_ssl)
+				SSL_free(m_ssl);
+			if(m_ssl_ctx)
+				SSL_CTX_free(m_ssl_ctx);
+			m_ssl = NULL;
+			m_ssl_ctx = NULL;
+			return;
+		}
+		//printf("SSL_accept successfully\n");
+		if(m_enableclientcacheck)
+		{
+			X509* client_cert;
+			client_cert = SSL_get_peer_certificate (m_ssl);
+			if (client_cert != NULL)
+			{
+				X509_free (client_cert);
+			}
+			else
+			{
+				printf("get client ca Failed\n");
+				
+				m_isSSL = FALSE;
+
+				if(m_ssl)
+					SSL_shutdown(m_ssl); 
+				if(m_ssl)
+					SSL_free(m_ssl);
+				if(m_ssl_ctx)
+					SSL_CTX_free(m_ssl_ctx);
+				m_ssl = NULL;
+				m_ssl_ctx = NULL;
+				return;
+			}
+		}
+		flags = fcntl(m_sockfd, F_GETFL, 0); 
+		fcntl(m_sockfd, F_SETFL, flags | O_NONBLOCK); 
+		
+		m_lssl = new linessl(m_sockfd, m_ssl);
+
+	}
+}
+
+void CMailImap::On_X_atom(char* text)
+{
+	char cmd[1024];
+	string strTag;
+	string strXCmd;
+	strcut(text, NULL, " ", strTag);
+	strcut(text, " ", "\r\n", strXCmd);
+	sprintf(cmd, "%s OK %s completed\r\n", strTag.c_str(), strXCmd.c_str());
+	ImapSend( cmd, strlen(cmd));
+}
+
+void CMailImap::On_Namespace(char* text)
+{
+	char cmd[1024];
+	string strTag;
+	strcut(text, NULL, " ", strTag);
+	if((m_status&STATUS_AUTHED) == STATUS_AUTHED)
+	{
+		sprintf(cmd, "* NAMESPACE NIL NIL ((\"\" \".\"))\r\n");
+		ImapSend( cmd, strlen(cmd));
+		
+		sprintf(cmd, "%s OK NAMESPACE command completed\r\n", strTag.c_str());
+		ImapSend( cmd, strlen(cmd));
+	}
+	else
+	{
+		sprintf(cmd, "%s NO Need LOGIN/AUTHENCIATE\r\n", strTag.c_str());
+		ImapSend( cmd, strlen(cmd));
+	}
+}
+
+void CMailImap::BodyStruct(MimeSummary* part, string & strStruct, BOOL isEND)
+{
+	
+	filedContentType* fcType = part->GetContentType();
+	
+	if(fcType)
+	{
+		if(strcasecmp(fcType->m_type1.c_str(), "multipart") != 0)
+		{
+			strStruct += "(";
+			string str1 = fcType->m_type1;
+			string str2 = fcType->m_type2;
+			string str3 = fcType->m_charset;
+			string str4 = fcType->m_filename;
+			string str5 = part->GetContentTransferEncoding();
+			
+			char str6[64];
+			sprintf(str6, "%u %u", part->m_data->m_end - part->m_data->m_beg, part->m_data->m_linenumber);
+			
+			string strtmp;
+			if(str1 ==  "")
+				str1 = "NIL";
+			else
+			{
+				strtmp = "\"";
+				strtmp += str1 + "\"";
+				str1 = strtmp;
+			}
+			if(str2 ==  "")
+				str2 = "NIL";
+			else
+			{
+				strtmp = "\"";
+				strtmp += str2 + "\"";
+				str2 = strtmp;
+			}
+			if(str3 == "")
+			{
+				str3 = "\"";
+				str3 += CMailBase::m_encoding;
+				str3 += "\"";
+			}
+			else
+			{
+				strtmp = "\"";
+				strtmp += str3 + "\"";
+				str3 = strtmp;
+			}
+			if(str5 == "")
+				str5 = "\"7BIT\"";
+			else
+			{
+				strtmp = "\"";
+				strtmp += str5 + "\"";
+				str5 = strtmp;
+			}
+			
+			if(str4 == "")
+			{
+				strStruct += str1 + " " + str2 + " (\"CHARSET\" " + str3 + ") NIL NIL " + str5 + " " + str6 + " NIL NIL NIL";
+			}
+			else
+			{
+				strStruct += str1 + " " + str2 + " (\"CHARSET\" " + str3 + " \"NAME\" \"" + str4 + "\") NIL NIL " + str5 + " " + str6 + " NIL NIL NIL";
+			}
+			strStruct += ")";
+		}
+		else
+		{
+			strStruct += "(";
+			
+			for(int x = 0; x < part->GetSubPartNumber(); x++)
+			{
+				if(x == part->GetSubPartNumber() - 1)
+					BodyStruct(part->GetPart(x), strStruct, TRUE);
+				else
+					BodyStruct(part->GetPart(x), strStruct);
+			}
+			
+			strStruct += " \"";
+			strStruct += fcType->m_type2.c_str();
+			strStruct += "\" (\"BOUNDARY\" \"";
+			strStruct += fcType->m_boundary.c_str();
+			strStruct += "\") NIL NIL)";
+		}
+	}
+	else
+	{
+		strStruct += "(";
+		string str1 = "";
+		string str2 = "";
+		string str3 = "";
+		string str4 = "";
+		string str5 = "";
+		
+		char str6[64];
+		sprintf(str6, "%u %u", part->m_data->m_end - part->m_beg, part->m_data->m_linenumber);
+		
+		string strtmp;
+		if(str1 ==  "")
+			str1 = "NIL";
+		else
+		{
+			strtmp = "\"";
+			strtmp += str1 + "\"";
+			str1 = strtmp;
+		}
+		if(str2 ==  "")
+			str2 = "NIL";
+		else
+		{
+			strtmp = "\"";
+			strtmp += str2 + "\"";
+			str2 = strtmp;
+		}
+		if(str3 == "")
+		{
+			str3 = "\"";
+			str3 += CMailBase::m_encoding;
+			str3 += "\"";
+		}
+		else
+		{
+			strtmp = "\"";
+			strtmp += str3 + "\"";
+			str3 = strtmp;
+		}
+		if(str5 == "")
+			str5 = "\"7BIT\"";
+		else
+		{
+			strtmp = "\"";
+			strtmp += str5 + "\"";
+			str5 = strtmp;
+		}
+		
+		if(str4 == "")
+		{
+			strStruct += str1 + " " + str2 + " (\"CHARSET\" " + str3 + ") NIL NIL " + str5 + " " + str6 + " NIL NIL NIL";
+		}
+		else
+		{
+			strStruct += str1 + " " + str2 + " (\"CHARSET\" " + str3 + " \"NAME\" \"" + str4 + "\") NIL NIL " + str5 + " " + str6 + " NIL NIL NIL";
+		}
+		strStruct += ")";
+	}
+	
+}
+
+void CMailImap::Fetch(const char* szArg, BOOL isUID)
+{
+	MailStorage* mailStg;
+	StorageEngineInstance stgengine_instance(m_storageEngine, &mailStg);
+	if(!mailStg)
+	{
+		printf("%s::%s Get Storage Engine Failed!\n", __FILE__, __FUNCTION__);
+		return;
+	}
+	char cmd[4096];
+	memset(cmd, 0, 4096);
+	string strSequence, strMsgItem;
+	unsigned int nBegin, nEnd;
+	strcut(szArg, NULL, " ", strSequence);
+	strcut(szArg, " ", "\r\n", strMsgItem);
+	vector<string> vecSequenceSet;
+	vSplitString(strSequence, vecSequenceSet, ",");
+	int zLen = vecSequenceSet.size();
+	for(int z = 0; z < zLen; z++)
+	{
+		vector<string> vecSequenceRange;
+		strSequence = vecSequenceSet[z];
+		
+		vSplitString(strSequence, vecSequenceRange, ":");
+		if(vecSequenceRange.size() == 1)
+		{
+			nBegin = nEnd = atoi(vecSequenceRange[0].c_str());
+		}
+		else if(vecSequenceRange.size() == 2)
+		{
+			nBegin = atoi(vecSequenceRange[0].c_str());
+			if(vecSequenceRange[1] == "*")
+			{
+				nEnd = 0x7FFFFFFF;
+			}
+			else
+			{
+				nEnd = atoi(vecSequenceRange[1].c_str());
+			}
+		}
+		
+		int vLen = m_maillisttbl.size();
+		
+		if(strMsgItem == "ALL")
+			strMsgItem = "(FLAGS INTERNALDATE RFC822.SIZE ENVELOPE)";
+		else if(strMsgItem == "FAST")
+			strMsgItem = "(FLAGS INTERNALDATE RFC822.SIZE)";
+		else if(strMsgItem == "FULL")
+			strMsgItem = "(FLAGS INTERNALDATE RFC822.SIZE ENVELOPE BODY)";
+		
+		strtrim(strMsgItem, "()");
+		
+		vector<string> vItem;
+		ParseFetch(strMsgItem.c_str(), vItem);
+		int iLen = vItem.size();
+		for(int x = 0; x < vLen; x++)
+		{
+			if(((isUID ? m_maillisttbl[x].mid : x + 1) >= nBegin) && ((isUID ? m_maillisttbl[x].mid : x + 1) <= nEnd))
+			{
+				
+				sprintf(cmd, "* %u FETCH (", x + 1);
+				ImapSend( cmd, strlen(cmd));
+				
+				if(isUID)
+				{
+					sprintf(cmd, "UID %u", m_maillisttbl[x].mid);
+					ImapSend(cmd, strlen(cmd));
+				}
+				
+				MailLetter * Letter;
+
+				string emlfile;
+				mailStg->GetMailIndex(m_maillisttbl[x].mid, emlfile);
+				
+				Letter = new MailLetter(emlfile.c_str());
+			
+				if(Letter->GetSize()> 0)
+				{
+					int llen = 0;
+					char* lbuf = Letter->Body(llen);
+					for(int i = 0 ;i < iLen; i++)
+					{
+						if(strlike("BODY.PEEK[*]", vItem[i].c_str()) == TRUE)
+						{
+							if(strlike("BODY.PEEK[HEADER.FIELDS (*)]", vItem[i].c_str()) == TRUE)
+							{								
+								string strHeaderFileds;
+								vector<string> vecHeaderFileds;
+								strcut(szArg, "BODY.PEEK[HEADER.FIELDS (", ")]", strHeaderFileds);
+								vSplitString(strHeaderFileds, vecHeaderFileds, " ");
+								int vHeaderLen = vecHeaderFileds.size();
+								string strRespHeader = "";
+								for(int j = 0; j < vHeaderLen; j++)
+								{
+									string fstrbuf = "";
+									for(int x = Letter->GetSummary()->m_mime->m_header->m_beg; x < Letter->GetSummary()->m_mime->m_header->m_end; x++)
+									{
+										fstrbuf += lbuf[x];
+										
+										if(lbuf[x] == '\n' && lbuf[x + 1] != ' ' && lbuf[x] != '\t')
+										{
+											if(strncasecmp(fstrbuf.c_str(),vecHeaderFileds[j].c_str(), vecHeaderFileds[j].length()) == 0)
+											{
+												strRespHeader += fstrbuf;
+											}					
+											fstrbuf = "";
+										}
+									}
+								}
+								strRespHeader += "\r\n";
+
+								if(i > 0 || isUID)
+									ImapSend( " ", 1);
+								
+								sprintf(cmd, "BODY[HEADER.FIELDS (%s)] {%u}\r\n", strHeaderFileds.c_str(), strRespHeader.length());						
+								ImapSend(cmd, strlen(cmd));
+								ImapSend(strRespHeader.c_str(), strRespHeader.length());
+							}
+							else if(strlike("BODY.PEEK[HEADER.FIELDS.NOT (*)]", vItem[i].c_str()) == TRUE)
+							{								
+								string strHeaderFileds;
+								vector<string> vecHeaderFileds;
+								strcut(szArg, "BODY.PEEK[HEADER.FIELDS.NOT (", ")]", strHeaderFileds);
+								vSplitString(strHeaderFileds, vecHeaderFileds, " ");
+								int vHeaderLen = vecHeaderFileds.size();
+								string strRespHeader = "";
+								
+								for(int j = 0; j < vHeaderLen; j++)
+								{
+									string fstrbuf = "";
+									for(int x = Letter->GetSummary()->m_mime->m_header->m_beg; x < Letter->GetSummary()->m_mime->m_header->m_end; x++)
+									{
+										fstrbuf += lbuf[x];
+										
+										if(lbuf[x] == '\n' && lbuf[x + 1] != ' ' && lbuf[x] != '\t')
+										{
+											if(strncasecmp(fstrbuf.c_str(),vecHeaderFileds[j].c_str(), vecHeaderFileds[j].length()) != 0)
+											{
+												strRespHeader += fstrbuf;
+											}					
+											fstrbuf = "";
+										}
+									}
+								}
+								strRespHeader += "\r\n";
+
+								if(i > 0 || isUID)
+									ImapSend( " ", 1);
+								
+								sprintf(cmd, "BODY[HEADER.FIELDS.NOT (%s)] {%u}\r\n", strHeaderFileds.c_str(), strRespHeader.length());
+								
+								ImapSend( cmd, strlen(cmd));
+								ImapSend( strRespHeader.c_str(), strRespHeader.length());
+							}
+							else if(strcasecmp((char*)vItem[i].c_str(), (char*)"BODY.PEEK[]") == 0)
+							{
+								if(i > 0 || isUID)
+									ImapSend( " ", 1);
+																
+								sprintf(cmd, "BODY[] {%u}\r\n", Letter->GetSummary()->m_mime->m_end - Letter->GetSummary()->m_mime->m_beg);
+								ImapSend( cmd, strlen(cmd));
+								
+								int llen;
+								char* lbuf = Letter->Body(llen);
+								
+								int wlen = 0;
+								while(1)
+								{
+									if(ImapSend(lbuf + wlen, (llen - wlen) > 1448 ? 1448 : (llen - wlen)) < 0)
+										break;
+									wlen += ((llen - wlen) > 1448 ? 1448 : (llen - wlen));
+									if(wlen >= llen)
+										break;
+								}
+							}
+							else if(strcasecmp((char*)vItem[i].c_str(), "BODY.PEEK[HEADER]") == 0)
+							{
+								if(i > 0 || isUID)
+									ImapSend( " ", 1);
+								
+								sprintf(cmd, "BODY[HEADER] {%u}\r\n", Letter->GetSummary()->m_mime->m_header->m_end - Letter->GetSummary()->m_mime->m_header->m_beg);
+
+								ImapSend( cmd, strlen(cmd));
+
+								int nRead = 0;
+								int tLen = Letter->GetSummary()->m_mime->m_header->m_end - Letter->GetSummary()->m_mime->m_header->m_beg;
+								while(1)
+								{
+									if(nRead >= tLen)
+										break;
+									char sztmp[1025];
+									memcpy(sztmp, lbuf + Letter->GetSummary()->m_mime->m_header->m_beg + nRead, (tLen - nRead) > 1024 ? 1024 : (tLen - nRead) );
+									sztmp[(tLen - nRead) > 1024 ? 1024 : (tLen - nRead)] = '\0';
+
+									nRead += (tLen - nRead) > 1024 ? 1024 : (tLen - nRead);
+									
+									if(ImapSend(sztmp, strlen(sztmp)) < 0)
+									{
+										break;
+									}
+								}
+								
+							}
+							else if(strcasecmp((char*)vItem[i].c_str(), "BODY.PEEK[TEXT]") == 0)
+							{								
+								BOOL isText = FALSE;
+								if(i > 0 || isUID)
+									ImapSend( " ", 1);
+								sprintf(cmd, "BODY[TEXT] {%u}\r\n", Letter->GetSummary()->m_mime->m_data->m_end - Letter->GetSummary()->m_mime->m_data->m_beg);
+								
+								ImapSend( cmd, strlen(cmd));
+
+								int nRead = 0;
+								int tLen = Letter->GetSummary()->m_mime->m_data->m_end - Letter->GetSummary()->m_mime->m_data->m_beg;
+								while(1)
+								{
+									if(nRead >= tLen)
+										break;
+									char sztmp[1025];
+									memcpy(sztmp, lbuf + Letter->GetSummary()->m_mime->m_data->m_beg + nRead, (tLen - nRead) > 1024 ? 1024 : (tLen - nRead) );
+									sztmp[(tLen - nRead) > 1024 ? 1024 : (tLen - nRead)] = '\0';
+
+									nRead += (tLen - nRead) > 1024 ? 1024 : (tLen - nRead);
+									
+									if(ImapSend(sztmp, strlen(sztmp)) < 0)
+									{
+											break;
+									}
+								}
+							}
+							else if(strlike("BODY.PEEK[?*.MIME]", vItem[i].c_str()) == TRUE)
+							{
+								if(i > 0 || isUID)
+									ImapSend( " ", 1);
+								
+								string rstrtmp;
+								strcut(vItem[i].c_str(), "BODY.PEEK[", ".MIME]", rstrtmp);
+								
+								MimeSummary* pMp = Letter->GetSummary()->m_mime;
+								vector<string> vstmp;
+								vSplitString(rstrtmp, vstmp, ".");
+								BOOL isExist = TRUE;
+								for(int p = 0; p < vstmp.size(); p++)
+								{
+									if(atoi(vstmp[p].c_str()) > 0)
+									{
+										if(pMp->GetSubPartNumber() < atoi(vstmp[p].c_str()))
+										{
+											isExist = FALSE;
+											break;
+										}
+										else
+											pMp = pMp->GetPart(atoi(vstmp[p].c_str()) - 1);
+									}
+								}
+								if(isExist)
+								{
+									
+									
+									sprintf(cmd, "BODY[%s.MIME] {%u}\r\n", rstrtmp.c_str(), pMp->m_header->m_end - pMp->m_header->m_beg);
+									ImapSend( cmd, strlen(cmd));
+									
+									int nRead = 0;
+									int tLen = pMp->m_header->m_end - pMp->m_header->m_beg;
+									while(1)
+									{
+										if(nRead >= tLen)
+											break;
+										char sztmp[1025];
+										memcpy(sztmp, lbuf + pMp->m_header->m_beg + nRead, (tLen - nRead) > 1024 ? 1024 : (tLen - nRead) );
+										sztmp[(tLen - nRead) > 1024 ? 1024 : (tLen - nRead)] = '\0';
+
+										nRead += (tLen - nRead) > 1024 ? 1024 : (tLen - nRead);
+										
+										if(ImapSend(sztmp, strlen(sztmp)) < 0)
+										{
+											break;
+										}
+									}
+								
+								}
+								else
+								{
+									sprintf(cmd, "BODY[%s.MIME] NIL\r\n", rstrtmp.c_str());
+									ImapSend( cmd, strlen(cmd));
+								}
+							}
+							else if(strlike("BODY.PEEK[?*.TEXT]", vItem[i].c_str()) == TRUE)
+							{
+								if(i > 0 || isUID)
+									ImapSend( " ", 1);
+								
+								string rstrtmp;
+								strcut(vItem[i].c_str(), "BODY.PEEK[", ".MIME]", rstrtmp);
+								MimeSummary* pMp = Letter->GetSummary()->m_mime;
+								vector<string> vstmp;
+								vSplitString(rstrtmp, vstmp, ".");
+								BOOL isExist = TRUE;
+								for(int p = 0; p < vstmp.size(); p++)
+								{
+									if(atoi(vstmp[p].c_str()) > 0)
+									{
+										if(pMp->GetSubPartNumber() < atoi(vstmp[p].c_str()))
+										{
+											isExist = FALSE;
+											break;
+										}
+										else
+											pMp = pMp->GetPart(atoi(vstmp[p].c_str()) - 1);
+									}
+								}
+								if(isExist)
+								{
+									sprintf(cmd, "BODY[%s.TEXT] {%u}\r\n", rstrtmp.c_str(), pMp->m_data->m_end - pMp->m_data->m_beg);
+									ImapSend( cmd, strlen(cmd));
+
+									int nRead = 0;
+									int tLen = pMp->m_data->m_end - pMp->m_data->m_beg;
+									while(1)
+									{
+										if(nRead >= tLen)
+											break;
+										char sztmp[1025];
+										memcpy(sztmp, lbuf + pMp->m_data->m_beg + nRead, (tLen - nRead) > 1024 ? 1024 : (tLen - nRead));
+										sztmp[(tLen - nRead) > 1024 ? 1024 : (tLen - nRead)] = '\0';
+
+										nRead += (tLen - nRead) > 1024 ? 1024 : (tLen - nRead);
+										if(ImapSend(sztmp, strlen(sztmp)) < 0)
+										{
+											break;
+										}
+									}
+									
+								}
+								else
+								{
+									sprintf(cmd, "BODY[%s.TEXT] NIL\r\n", rstrtmp.c_str());
+									ImapSend( cmd, strlen(cmd));
+								}
+							}
+							else if(strlike("BODY.PEEK[?*.HEADER]", vItem[i].c_str()) == TRUE)
+							{
+								if(i > 0 || isUID)
+									ImapSend( " ", 1);
+								string rstrtmp;
+								strcut(vItem[i].c_str(), "BODY.PEEK[", ".MIME]", rstrtmp);
+								MimeSummary* pMp = Letter->GetSummary()->m_mime;
+								vector<string> vstmp;
+								vSplitString(rstrtmp, vstmp, ".");
+								BOOL isExist = TRUE;
+								for(int p = 0; p < vstmp.size(); p++)
+								{
+									if(atoi(vstmp[p].c_str()) > 0)
+									{
+										if(pMp->GetSubPartNumber() < atoi(vstmp[p].c_str()))
+										{
+											isExist = FALSE;
+											break;
+										}
+										else
+											pMp = pMp->GetPart(atoi(vstmp[p].c_str()) - 1);
+									}
+								}
+								if(isExist)
+								{
+								
+									sprintf(cmd, "BODY[%s.HEADER] {%u}\r\n", rstrtmp.c_str(), pMp->m_header->m_end - pMp->m_header->m_beg);
+									ImapSend( cmd, strlen(cmd));
+
+									int nRead = 0;
+									int tLen = pMp->m_header->m_end - pMp->m_header->m_beg;
+									while(1)
+									{
+										if(nRead >= tLen)
+											break;
+										char sztmp[1025];
+										memcpy(sztmp, lbuf + pMp->m_header->m_beg + nRead, (tLen - nRead) > 1024 ? 1024 : (tLen - nRead) );
+										sztmp[(tLen - nRead) > 1024 ? 1024 : (tLen - nRead)] = '\0';
+
+										nRead += (tLen - nRead) > 1024 ? 1024 : (tLen - nRead);
+										
+										if(ImapSend(sztmp, strlen(sztmp)) < 0)
+										{
+											break;
+										}
+									}
+									
+								}
+								else
+								{
+									sprintf(cmd, "BODY[%s.HEADER] NIL\r\n", rstrtmp.c_str());
+									ImapSend( cmd, strlen(cmd));
+								}
+							}
+							else
+							{	
+								if(i > 0 || isUID)
+									ImapSend(" ", 1);
+								
+								string rstrtmp;
+								strcut(vItem[i].c_str(), "BODY.PEEK[", "]", rstrtmp);
+								MimeSummary* pMp = Letter->GetSummary()->m_mime;
+								vector<string> vstmp;
+								vSplitString(rstrtmp, vstmp, ".");
+								BOOL isExist = TRUE;
+								for(int p = 0; p < vstmp.size(); p++)
+								{
+									if(atoi(vstmp[p].c_str()) > 0)
+									{
+										if(pMp->GetSubPartNumber() < atoi(vstmp[p].c_str()))
+										{
+											isExist = FALSE;
+											break;
+										}
+										else
+											pMp = pMp->GetPart(atoi(vstmp[p].c_str()) - 1);
+									}
+								}
+								if(isExist)
+								{
+									sprintf(cmd, "BODY[%s] {%u}\r\n", rstrtmp.c_str(), pMp->m_data->m_end - pMp->m_data->m_beg);
+									ImapSend( cmd, strlen(cmd));
+									int nRead = 0;
+									int tLen = pMp->m_data->m_end - pMp->m_data->m_beg;
+									while(1)
+									{
+										if(nRead >= tLen)
+											break;
+										char sztmp[1025];
+										memcpy(sztmp, lbuf + pMp->m_data->m_beg + nRead, (tLen - nRead) > 1024 ? 1024 : (tLen - nRead) );
+										sztmp[(tLen - nRead) > 1024 ? 1024 : (tLen - nRead)] = '\0'; 
+
+										nRead += (tLen - nRead) > 1024 ? 1024 : (tLen - nRead);
+										
+										if(ImapSend(sztmp, strlen(sztmp)) < 0)
+										{
+											break;
+										}
+
+									}
+								}
+								else
+								{
+									sprintf(cmd, "BODY[%s] NIL\r\n", rstrtmp.c_str());
+									ImapSend( cmd, strlen(cmd));
+								}
+							}
+						}
+						else if(strlike("BODY[*]", vItem[i].c_str()) == TRUE)
+						{
+							if(strlike("BODY[HEADER.FIELDS (*)]", vItem[i].c_str()) == TRUE)
+							{
+								string strHeaderFileds;
+								vector<string> vecHeaderFileds;
+								strcut(szArg, "BODY[HEADER.FIELDS (", ")]", strHeaderFileds);
+								vSplitString(strHeaderFileds, vecHeaderFileds, " ");
+								int vHeaderLen = vecHeaderFileds.size();
+								string strRespHeader = "";
+								for(int j = 0; j < vHeaderLen; j++)
+								{
+
+									string fstrbuf = "";
+									for(int x = Letter->GetSummary()->m_mime->m_header->m_beg; x < Letter->GetSummary()->m_mime->m_header->m_end; x++)
+									{
+										fstrbuf += lbuf[x];
+										
+										if(lbuf[x] == '\n' && lbuf[x + 1] != ' ' && lbuf[x] != '\t')
+										{
+											if(strncasecmp(fstrbuf.c_str(),vecHeaderFileds[j].c_str(), vecHeaderFileds[j].length()) == 0)
+											{
+												strRespHeader += fstrbuf;
+											}					
+											fstrbuf = "";
+										}
+									}
+									
+								}
+								strRespHeader += "\r\n";
+
+								if(i > 0 || isUID)
+									ImapSend( " ", 1);
+								
+								sprintf(cmd, "BODY[HEADER.FIELDS (%s)] {%u}\r\n", strHeaderFileds.c_str(), strRespHeader.length());
+								ImapSend(cmd, strlen(cmd));
+								ImapSend(strRespHeader.c_str(), strRespHeader.length());
+							}
+							else if(strlike("BODY[HEADER.FIELDS.NOT (*)]", vItem[i].c_str()) == TRUE)
+							{
+								string strHeaderFileds;
+								vector<string> vecHeaderFileds;
+								strcut(szArg, "BODY[HEADER.FIELDS.NOT (", ")]", strHeaderFileds);
+								vSplitString(strHeaderFileds, vecHeaderFileds, " ");
+								int vHeaderLen = vecHeaderFileds.size();
+								string strRespHeader = "";
+								
+								for(int j = 0; j < vHeaderLen; j++)
+								{
+									string fstrbuf = "";
+									for(int x = Letter->GetSummary()->m_mime->m_header->m_beg; x < Letter->GetSummary()->m_mime->m_header->m_end; x++)
+									{
+										fstrbuf += lbuf[x];
+										
+										if(lbuf[x] == '\n' && lbuf[x + 1] != ' ' && lbuf[x] != '\t')
+										{
+											if(strncasecmp(fstrbuf.c_str(),vecHeaderFileds[j].c_str(), vecHeaderFileds[j].length()) != 0)
+											{
+												strRespHeader += fstrbuf;
+											}					
+											fstrbuf = "";
+										}
+									}
+								}
+								strRespHeader += "\r\n";
+
+								if(i > 0 || isUID)
+									ImapSend( " ", 1);
+								
+								sprintf(cmd, "BODY[HEADER.FIELDS.NOT (%s)] {%u}\r\n", strHeaderFileds.c_str(), strRespHeader.length());
+								
+								ImapSend( cmd, strlen(cmd));
+								ImapSend( strRespHeader.c_str(), strRespHeader.length());
+							}
+							else if(strcasecmp((char*)vItem[i].c_str(), (char*)"BODY[]") == 0)
+							{	
+								if(i > 0 || isUID)
+									ImapSend( " ", 1);
+								
+								sprintf(cmd, "BODY[] {%u}\r\n", Letter->GetSummary()->m_mime->m_end - Letter->GetSummary()->m_mime->m_beg);
+																
+								ImapSend( cmd, strlen(cmd));
+								
+								int llen;
+								char* lbuf = Letter->Body(llen);
+								
+								int wlen = 0;
+								while(1)
+								{
+									if(ImapSend(lbuf + wlen, (llen - wlen) > 1448 ? 1448 : (llen - wlen)) < 0)
+										break;
+									wlen += ((llen - wlen) > 1448 ? 1448 : (llen - wlen));
+									if(wlen >= llen)
+										break;
+								}
+							}
+							else if(strcasecmp((char*)vItem[i].c_str(), "BODY[HEADER]") == 0)
+							{
+								if(i > 0 || isUID)
+									ImapSend( " ", 1);
+								
+								sprintf(cmd, "BODY[HEADER] {%u}\r\n", Letter->GetSummary()->m_mime->m_header->m_end -  Letter->GetSummary()->m_mime->m_header->m_beg);
+								
+								ImapSend( cmd, strlen(cmd));
+
+								int nRead = 0;
+								int tLen = Letter->GetSummary()->m_mime->m_header->m_end -  Letter->GetSummary()->m_mime->m_header->m_beg;
+								while(1)
+								{
+									if(nRead >= tLen)
+										break;
+									char sztmp[1025];
+									memcpy(sztmp, lbuf +  Letter->GetSummary()->m_mime->m_header->m_beg + nRead, (tLen - nRead) > 1024 ? 1024 : (tLen - nRead) );
+									sztmp[(tLen - nRead) > 1024 ? 1024 : (tLen - nRead)] = '\0';
+
+									nRead += (tLen - nRead) > 1024 ? 1024 : (tLen - nRead);
+									
+									if(ImapSend(sztmp, strlen(sztmp)) < 0)
+									{
+											break;
+									}
+								}
+							}
+							else if(strcasecmp((char*)vItem[i].c_str(), "BODY[TEXT]") == 0)
+							{
+								
+								BOOL isText = FALSE;
+								if(i > 0 || isUID)
+									ImapSend( " ", 1);
+								
+								sprintf(cmd, "BODY[TEXT] {%u}\r\n", Letter->GetSummary()->m_mime->m_data->m_end -  Letter->GetSummary()->m_mime->m_data->m_beg);
+								
+								ImapSend( cmd, strlen(cmd));
+
+								int nRead = 0;
+								int tLen = Letter->GetSummary()->m_mime->m_data->m_end -  Letter->GetSummary()->m_mime->m_data->m_beg;
+								while(1)
+								{
+									if(nRead >= tLen)
+										break;
+									char sztmp[1025];
+									memcpy(sztmp, lbuf +  Letter->GetSummary()->m_mime->m_data->m_beg + nRead, (tLen - nRead) > 1024 ? 1024 : (tLen - nRead) );
+									sztmp[(tLen - nRead) > 1024 ? 1024 : (tLen - nRead)] = '\0';
+
+									nRead += (tLen - nRead) > 1024 ? 1024 : (tLen - nRead);
+
+									if(ImapSend(sztmp, strlen(sztmp)) < 0)
+									{
+										break;
+									}
+								}
+								
+							}
+							else if(strlike("BODY[?*.MIME]", vItem[i].c_str()) == TRUE)
+							{									
+								if(i > 0 || isUID)
+									ImapSend( " ", 1);							
+								string rstrtmp;
+								strcut(vItem[i].c_str(), "BODY[", ".MIME]", rstrtmp);
+								MimeSummary* pMp = Letter->GetSummary()->m_mime;
+								vector<string> vstmp;
+								vSplitString(rstrtmp, vstmp, ".");
+								BOOL isExist = TRUE;
+								for(int p = 0; p < vstmp.size(); p++)
+								{
+									if(atoi(vstmp[p].c_str()) > 0)
+									{
+										if(pMp->GetSubPartNumber() < atoi(vstmp[p].c_str()))
+										{
+											isExist = FALSE;
+											break;
+										}
+										else
+											pMp = pMp->GetPart(atoi(vstmp[p].c_str()) - 1);
+									}
+								}
+								if(isExist)
+								{
+									sprintf(cmd, "BODY[%s.MIME] {%u}\r\n", rstrtmp.c_str(), pMp->m_header->m_end - pMp->m_header->m_beg);
+									ImapSend( cmd, strlen(cmd));
+
+									int nRead = 0;
+									int tLen = pMp->m_header->m_end - pMp->m_header->m_beg;
+									while(1)
+									{
+										if(nRead >= tLen)
+											break;
+										char sztmp[1025];
+										memcpy(sztmp, lbuf + pMp->m_header->m_beg + nRead, (tLen - nRead) > 1024 ? 1024 : (tLen - nRead) );
+										sztmp[(tLen - nRead) > 1024 ? 1024 : (tLen - nRead)] = '\0';
+
+										nRead += (tLen - nRead) > 1024 ? 1024 : (tLen - nRead);
+
+										if(ImapSend(sztmp, strlen(sztmp)) < 0)
+										{
+											break;
+										}
+									}
+								}
+								else
+								{
+									sprintf(cmd, "BODY[%s.MIME] NIL\r\n", rstrtmp.c_str());
+									ImapSend( cmd, strlen(cmd));
+								}
+							}
+							else if(strlike("BODY[?*.TEXT]", vItem[i].c_str()) == TRUE)
+							{
+								if(i > 0 || isUID)
+									ImapSend( " ", 1);
+
+								string rstrtmp;
+								strcut(vItem[i].c_str(), "BODY[", ".MIME]", rstrtmp);
+								MimeSummary* pMp = Letter->GetSummary()->m_mime;
+								vector<string> vstmp;
+								vSplitString(rstrtmp, vstmp, ".");
+								BOOL isExist = TRUE;
+								for(int p = 0; p < vstmp.size(); p++)
+								{
+									if(atoi(vstmp[p].c_str()) > 0)
+									{
+										if(pMp->GetSubPartNumber() < atoi(vstmp[p].c_str()))
+										{
+											isExist = FALSE;
+											break;
+										}
+										else
+											pMp = pMp->GetPart(atoi(vstmp[p].c_str()) - 1);
+									}
+								}
+								if(isExist)
+								{
+									sprintf(cmd, "BODY[%s.TEXT] {%u}\r\n", rstrtmp.c_str(), pMp->m_data->m_end - pMp->m_data->m_beg);
+									ImapSend( cmd, strlen(cmd));
+
+									int nRead = 0;
+									int tLen = pMp->m_data->m_end - pMp->m_data->m_beg;
+									while(1)
+									{
+										if(nRead >= tLen)
+											break;
+										char sztmp[1025];
+										memcpy(sztmp, lbuf + pMp->m_data->m_beg + nRead, (tLen - nRead) > 1024 ? 1024 : (tLen - nRead) );
+										sztmp[(tLen - nRead) > 1024 ? 1024 : (tLen - nRead)] = '\0';\
+
+										nRead += (tLen - nRead) > 1024 ? 1024 : (tLen - nRead);
+
+										if(ImapSend(sztmp, strlen(sztmp)) < 0)
+										{
+											break;
+										}
+									}
+									
+								}
+								else
+								{
+									sprintf(cmd, "BODY[%s.TEXT] NIL\r\n", rstrtmp.c_str());
+									ImapSend( cmd, strlen(cmd));
+								}
+							}
+							else if(strlike("BODY[?*.HEADER]", vItem[i].c_str()) == TRUE)
+							{
+								if(i > 0 || isUID)
+									ImapSend( " ", 1);
+								
+								string rstrtmp;
+								strcut(vItem[i].c_str(), "BODY[", ".MIME]", rstrtmp);
+								MimeSummary* pMp = Letter->GetSummary()->m_mime;
+								vector<string> vstmp;
+								vSplitString(rstrtmp, vstmp, ".");
+								BOOL isExist = TRUE;
+								for(int p = 0; p < vstmp.size(); p++)
+								{
+									if(atoi(vstmp[p].c_str()) > 0)
+									{
+										if(pMp->GetSubPartNumber() < atoi(vstmp[p].c_str()))
+										{
+											isExist = FALSE;
+											break;
+										}
+										else
+											pMp = pMp->GetPart(atoi(vstmp[p].c_str()) - 1);
+									}
+								}
+								if(isExist)
+								{
+									sprintf(cmd, "BODY[%s.HEADER] {%u}\r\n", rstrtmp.c_str(), pMp->m_header->m_end - pMp->m_header->m_beg);
+									ImapSend( cmd, strlen(cmd));
+
+									int nRead = 0;
+									int tLen = pMp->m_header->m_end - pMp->m_header->m_beg;
+									while(1)
+									{
+										if(nRead >= tLen)
+											break;
+										char sztmp[1025];
+										memcpy(sztmp, lbuf + pMp->m_header->m_beg + nRead, (tLen - nRead) > 1024 ? 1024 : (tLen - nRead) );
+										sztmp[(tLen - nRead) > 1024 ? 1024 : (tLen - nRead)] = '\0';
+
+										nRead += (tLen - nRead) > 1024 ? 1024 : (tLen - nRead);
+
+										if(ImapSend(sztmp, strlen(sztmp)) < 0)
+										{
+											break;
+										}
+									}
+								}
+								else
+								{
+									sprintf(cmd, "BODY[%s.HEADER] NIL\r\n", rstrtmp.c_str());
+									ImapSend( cmd, strlen(cmd));
+								}
+							}
+							else
+							{	
+								if(i > 0 || isUID)
+									ImapSend( " ", 1);
+								
+								string rstrtmp;
+								strcut(vItem[i].c_str(), "BODY[", "]", rstrtmp);
+								MimeSummary* pMp = Letter->GetSummary()->m_mime;
+								vector<string> vstmp;
+								vSplitString(rstrtmp, vstmp, ".");
+								BOOL isExist = TRUE;
+								for(int p = 0; p < vstmp.size(); p++)
+								{
+									if(atoi(vstmp[p].c_str()) > 0)
+									{
+										if(pMp->GetSubPartNumber() < atoi(vstmp[p].c_str()))
+										{
+											isExist = FALSE;
+											break;
+										}
+										else
+											pMp = pMp->GetPart(atoi(vstmp[p].c_str()) - 1);
+									}
+								}
+								if(isExist)
+								{
+									sprintf(cmd, "BODY[%s] {%u}\r\n", rstrtmp.c_str(), pMp->m_data->m_end -  pMp->m_data->m_beg);
+									ImapSend( cmd, strlen(cmd));
+									int nRead = 0;
+									int tLen = pMp->m_data->m_end - pMp->m_data->m_beg;
+									while(1)
+									{
+										if(nRead >= tLen)
+											break;
+										char sztmp[1025];
+										memcpy(sztmp, lbuf + pMp->m_data->m_beg + nRead, (tLen - nRead) > 1024 ? 1024 : (tLen - nRead) );
+										sztmp[(tLen - nRead) > 1024 ? 1024 : (tLen - nRead)] = '\0';
+
+										nRead += (tLen - nRead) > 1024 ? 1024 : (tLen - nRead);
+
+										if(ImapSend(sztmp, strlen(sztmp)) < 0)
+										{
+											break;
+										}
+									}
+								}
+								else
+								{
+									sprintf(cmd, "BODY[%s] NIL\r\n", rstrtmp.c_str());
+									ImapSend( cmd, strlen(cmd));
+								}
+							}
+						}
+						else if(strcasecmp(vItem[i].c_str(), "BODY") == 0)
+						{	
+							if(i > 0 || isUID)
+								ImapSend( " ", 1);
+														
+							sprintf(cmd, "BODY[] {%u}\r\n", Letter->GetSummary()->m_mime->m_end - Letter->GetSummary()->m_mime->m_beg);
+
+							ImapSend( cmd, strlen(cmd));
+							
+							int llen;
+							char* lbuf = Letter->Body(llen);
+							
+							int wlen = 0;
+							while(1)
+							{
+								if(ImapSend(lbuf + wlen, (llen - wlen) > 1448 ? 1448 : (llen - wlen)) < 0)
+									break;
+								wlen += ((llen - wlen) > 1448 ? 1448 : (llen - wlen));
+								if(wlen >= llen)
+									break;
+							}
+						}
+						else if(
+							strlike("BODY.PEEK[]<*.*>", vItem[i].c_str())||
+							strlike("BODY[]<*.*>", vItem[i].c_str())||
+							strlike("BODY<*.*>", vItem[i].c_str())
+							)
+						{
+							if(i > 0 || isUID)
+								ImapSend( " ", 1);
+							
+							string strRange;
+							strcut(vItem[i].c_str(), "<", ">", strRange);
+							strtrim(strRange);
+							unsigned int origin, octet;
+							sscanf(strRange.c_str(), "%u.%u", &origin, &octet);
+							
+							sprintf(cmd, "BODY[]<%s> {%u}\r\n",strRange.c_str(), octet);
+							if(i > 0 || isUID)
+								ImapSend( " ", 1);
+							ImapSend( cmd, strlen(cmd));
+							
+							int llen;
+							char* lbuf = Letter->Body(llen);
+							
+							lbuf = lbuf + origin;
+							llen = origin + octet > llen ? llen  - origin : octet;
+							
+							int wlen = 0;
+							while(1)
+							{
+								if(ImapSend(lbuf + wlen, (llen - wlen) > 1448 ? 1448 : (llen - wlen)) < 0)
+									break;
+								wlen += ((llen - wlen) > 1448 ? 1448 : (llen - wlen));
+								if(wlen >= llen)
+									break;
+							}
+						}
+						
+						else if(strcasecmp(vItem[i].c_str(), "BODYSTRUCTURE") == 0)
+						{
+							string strStruct;
+							
+							BodyStruct(Letter->GetSummary()->m_mime, strStruct, TRUE);
+							
+							//printf("%s\n", strStruct.c_str());
+							
+							if(i > 0 || isUID)
+								ImapSend( " ", 1);
+							
+							sprintf(cmd, "BODYSTRUCTURE ");
+							ImapSend(cmd, strlen(cmd));
+							
+							ImapSend(strStruct.c_str(), strStruct.length());						
+						}
+						else if(strcasecmp(vItem[i].c_str(), "RFC822") == 0)
+						{
+							if(i > 0 || isUID)
+								ImapSend( " ", 1);
+														
+							sprintf(cmd, "RFC822 {%u}\r\n", Letter->GetSummary()->m_mime->m_end - Letter->GetSummary()->m_mime->m_beg);
+
+							ImapSend( cmd, strlen(cmd));
+
+							int nRead = 0;
+							int tLen = Letter->GetSummary()->m_mime->m_end - Letter->GetSummary()->m_mime->m_beg;
+							while(1)
+							{
+								if(nRead >= tLen)
+									break;
+								char sztmp[1025];
+								memcpy(sztmp, lbuf + Letter->GetSummary()->m_mime->m_beg + nRead, (tLen - nRead) > 1024 ? 1024 : (tLen - nRead) );
+								sztmp[(tLen - nRead) > 1024 ? 1024 : (tLen - nRead)] = '\0';
+
+								nRead += (tLen - nRead) > 1024 ? 1024 : (tLen - nRead);
+
+								if(ImapSend(sztmp, strlen(sztmp)) < 0)
+								{
+									break;
+								}
+							}
+						}
+						else if(strcasecmp(vItem[i].c_str(), "RFC822.HEADER") == 0)
+						{
+							if(i > 0 || isUID)
+								ImapSend( " ", 1);
+							
+							sprintf(cmd, "BODY[HEADER] {%u}\r\n", Letter->GetSummary()->m_mime->m_header->m_end - Letter->GetSummary()->m_mime->m_header->m_beg);
+							
+							ImapSend( cmd, strlen(cmd));
+
+							int nRead = 0;
+							int tLen = Letter->GetSummary()->m_mime->m_header->m_end - Letter->GetSummary()->m_mime->m_header->m_beg;
+							while(1)
+							{
+								if(nRead >= tLen)
+									break;
+								char sztmp[1025];
+								memcpy(sztmp, lbuf + Letter->GetSummary()->m_mime->m_header->m_beg + nRead, (tLen - nRead) > 1024 ? 1024 : (tLen - nRead) );
+								sztmp[(tLen - nRead) > 1024 ? 1024 : (tLen - nRead)] = '\0';
+
+								nRead += (tLen - nRead) > 1024 ? 1024 : (tLen - nRead);
+
+								if(ImapSend(sztmp, strlen(sztmp)) < 0)
+								{
+									break;
+								}
+							}
+							
+						}
+						else if(strcasecmp(vItem[i].c_str(), "RFC822.TEXT") == 0)
+						{
+							if(i > 0 || isUID)
+								ImapSend( " ", 1);
+							
+							BOOL isText = FALSE;
+							
+							sprintf(cmd, "BODY[TEXT] {%u}\r\n", Letter->GetSummary()->m_mime->m_data->m_end - Letter->GetSummary()->m_mime->m_data->m_beg);
+							
+							ImapSend( cmd, strlen(cmd));
+
+
+							int nRead = 0;
+							int tLen = Letter->GetSummary()->m_mime->m_data->m_end - Letter->GetSummary()->m_mime->m_data->m_beg;
+							while(1)
+							{
+								if(nRead >= tLen)
+									break;
+								char sztmp[1025];
+								memcpy(sztmp, lbuf + Letter->GetSummary()->m_mime->m_data->m_beg + nRead, (tLen - nRead) > 1024 ? 1024 : (tLen - nRead) );
+								sztmp[(tLen - nRead) > 1024 ? 1024 : (tLen - nRead)] = '\0';
+
+								nRead += (tLen - nRead) > 1024 ? 1024 : (tLen - nRead);
+
+								if(ImapSend(sztmp, strlen(sztmp)) < 0)
+								{
+									break;
+								}
+							}
+							
+						}
+						else if(strcasecmp(vItem[i].c_str(), "ENVELOPE") == 0)
+						{
+							string strIntTime;
+							OutTimeString(m_maillisttbl[x].mtime, strIntTime);
+							string strEnve;
+							strEnve = "ENVELOPE (";
+							
+							strEnve += "\"";
+							strEnve += strIntTime.c_str();
+							strEnve += "\"";
+							strEnve += " ";
+							
+							strEnve += "\"";
+							strEnve += Letter->GetSummary()->m_header->GetSubject();
+							strEnve += "\"";
+							strEnve += " ";
+							
+							/*from info*/
+							if(Letter->GetSummary()->m_header->GetFrom())
+							{
+								strEnve += "(";
+								for(int k = 0; k < Letter->GetSummary()->m_header->GetFrom()->m_addrs.size(); k++)
+								{
+									strEnve += "(";
+									
+									strEnve += "\"";
+									strEnve += Letter->GetSummary()->m_header->GetFrom()->m_addrs[k].pName;
+									strEnve += "\"";
+									strEnve += " ";
+									
+									strEnve += "NIL";
+									strEnve += " ";
+									
+									strEnve += "\"";
+									strEnve += Letter->GetSummary()->m_header->GetFrom()->m_addrs[k].mName;
+									strEnve += "\"";
+									strEnve += " ";
+									
+									strEnve += "\"";
+									strEnve += Letter->GetSummary()->m_header->GetFrom()->m_addrs[k].dName;
+									strEnve += "\"";
+									
+									strEnve += ")";
+								}
+								strEnve += ") ";
+							}
+							else
+							{
+								strEnve += "NIL ";
+							}
+							
+							
+							/*Sender info*/
+							if(Letter->GetSummary()->m_header->GetSender())
+							{
+								strEnve += "(";
+								for(int k = 0; k < Letter->GetSummary()->m_header->GetSender()->m_addrs.size(); k++)
+								{
+									strEnve += "(";
+									
+									strEnve += "\"";
+									strEnve += Letter->GetSummary()->m_header->GetSender()->m_addrs[k].pName;
+									strEnve += "\"";
+									strEnve += " ";
+									
+									strEnve += "NIL";
+									strEnve += " ";
+									
+									strEnve += "\"";
+									strEnve += Letter->GetSummary()->m_header->GetSender()->m_addrs[k].mName;
+									strEnve += "\"";
+									strEnve += " ";
+									
+									strEnve += "\"";
+									strEnve += Letter->GetSummary()->m_header->GetSender()->m_addrs[k].dName;
+									strEnve += "\"";
+									
+									strEnve += ")";
+								}
+								strEnve += ") ";
+							}
+							else
+							{
+								if(Letter->GetSummary()->m_header->GetFrom())
+								{
+									strEnve += "(";
+									for(int k = 0; k < Letter->GetSummary()->m_header->GetFrom()->m_addrs.size(); k++)
+									{
+										strEnve += "(";
+										
+										strEnve += "\"";
+										strEnve += Letter->GetSummary()->m_header->GetFrom()->m_addrs[k].pName;
+										strEnve += "\"";
+										strEnve += " ";
+										
+										strEnve += "NIL";
+										strEnve += " ";
+										
+										strEnve += "\"";
+										strEnve += Letter->GetSummary()->m_header->GetFrom()->m_addrs[k].mName;
+										strEnve += "\"";
+										strEnve += " ";
+										
+										strEnve += "\"";
+										strEnve += Letter->GetSummary()->m_header->GetFrom()->m_addrs[k].dName;
+										strEnve += "\"";
+										
+										strEnve += ")";
+									}
+									strEnve += ") ";
+								}
+								else
+								{
+									strEnve += "NIL ";
+								}
+							}
+							
+							/* Reply-To */
+							if(Letter->GetSummary()->m_header->GetReplyTo())
+							{
+								strEnve += "(";
+								for(int k = 0; k < Letter->GetSummary()->m_header->GetReplyTo()->m_addrs.size(); k++)
+								{
+									strEnve += "(";
+									
+									strEnve += "\"";
+									strEnve += Letter->GetSummary()->m_header->GetReplyTo()->m_addrs[k].pName;
+									strEnve += "\"";
+									strEnve += " ";
+									
+									strEnve += "NIL";
+									strEnve += " ";
+									
+									strEnve += "\"";
+									strEnve += Letter->GetSummary()->m_header->GetReplyTo()->m_addrs[k].mName;
+									strEnve += "\"";
+									strEnve += " ";
+									
+									strEnve += "\"";
+									strEnve += Letter->GetSummary()->m_header->GetReplyTo()->m_addrs[k].dName;
+									strEnve += "\"";
+									
+									strEnve += ")";
+								}
+								strEnve += ") ";
+							}
+							else
+							{
+								if(Letter->GetSummary()->m_header->GetFrom())
+								{
+									strEnve += "(";
+									for(int k = 0; k < Letter->GetSummary()->m_header->GetFrom()->m_addrs.size(); k++)
+									{
+										strEnve += "(";
+										
+										strEnve += "\"";
+										strEnve += Letter->GetSummary()->m_header->GetFrom()->m_addrs[k].pName;
+										strEnve += "\"";
+										strEnve += " ";
+										
+										strEnve += "NIL";
+										strEnve += " ";
+										
+										strEnve += "\"";
+										strEnve += Letter->GetSummary()->m_header->GetFrom()->m_addrs[k].mName;
+										strEnve += "\"";
+										strEnve += " ";
+										
+										strEnve += "\"";
+										strEnve += Letter->GetSummary()->m_header->GetFrom()->m_addrs[k].dName;
+										strEnve += "\"";
+										
+										strEnve += ")";
+									}
+									strEnve += ") ";
+								}
+								else
+								{
+									strEnve += "NIL ";
+								}
+							}
+							
+							
+							/* To */
+							if(Letter->GetSummary()->m_header->GetTo())
+							{
+								strEnve += "(";
+								for(int k = 0; k < Letter->GetSummary()->m_header->GetTo()->m_addrs.size(); k++)
+								{
+									strEnve += "(";
+									
+									strEnve += "\"";
+									strEnve += Letter->GetSummary()->m_header->GetTo()->m_addrs[k].pName;
+									strEnve += "\"";
+									strEnve += " ";
+									
+									strEnve += "NIL";
+									strEnve += " ";
+									
+									strEnve += "\"";
+									strEnve += Letter->GetSummary()->m_header->GetTo()->m_addrs[k].mName;
+									strEnve += "\"";
+									strEnve += " ";
+									
+									strEnve += "\"";
+									strEnve += Letter->GetSummary()->m_header->GetTo()->m_addrs[k].dName;
+									strEnve += "\"";
+									
+									strEnve += ")";
+								}
+								strEnve += ") ";
+							}
+							else
+							{
+								strEnve += "NIL ";
+							}
+							
+							/* CC */
+							if(Letter->GetSummary()->m_header->GetCc())
+							{
+								strEnve += "(";
+								for(int k = 0; k < Letter->GetSummary()->m_header->GetCc()->m_addrs.size(); k++)
+								{
+									strEnve += "(";
+									
+									strEnve += "\"";
+									strEnve += Letter->GetSummary()->m_header->GetCc()->m_addrs[k].pName;
+									strEnve += "\"";
+									strEnve += " ";
+									
+									strEnve += "NIL";
+									strEnve += " ";
+									
+									strEnve += "\"";
+									strEnve += Letter->GetSummary()->m_header->GetCc()->m_addrs[k].mName;
+									strEnve += "\"";
+									strEnve += " ";
+									
+									strEnve += "\"";
+									strEnve += Letter->GetSummary()->m_header->GetCc()->m_addrs[k].dName;
+									strEnve += "\"";
+									
+									strEnve += ")";
+								}
+								strEnve += ") ";
+							}
+							else
+							{
+								strEnve += "NIL ";
+							}
+							
+							
+							/*BCC*/
+							if(Letter->GetSummary()->m_header->GetBcc())
+							{
+								strEnve += "(";
+								for(int k = 0; k < Letter->GetSummary()->m_header->GetBcc()->m_addrs.size(); k++)
+								{
+									strEnve += "(";
+									
+									strEnve += "\"";
+									strEnve += Letter->GetSummary()->m_header->GetBcc()->m_addrs[k].pName;
+									strEnve += "\"";
+									strEnve += " ";
+									
+									strEnve += "NIL";
+									strEnve += " ";
+									
+									strEnve += "\"";
+									strEnve += Letter->GetSummary()->m_header->GetBcc()->m_addrs[k].mName;
+									strEnve += "\"";
+									strEnve += " ";
+									
+									strEnve += "\"";
+									strEnve += Letter->GetSummary()->m_header->GetBcc()->m_addrs[k].dName;
+									strEnve += "\"";
+									
+									strEnve += ")";
+								}
+								strEnve += ") ";
+							}
+							else
+							{
+								strEnve += "NIL ";
+							}
+							
+							
+							if(strcmp(Letter->GetSummary()->m_header->GetInReplyTo(), "") == 0)
+							{
+								strEnve += "NIL ";
+							}
+							else
+							{
+								strEnve += "\"";
+								strEnve += Letter->GetSummary()->m_header->GetInReplyTo();
+								strEnve += "\" ";
+							}
+							
+							if(strcmp(Letter->GetSummary()->m_header->GetMessageID(), "") == 0)
+							{
+								strEnve += "NIL ";
+							}
+							else
+							{
+								strEnve += "\"";
+								strEnve += Letter->GetSummary()->m_header->GetMessageID();
+								strEnve += "\"";
+							}
+							strEnve += ")";
+							
+							if(i > 0 || isUID)
+								ImapSend( " ", 1);
+
+							ImapSend(strEnve.c_str(), strEnve.length());
+						}
+						else if(strcasecmp(vItem[i].c_str(), "FLAGS") == 0)
+						{
+							unsigned int status = m_maillisttbl[x].mstatus;
+							string strFlags = ""; 
+							if((status & MSG_ATTR_ANSWERED) != 0)
+							{
+								if(strFlags == "")
+									strFlags += "\\Answered";
+								else
+									strFlags += " \\Answered";
+							}
+							if((status & MSG_ATTR_DELETED) != 0)
+							{
+								if(strFlags == "")
+									strFlags += "\\Deleted";
+								else
+									strFlags += " \\Deleted";
+							}
+							if((status & MSG_ATTR_DRAFT) != 0)
+							{
+								if(strFlags == "")
+									strFlags += "\\Draft";
+								else
+									strFlags += " \\Draft";
+							}
+							if((status & MSG_ATTR_FLAGGED) != 0)
+							{
+								if(strFlags == "")
+									strFlags += "\\Flagged";
+								else
+									strFlags += " \\Flagged";
+							}
+							if((time(NULL) - m_maillisttbl[x].mtime) < RECENT_MSG_TIME)
+							{
+								if(strFlags == "")
+									strFlags += "\\Recent";
+								else
+									strFlags += " \\Recent";
+							}
+							if((status & MSG_ATTR_SEEN) != 0)
+							{
+								if(strFlags == "")
+									strFlags += "\\Seen";
+								else
+									strFlags += " \\Seen";
+							}
+							sprintf(cmd, "FLAGS (%s)", strFlags.c_str());
+							
+							if(i > 0 || isUID)
+								ImapSend( " ", 1);
+							ImapSend(cmd, strlen(cmd));
+						}
+						else if(strcasecmp(vItem[i].c_str(), "INTERNALDATE") == 0)
+						{
+							sprintf(cmd, "INTERNALDATE \"%s\"",Letter->GetSummary()->m_header->GetDate());
+							if(i > 0 || isUID)
+								ImapSend( " ", 1);
+							ImapSend( cmd, strlen(cmd));
+						}
+						else if(strcasecmp(vItem[i].c_str(), "RFC822.SIZE") == 0)
+						{
+							sprintf(cmd, "RFC822.SIZE %u", Letter->GetSize());
+							if(i > 0 || isUID)
+								ImapSend( " ", 1);
+							ImapSend( cmd, strlen(cmd));
+							
+							
+						}
+						else if(strcasecmp(vItem[i].c_str(), "UID") == 0)
+						{
+							if(!isUID)
+							{
+								sprintf(cmd, "UID %u", m_maillisttbl[x].mid);
+								if(i > 0)
+									ImapSend( " ", 1);
+								ImapSend( cmd, strlen(cmd));
+							}
+						}
+						
+					}
+				}
+
+				sprintf(cmd, ")\r\n");
+				ImapSend(cmd, strlen(cmd));
+				
+				delete Letter;
+			}
+		}
+		
+	}
+}
+
+void CMailImap::Store(const char* szArg, BOOL isUID)
+{	
+	MailStorage* mailStg;
+	StorageEngineInstance stgengine_instance(m_storageEngine, &mailStg);
+	if(!mailStg)
+	{
+		printf("%s::%s Get Storage Engine Failed!\n", __FILE__, __FUNCTION__);
+		return;
+	}
+	char cmd[512];
+	string strSequence, strMsgItem;
+	unsigned int nBegin, nEnd;
+	strcut(szArg, NULL, " ", strSequence);
+	strcut(szArg, " ", "\r\n", strMsgItem);
+	vector<string> vecSequenceSet;
+	vSplitString(strSequence, vecSequenceSet, ",");
+	int zLen = vecSequenceSet.size();
+	for(int z = 0; z < zLen; z++)
+	{
+		vector<string> vecSequenceRange;
+		strSequence = vecSequenceSet[z];
+		
+		vSplitString(strSequence, vecSequenceRange, ":");
+		if(vecSequenceRange.size() == 1)
+		{
+			nBegin = nEnd = atoi(vecSequenceRange[0].c_str());
+		}
+		else if(vecSequenceRange.size() == 2)
+		{
+			nBegin = atoi(vecSequenceRange[0].c_str());
+			if(vecSequenceRange[1] == "*")
+			{
+				nEnd = 0x7FFFFFFF;
+			}
+			else
+			{
+				nEnd = atoi(vecSequenceRange[1].c_str());
+			}
+		}
+		
+		int vLen = m_maillisttbl.size();
+		for(int x = 0; x < vLen; x++)
+		{
+			if(((isUID ? m_maillisttbl[x].mid : x + 1) >= nBegin) && ((isUID ? m_maillisttbl[x].mid : x + 1) <= nEnd))
+			{
+				if(strncasecmp(strMsgItem.c_str(),"FLAGS.SILENT ", strlen("FLAGS.SILENT ")) == 0)
+				{
+					mailStg->SetMailStatus(m_username.c_str(), m_maillisttbl[x].mid, 0);
+					if(strMsgItem.find("\\Seen", 0, strlen("\\Seen")) != string::npos)
+					{
+						unsigned int status;
+						mailStg->GetMailStatus(m_maillisttbl[x].mid, status);
+						status |= MSG_ATTR_SEEN;
+						mailStg->SetMailStatus(m_username.c_str(),m_maillisttbl[x].mid, status);
+					}
+					if(strMsgItem.find("\\Answered", 0, strlen("\\Answered")) != string::npos)
+					{
+						unsigned int status;
+						mailStg->GetMailStatus(m_maillisttbl[x].mid, status);
+						status |= MSG_ATTR_ANSWERED;
+						mailStg->SetMailStatus(m_username.c_str(),m_maillisttbl[x].mid, status);
+					}
+					if(strMsgItem.find("\\Flagged", 0, strlen("\\Flagged")) != string::npos)
+					{
+						unsigned int status;
+						mailStg->GetMailStatus(m_maillisttbl[x].mid, status);
+						status |= MSG_ATTR_FLAGGED;
+						mailStg->SetMailStatus(m_username.c_str(),m_maillisttbl[x].mid, status);
+					}
+					if(strMsgItem.find("\\Deleted", 0, strlen("\\Deleted")) != string::npos)
+					{
+						unsigned int status;
+						mailStg->GetMailStatus(m_maillisttbl[x].mid, status);
+						status |= MSG_ATTR_DELETED;
+						mailStg->SetMailStatus(m_username.c_str(),m_maillisttbl[x].mid, status);
+					}
+					if(strMsgItem.find("\\Draft", 0, strlen("\\Draft")) != string::npos)
+					{
+						unsigned int status;
+						mailStg->GetMailStatus(m_maillisttbl[x].mid, status);
+						status |= MSG_ATTR_DRAFT;
+						mailStg->SetMailStatus(m_username.c_str(),m_maillisttbl[x].mid, status);
+					}
+					if(strMsgItem.find("\\Recent", 0, strlen("\\Recent")) != string::npos)
+					{
+						unsigned int status;
+						mailStg->GetMailStatus(m_maillisttbl[x].mid, status);
+						status |= MSG_ATTR_RECENT;
+						mailStg->SetMailStatus(m_username.c_str(),m_maillisttbl[x].mid, status);
+					}
+				}
+				else if(strncasecmp(strMsgItem.c_str(),"FLAGS ", strlen("FLAGS ")) == 0)
+				{
+					mailStg->SetMailStatus(m_username.c_str(),m_maillisttbl[x].mid, 0);
+					if(strMsgItem.find("\\Seen", 0, strlen("\\Seen")) != string::npos)
+					{
+						unsigned int status;
+						mailStg->GetMailStatus(m_maillisttbl[x].mid, status);
+						status |= MSG_ATTR_SEEN;
+						mailStg->SetMailStatus(m_username.c_str(),m_maillisttbl[x].mid, status);
+					}
+					if(strMsgItem.find("\\Answered", 0, strlen("\\Answered")) != string::npos)
+					{
+						unsigned int status;
+						mailStg->GetMailStatus(m_maillisttbl[x].mid, status);
+						status |= MSG_ATTR_ANSWERED;
+						mailStg->SetMailStatus(m_username.c_str(),m_maillisttbl[x].mid, status);
+					}
+					if(strMsgItem.find("\\Flagged", 0, strlen("\\Flagged")) != string::npos)
+					{
+						unsigned int status;
+						mailStg->GetMailStatus(m_maillisttbl[x].mid, status);
+						status |= MSG_ATTR_FLAGGED;
+						mailStg->SetMailStatus(m_username.c_str(),m_maillisttbl[x].mid, status);
+					}
+					if(strMsgItem.find("\\Deleted", 0, strlen("\\Deleted")) != string::npos)
+					{
+						unsigned int status;
+						mailStg->GetMailStatus(m_maillisttbl[x].mid, status);
+						status |= MSG_ATTR_DELETED;
+						mailStg->SetMailStatus(m_username.c_str(),m_maillisttbl[x].mid, status);
+					}
+					if(strMsgItem.find("\\Draft", 0, strlen("\\Draft")) != string::npos)
+					{
+						unsigned int status;
+						mailStg->GetMailStatus(m_maillisttbl[x].mid, status);
+						status |= MSG_ATTR_DRAFT;
+						mailStg->SetMailStatus(m_username.c_str(),m_maillisttbl[x].mid, status);
+					}
+					if(strMsgItem.find("\\Recent", 0, strlen("\\Recent")) != string::npos)
+					{
+						unsigned int status;
+						mailStg->GetMailStatus(m_maillisttbl[x].mid, status);
+						status |= MSG_ATTR_RECENT;
+						mailStg->SetMailStatus(m_username.c_str(),m_maillisttbl[x].mid, status);
+					}
+					unsigned int status;
+					mailStg->GetMailStatus(m_maillisttbl[x].mid, status);
+					string strStatus = "";
+					if((status & MSG_ATTR_SEEN) == MSG_ATTR_SEEN)
+					{
+						if(strStatus == "")
+							strStatus += "\\Seen";
+						else
+							strStatus += " \\Seen";
+					}
+					if((status & MSG_ATTR_ANSWERED) == MSG_ATTR_ANSWERED)
+					{
+						if(strStatus == "")
+							strStatus += "\\Answered";
+						else
+							strStatus += " \\Answered";
+					}
+					if((status & MSG_ATTR_FLAGGED) == MSG_ATTR_FLAGGED)
+					{
+						if(strStatus == "")
+							strStatus += "\\Flagged";
+						else
+							strStatus += " \\Flagged";
+					}
+					if((status & MSG_ATTR_DELETED) == MSG_ATTR_DELETED)
+					{
+						if(strStatus == "")
+							strStatus += "\\Deleted";
+						else
+							strStatus += " \\Deleted";
+					}
+					if((status & MSG_ATTR_DRAFT) == MSG_ATTR_DRAFT)
+					{
+						if(strStatus == "")
+							strStatus += "\\Draft";
+						else
+							strStatus += " \\Draft";
+					}
+					if((time(NULL) - m_maillisttbl[x].mtime) < RECENT_MSG_TIME)
+					{
+						if(strStatus == "")
+							strStatus += "\\Recent";
+						else
+							strStatus += " \\Recent";
+					}
+					if(isUID)
+						sprintf(cmd ,"* %u FETCH (FLAGS (%s)) UID %u\r\n", x+1, strStatus.c_str(), m_maillisttbl[x].mid);
+					else
+						sprintf(cmd ,"* %u FETCH (FLAGS (%s))\r\n", x+1, strStatus.c_str());
+					ImapSend( cmd, strlen(cmd));
+				}
+				else if(strncasecmp(strMsgItem.c_str(),"+FLAGS.SILENT ", strlen("+FLAGS.SILENT ")) == 0)
+				{
+					if(strMsgItem.find("\\Seen", 0, strlen("\\Seen")) != string::npos)
+					{
+						unsigned int status;
+						mailStg->GetMailStatus(m_maillisttbl[x].mid, status);
+						status |= MSG_ATTR_SEEN;
+						mailStg->SetMailStatus(m_username.c_str(),m_maillisttbl[x].mid, status);
+					}
+					if(strMsgItem.find("\\Answered", 0, strlen("\\Answered")) != string::npos)
+					{
+						unsigned int status;
+						mailStg->GetMailStatus(m_maillisttbl[x].mid, status);
+						status |= MSG_ATTR_ANSWERED;
+						mailStg->SetMailStatus(m_username.c_str(),m_maillisttbl[x].mid, status);
+					}
+					if(strMsgItem.find("\\Flagged", 0, strlen("\\Flagged")) != string::npos)
+					{
+						unsigned int status;
+						mailStg->GetMailStatus(m_maillisttbl[x].mid, status);
+						status |= MSG_ATTR_FLAGGED;
+						mailStg->SetMailStatus(m_username.c_str(),m_maillisttbl[x].mid, status);
+					}
+					if(strMsgItem.find("\\Deleted", 0, strlen("\\Deleted")) != string::npos)
+					{
+						unsigned int status;
+						mailStg->GetMailStatus(m_maillisttbl[x].mid, status);
+						status |= MSG_ATTR_DELETED;
+						mailStg->SetMailStatus(m_username.c_str(),m_maillisttbl[x].mid, status);
+					}
+					if(strMsgItem.find("\\Draft", 0, strlen("\\Draft")) != string::npos)
+					{
+						unsigned int status;
+						mailStg->GetMailStatus(m_maillisttbl[x].mid, status);
+						status |= MSG_ATTR_DRAFT;
+						mailStg->SetMailStatus(m_username.c_str(),m_maillisttbl[x].mid, status);
+					}
+					if(strMsgItem.find("\\Recent", 0, strlen("\\Recent")) != string::npos)
+					{
+						unsigned int status;
+						mailStg->GetMailStatus(m_maillisttbl[x].mid, status);
+						status |= MSG_ATTR_RECENT;
+						mailStg->SetMailStatus(m_username.c_str(),m_maillisttbl[x].mid, status);
+					}
+				}
+				else if(strncasecmp(strMsgItem.c_str(),"+FLAGS ", strlen("+FLAGS ")) == 0)
+				{
+					if(strMsgItem.find("\\Seen", 0, strlen("\\Seen")) != string::npos)
+					{
+						unsigned int status;
+						mailStg->GetMailStatus(m_maillisttbl[x].mid, status);
+						status |= MSG_ATTR_SEEN;
+						mailStg->SetMailStatus(m_username.c_str(),m_maillisttbl[x].mid, status);
+					}
+					if(strMsgItem.find("\\Answered", 0, strlen("\\Answered")) != string::npos)
+					{
+						unsigned int status;
+						mailStg->GetMailStatus(m_maillisttbl[x].mid, status);
+						status |= MSG_ATTR_ANSWERED;
+						mailStg->SetMailStatus(m_username.c_str(),m_maillisttbl[x].mid, status);
+					}
+					if(strMsgItem.find("\\Flagged", 0, strlen("\\Flagged")) != string::npos)
+					{
+						unsigned int status;
+						mailStg->GetMailStatus(m_maillisttbl[x].mid, status);
+						status |= MSG_ATTR_FLAGGED;
+						mailStg->SetMailStatus(m_username.c_str(),m_maillisttbl[x].mid, status);
+					}
+					if(strMsgItem.find("\\Deleted", 0, strlen("\\Deleted")) != string::npos)
+					{
+						unsigned int status;
+						mailStg->GetMailStatus(m_maillisttbl[x].mid, status);
+						status |= MSG_ATTR_DELETED;
+						mailStg->SetMailStatus(m_username.c_str(),m_maillisttbl[x].mid, status);
+					}
+					if(strMsgItem.find("\\Draft", 0, strlen("\\Draft")) != string::npos)
+					{
+						unsigned int status;
+						mailStg->GetMailStatus(m_maillisttbl[x].mid, status);
+						status |= MSG_ATTR_DRAFT;
+						mailStg->SetMailStatus(m_username.c_str(),m_maillisttbl[x].mid, status);
+					}
+					if(strMsgItem.find("\\Recent", 0, strlen("\\Recent")) != string::npos)
+					{
+						unsigned int status;
+						mailStg->GetMailStatus(m_maillisttbl[x].mid, status);
+						status |= MSG_ATTR_RECENT;
+						mailStg->SetMailStatus(m_username.c_str(),m_maillisttbl[x].mid, status);
+					}
+					unsigned int status;
+					mailStg->GetMailStatus(m_maillisttbl[x].mid, status);
+					string strStatus = "";
+					if((status & MSG_ATTR_SEEN) == MSG_ATTR_SEEN)
+					{
+						if(strStatus == "")
+							strStatus += "\\Seen";
+						else
+							strStatus += " \\Seen";
+					}
+					if((status & MSG_ATTR_ANSWERED) == MSG_ATTR_ANSWERED)
+					{
+						if(strStatus == "")
+							strStatus += "\\Answered";
+						else
+							strStatus += " \\Answered";
+					}
+					if((status & MSG_ATTR_FLAGGED) == MSG_ATTR_FLAGGED)
+					{
+						if(strStatus == "")
+							strStatus += "\\Flagged";
+						else
+							strStatus += " \\Flagged";
+					}
+					if((status & MSG_ATTR_DELETED) == MSG_ATTR_DELETED)
+					{
+						if(strStatus == "")
+							strStatus += "\\Deleted";
+						else
+							strStatus += " \\Deleted";
+					}
+					if((status & MSG_ATTR_DRAFT) == MSG_ATTR_DRAFT)
+					{
+						if(strStatus == "")
+							strStatus += "\\Draft";
+						else
+							strStatus += " \\Draft";
+					}
+					if((time(NULL) - m_maillisttbl[x].mtime) < RECENT_MSG_TIME)
+					{
+						if(strStatus == "")
+							strStatus += "\\Recent";
+						else
+							strStatus += " \\Recent";
+					}
+					if(isUID)
+						sprintf(cmd ,"* %u FETCH (FLAGS (%s)) UID %u\r\n",x+1, strStatus.c_str(), m_maillisttbl[x].mid);
+					else
+						sprintf(cmd ,"* %u FETCH (FLAGS (%s))\r\n", x+1, strStatus.c_str());
+					ImapSend( cmd, strlen(cmd));
+					
+				}
+				else if(strncasecmp(strMsgItem.c_str(),"-FLAGS ", strlen("-FLAGS ")) == 0)
+				{
+					if(strMsgItem.find("\\Seen", 0, strlen("\\Seen")) != string::npos)
+					{
+						unsigned int status;
+						mailStg->GetMailStatus(m_maillisttbl[x].mid, status);
+						status &= (~MSG_ATTR_SEEN);
+						mailStg->SetMailStatus(m_username.c_str(),m_maillisttbl[x].mid, status);
+					}
+					if(strMsgItem.find("\\Answered", 0, strlen("\\Answered")) != string::npos)
+					{
+						unsigned int status;
+						mailStg->GetMailStatus(m_maillisttbl[x].mid, status);
+						status &= (~MSG_ATTR_ANSWERED);
+						mailStg->SetMailStatus(m_username.c_str(),m_maillisttbl[x].mid, status);
+					}
+					if(strMsgItem.find("\\Flagged", 0, strlen("\\Flagged")) != string::npos)
+					{
+						unsigned int status;
+						mailStg->GetMailStatus(m_maillisttbl[x].mid, status);
+						status &= (~MSG_ATTR_FLAGGED);
+						mailStg->SetMailStatus(m_username.c_str(),m_maillisttbl[x].mid, status);
+					}
+					if(strMsgItem.find("\\Deleted", 0, strlen("\\Deleted")) != string::npos)
+					{
+						unsigned int status;
+						mailStg->GetMailStatus(m_maillisttbl[x].mid, status);
+						status &= (~MSG_ATTR_DELETED);
+						mailStg->SetMailStatus(m_username.c_str(),m_maillisttbl[x].mid, status);
+					}
+					if(strMsgItem.find("\\Draft", 0, strlen("\\Draft")) != string::npos)
+					{
+						unsigned int status;
+						mailStg->GetMailStatus(m_maillisttbl[x].mid, status);
+						status &= (~MSG_ATTR_DRAFT);
+						mailStg->SetMailStatus(m_username.c_str(),m_maillisttbl[x].mid, status);
+					}
+					if(strMsgItem.find("\\Recent", 0, strlen("\\Recent")) != string::npos)
+					{
+						unsigned int status;
+						mailStg->GetMailStatus(m_maillisttbl[x].mid, status);
+						status &= (~MSG_ATTR_RECENT);
+						mailStg->SetMailStatus(m_username.c_str(),m_maillisttbl[x].mid, status);
+					}
+					unsigned int status;
+					mailStg->GetMailStatus(m_maillisttbl[x].mid, status);
+					string strStatus = "";
+					if((status & MSG_ATTR_SEEN) == MSG_ATTR_SEEN)
+					{
+						if(strStatus == "")
+							strStatus += "\\Seen";
+						else
+							strStatus += " \\Seen";
+					}
+					if((status & MSG_ATTR_ANSWERED) == MSG_ATTR_ANSWERED)
+					{
+						if(strStatus == "")
+							strStatus += "\\Answered";
+						else
+							strStatus += " \\Answered";
+					}
+					if((status & MSG_ATTR_FLAGGED) == MSG_ATTR_FLAGGED)
+					{
+						if(strStatus == "")
+							strStatus += "\\Flagged";
+						else
+							strStatus += " \\Flagged";
+					}
+					if((status & MSG_ATTR_DELETED) == MSG_ATTR_DELETED)
+					{
+						if(strStatus == "")
+							strStatus += "\\Deleted";
+						else
+							strStatus += " \\Deleted";
+					}
+					if((status & MSG_ATTR_DRAFT) == MSG_ATTR_DRAFT)
+					{
+						if(strStatus == "")
+							strStatus += "\\Draft";
+						else
+							strStatus += " \\Draft";
+					}
+					if((time(NULL) - m_maillisttbl[x].mtime) < RECENT_MSG_TIME)
+					{
+						if(strStatus == "")
+							strStatus += "\\Recent";
+						else
+							strStatus += " \\Recent";
+					}
+					if(isUID)
+						sprintf(cmd ,"* %u FETCH (FLAGS (%s)) UID %u\r\n", x+1, strStatus.c_str(), m_maillisttbl[x].mid);
+					else
+						sprintf(cmd ,"* %u  FETCH (FLAGS (%s))\r\n", x+1, strStatus.c_str());
+					ImapSend( cmd, strlen(cmd));
+				}
+				else if(strncasecmp(strMsgItem.c_str(),"-FLAGS.SILENT ", strlen("-FLAGS.SILENT ")) == 0)
+				{
+					if(strMsgItem.find("\\Seen", 0, strlen("\\Seen")) != string::npos)
+					{
+						unsigned int status;
+						mailStg->GetMailStatus(m_maillisttbl[x].mid, status);
+						status &= (~MSG_ATTR_SEEN);
+						mailStg->SetMailStatus(m_username.c_str(),m_maillisttbl[x].mid, status);
+					}
+					if(strMsgItem.find("\\Answered", 0, strlen("\\Answered")) != string::npos)
+					{
+						unsigned int status;
+						mailStg->GetMailStatus(m_maillisttbl[x].mid, status);
+						status &= (~MSG_ATTR_ANSWERED);
+						mailStg->SetMailStatus(m_username.c_str(),m_maillisttbl[x].mid, status);
+					}
+					if(strMsgItem.find("\\Flagged", 0, strlen("\\Flagged")) != string::npos)
+					{
+						unsigned int status;
+						mailStg->GetMailStatus(m_maillisttbl[x].mid, status);
+						status &= (~MSG_ATTR_FLAGGED);
+						mailStg->SetMailStatus(m_username.c_str(),m_maillisttbl[x].mid, status);
+					}
+					if(strMsgItem.find("\\Deleted", 0, strlen("\\Deleted")) != string::npos)
+					{
+						unsigned int status;
+						mailStg->GetMailStatus(m_maillisttbl[x].mid, status);
+						status &= (~MSG_ATTR_DELETED);
+						mailStg->SetMailStatus(m_username.c_str(),m_maillisttbl[x].mid, status);
+					}
+					if(strMsgItem.find("\\Draft", 0, strlen("\\Draft")) != string::npos)
+					{
+						unsigned int status;
+						mailStg->GetMailStatus(m_maillisttbl[x].mid, status);
+						status &= (~MSG_ATTR_DRAFT);
+						mailStg->SetMailStatus(m_username.c_str(),m_maillisttbl[x].mid, status);
+					}
+					if(strMsgItem.find("\\Recent", 0, strlen("\\Recent")) != string::npos)
+					{
+						unsigned int status;
+						mailStg->GetMailStatus(m_maillisttbl[x].mid, status);
+						status &= (~MSG_ATTR_RECENT);
+						mailStg->SetMailStatus(m_username.c_str(),m_maillisttbl[x].mid, status);
+					}
+				}
+			}
+		}
+	}
+}
+
+int CMailImap::Copy(const char* szArg, BOOL isUID)
+{	
+	MailStorage* mailStg;
+	StorageEngineInstance stgengine_instance(m_storageEngine, &mailStg);
+	if(!mailStg)
+	{
+		printf("%s::%s Get Storage Engine Failed!\n", __FILE__, __FUNCTION__);
+		return -1;
+	}
+	char cmd[512];
+	string strSequence, strMsgItem;
+	unsigned int nBegin, nEnd;
+	strcut(szArg, NULL, " ", strSequence);
+	strcut(szArg, " ", "\r\n", strMsgItem);
+	vector<string> vecSequenceSet;
+	vSplitString(strSequence, vecSequenceSet, ",");
+	int zLen = vecSequenceSet.size();
+	for(int z = 0; z < zLen; z++)
+	{
+		vector<string> vecSequenceRange;
+		strSequence = vecSequenceSet[z];
+		
+		vSplitString(strSequence, vecSequenceRange, ":");
+		if(vecSequenceRange.size() == 1)
+		{
+			nBegin = nEnd = atoi(vecSequenceRange[0].c_str());
+		}
+		else if(vecSequenceRange.size() == 2)
+		{
+			nBegin = atoi(vecSequenceRange[0].c_str());
+			if(vecSequenceRange[1] == "*")
+			{
+				nEnd = 0x7FFFFFFF;
+			}
+			else
+			{
+				nEnd = atoi(vecSequenceRange[1].c_str());
+			}
+		}
+		
+		strtrim(strMsgItem,"\" ");
+		int dirID;
+		if(mailStg->GetDirID(m_username.c_str(), strMsgItem.c_str(), dirID) == -1)
+		{
+			return -1;
+		}
+		int vLen = m_maillisttbl.size();
+		
+		for(int x = 0; x < vLen; x++)
+		{
+			if(((isUID ? m_maillisttbl[x].mid : x + 1) >= nBegin) && ((isUID ? m_maillisttbl[x].mid : x + 1) <= nEnd))
+			{
+				char newuid[256];
+				sprintf(newuid, "%08x_%08x_%016lx_%08x", time(NULL), getpid(), pthread_self(), CMailBase::m_global_uid);
+				CMailBase::m_global_uid++;
+				
+				unsigned long long usermaxsize;
+				if(mailStg->GetUserSize(m_username.c_str(), usermaxsize) == -1)
+				{
+					usermaxsize = 5000*1024;
+				}
+				
+				MailLetter* oldLetter, *newLetter;
+
+				string emlfile;
+				mailStg->GetMailIndex(m_maillisttbl[x].mid, emlfile);
+				
+				oldLetter = new MailLetter(emlfile.c_str());
+				newLetter = new MailLetter(newuid, usermaxsize /*mailStg, 
+					"", "", mtLocal, newuid, dirID, m_maillisttbl[x].mstatus, (unsigned int)time(NULL), usermaxsize*/);
+				
+				Letter_Info letter_info;
+				letter_info.mail_from = "";
+				letter_info.mail_to = "";
+				letter_info.mail_type = mtLocal;
+				letter_info.mail_uniqueid = newuid;
+				letter_info.mail_dirid = dirID;
+				letter_info.mail_status = m_maillisttbl[x].mstatus;
+				letter_info.mail_time = time(NULL);
+				letter_info.user_maxsize = usermaxsize;
+				letter_info.mail_id = -1;
+
+				int llen;
+				char* lbuf = oldLetter->Body(llen);
+				
+				int wlen = 0;
+				BOOL isOK = TRUE;
+				while(1)
+				{
+					if(newLetter->Write(lbuf + wlen, ((llen - wlen) > MEMORY_BLOCK_SIZE ? MEMORY_BLOCK_SIZE : (llen - wlen))) < 0)
+					{
+						isOK = FALSE;
+						break;
+					}
+					wlen += ((llen - wlen) > MEMORY_BLOCK_SIZE ? MEMORY_BLOCK_SIZE : (llen - wlen));
+					if(wlen >= llen)
+						break;
+				}
+				if(isOK)
+					newLetter->SetOK();
+				newLetter->Close();
+				if(newLetter->isOK())
+				{
+					mailStg->InsertMailIndex(letter_info.mail_from.c_str(), letter_info.mail_to.c_str(),letter_info.mail_time,
+						letter_info.mail_type, letter_info.mail_uniqueid.c_str(), letter_info.mail_dirid, letter_info.mail_status,
+						newLetter->GetEmlName(), newLetter->GetSize(), letter_info.mail_id);
+				}
+				delete oldLetter;
+				delete newLetter;
+			}
+		}
+	}
+	return 0;
+}
+
+void CMailImap::ParseFetch(const char* text, vector<string>& vDst)
+{
+	int isFlag = 0;
+	int sLen = strlen(text);
+	BOOL inSemicolon = FALSE;
+	BOOL isTransferred = FALSE;
+	string strCell = "";
+	char tmp[3];
+	for(int i = 0; i <= sLen; i++)
+	{
+		if(isTransferred)
+		{
+			memset(tmp, 0, 3);
+			memcpy(tmp, &text[i], 1);
+			strCell += tmp;
+			isTransferred = FALSE;
+		}
+		else
+		{
+			if(((text[i] == ' ')||
+				(text[i] == '\r')||(text[i] == '\n')||(text[i] == '\0'))
+				&&(!inSemicolon)&&(isFlag == 0))
+			{
+				vDst.push_back(strCell);
+				strCell = "";
+				if((text[i] == '\r')||(text[i] == '\n'))
+					break;
+			}
+			else if((text[i] == '[')&&(!inSemicolon))
+			{
+				isFlag++;
+				memset(tmp, 0, 3);
+				memcpy(tmp, &text[i], 1);
+				strCell += tmp;
+			}
+			else if((text[i] == ']')&&(!inSemicolon))
+			{
+				isFlag--;
+				memset(tmp, 0, 3);
+				memcpy(tmp, &text[i], 1);
+				strCell += tmp;
+			}
+			else if(text[i] == '\"')
+			{
+				if(inSemicolon == TRUE)
+				{
+					inSemicolon = FALSE;
+				}
+				else
+				{
+					inSemicolon = TRUE;
+				}
+			}
+			else if(text[i] == '\\')
+			{
+				isTransferred = TRUE;
+			}
+			else
+			{
+				memset(tmp, 0, 3);
+				memcpy(tmp, &text[i], 1);
+				strCell += tmp;
+			}
+		}
+	}
+}
+
+void CMailImap::ParseCommand(const char* text, vector<string>& vDst)
+{
+	int sLen = strlen(text);
+	BOOL inSemicolon = FALSE;
+	BOOL isTransferred = FALSE;
+	string strCell = "";
+	char tmp[3];
+	for(int i = 0; i <= sLen; i++)
+	{
+		if(isTransferred)
+		{
+			memset(tmp, 0, 3);
+			memcpy(tmp, &text[i], 1);
+			strCell += tmp;
+			isTransferred = FALSE;
+		}
+		else
+		{
+			if(((text[i] == ' ')||(text[i] == '\r')||(text[i] == '\n')||(text[i] == '\0'))&&(!inSemicolon))
+			{
+				vDst.push_back(strCell);
+				strCell = "";
+				if((text[i] == '\r')||(text[i] == '\n'))
+					break;
+			}
+			else if(text[i] == '\"')
+			{
+				if(inSemicolon == TRUE)
+				{
+					inSemicolon = FALSE;
+				}
+				else
+				{
+					inSemicolon = TRUE;
+				}
+			}
+			else if(text[i] == '\\')
+			{
+				isTransferred = TRUE;
+			}
+			else
+			{
+				memset(tmp, 0, 3);
+				memcpy(tmp, &text[i], 1);
+				strCell += tmp;
+			}
+		}
+	}
+}
+
+BOOL CMailImap::Parse(char* text)
+{
+	//printf("%s", text);
+	string strNotag;
+	strcut(text, " ", " ", strNotag);
+	
+	//Any state
+	BOOL retValue = TRUE;
+	
+	if(strncasecmp(strNotag.c_str(), "CAPABILITY", strlen("CAPABILITY")) == 0)
+	{
+		On_Capability(text);
+	}
+	else if(strncasecmp(strNotag.c_str(), "NOOP", strlen("NOOP")) == 0)
+	{
+		
+		On_Noop(text);
+
+	}
+	else if(strncasecmp(strNotag.c_str(), "LOGOUT", strlen("LOGOUT")) == 0)
+	{
+		On_Logout(text);
+		return FALSE;
+	}
+	
+	//Non-athenticated state
+	else if(strncasecmp(strNotag.c_str(), "AUTHENTICATE", strlen("AUTHENTICATE")) == 0)
+	{
+
+		retValue = On_Authenticate(text);
+
+	}
+	else if(strncasecmp(strNotag.c_str(), "LOGIN", strlen("LOGIN")) == 0)
+	{
+		
+		retValue = On_Login(text);
+		
+	}
+	else if(strncasecmp(strNotag.c_str(), "SELECT", strlen("SELECT")) == 0)
+	{
+		
+		On_Select(text);
+
+	}
+	else if(strncasecmp(strNotag.c_str(), "EXAMINE", strlen("EXAMINE")) == 0)
+	{
+		
+		On_Examine(text);
+
+	}
+	else if(strncasecmp(strNotag.c_str(), "CREATE", strlen("CREATE")) == 0)
+	{
+		
+		On_Create(text);
+		
+	}
+	else if(strncasecmp(strNotag.c_str(), "DELETE", strlen("DELETE")) == 0)
+	{
+		
+		On_Delete(text);
+		
+	}
+	else if(strncasecmp(strNotag.c_str(), "RENAME", strlen("RENAME")) == 0)
+	{
+		
+		On_Rename(text);
+
+		
+	}
+	else if(strncasecmp(strNotag.c_str(), "SUBSCRIBE", strlen("SUBSCRIBE")) == 0)
+	{
+		
+		On_Subscribe(text);
+		
+	}
+	else if(strncasecmp(strNotag.c_str(), "UNSUBSCRIBE", strlen("UNSUBSCRIBE")) == 0)
+	{
+		
+		On_Unsubscribe(text);
+		
+	}
+	else if(strncasecmp(strNotag.c_str(), "LIST", strlen("LIST")) == 0)
+	{
+		
+		On_List(text);
+		
+	}
+	else if(strncasecmp(strNotag.c_str(), "LSUB", strlen("LSUB")) == 0)
+	{
+		
+		On_Listsub(text);
+	}
+	else if(strncasecmp(strNotag.c_str(), "STATUS", strlen("STATUS")) == 0)
+	{
+		
+		On_Status(text);
+		
+	}
+	else if(strncasecmp(strNotag.c_str(), "APPEND", strlen("APPEND")) == 0)
+	{
+		
+		On_Append(text);
+
+		
+	}
+	else if(strncasecmp(strNotag.c_str(), "CHECK", strlen("CHECK")) == 0)
+	{
+		On_Check(text);
+	}
+	else if(strncasecmp(strNotag.c_str(), "CLOSE", strlen("CLOSE")) == 0)
+	{
+		
+		On_Close(text);
+
+		
+	}
+	else if(strncasecmp(strNotag.c_str(), "EXPUNGE", strlen("EXPUNGE")) == 0)
+	{
+		
+		On_Expunge(text);
+
+		
+	}
+	else if(strncasecmp(strNotag.c_str(), "SEARCH", strlen("SEARCH")) == 0)
+	{
+		
+		On_Search(text);
+
+		
+	}
+	else if(strncasecmp(strNotag.c_str(), "FETCH", strlen("FETCH")) == 0)
+	{
+		
+		On_Fetch(text);
+
+		
+	}
+	else if(strncasecmp(strNotag.c_str(), "STORE", strlen("STORE")) == 0)
+	{
+		
+		On_Store(text);
+
+		
+	}
+	else if(strncasecmp(strNotag.c_str(), "COPY", strlen("COPY")) == 0)
+	{
+		
+		On_Copy(text);
+
+		
+	}
+	else if(strncasecmp(strNotag.c_str(), "UID", strlen("UID")) == 0)
+	{
+		
+		On_UID(text);
+
+	}
+	else if(strncasecmp(strNotag.c_str(), "STARTTLS", strlen("STARTTLS")) == 0)
+	{
+		On_STARTTLS(text);
+	}
+	else if(strncasecmp(strNotag.c_str(), "X", strlen("X")) == 0)
+	{
+		On_X_atom(text);
+	}
+	else if(strncasecmp(strNotag.c_str(),"NAMESPACE", strlen("NAMESPACE")) == 0)
+	{
+		On_Namespace(text);
+	}
+	else
+	{
+		On_Unknown(text);
+	}
+	return retValue;
+}
+
+void CMailImap::On_Service_Error()
+{
+	char cmd[1024];
+	sprintf(cmd, "* NO %s IMAP4rev1 Server is not ready yet\r\n", m_email_domain.c_str());
+	ImapSend( cmd, strlen(cmd));
+}
+
+void CMailImap::ParseSearch(const char* text, vector<Search_Item>& vDst)
+{
+	int sLen = strlen(text);
+	int nBracket = 0;
+	BOOL inSemicolon = FALSE;
+	BOOL isTransferred = FALSE;
+	BOOL isDeep = FALSE;
+	string strCell = "";
+	char tmp[3];
+	for(int i = 0; i <= sLen; i++)
+	{
+		if(isTransferred)
+		{
+			memset(tmp, 0, 3);
+			memcpy(tmp, &text[i], 1);
+			strCell += tmp;
+			isTransferred = FALSE;
+		}
+		else
+		{
+			unsigned char value = (unsigned char)text[i];
+			if(value > 0x7F)
+			{
+				memset(tmp, 0, 3);
+				memcpy(tmp, &text[i], 2);
+				strCell += tmp;
+				i++;
+			}
+			else if(((text[i] == ' ')||(text[i] == '\n')||(text[i] == '\0'))&&(!inSemicolon)&&(nBracket == 0))
+			{
+				Search_Item tmp;
+				tmp.item = strCell;
+				tmp.isDeep= isDeep;
+				vDst.push_back(tmp);
+				strCell = "";
+				isDeep = FALSE;
+				if(text[i] == '\0')
+					break;
+			}
+			else if(text[i] == '\r')
+			{
+				//ignore
+			}
+			else if(text[i] == '\\')
+			{
+				isTransferred = TRUE;
+			}
+			else if(text[i] == '\"')
+			{
+				memset(tmp, 0, 3);
+				memcpy(tmp, &text[i], 1);
+				strCell += tmp;
+				
+				if(nBracket == 0)
+				{
+					if(inSemicolon == TRUE)
+					{
+						inSemicolon = FALSE;
+					}
+					else
+					{
+						inSemicolon = TRUE;
+					}
+				}
+			}
+			else if((text[i] == '(')&&(!inSemicolon))
+			{					
+				if(nBracket > 0)
+				{
+					memset(tmp, 0, 3);
+					memcpy(tmp, &text[i], 1);
+					strCell += tmp;
+				}
+				else
+				{
+					isDeep = TRUE;
+				}
+				nBracket++;
+				
+			}
+			else if((text[i] == ')')&&(!inSemicolon))
+			{
+				nBracket--;
+				if(nBracket > 0)
+				{
+					memset(tmp, 0, 3);
+					memcpy(tmp, &text[i], 1);
+					strCell += tmp;
+				}
+				
+			}
+			else
+			{
+				memset(tmp, 0, 3);
+				memcpy(tmp, &text[i], 1);
+				strCell += tmp;
+			}
+		}
+	}
+}
+
+
+void CMailImap::SearchRecv(const char* szTag, const char* szCmd, string & strsearch)
+{
+	if(strlike("*{*}\r\n", strsearch.c_str()))
+	{
+		char cmd[1024];
+		sprintf(cmd, "%s OK %s Completed\r\n", szTag, szCmd);
+		ImapSend(cmd, strlen(cmd));
+		
+		unsigned int clen;
+		sscanf(strsearch.c_str(), "%*[^{]{%d}\r\n", &clen);
+		char* cbuf = new char[clen + 4096];
+		memset(cbuf, 0, clen + 4096);
+		if(ProtRecv(cbuf, clen + 4095) > 0)
+		{
+			if(strcmp(cbuf, "") != 0)
+			{
+				strsearch += cbuf;
+				delete[] cbuf;
+				SearchRecv(szTag, szCmd, strsearch);
+			}
+			else
+			{
+				delete[] cbuf;
+			}
+		}
+	}
+}
+
+void CMailImap::Search(const char * szTag, const char* szCmd, const char* szArg)
+{
+	MailStorage* mailStg;
+	StorageEngineInstance stgengine_instance(m_storageEngine, &mailStg);
+	if(!mailStg)
+	{
+		printf("%s::%s Get Storage Engine Failed!\n", __FILE__, __FUNCTION__);
+		return;
+	}
+	string strsearch;
+	strsearch = szArg;
+	
+	SearchRecv(szTag, szCmd, strsearch);
+	
+	mailStg->ListMailByDir((char*)m_username.c_str(), m_maillisttbl, (char*)m_strSelectedDir.c_str());
+	map<int,int> vSearchResult;
+	int listtbllen = m_maillisttbl.size();
+	for(int x = 0; x < listtbllen; x++)
+	{
+		vSearchResult.insert(map<int, int>::value_type(m_maillisttbl[x].mid, 1));
+	}
+	
+	SubSearch(mailStg, strsearch.c_str(), vSearchResult);
+	
+	map<int, int>::iterator iter;
+	
+	string resp;
+	resp = "* SEARCH";
+	char cmd[16];
+	int count = 0;
+	for(iter = vSearchResult.begin(); iter != vSearchResult.end(); iter++)
+	{
+		if(iter->second == 1)
+		{
+			count++;
+			sprintf(cmd, " %d", iter->first);
+			resp += cmd;
+		}
+	}
+	resp += "\r\n";
+	if(count > 0)
+		ImapSend(resp.c_str(), resp.length());
+}
+
+void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>& vSearchResult)
+{
+	Search_Relation eSearchRelation = ANDing;
+	BOOL bIsNot = FALSE;
+	
+	vector<Search_Item> vItem;
+	ParseSearch(szArg, vItem);
+	int vItemLength = vItem.size();
+	int listtbllen = m_maillisttbl.size();
+	for(int i = 0; i < vItemLength; i++)
+	{
+		if(vItem[i].isDeep)
+		{
+			SubSearch(mailStg, vItem[i].item.c_str(), vSearchResult);
+		}
+		else
+		{
+			if(vItem[i].item== "ALL")
+			{
+				for(int y = 0; y < listtbllen; y++)
+				{
+					vSearchResult[m_maillisttbl[y].mid] = 1;
+				}
+			}
+			else if(vItem[i].item == "ANSWERED")
+			{
+				if(eSearchRelation == ORing)
+				{
+					if(bIsNot == TRUE)
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							if((m_maillisttbl[y].mstatus & MSG_ATTR_ANSWERED) != MSG_ATTR_ANSWERED)
+							{
+								vSearchResult[m_maillisttbl[y].mid] = 1;
+							}
+						}
+						bIsNot = FALSE;
+					}
+					else
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							if((m_maillisttbl[y].mstatus & MSG_ATTR_ANSWERED) == MSG_ATTR_ANSWERED)
+							{
+								vSearchResult[m_maillisttbl[y].mid] = 1;
+							}
+						}
+					}
+				}
+				else
+				{
+					if(bIsNot == TRUE)
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							if((m_maillisttbl[y].mstatus & MSG_ATTR_ANSWERED) == MSG_ATTR_ANSWERED)
+							{
+								vSearchResult[m_maillisttbl[y].mid] = 0;
+							}
+						}
+						bIsNot = FALSE;
+					}
+					else
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							if((m_maillisttbl[y].mstatus & MSG_ATTR_ANSWERED) != MSG_ATTR_ANSWERED)
+							{
+								vSearchResult[m_maillisttbl[y].mid] = 0;
+							}
+						}
+					}
+				}
+			}
+			else if( vItem[i].item == "BCC")
+			{
+				if(eSearchRelation == ORing)
+				{
+					if(bIsNot == TRUE)
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							string emlfile;
+							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
+				
+							MailLetter* Letter = new MailLetter(emlfile.c_str());
+							if(Letter->GetSize()> 0)
+							{
+								int llen = 0;
+								char* lbuf = Letter->Body(llen);
+								string bcc = Letter->GetSummary()->m_header->GetBcc()->m_strfiled;
+								string condition = strlike("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
+								if(bcc.find(condition.c_str(), 0,condition.length()) == string::npos)
+								{
+									vSearchResult[m_maillisttbl[y].mid] = 1;
+								}
+							}
+							if(Letter)
+								delete Letter;
+						}
+						bIsNot = FALSE;
+					}
+					else
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							string emlfile;
+							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
+							
+							MailLetter* Letter = new MailLetter(emlfile.c_str());
+							if(Letter->GetSize()> 0)
+							{
+								int llen = 0;
+								char* lbuf = Letter->Body(llen);
+								string bcc = Letter->GetSummary()->m_header->GetBcc()->m_strfiled;
+								string condition = strlike("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
+								if(bcc.find(condition.c_str(), 0,condition.length()) != string::npos)
+								{
+									vSearchResult[m_maillisttbl[y].mid] = 1;
+								}
+							}
+							if(Letter)
+								delete Letter;
+						}
+					}
+				}
+				else
+				{
+					if(bIsNot == TRUE)
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							string emlfile;
+							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
+							
+							MailLetter* Letter = new MailLetter(emlfile.c_str());
+							if(Letter->GetSize()> 0)
+							{
+								int llen = 0;
+								char* lbuf = Letter->Body(llen);
+								string bcc = Letter->GetSummary()->m_header->GetBcc()->m_strfiled;
+								string condition = strlike("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
+								if(bcc.find(condition.c_str(), 0,condition.length()) != string::npos)
+								{
+									vSearchResult[m_maillisttbl[y].mid] = 0;
+								}
+							}
+							if(Letter)
+								delete Letter;
+						}
+						
+						bIsNot = FALSE;
+					}
+					else
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							string emlfile;
+							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
+							
+							MailLetter* Letter = new MailLetter(emlfile.c_str());
+							if(Letter->GetSize()> 0)
+							{
+								int llen = 0;
+								char* lbuf = Letter->Body(llen);
+								string bcc = Letter->GetSummary()->m_header->GetBcc()->m_strfiled;
+								string condition = strlike("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
+								if(bcc.find(condition.c_str(), 0,condition.length()) == string::npos)
+								{
+									vSearchResult[m_maillisttbl[y].mid] = 0;
+								}
+							}
+							if(Letter)
+								delete Letter;
+						}
+					}
+				}
+				i++;
+			}
+			else if(vItem[i].item == "BEFORE")
+			{
+				unsigned int year1, month1, day1;
+				
+				char szmon[32];
+				sscanf(vItem[i+1].item.c_str(), "%d-%[^-]-%d",&day1, szmon, &year1);
+				month1 = getmonthnumber(szmon);
+				
+				if(eSearchRelation == ORing)
+				{
+					if(bIsNot == TRUE)
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							string emlfile;
+							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
+							
+							MailLetter* Letter = new MailLetter(emlfile.c_str());
+							if(Letter->GetSize()> 0)
+							{
+								int llen = 0;
+								char* lbuf = Letter->Body(llen);
+								if(datecmp(year1, month1, day1, Letter->GetSummary()->m_header->GetTm()->tm_year + 1900, Letter->GetSummary()->m_header->GetTm()->tm_mon, Letter->GetSummary()->m_header->GetTm()->tm_mday) <= 0)
+								{
+									vSearchResult[m_maillisttbl[y].mid] = 1;
+								}
+							}
+							if(Letter)
+								delete Letter;
+						}
+						bIsNot = FALSE;
+					}
+					else
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							string emlfile;
+							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
+							
+							MailLetter* Letter = new MailLetter(emlfile.c_str());
+							if(Letter->GetSize()> 0)
+							{
+								int llen = 0;
+								char* lbuf = Letter->Body(llen);
+								if(datecmp(year1, month1, day1, Letter->GetSummary()->m_header->GetTm()->tm_year + 1900, Letter->GetSummary()->m_header->GetTm()->tm_mon, Letter->GetSummary()->m_header->GetTm()->tm_mday) >= 0)
+								{
+									vSearchResult[m_maillisttbl[y].mid] = 1;
+								}
+							}
+							if(Letter)
+								delete Letter;
+						}
+					}
+				}
+				else
+				{
+					if(bIsNot == TRUE)
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							string emlfile;
+							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
+							
+							MailLetter* Letter = new MailLetter(emlfile.c_str());
+							if(Letter->GetSize()> 0)
+							{
+								int llen = 0;
+								char* lbuf = Letter->Body(llen);
+								if(datecmp(year1, month1, day1, Letter->GetSummary()->m_header->GetTm()->tm_year + 1900, Letter->GetSummary()->m_header->GetTm()->tm_mon, Letter->GetSummary()->m_header->GetTm()->tm_mday) >= 0)
+								{
+									vSearchResult[m_maillisttbl[y].mid] = 0;
+								}
+							}
+							if(Letter)
+								delete Letter;
+						}
+						bIsNot = FALSE;
+					}
+					else
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							string emlfile;
+							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
+							
+							MailLetter* Letter = new MailLetter(emlfile.c_str());
+							if(Letter->GetSize()> 0)
+							{
+								int llen = 0;
+								char* lbuf = Letter->Body(llen);
+								if(datecmp(year1, month1, day1, Letter->GetSummary()->m_header->GetTm()->tm_year + 1900, Letter->GetSummary()->m_header->GetTm()->tm_mon, Letter->GetSummary()->m_header->GetTm()->tm_mday) <= 0)
+								{
+									vSearchResult[m_maillisttbl[y].mid] = 0;
+								}
+							}
+							if(Letter)
+								delete Letter;
+						}
+					}
+				}
+				i++;
+			}
+			else if(vItem[i].item == "BODY")
+			{
+				if(eSearchRelation == ORing)
+				{
+					if(bIsNot == TRUE)
+					{
+						bIsNot = FALSE;
+					}
+					else
+					{
+						
+					}
+				}
+				else
+				{
+					if(bIsNot == TRUE)
+					{
+						bIsNot = FALSE;
+					}
+					else
+					{
+						
+					}
+				}
+			}
+			else if(vItem[i].item == "CC")
+			{
+				if(eSearchRelation == ORing)
+				{
+					if(bIsNot == TRUE)
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							string emlfile;
+							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
+							
+							MailLetter* Letter = new MailLetter(emlfile.c_str());
+							if(Letter->GetSize()> 0)
+							{
+								int llen = 0;
+								char* lbuf = Letter->Body(llen);
+								string cc = Letter->GetSummary()->m_header->GetCc()->m_strfiled;
+								string condition = strlike("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
+								if(cc.find(condition.c_str(), 0,condition.length()) == string::npos)
+								{
+									vSearchResult[m_maillisttbl[y].mid] = 1;
+								}
+							}
+							if(Letter)
+								delete Letter;
+						}
+						bIsNot = FALSE;
+					}
+					else
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							string emlfile;
+							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
+							
+							MailLetter* Letter = new MailLetter(emlfile.c_str());
+							if(Letter->GetSize()> 0)
+							{
+								int llen = 0;
+								char* lbuf = Letter->Body(llen);
+								string cc = Letter->GetSummary()->m_header->GetCc()->m_strfiled;
+								string condition = strlike("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
+								if(cc.find(condition.c_str(), 0,condition.length()) != string::npos)
+								{
+									vSearchResult[m_maillisttbl[y].mid] = 1;
+								}
+							}
+							if(Letter)
+								delete Letter;
+						}
+					}
+				}
+				else
+				{
+					if(bIsNot == TRUE)
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							string emlfile;
+							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
+							
+							MailLetter* Letter = new MailLetter(emlfile.c_str());
+							if(Letter->GetSize()> 0)
+							{
+								int llen = 0;
+								char* lbuf = Letter->Body(llen);
+								string cc = Letter->GetSummary()->m_header->GetCc()->m_strfiled;
+								string condition = strlike("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
+								if(cc.find(condition.c_str(), 0,condition.length()) != string::npos)
+								{
+									vSearchResult[m_maillisttbl[y].mid] = 0;
+								}
+							}
+							if(Letter)
+								delete Letter;
+						}
+						
+						bIsNot = FALSE;
+					}
+					else
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							string emlfile;
+							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
+							
+							MailLetter* Letter = new MailLetter(emlfile.c_str());
+							if(Letter->GetSize()> 0)
+							{
+								int llen = 0;
+								char* lbuf = Letter->Body(llen);
+								string cc = Letter->GetSummary()->m_header->GetCc()->m_strfiled;
+								string condition = strlike("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
+								if(cc.find(condition.c_str(), 0,condition.length()) == string::npos)
+								{
+									vSearchResult[m_maillisttbl[y].mid] = 0;
+								}
+							}
+							if(Letter)
+								delete Letter;
+						}
+					}
+				}
+				i++;
+			}
+			else if(vItem[i].item == "DELETED")
+			{
+				if(eSearchRelation == ORing)
+				{
+					if(bIsNot == TRUE)
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							if((m_maillisttbl[y].mstatus & MSG_ATTR_DELETED) != MSG_ATTR_DELETED)
+							{
+								vSearchResult[m_maillisttbl[y].mid] = 1;
+							}
+						}
+						bIsNot = FALSE;
+					}
+					else
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							if((m_maillisttbl[y].mstatus & MSG_ATTR_DELETED) == MSG_ATTR_DELETED)
+							{
+								vSearchResult[m_maillisttbl[y].mid] = 1;
+							}
+						}
+					}
+				}
+				else
+				{
+					if(bIsNot == TRUE)
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							if((m_maillisttbl[y].mstatus & MSG_ATTR_DELETED) == MSG_ATTR_DELETED)
+							{
+								vSearchResult[m_maillisttbl[y].mid] = 0;
+							}
+						}
+						bIsNot = FALSE;
+					}
+					else
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							if((m_maillisttbl[y].mstatus & MSG_ATTR_DELETED) != MSG_ATTR_DELETED)
+							{
+								vSearchResult[m_maillisttbl[y].mid] = 0;
+							}
+						}
+					}
+				}
+			}
+			else  if(vItem[i].item == "DRAFT")
+			{
+				if(eSearchRelation == ORing)
+				{
+					if(bIsNot == TRUE)
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							if((m_maillisttbl[y].mstatus & MSG_ATTR_DRAFT) != MSG_ATTR_DRAFT)
+							{
+								vSearchResult[m_maillisttbl[y].mid] = 1;
+							}
+						}
+						bIsNot = FALSE;
+					}
+					else
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							if((m_maillisttbl[y].mstatus & MSG_ATTR_DRAFT) == MSG_ATTR_DRAFT)
+							{
+								vSearchResult[m_maillisttbl[y].mid] = 1;
+							}
+						}
+					}
+				}
+				else
+				{
+					if(bIsNot == TRUE)
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							if((m_maillisttbl[y].mstatus & MSG_ATTR_DRAFT) == MSG_ATTR_DRAFT)
+							{
+								vSearchResult[m_maillisttbl[y].mid] = 0;
+							}
+						}
+						bIsNot = FALSE;
+					}
+					else
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							if((m_maillisttbl[y].mstatus & MSG_ATTR_DRAFT) != MSG_ATTR_DRAFT)
+							{
+								vSearchResult[m_maillisttbl[y].mid] = 0;
+							}
+						}
+					}
+				}
+			}
+			else  if(vItem[i].item == "FLAGGED")
+			{
+				if(eSearchRelation == ORing)
+				{
+					if(bIsNot == TRUE)
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							if((m_maillisttbl[y].mstatus & MSG_ATTR_FLAGGED) != MSG_ATTR_FLAGGED)
+							{
+								vSearchResult[m_maillisttbl[y].mid] = 1;
+							}
+						}
+						bIsNot = FALSE;
+					}
+					else
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							if((m_maillisttbl[y].mstatus & MSG_ATTR_FLAGGED) == MSG_ATTR_FLAGGED)
+							{
+								vSearchResult[m_maillisttbl[y].mid] = 1;
+							}
+						}
+					}
+				}
+				else
+				{
+					if(bIsNot == TRUE)
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							if((m_maillisttbl[y].mstatus & MSG_ATTR_FLAGGED) == MSG_ATTR_FLAGGED)
+							{
+								vSearchResult[m_maillisttbl[y].mid] = 0;
+							}
+						}
+						bIsNot = FALSE;
+					}
+					else
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							if((m_maillisttbl[y].mstatus & MSG_ATTR_FLAGGED) != MSG_ATTR_FLAGGED)
+							{
+								vSearchResult[m_maillisttbl[y].mid] = 0;
+							}
+						}
+					}
+				}
+			}
+			else if(vItem[i].item == "SUBJECT")
+			{
+				if(eSearchRelation == ORing)
+				{
+					if(bIsNot == TRUE)
+					{
+						if(strlike("{*}", vItem[i+1].item.c_str()))
+						{
+							for(int y = 0; y < listtbllen; y++)
+							{
+								string emlfile;
+								mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
+								
+								MailLetter* Letter = new MailLetter(emlfile.c_str());
+								if(Letter->GetSize()> 0)
+								{
+									int llen = 0;
+									char* lbuf = Letter->Body(llen);
+									string subject = Letter->GetSummary()->m_header->GetDecodedSubject();
+									string condition = strlike("\"*\"", vItem[i+2].item.c_str()) ? vItem[i+2].item.substr(1, vItem[i+2].item.length() - 2) : vItem[i+2].item;
+									if(subject.find(condition.c_str(), 0, condition.length()) == string::npos)
+									{
+										vSearchResult[m_maillisttbl[y].mid] = 1;
+									}
+								}
+								if(Letter)
+									delete Letter;
+							}
+							i += 2;
+						}
+						else
+						{
+							for(int y = 0; y < listtbllen; y++)
+							{
+								string emlfile;
+								mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
+								
+								MailLetter* Letter = new MailLetter(emlfile.c_str());
+								if(Letter->GetSize()> 0)
+								{
+									int llen = 0;
+									char* lbuf = Letter->Body(llen);
+									string subject = Letter->GetSummary()->m_header->GetDecodedSubject();
+									string condition = strlike("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
+									if(subject.find(condition.c_str(), 0, condition.length()) == string::npos)
+									{
+										vSearchResult[m_maillisttbl[y].mid] = 1;
+									}
+								}
+								if(Letter)
+									delete Letter;
+							}
+							i += 1;
+						}
+						bIsNot = FALSE;
+					}
+					else
+					{
+						if(strlike("{*}", vItem[i+1].item.c_str()))
+						{
+							for(int y = 0; y < listtbllen; y++)
+							{
+								string emlfile;
+								mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
+								
+								MailLetter* Letter = new MailLetter(emlfile.c_str());
+								if(Letter->GetSize()> 0)
+								{
+									int llen = 0;
+									char* lbuf = Letter->Body(llen);
+									string subject = Letter->GetSummary()->m_header->GetDecodedSubject();
+									string condition = strlike("\"*\"", vItem[i+2].item.c_str()) ? vItem[i+2].item.substr(1, vItem[i+2].item.length() - 2) : vItem[i+2].item;
+									if(subject.find(condition.c_str(), 0, condition.length()) != string::npos)
+									{
+										vSearchResult[m_maillisttbl[y].mid] = 1;
+									}
+								}
+								if(Letter)
+									delete Letter;
+							}
+							i += 2;
+						}
+						else
+						{
+							for(int y = 0; y < listtbllen; y++)
+							{
+								string emlfile;
+								mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
+								
+								MailLetter* Letter = new MailLetter(emlfile.c_str());
+								if(Letter->GetSize()> 0)
+								{
+									int llen = 0;
+									char* lbuf = Letter->Body(llen);
+									string subject = Letter->GetSummary()->m_header->GetDecodedSubject();
+									string condition = strlike("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
+									if(subject.find(condition.c_str(), 0, condition.length()) != string::npos)
+									{
+										vSearchResult[m_maillisttbl[y].mid] = 1;
+									}
+								}
+								if(Letter)
+									delete Letter;
+							}
+							i += 1;
+						}
+					}
+				}
+				else
+				{
+					if(bIsNot == TRUE)
+					{
+						if(strlike("{*}", vItem[i+1].item.c_str()))
+						{
+							for(int y = 0; y < listtbllen; y++)
+							{
+								string emlfile;
+								mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
+								
+								MailLetter* Letter = new MailLetter(emlfile.c_str());
+								if(Letter->GetSize()> 0)
+								{
+									int llen = 0;
+									char* lbuf = Letter->Body(llen);
+									string subject = Letter->GetSummary()->m_header->GetDecodedSubject();
+									string condition = strlike("\"*\"", vItem[i+2].item.c_str()) ? vItem[i+2].item.substr(1, vItem[i+2].item.length() - 2) : vItem[i+2].item;
+									if(subject.find(condition.c_str(), 0, condition.length()) != string::npos)
+									{
+										vSearchResult[m_maillisttbl[y].mid] = 0;
+									}
+								}
+								if(Letter)
+									delete Letter;
+							}
+							i += 2;
+						}
+						else
+						{
+							for(int y = 0; y < listtbllen; y++)
+							{
+								string emlfile;
+								mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
+								
+								MailLetter* Letter = new MailLetter(emlfile.c_str());
+								if(Letter->GetSize()> 0)
+								{
+									int llen = 0;
+									char* lbuf = Letter->Body(llen);
+									string subject = Letter->GetSummary()->m_header->GetDecodedSubject();
+									string condition = strlike("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
+									if(subject.find(condition.c_str(), 0, condition.length()) != string::npos)
+									{
+										vSearchResult[m_maillisttbl[y].mid] = 0;
+									}
+								}
+								if(Letter)
+									delete Letter;
+							}
+							i += 1;
+						}
+						bIsNot = FALSE;
+					}
+					else
+					{
+						if(strlike("{*}", vItem[i+1].item.c_str()))
+						{
+							for(int y = 0; y < listtbllen; y++)
+							{
+								string emlfile;
+								mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
+								
+								MailLetter* Letter = new MailLetter(emlfile.c_str());
+								if(Letter->GetSize()> 0)
+								{
+									int llen = 0;
+									char* lbuf = Letter->Body(llen);
+									string subject = Letter->GetSummary()->m_header->GetDecodedSubject();
+									string condition = strlike("\"*\"", vItem[i+2].item.c_str()) ? vItem[i+2].item.substr(1, vItem[i+2].item.length() - 2) : vItem[i+2].item;
+									if(subject.find(condition.c_str(), 0, condition.length()) == string::npos)
+									{
+										vSearchResult[m_maillisttbl[y].mid] = 0;
+									}
+								}
+								if(Letter)
+									delete Letter;
+							}
+							i += 2;
+						}
+						else
+						{
+							for(int y = 0; y < listtbllen; y++)
+							{
+								string emlfile;
+								mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
+								
+								MailLetter* Letter = new MailLetter(emlfile.c_str());
+								if(Letter->GetSize()> 0)
+								{
+									int llen = 0;
+									char* lbuf = Letter->Body(llen);
+									string subject = Letter->GetSummary()->m_header->GetDecodedSubject();
+									string condition = strlike("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
+									if(subject.find(condition.c_str(), 0, condition.length()) == string::npos)
+									{
+										vSearchResult[m_maillisttbl[y].mid] = 0;
+									}
+								}
+								if(Letter)
+									delete Letter;
+							}
+							i += 1;
+						}
+					}
+				}
+			}
+			else if(vItem[i].item == "HEADER")
+			{
+				if(eSearchRelation == ORing)
+				{
+					if(bIsNot == TRUE)
+					{
+						bIsNot = FALSE;
+					}
+					else
+					{
+						
+					}
+				}
+				else
+				{
+					if(bIsNot == TRUE)
+					{
+						bIsNot = FALSE;
+					}
+					else
+					{
+						
+					}
+				}
+				i++;			
+			}
+			else if(vItem[i].item == "KEYWORD")
+			{
+				if(eSearchRelation == ORing)
+				{
+					if(bIsNot == TRUE)
+					{
+						bIsNot = FALSE;
+					}
+					else
+					{
+						
+					}
+				}
+				else
+				{
+					if(bIsNot == TRUE)
+					{
+						bIsNot = FALSE;
+					}
+					else
+					{
+						
+					}
+				}
+				i++;
+			}
+			else if( vItem[i].item == "LARGER")
+			{
+				int letterSize = atoi(vItem[i+1].item.c_str());
+				if(eSearchRelation == ORing)
+				{
+					if(bIsNot == TRUE)
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							string emlfile;
+							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
+							
+							MailLetter* Letter = new MailLetter(emlfile.c_str());
+							if(Letter->GetSize() <= letterSize)
+							{
+								vSearchResult[m_maillisttbl[y].mid] = 1;
+							}
+							if(Letter)
+								delete Letter;
+						}
+						bIsNot = FALSE;
+					}
+					else
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							string emlfile;
+							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
+							
+							MailLetter* Letter = new MailLetter(emlfile.c_str());
+							if(Letter->GetSize() >= letterSize)
+							{
+								vSearchResult[m_maillisttbl[y].mid] = 1;
+							}
+							if(Letter)
+								delete Letter;
+						}
+					}
+				}
+				else
+				{
+					if(bIsNot == TRUE)
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							string emlfile;
+							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
+							
+							MailLetter* Letter = new MailLetter(emlfile.c_str());
+							if(Letter->GetSize() >= letterSize)
+							{
+								vSearchResult[m_maillisttbl[y].mid] = 0;
+							}
+							if(Letter)
+								delete Letter;
+						}
+						
+						bIsNot = FALSE;
+					}
+					else
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							string emlfile;
+							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
+							
+							MailLetter* Letter = new MailLetter(emlfile.c_str());
+							if(Letter->GetSize() <= letterSize)
+							{
+								vSearchResult[m_maillisttbl[y].mid] = 0;
+							}
+							if(Letter)
+								delete Letter;
+						}
+					}
+				}
+				i++;
+			}
+			else if( vItem[i].item == "NEW")
+			{
+				if(eSearchRelation == ORing)
+				{
+					if(bIsNot == TRUE)
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							if((time(NULL) - m_maillisttbl[y].mtime > RECENT_MSG_TIME)&&
+								((m_maillisttbl[y].mstatus & MSG_ATTR_SEEN) == MSG_ATTR_SEEN))
+							{
+								vSearchResult[m_maillisttbl[y].mid] = 1;
+							}
+						}
+						bIsNot = FALSE;
+					}
+					else
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							if((time(NULL) - m_maillisttbl[y].mtime < RECENT_MSG_TIME)&&
+								((m_maillisttbl[y].mstatus & MSG_ATTR_SEEN) != MSG_ATTR_SEEN))
+							{
+								vSearchResult[m_maillisttbl[y].mid] = 1;
+							}
+						}
+					}
+				}
+				else
+				{
+					if(bIsNot == TRUE)
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							if((time(NULL) - m_maillisttbl[y].mtime < RECENT_MSG_TIME)&&
+								((m_maillisttbl[y].mstatus & MSG_ATTR_SEEN) != MSG_ATTR_SEEN))
+							{
+								vSearchResult[m_maillisttbl[y].mid] = 0;
+							}
+						}
+						bIsNot = FALSE;
+					}
+					else
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							if((time(NULL) - m_maillisttbl[y].mtime > RECENT_MSG_TIME)&&
+								((m_maillisttbl[y].mstatus & MSG_ATTR_SEEN) == MSG_ATTR_SEEN))
+							{
+								vSearchResult[m_maillisttbl[y].mid] = 0;
+							}
+						}
+					}
+				}
+			}
+			else if( vItem[i].item == "NOT")
+			{
+				bIsNot = TRUE;
+			}
+			else if( vItem[i].item.c_str() == "OLD")
+			{
+				if(eSearchRelation == ORing)
+				{
+					if(bIsNot == TRUE)
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							if((time(NULL) - m_maillisttbl[y].mtime < RECENT_MSG_TIME) && 
+								((m_maillisttbl[y].mstatus & MSG_ATTR_SEEN) != MSG_ATTR_SEEN))
+							{
+								vSearchResult[m_maillisttbl[y].mid] = 1;
+							}
+						}
+						bIsNot = FALSE;
+					}
+					else
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							if((time(NULL) - m_maillisttbl[y].mtime > RECENT_MSG_TIME)&&
+								((m_maillisttbl[y].mstatus & MSG_ATTR_SEEN) == MSG_ATTR_SEEN))
+							{
+								vSearchResult[m_maillisttbl[y].mid] = 1;
+							}
+						}
+					}
+				}
+				else
+				{
+					if(bIsNot == TRUE)
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							if((time(NULL) - m_maillisttbl[y].mtime > RECENT_MSG_TIME)&&
+								((m_maillisttbl[y].mstatus & MSG_ATTR_SEEN) == MSG_ATTR_SEEN))
+							{
+								vSearchResult[m_maillisttbl[y].mid] = 0;
+							}
+						}
+						bIsNot = FALSE;
+					}
+					else
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							if((time(NULL) - m_maillisttbl[y].mtime < RECENT_MSG_TIME)&&
+								((m_maillisttbl[y].mstatus & MSG_ATTR_SEEN) != MSG_ATTR_SEEN))
+							{
+								vSearchResult[m_maillisttbl[y].mid] = 0;
+							}
+						}
+					}
+				}
+			}
+			else if(vItem[i].item == "ON")
+			{
+				if(eSearchRelation == ORing)
+				{
+					if(bIsNot == TRUE)
+					{
+						bIsNot = FALSE;
+					}
+					else
+					{
+						
+					}
+				}
+				else
+				{
+					if(bIsNot == TRUE)
+					{
+						bIsNot = FALSE;
+					}
+					else
+					{
+						
+					}
+				}
+			}
+			else if( vItem[i].item == "OR")
+			{
+				eSearchRelation = ORing;
+			}
+			else  if(vItem[i].item.c_str() == "RECENT")
+			{
+				if(eSearchRelation == ORing)
+				{
+					if(bIsNot == TRUE)
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							if(time(NULL) - m_maillisttbl[y].mtime > RECENT_MSG_TIME)
+							{
+								vSearchResult[m_maillisttbl[y].mid] = 1;
+							}
+						}
+						bIsNot = FALSE;
+					}
+					else
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							if(time(NULL) - m_maillisttbl[y].mtime < RECENT_MSG_TIME)
+							{
+								vSearchResult[m_maillisttbl[y].mid] = 1;
+							}
+						}
+					}
+				}
+				else
+				{
+					if(bIsNot == TRUE)
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							if(time(NULL) - m_maillisttbl[y].mtime < RECENT_MSG_TIME)
+							{
+								vSearchResult[m_maillisttbl[y].mid] = 0;
+							}
+						}
+						bIsNot = FALSE;
+					}
+					else
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							if(time(NULL) - m_maillisttbl[y].mtime > RECENT_MSG_TIME)
+							{
+								vSearchResult[m_maillisttbl[y].mid] = 0;
+							}
+						}
+					}
+				}
+			}
+			else  if(vItem[i].item == "SEEN")
+			{
+				if(eSearchRelation == ORing)
+				{
+					if(bIsNot == TRUE)
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							if((m_maillisttbl[y].mstatus & MSG_ATTR_SEEN) != MSG_ATTR_SEEN)
+							{
+								vSearchResult[m_maillisttbl[y].mid] = 1;
+							}
+						}
+						bIsNot = FALSE;
+					}
+					else
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							if((m_maillisttbl[y].mstatus & MSG_ATTR_SEEN) == MSG_ATTR_SEEN)
+							{
+								vSearchResult[m_maillisttbl[y].mid] = 1;
+							}
+						}
+					}
+				}
+				else
+				{
+					if(bIsNot == TRUE)
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							if((m_maillisttbl[y].mstatus & MSG_ATTR_SEEN) == MSG_ATTR_SEEN)
+							{
+								vSearchResult[m_maillisttbl[y].mid] = 0;
+							}
+						}
+						bIsNot = FALSE;
+					}
+					else
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							if((m_maillisttbl[y].mstatus & MSG_ATTR_SEEN) != MSG_ATTR_SEEN)
+							{
+								vSearchResult[m_maillisttbl[y].mid] = 0;
+							}
+						}
+					}
+				}
+			}
+			else if(vItem[i].item == "SENTBEFORE")
+			{
+				unsigned int year1, month1, day1;
+				char szmon[32];
+				sscanf(vItem[i+1].item.c_str(), "%d-%[^-]-%d",&day1, szmon, &year1);
+				month1 = getmonthnumber(szmon);
+				
+				if(eSearchRelation == ORing)
+				{
+					if(bIsNot == TRUE)
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							string emlfile;
+							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
+							
+							MailLetter* Letter = new MailLetter(emlfile.c_str());
+							if(Letter->GetSize()> 0)
+							{
+								int llen = 0;
+								char* lbuf = Letter->Body(llen);
+								if(datecmp(year1, month1, day1, Letter->GetSummary()->m_header->GetTm()->tm_year + 1900, Letter->GetSummary()->m_header->GetTm()->tm_mon, Letter->GetSummary()->m_header->GetTm()->tm_mday) <= 0)
+								{
+									vSearchResult[m_maillisttbl[y].mid] = 1;
+								}
+							}
+							if(Letter)
+								delete Letter;
+						}
+						bIsNot = FALSE;
+					}
+					else
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							string emlfile;
+							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
+							
+							MailLetter* Letter = new MailLetter(emlfile.c_str());
+							if(Letter->GetSize()> 0)
+							{
+								int llen = 0;
+								char* lbuf = Letter->Body(llen);
+								if(datecmp(year1, month1, day1, Letter->GetSummary()->m_header->GetTm()->tm_year + 1900, Letter->GetSummary()->m_header->GetTm()->tm_mon, Letter->GetSummary()->m_header->GetTm()->tm_mday) >= 0)
+								{
+									vSearchResult[m_maillisttbl[y].mid] = 1;
+								}
+							}
+							if(Letter)
+								delete Letter;
+						}
+					}
+				}
+				else
+				{
+					if(bIsNot == TRUE)
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							string emlfile;
+							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
+							
+							MailLetter* Letter = new MailLetter(emlfile.c_str());
+							if(Letter->GetSize()> 0)
+							{
+								int llen = 0;
+								char* lbuf = Letter->Body(llen);
+								if(datecmp(year1, month1, day1, Letter->GetSummary()->m_header->GetTm()->tm_year + 1900, Letter->GetSummary()->m_header->GetTm()->tm_mon, Letter->GetSummary()->m_header->GetTm()->tm_mday) >= 0)
+								{
+									vSearchResult[m_maillisttbl[y].mid] = 0;
+								}
+							}
+							if(Letter)
+								delete Letter;
+						}
+						bIsNot = FALSE;
+					}
+					else
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							string emlfile;
+							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
+							
+							MailLetter* Letter = new MailLetter(emlfile.c_str());
+							if(Letter->GetSize()> 0)
+							{
+								int llen = 0;
+								char* lbuf = Letter->Body(llen);
+								if(datecmp(year1, month1, day1, Letter->GetSummary()->m_header->GetTm()->tm_year + 1900, Letter->GetSummary()->m_header->GetTm()->tm_mon, Letter->GetSummary()->m_header->GetTm()->tm_mday) <= 0)
+								{
+									vSearchResult[m_maillisttbl[y].mid] = 0;
+								}
+							}
+							if(Letter)
+								delete Letter;
+						}
+					}
+				}
+				i++;
+			}
+			else if(vItem[i].item == "SENTON")
+			{
+				unsigned int year1, month1, day1;
+				
+				char szmon[32];
+				sscanf(vItem[i+1].item.c_str(), "%d-%[^-]-%d",&day1, szmon, &year1);
+				month1 = getmonthnumber(szmon);
+				if(eSearchRelation == ORing)
+				{
+					if(bIsNot == TRUE)
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							string emlfile;
+							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
+							
+							MailLetter* Letter = new MailLetter(emlfile.c_str());
+							if(Letter->GetSize()> 0)
+							{
+								int llen = 0;
+								char* lbuf = Letter->Body(llen);
+								if(datecmp(year1, month1, day1, Letter->GetSummary()->m_header->GetTm()->tm_year + 1900, Letter->GetSummary()->m_header->GetTm()->tm_mon, Letter->GetSummary()->m_header->GetTm()->tm_mday) != 0)
+								{
+									vSearchResult[m_maillisttbl[y].mid] = 1;
+								}
+							}
+							if(Letter)
+								delete Letter;
+						}
+						bIsNot = FALSE;
+					}
+					else
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							string emlfile;
+							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
+							
+							MailLetter* Letter = new MailLetter(emlfile.c_str());
+							if(Letter->GetSize()> 0)
+							{
+								int llen = 0;
+								char* lbuf = Letter->Body(llen);
+								if(datecmp(year1, month1, day1, Letter->GetSummary()->m_header->GetTm()->tm_year + 1900, Letter->GetSummary()->m_header->GetTm()->tm_mon, Letter->GetSummary()->m_header->GetTm()->tm_mday) == 0)
+								{
+									vSearchResult[m_maillisttbl[y].mid] = 1;
+								}
+							}
+							if(Letter)
+								delete Letter;
+						}
+					}
+				}
+				else
+				{
+					if(bIsNot == TRUE)
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							string emlfile;
+							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
+							
+							MailLetter* Letter = new MailLetter(emlfile.c_str());
+							if(Letter->GetSize()> 0)
+							{
+								int llen = 0;
+								char* lbuf = Letter->Body(llen);
+								if(datecmp(year1, month1, day1, Letter->GetSummary()->m_header->GetTm()->tm_year + 1900, Letter->GetSummary()->m_header->GetTm()->tm_mon, Letter->GetSummary()->m_header->GetTm()->tm_mday) == 0)
+								{
+									vSearchResult[m_maillisttbl[y].mid] = 0;
+								}
+							}
+							if(Letter)
+								delete Letter;
+						}
+						bIsNot = FALSE;
+					}
+					else
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							string emlfile;
+							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
+							
+							MailLetter* Letter = new MailLetter(emlfile.c_str());
+							if(Letter->GetSize()> 0)
+							{
+								int llen = 0;
+								char* lbuf = Letter->Body(llen);
+								if(datecmp(year1, month1, day1, Letter->GetSummary()->m_header->GetTm()->tm_year + 1900, Letter->GetSummary()->m_header->GetTm()->tm_mon, Letter->GetSummary()->m_header->GetTm()->tm_mday) != 0)
+								{
+									vSearchResult[m_maillisttbl[y].mid] = 0;
+								}
+							}
+							if(Letter)
+								delete Letter;
+						}
+					}
+				}
+				i++;
+			}
+			else if(vItem[i].item == "SENTSINCE")
+			{
+				unsigned int year1, month1, day1;
+				
+				char szmon[32];
+				sscanf(vItem[i+1].item.c_str(), "%d-%[^-]-%d",&day1, szmon, &year1);
+				month1 = getmonthnumber(szmon);
+				if(eSearchRelation == ORing)
+				{
+					if(bIsNot == TRUE)
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							string emlfile;
+							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
+							
+							MailLetter* Letter = new MailLetter(emlfile.c_str());
+							if(Letter->GetSize()> 0)
+							{
+								int llen = 0;
+								char* lbuf = Letter->Body(llen);
+								if(datecmp(year1, month1, day1, Letter->GetSummary()->m_header->GetTm()->tm_year + 1900, Letter->GetSummary()->m_header->GetTm()->tm_mon, Letter->GetSummary()->m_header->GetTm()->tm_mday) >= 0)
+								{
+									vSearchResult[m_maillisttbl[y].mid] = 1;
+								}
+							}
+							if(Letter)
+								delete Letter;
+						}
+						bIsNot = FALSE;
+					}
+					else
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							string emlfile;
+							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
+							
+							MailLetter* Letter = new MailLetter(emlfile.c_str());
+							if(Letter->GetSize()> 0)
+							{
+								int llen = 0;
+								char* lbuf = Letter->Body(llen);
+								if(datecmp(year1, month1, day1, Letter->GetSummary()->m_header->GetTm()->tm_year + 1900, Letter->GetSummary()->m_header->GetTm()->tm_mon, Letter->GetSummary()->m_header->GetTm()->tm_mday) <= 0)
+								{
+									vSearchResult[m_maillisttbl[y].mid] = 1;
+								}
+							}
+							if(Letter)
+								delete Letter;
+						}
+					}
+				}
+				else
+				{
+					if(bIsNot == TRUE)
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							string emlfile;
+							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
+							
+							MailLetter* Letter = new MailLetter(emlfile.c_str());
+							if(Letter->GetSize()> 0)
+							{
+								int llen = 0;
+								char* lbuf = Letter->Body(llen);
+								if(datecmp(year1, month1, day1, Letter->GetSummary()->m_header->GetTm()->tm_year + 1900, Letter->GetSummary()->m_header->GetTm()->tm_mon, Letter->GetSummary()->m_header->GetTm()->tm_mday) <= 0)
+								{
+									vSearchResult[m_maillisttbl[y].mid] = 0;
+								}
+							}
+							if(Letter)
+								delete Letter;
+						}
+						bIsNot = FALSE;
+					}
+					else
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							string emlfile;
+							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
+							
+							MailLetter* Letter = new MailLetter(emlfile.c_str());
+							if(Letter->GetSize()> 0)
+							{
+								int llen = 0;
+								char* lbuf = Letter->Body(llen);
+								if(datecmp(year1, month1, day1, Letter->GetSummary()->m_header->GetTm()->tm_year + 1900, Letter->GetSummary()->m_header->GetTm()->tm_mon, Letter->GetSummary()->m_header->GetTm()->tm_mday) >= 0)
+								{
+									vSearchResult[m_maillisttbl[y].mid] = 0;
+								}
+							}
+							if(Letter)
+								delete Letter;
+						}
+					}
+				}
+				i++;
+			}
+			else if(vItem[i].item == "SINCE")
+			{
+				unsigned int year1, month1, day1;
+				
+				char szmon[32];
+				sscanf(vItem[i+1].item.c_str(), "%d-%[^-]-%d",&day1, szmon, &year1);
+				month1 = getmonthnumber(szmon);
+				if(eSearchRelation == ORing)
+				{
+					if(bIsNot == TRUE)
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							string emlfile;
+							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
+							
+							MailLetter* Letter = new MailLetter(emlfile.c_str());
+							if(Letter->GetSize()> 0)
+							{
+								int llen = 0;
+								char* lbuf = Letter->Body(llen);
+								if(datecmp(year1, month1, day1, Letter->GetSummary()->m_header->GetTm()->tm_year + 1900, Letter->GetSummary()->m_header->GetTm()->tm_mon, Letter->GetSummary()->m_header->GetTm()->tm_mday) >= 0)
+								{
+									vSearchResult[m_maillisttbl[y].mid] = 1;
+								}
+							}
+							if(Letter)
+								delete Letter;
+						}
+						bIsNot = FALSE;
+					}
+					else
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							string emlfile;
+							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
+							
+							MailLetter* Letter = new MailLetter(emlfile.c_str());
+							if(Letter->GetSize()> 0)
+							{
+								int llen = 0;
+								char* lbuf = Letter->Body(llen);
+								if(datecmp(year1, month1, day1, Letter->GetSummary()->m_header->GetTm()->tm_year + 1900, Letter->GetSummary()->m_header->GetTm()->tm_mon, Letter->GetSummary()->m_header->GetTm()->tm_mday) <= 0)
+								{
+									vSearchResult[m_maillisttbl[y].mid] = 1;
+								}
+							}
+							if(Letter)
+								delete Letter;
+						}
+					}
+				}
+				else
+				{
+					if(bIsNot == TRUE)
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							string emlfile;
+							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
+							
+							MailLetter* Letter = new MailLetter(emlfile.c_str());
+							if(Letter->GetSize()> 0)
+							{
+								int llen = 0;
+								char* lbuf = Letter->Body(llen);
+								if(datecmp(year1, month1, day1, Letter->GetSummary()->m_header->GetTm()->tm_year + 1900, Letter->GetSummary()->m_header->GetTm()->tm_mon, Letter->GetSummary()->m_header->GetTm()->tm_mday) <= 0)
+								{
+									vSearchResult[m_maillisttbl[y].mid] = 0;
+								}
+							}
+							if(Letter)
+								delete Letter;
+						}
+						bIsNot = FALSE;
+					}
+					else
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							string emlfile;
+							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
+							
+							MailLetter* Letter = new MailLetter(emlfile.c_str());
+							if(Letter->GetSize()> 0)
+							{
+								int llen = 0;
+								char* lbuf = Letter->Body(llen);
+								if(datecmp(year1, month1, day1, Letter->GetSummary()->m_header->GetTm()->tm_year + 1900, Letter->GetSummary()->m_header->GetTm()->tm_mon, Letter->GetSummary()->m_header->GetTm()->tm_mday) >= 0)
+								{
+									vSearchResult[m_maillisttbl[y].mid] = 0;
+								}
+							}
+							if(Letter)
+								delete Letter;
+						}
+					}
+				}
+				i++;
+			}
+			else if( vItem[i].item == "SMALLER")
+			{
+				int letterSize = atoi(vItem[i+1].item.c_str());
+				if(eSearchRelation == ORing)
+				{
+					if(bIsNot == TRUE)
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							string emlfile;
+							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
+							
+							MailLetter* Letter = new MailLetter(emlfile.c_str());
+							if(Letter->GetSize() >= letterSize)
+							{
+								vSearchResult[m_maillisttbl[y].mid] = 1;
+							}
+							if(Letter)
+								delete Letter;
+						}
+						bIsNot = FALSE;
+					}
+					else
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							string emlfile;
+							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
+							
+							MailLetter* Letter = new MailLetter(emlfile.c_str());
+							if(Letter->GetSize() <= letterSize)
+							{
+								vSearchResult[m_maillisttbl[y].mid] = 1;
+							}
+							if(Letter)
+								delete Letter;
+						}
+					}
+				}
+				else
+				{
+					if(bIsNot == TRUE)
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							string emlfile;
+							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
+							
+							MailLetter* Letter = new MailLetter(emlfile.c_str());
+							if(Letter->GetSize() <= letterSize)
+							{
+								vSearchResult[m_maillisttbl[y].mid] = 0;
+							}
+							if(Letter)
+								delete Letter;
+						}
+						
+						bIsNot = FALSE;
+					}
+					else
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							string emlfile;
+							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
+							
+							MailLetter* Letter = new MailLetter(emlfile.c_str());
+							if(Letter->GetSize() >= letterSize)
+							{
+								vSearchResult[m_maillisttbl[y].mid] = 0;
+							}
+							if(Letter)
+								delete Letter;
+						}
+					}
+				}
+				i++;
+			}
+			else if(vItem[i].item == "FROM")
+			{
+				if(eSearchRelation == ORing)
+				{
+					if(bIsNot == TRUE)
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							string emlfile;
+							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
+							
+							MailLetter* Letter = new MailLetter(emlfile.c_str());
+							if(Letter->GetSize()> 0)
+							{
+								int llen = 0;
+								char* lbuf = Letter->Body(llen);
+								string from = Letter->GetSummary()->m_header->GetFrom()->m_strfiled;
+								string condition = strlike("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
+								if(from.find(condition.c_str(), 0,condition.length()) == string::npos)
+								{
+									vSearchResult[m_maillisttbl[y].mid] = 1;
+								}
+							}
+							if(Letter)
+								delete Letter;
+						}
+						bIsNot = FALSE;
+					}
+					else
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							string emlfile;
+							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
+							
+							MailLetter* Letter = new MailLetter(emlfile.c_str());
+							if(Letter->GetSize()> 0)
+							{
+								int llen = 0;
+								char* lbuf = Letter->Body(llen);
+								string from = Letter->GetSummary()->m_header->GetFrom()->m_strfiled;
+								string condition = strlike("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
+								if(from.find(condition.c_str(), 0,condition.length()) != string::npos)
+								{
+									vSearchResult[m_maillisttbl[y].mid] = 1;
+								}
+							}
+							if(Letter)
+								delete Letter;
+						}
+					}
+				}
+				else
+				{
+					if(bIsNot == TRUE)
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							string emlfile;
+							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
+							
+							MailLetter* Letter = new MailLetter(emlfile.c_str());
+							if(Letter->GetSize()> 0)
+							{
+								int llen = 0;
+								char* lbuf = Letter->Body(llen);
+								string from = Letter->GetSummary()->m_header->GetFrom()->m_strfiled;
+								string condition = strlike("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
+								if(from.find(condition.c_str(), 0,condition.length()) != string::npos)
+								{
+									vSearchResult[m_maillisttbl[y].mid] = 0;
+								}
+							}
+							if(Letter)
+								delete Letter;
+						}
+						
+						bIsNot = FALSE;
+					}
+					else
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							string emlfile;
+							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
+							
+							MailLetter* Letter = new MailLetter(emlfile.c_str());
+							if(Letter->GetSize()> 0)
+							{
+								int llen = 0;
+								char* lbuf = Letter->Body(llen);
+								string from = Letter->GetSummary()->m_header->GetFrom()->m_strfiled;
+								string condition = strlike("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
+								if(from.find(condition.c_str(), 0,condition.length()) == string::npos)
+								{
+									vSearchResult[m_maillisttbl[y].mid] = 0;
+								}
+							}
+							if(Letter)
+								delete Letter;
+						}
+					}
+				}
+				i++;
+			}
+			else if(vItem[i].item == "TEXT")
+			{
+				if(eSearchRelation == ORing)
+				{
+					if(bIsNot == TRUE)
+					{
+						bIsNot = FALSE;
+					}
+					else
+					{
+						
+					}
+				}
+				else
+				{
+					if(bIsNot == TRUE)
+					{
+						bIsNot = FALSE;
+					}
+					else
+					{
+						
+					}
+				}
+			}
+			else if(vItem[i].item == "TO")
+			{
+				if(eSearchRelation == ORing)
+				{
+					if(bIsNot == TRUE)
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							string emlfile;
+							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
+							
+							MailLetter* Letter = new MailLetter(emlfile.c_str());
+							if(Letter->GetSize()> 0)
+							{
+								int llen = 0;
+								char* lbuf = Letter->Body(llen);
+								string to = Letter->GetSummary()->m_header->GetTo()->m_strfiled;
+								string condition = strlike("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
+								if(to.find(condition.c_str(), 0,condition.length()) == string::npos)
+								{
+									vSearchResult[m_maillisttbl[y].mid] = 1;
+								}
+							}
+							if(Letter)
+								delete Letter;
+						}
+						bIsNot = FALSE;
+					}
+					else
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							string emlfile;
+							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
+							
+							MailLetter* Letter = new MailLetter(emlfile.c_str());
+							if(Letter->GetSize()> 0)
+							{
+								int llen = 0;
+								char* lbuf = Letter->Body(llen);
+								string to = Letter->GetSummary()->m_header->GetTo()->m_strfiled;
+								string condition = strlike("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
+								if(to.find(condition.c_str(), 0,condition.length()) != string::npos)
+								{
+									vSearchResult[m_maillisttbl[y].mid] = 1;
+								}
+							}
+							if(Letter)
+								delete Letter;
+						}
+					}
+				}
+				else
+				{
+					if(bIsNot == TRUE)
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							string emlfile;
+							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
+							
+							MailLetter* Letter = new MailLetter(emlfile.c_str());
+							if(Letter->GetSize()> 0)
+							{
+								int llen = 0;
+								char* lbuf = Letter->Body(llen);
+								string to = Letter->GetSummary()->m_header->GetTo()->m_strfiled;
+								string condition = strlike("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
+								if(to.find(condition.c_str(), 0,condition.length()) != string::npos)
+								{
+									vSearchResult[m_maillisttbl[y].mid] = 0;
+								}
+							}
+							if(Letter)
+								delete Letter;
+						}
+						
+						bIsNot = FALSE;
+					}
+					else
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							string emlfile;
+							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
+							
+							MailLetter* Letter = new MailLetter(emlfile.c_str());
+							if(Letter->GetSize()> 0)
+							{
+								int llen = 0;
+								char* lbuf = Letter->Body(llen);
+								string to = Letter->GetSummary()->m_header->GetTo()->m_strfiled;
+								string condition = strlike("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
+								if(to.find(condition.c_str(), 0,condition.length()) == string::npos)
+								{
+									vSearchResult[m_maillisttbl[y].mid] = 0;
+								}
+							}
+							if(Letter)
+								delete Letter;
+						}
+					}
+				}
+				i++;
+			}
+			else if(vItem[i].item == "UID")
+			{
+				if(eSearchRelation == ORing)
+				{
+					if(bIsNot == TRUE)
+					{
+						bIsNot = FALSE;
+					}
+					else
+					{
+						
+					}
+				}
+				else
+				{
+					if(bIsNot == TRUE)
+					{
+						bIsNot = FALSE;
+					}
+					else
+					{
+						
+					}
+				}
+			}
+			else  if(vItem[i].item == "UNANSWERED")
+			{
+				if(eSearchRelation == ORing)
+				{
+					if(bIsNot == TRUE)
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							if((m_maillisttbl[y].mstatus & MSG_ATTR_ANSWERED) == MSG_ATTR_ANSWERED)
+							{
+								vSearchResult[m_maillisttbl[y].mid] = 1;
+							}
+						}
+						bIsNot = FALSE;
+					}
+					else
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							if((m_maillisttbl[y].mstatus & MSG_ATTR_ANSWERED) != MSG_ATTR_ANSWERED)
+							{
+								vSearchResult[m_maillisttbl[y].mid] = 1;
+							}
+						}
+					}
+				}
+				else
+				{
+					if(bIsNot == TRUE)
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							if((m_maillisttbl[y].mstatus & MSG_ATTR_ANSWERED) != MSG_ATTR_ANSWERED)
+							{
+								vSearchResult[m_maillisttbl[y].mid] = 0;
+							}
+						}
+						bIsNot = FALSE;
+					}
+					else
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							if((m_maillisttbl[y].mstatus & MSG_ATTR_ANSWERED) == MSG_ATTR_ANSWERED)
+							{
+								vSearchResult[m_maillisttbl[y].mid] = 0;
+							}
+						}
+					}
+				}
+			}
+			else  if(vItem[i].item == "UNDELETED")
+			{
+				if(eSearchRelation == ORing)
+				{
+					if(bIsNot == TRUE)
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							if((m_maillisttbl[y].mstatus & MSG_ATTR_DELETED) == MSG_ATTR_DELETED)
+							{
+								vSearchResult[m_maillisttbl[y].mid] = 1;
+							}
+						}
+						bIsNot = FALSE;
+					}
+					else
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							if((m_maillisttbl[y].mstatus & MSG_ATTR_DELETED) != MSG_ATTR_DELETED)
+							{
+								vSearchResult[m_maillisttbl[y].mid] = 1;
+							}
+						}
+					}
+				}
+				else
+				{
+					if(bIsNot == TRUE)
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							if((m_maillisttbl[y].mstatus & MSG_ATTR_DELETED) != MSG_ATTR_DELETED)
+							{
+								vSearchResult[m_maillisttbl[y].mid] = 0;
+							}
+						}
+						bIsNot = FALSE;
+					}
+					else
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							if((m_maillisttbl[y].mstatus & MSG_ATTR_DELETED) == MSG_ATTR_DELETED)
+							{
+								vSearchResult[m_maillisttbl[y].mid] = 0;
+							}
+						}
+					}
+				}
+			}
+			else  if(vItem[i].item == "UNFLAGGED")
+			{
+				if(eSearchRelation == ORing)
+				{
+					if(bIsNot == TRUE)
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							if((m_maillisttbl[y].mstatus & MSG_ATTR_FLAGGED) == MSG_ATTR_FLAGGED)
+							{
+								vSearchResult[m_maillisttbl[y].mid] = 1;
+							}
+						}
+						bIsNot = FALSE;
+					}
+					else
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							if((m_maillisttbl[y].mstatus & MSG_ATTR_FLAGGED) != MSG_ATTR_FLAGGED)
+							{
+								vSearchResult[m_maillisttbl[y].mid] = 1;
+							}
+						}
+					}
+				}
+				else
+				{
+					if(bIsNot == TRUE)
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							if((m_maillisttbl[y].mstatus & MSG_ATTR_FLAGGED) != MSG_ATTR_FLAGGED)
+							{
+								vSearchResult[m_maillisttbl[y].mid] = 0;
+							}
+						}
+						bIsNot = FALSE;
+					}
+					else
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							if((m_maillisttbl[y].mstatus & MSG_ATTR_FLAGGED) == MSG_ATTR_FLAGGED)
+							{
+								vSearchResult[m_maillisttbl[y].mid] = 0;
+							}
+						}
+					}
+				}
+			}
+			else  if(vItem[i].item == "UNKEYWORD")
+			{
+				if(eSearchRelation == ORing)
+				{
+					if(bIsNot == TRUE)
+					{
+						bIsNot = FALSE;
+					}
+					else
+					{
+						
+					}
+				}
+				else
+				{
+					if(bIsNot == TRUE)
+					{
+						bIsNot = FALSE;
+					}
+					else
+					{
+						
+					}
+				}
+			}
+			else  if(vItem[i].item == "UNSEEN")
+			{
+				if(eSearchRelation == ORing)
+				{
+					if(bIsNot == TRUE)
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							if((m_maillisttbl[y].mstatus & MSG_ATTR_SEEN) == MSG_ATTR_SEEN)
+							{
+								vSearchResult[m_maillisttbl[y].mid] = 1;
+							}
+						}
+						bIsNot = FALSE;
+					}
+					else
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							if((m_maillisttbl[y].mstatus & MSG_ATTR_SEEN) != MSG_ATTR_SEEN)
+							{
+								vSearchResult[m_maillisttbl[y].mid] = 1;
+							}
+						}
+					}
+				}
+				else
+				{
+					if(bIsNot == TRUE)
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							if((m_maillisttbl[y].mstatus & MSG_ATTR_SEEN) != MSG_ATTR_SEEN)
+							{
+								vSearchResult[m_maillisttbl[y].mid] = 0;
+							}
+						}
+						bIsNot = FALSE;
+					}
+					else
+					{
+						for(int y = 0; y < listtbllen; y++)
+						{
+							if((m_maillisttbl[y].mstatus & MSG_ATTR_SEEN) == MSG_ATTR_SEEN)
+							{
+								vSearchResult[m_maillisttbl[y].mid] = 0;
+							}
+						}
+					}
+				}
+			}
+			else
+			{
+				//do nothing
+			}
+		}
+	}
+}
+
+
