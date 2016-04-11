@@ -29,6 +29,7 @@
 #include <list>
 #include <map>
 #include <pthread.h>
+#include <libmemcached/memcached.h>
 
 #include "util/general.h"
 #include "storage.h"
@@ -501,6 +502,7 @@ public:
 	static string	m_email_domain;
 	static string	m_hostip;
 	static string	m_dns_server;
+	static map<string, int> m_memcached_list;
 	
 	static unsigned short	m_smtpport;
 	static BOOL		m_enablesmtptls;
@@ -569,6 +571,8 @@ public:
 	static unsigned char m_rsa_pri_key[128];
 
 	static BOOL Is_Local_Domain(const char* domain);
+    
+    static char m_des_key[9];
 	
 public:	
 	CMailBase();
@@ -582,6 +586,8 @@ public:
 	static BOOL LoadList();
 	static BOOL UnLoadList();
 	
+    static const char* DESKey() { return m_des_key; }
+    
 	/* Pure virual function	*/
 	virtual BOOL Parse(char* text) = 0;
 	virtual int ProtRecv(char* buf, int len) = 0;

@@ -1,13 +1,15 @@
 #ifndef _LETTER_H_
 #define _LETTER_H_
 
+#include <fstream>
+#include <queue>
+#include <libmemcached/memcached.h>
+
 #include "storage.h"
 #include "util/general.h"
 #include "base.h"
 #include "tinyxml/tinyxml.h"
 #include "mime.h"
-#include <fstream>
-#include <queue>
 #include "calendar.h"
 
 using namespace std;
@@ -207,8 +209,8 @@ private:
 class LetterSummary : public BlockSummary
 {
 public:
-	LetterSummary();
-	LetterSummary(const char* szpath);
+	LetterSummary(memcached_st * memcached);
+	LetterSummary(const char* szpath, memcached_st * memcached);
 	virtual ~LetterSummary();
 
 	void Parse(const char* buf);
@@ -228,13 +230,14 @@ private:
 	void _flush_();
 	
 	TiXmlDocument * m_xml;
-	
+	//char* m_xml_text;
 	SumMode m_mode;
 	string m_xmlpath;
 	
 	string m_strfield;
 
 	BOOL m_isheader;
+	memcached_st * m_memcached;
 };
 
 typedef enum
@@ -256,12 +259,19 @@ typedef struct
 	int mail_id;
 }Letter_Info;
 
+typedef enum
+{
+    MMAPED = 0,
+    CACHED
+} MemoryType;
+
 class MailLetter
 {
 protected:
 	lAtt m_att;
 	
-	char* m_body;	
+	char* m_body;
+    MemoryType m_body_memtype; 
 	unsigned int m_size;
 	
 	unsigned int m_real_size;
@@ -283,9 +293,11 @@ protected:
 
 	int m_emlmapfd;
 	
+	memcached_st * m_memcached;
+	
 public:
-	MailLetter(const char* emlfile);
-	MailLetter(const char* uid, unsigned long long maxsize);
+	MailLetter(memcached_st * memcached, const char* emlfile);
+	MailLetter(memcached_st * memcached, const char* uid, unsigned long long maxsize);
 	
 	virtual ~MailLetter();
 	

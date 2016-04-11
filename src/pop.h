@@ -1,5 +1,7 @@
 #ifndef _POP_H_
 #define _POP_H_
+
+#include <libmemcached/memcached.h>
 #include "base.h"
 #include "letter.h"
 #include <string>
@@ -8,7 +10,7 @@ using namespace std;
 class CMailPop  : public CMailBase
 {
 public:
-	CMailPop(int sockfd, const char* clientip, StorageEngine* storage_engine, BOOL isSSL = FALSE);
+	CMailPop(int sockfd, const char* clientip, StorageEngine* storage_engine, memcached_st * memcached, BOOL isSSL = FALSE);
 	virtual ~CMailPop();
 	virtual BOOL Parse(char* text);
 	virtual int ProtRecv(char* buf, int len);
@@ -56,6 +58,7 @@ protected:
 	string m_strToken;
 
 	StorageEngine* m_storageEngine;
+	memcached_st * m_memcached;
 };
 #endif /* _POP_H_ */
 

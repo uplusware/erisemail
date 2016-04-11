@@ -10,7 +10,7 @@ class Security
 {
 public:
 	//Source -> DES -> Base64
-	static int Encrypt(const char* srcBuf, int srcLen, string & strOut)
+	static int Encrypt(const char* srcBuf, int srcLen, string & strOut, const char* key = NULL)
 	{
 		int ntmp1 = ALIGN_8(srcLen);
 		char* ptmp1 = (char*)malloc(ntmp1);
@@ -19,7 +19,7 @@ public:
         
         DES des;
 		des.Init(1);
-		des.SetKey(COOKIE_DES_KEY);
+		des.SetKey(key == NULL ? COOKIE_DES_KEY : key);
 		for(int x = 0; x < ntmp1/8; x++)
 			des.Encode(ptmp1 + x*8);
 		des.Done();
@@ -41,7 +41,7 @@ public:
 	}
 
 	//Source -> Base64 -> DES
-	static int Decrypt(const char* srcBuf, int srcLen, string & strOut)
+	static int Decrypt(const char* srcBuf, int srcLen, string & strOut, const char* key = NULL)
 	{
 		int ntmp1 = BASE64_DECODE_OUTPUT_MAX_LEN(srcLen);
 		char* ptmp1 = (char*)malloc(ntmp1);
@@ -58,7 +58,7 @@ public:
 		{
             DES des;
 			des.Init(1);
-			des.SetKey(COOKIE_DES_KEY);
+			des.SetKey(key == NULL ? COOKIE_DES_KEY : key);
 			for(int x = 0; x < ntmp1/8; x++)
 				des.Decode(ptmp1 + x*8);
 			des.Done();

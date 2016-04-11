@@ -783,7 +783,7 @@ public:
 		m_session->parse_cookie_value("AUTH_TOKEN", strauth);
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth);
+		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -875,7 +875,7 @@ public:
 		m_session->parse_cookie_value("AUTH_TOKEN", strauth);
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth);
+		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -966,7 +966,7 @@ public:
 		m_session->parse_cookie_value("AUTH_TOKEN", strauth);
 
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth);
+		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -1074,7 +1074,7 @@ public:
 		m_session->parse_cookie_value("AUTH_TOKEN", strauth);
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth);
+		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -1178,7 +1178,7 @@ public:
 		m_session->parse_cookie_value("AUTH_TOKEN", strauth);
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth);
+		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -1267,7 +1267,7 @@ public:
 		m_session->parse_cookie_value("AUTH_TOKEN", strauth);
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth);
+		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -1394,7 +1394,7 @@ public:
 		m_session->parse_cookie_value("AUTH_TOKEN", strauth);
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth);
+		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -1484,7 +1484,7 @@ public:
 		m_session->parse_cookie_value("AUTH_TOKEN", strauth);
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth);
+		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -1576,7 +1576,7 @@ public:
 		m_session->parse_cookie_value("AUTH_TOKEN", strauth);
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth);
+		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -1699,7 +1699,7 @@ public:
 		m_session->parse_cookie_value("AUTH_TOKEN", strauth);
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth);
+		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -1810,7 +1810,7 @@ public:
 		m_session->parse_cookie_value("AUTH_TOKEN", strauth);
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth);
+		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -1911,7 +1911,7 @@ public:
 		m_session->parse_cookie_value("AUTH_TOKEN", strauth);
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth);
+		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -1995,7 +1995,7 @@ public:
 		m_session->parse_cookie_value("AUTH_TOKEN", strauth);
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth);
+		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -2081,7 +2081,7 @@ public:
 		m_session->parse_urlencode_value("GROUP_NAME", strgroup);
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth);
+		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -2224,7 +2224,7 @@ public:
 			nPID = atoi(strParentID.c_str());
 		}
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth);
+		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -2351,7 +2351,7 @@ public:
 		}
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth);
+		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -2421,7 +2421,7 @@ public:
 		m_session->parse_urlencode_value("ROW", strRow);
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth);
+		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -2483,7 +2483,7 @@ public:
 					m_mailStg->GetMailIndex(listtbl[x].mid, emlfile);
 					
 					MailLetter * Letter = NULL;
-					Letter = new MailLetter(emlfile.c_str());
+					Letter = new MailLetter(m_session->GetMemCached(), emlfile.c_str());
 					if(Letter && Letter->GetSize() > 0)
 					{
 						int llen = 0;
@@ -2693,7 +2693,7 @@ public:
 		m_session->parse_urlencode_value("ROW", strRow);
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth);
+		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -2743,7 +2743,7 @@ public:
 					m_mailStg->GetMailIndex(listtbl[x].mid, emlfile);
 					
 					MailLetter * Letter = NULL;
-					Letter = new MailLetter(emlfile.c_str());
+					Letter = new MailLetter(m_session->GetMemCached(), emlfile.c_str());
 					if(Letter && Letter->GetSize() > 0)
 					{
 						int llen = 0;
@@ -2917,7 +2917,7 @@ public:
 		
 		unsigned int nMailID = atoi(strID.c_str());
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth);
+		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -2990,7 +2990,7 @@ public:
 			m_mailStg->GetMailIndex(nMailID, emlfile);
 					
 			MailLetter * Letter;
-			Letter = new MailLetter(emlfile.c_str());
+			Letter = new MailLetter(m_session->GetMemCached(), emlfile.c_str());
 			if(Letter->GetSize() > 0)
 			{	
 				int llen = 0;
@@ -3107,7 +3107,7 @@ public:
 		string strauth;
 		m_session->parse_cookie_value("AUTH_TOKEN", strauth);
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth);
+		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -3261,7 +3261,7 @@ public:
 							usermaxsize = 5000*1024;
 						}
 						
-						pLetter = new MailLetter(newuid, usermaxsize /*m_mailStg, "", 
+						pLetter = new MailLetter(m_session->GetMemCached(), newuid, usermaxsize /*m_mailStg, "", 
 							"", mtLocal, newuid, DirID, mstatus, time(NULL), usermaxsize*/);
 
 						Letter_Info* letter_info = new Letter_Info;
@@ -3310,7 +3310,7 @@ public:
 					mailfrom += CMailBase::m_email_domain;
 
 							
-					pLetter = new MailLetter(newuid, usermaxsize /*m_mailStg, mailfrom.c_str(),
+					pLetter = new MailLetter(m_session->GetMemCached(), newuid, usermaxsize /*m_mailStg, mailfrom.c_str(),
 						mailaddr.c_str(), mtExtern, newuid, -1, mstatus, time(NULL), usermaxsize*/);
 
 					Letter_Info* letter_info = new Letter_Info;
@@ -3495,7 +3495,7 @@ public:
 		m_session->parse_cookie_value("AUTH_TOKEN", strauth);
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth);
+		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -3709,7 +3709,7 @@ public:
 		m_session->parse_cookie_value("AUTH_TOKEN", strauth);
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth);
+		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -3771,7 +3771,7 @@ public:
 		m_session->parse_urlencode_value("TODIRS", strToDirID);
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth);
+		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -3816,8 +3816,8 @@ public:
 					string emlfile;
 					m_mailStg->GetMailIndex(nMailID, emlfile);
 			
-					oldLetter = new MailLetter(emlfile.c_str());
-					newLetter = new MailLetter(newuid, usermaxsize /*m_mailStg, "", "", mtLocal,
+					oldLetter = new MailLetter(m_session->GetMemCached(), emlfile.c_str());
+					newLetter = new MailLetter(m_session->GetMemCached(), newuid, usermaxsize /*m_mailStg, "", "", mtLocal,
 						newuid, nToDirID, mstatus, (unsigned int)time(NULL), usermaxsize*/);
 
 					Letter_Info letter_info;
@@ -3916,7 +3916,7 @@ public:
 		m_session->parse_urlencode_value("TODIRS", strToDirID);
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth);
+		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -3961,9 +3961,9 @@ public:
 					string emlfile;
 					m_mailStg->GetMailIndex(nMailID, emlfile);
 			
-					oldLetter = new MailLetter(emlfile.c_str());
+					oldLetter = new MailLetter(m_session->GetMemCached(), emlfile.c_str());
 					
-					newLetter = new MailLetter(newuid, usermaxsize /*m_mailStg, "", "", mtLocal,
+					newLetter = new MailLetter(m_session->GetMemCached(), newuid, usermaxsize /*m_mailStg, "", "", mtLocal,
 						newuid, nToDirID, mstatus, (unsigned int)time(NULL), usermaxsize*/);
 
 					Letter_Info letter_info;
@@ -4067,7 +4067,7 @@ public:
 		
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth);
+		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -4161,7 +4161,7 @@ public:
 		m_session->parse_urlencode_value("MAILID", strMailID);
 		unsigned int nMailID = atoi(strMailID.c_str());
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth);
+		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -4262,7 +4262,7 @@ public:
 		m_session->parse_urlencode_value("MAILID", strMailID);
 		unsigned int nMailID = atoi(strMailID.c_str());
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth);
+		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -4364,7 +4364,7 @@ public:
 		m_session->parse_urlencode_value("MAILID", strMailID);
 		unsigned int nMailID = atoi(strMailID.c_str());
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth);
+		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -4415,8 +4415,8 @@ public:
 					string emlfile;
 					m_mailStg->GetMailIndex(nMailID, emlfile);
 					
-					oldLetter = new MailLetter(emlfile.c_str());
-					newLetter = new MailLetter(newuid, usermaxsize /*m_mailStg, postmaster.c_str(), strFrom.c_str(), isLocal ? mtLocal : mtExtern,
+					oldLetter = new MailLetter(m_session->GetMemCached(), emlfile.c_str());
+					newLetter = new MailLetter(m_session->GetMemCached(), newuid, usermaxsize /*m_mailStg, postmaster.c_str(), strFrom.c_str(), isLocal ? mtLocal : mtExtern,
 						newuid, nToDirID, mstatus & (~MSG_ATTR_UNAUDITED), (unsigned int)time(NULL), usermaxsize*/);
 
 					Letter_Info letter_info;
@@ -4555,7 +4555,7 @@ public:
 		m_session->parse_urlencode_value("FLAG", strFlag);
 		unsigned int nMailID = atoi(strID.c_str());
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth);
+		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -4647,7 +4647,7 @@ public:
 		m_session->parse_urlencode_value("SEEN", strSeen);
 		unsigned int nMailID = atoi(strID.c_str());
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth);
+		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -4734,7 +4734,7 @@ public:
 		m_session->parse_urlencode_value("DIRID", strDirID);
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth);
+		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -4826,7 +4826,7 @@ public:
 		m_session->parse_cookie_value("AUTH_TOKEN", strauth);
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth);
+		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -4898,7 +4898,7 @@ public:
 		code_convert_ex("UTF-8", CMailBase::m_encoding.c_str(), strSrc.c_str(), strFileName);		
 		unsigned int nMailID = atoi(strID.c_str());
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth);
+		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -4912,7 +4912,7 @@ public:
 			string emlfile;
 			m_mailStg->GetMailIndex(nMailID, emlfile);
 					
-			Letter = new MailLetter(emlfile.c_str());
+			Letter = new MailLetter(m_session->GetMemCached(), emlfile.c_str());
 			if(Letter->GetSize() > 0)
 			{	
 				int llen = 0;
@@ -5076,7 +5076,7 @@ public:
 		m_session->parse_urlencode_value("TMPFILENAME", strTmpFileName);
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth);
+		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -5289,7 +5289,7 @@ public:
 		
 		unsigned int nMailID = atoi(strID.c_str());
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth);
+		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -5303,7 +5303,7 @@ public:
 			string emlfile;
 			m_mailStg->GetMailIndex(nMailID, emlfile);
 			
-			Letter = new MailLetter(emlfile.c_str());
+			Letter = new MailLetter(m_session->GetMemCached(), emlfile.c_str());
 			if(Letter->GetSize() > 0)
 			{
 				int llen = 0;
@@ -5375,7 +5375,7 @@ public:
 		m_session->parse_cookie_value("AUTH_TOKEN", strauth);
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth);
+		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -5473,7 +5473,7 @@ public:
 				usermaxsize = 5000*1024;
 			}
 			
-			MailLetter* pLetter = new MailLetter(newuid, usermaxsize /*m_mailStg, 
+			MailLetter* pLetter = new MailLetter(m_session->GetMemCached(), newuid, usermaxsize /*m_mailStg, 
 				"", "", mtLocal, newuid, DirID, mstatus, time(NULL), usermaxsize, DraftID*/);
 
 			Letter_Info letter_info;
@@ -5618,7 +5618,7 @@ public:
 		m_session->parse_cookie_value("AUTH_TOKEN", strauth);
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth);
+		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -5719,7 +5719,7 @@ public:
 				usermaxsize = 5000*1024;
 			}
 			
-			MailLetter* pLetter = new MailLetter(newuid, usermaxsize /*m_mailStg, 
+			MailLetter* pLetter = new MailLetter(m_session->GetMemCached(), newuid, usermaxsize /*m_mailStg, 
 				"", "", mtLocal, newuid, DirID, mstatus, time(NULL), usermaxsize, DraftID*/);
 
 			Letter_Info letter_info;
@@ -5890,7 +5890,7 @@ public:
 				name_and_pwd += password;
 				
 				string strCookie, strOut;
-				Security::Encrypt(name_and_pwd.c_str(), name_and_pwd.length(), strCookie);
+				Security::Encrypt(name_and_pwd.c_str(), name_and_pwd.length(), strCookie, CMailBase::DESKey());
 				
 				generate_cookie_content("AUTH_TOKEN", strCookie.c_str(), "/", strOut);
 				
@@ -5992,7 +5992,7 @@ public:
 				name_and_pwd += password;
 				
 				string strCookie, strOut;
-				Security::Encrypt(name_and_pwd.c_str(), name_and_pwd.length(), strCookie);
+				Security::Encrypt(name_and_pwd.c_str(), name_and_pwd.length(), strCookie, CMailBase::DESKey());
 				
 				generate_cookie_content("AUTH_TOKEN", strCookie.c_str(), "/", strOut);
 				
@@ -6054,7 +6054,7 @@ public:
 		m_session->parse_urlencode_value("OLD_PWD", strOldPwd);
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth);
+		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -6126,7 +6126,7 @@ public:
 		m_session->parse_urlencode_value("ALIAS", strAlias);
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth);
+		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -6194,7 +6194,7 @@ public:
 		m_session->parse_cookie_value("AUTH_TOKEN", strauth);
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth);
+		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -6314,7 +6314,7 @@ public:
 		m_session->parse_cookie_value("AUTH_TOKEN", strauth);
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth);
+		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -6375,7 +6375,7 @@ public:
 		m_session->parse_cookie_value("AUTH_TOKEN", strauth);
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth);
+		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -6452,7 +6452,7 @@ public:
 		m_session->parse_cookie_value("AUTH_TOKEN", strauth);
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth);
+		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -6534,7 +6534,7 @@ public:
 		m_session->parse_cookie_value("AUTH_TOKEN", strauth);
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth);
+		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -6627,7 +6627,7 @@ public:
 		m_session->parse_cookie_value("AUTH_TOKEN", strauth);
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth);
+		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -6840,7 +6840,7 @@ public:
 		m_session->parse_cookie_value("AUTH_TOKEN", strauth);
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth);
+		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -7164,7 +7164,7 @@ public:
 		m_session->parse_cookie_value("AUTH_TOKEN", strauth);
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth);
+		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -7282,7 +7282,7 @@ public:
 		m_session->parse_cookie_value("AUTH_TOKEN", strauth);
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth);
+		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -7399,7 +7399,7 @@ public:
 		m_session->parse_cookie_value("AUTH_TOKEN", strauth);
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth);
+		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -7603,7 +7603,7 @@ public:
 		m_session->parse_cookie_value("AUTH_TOKEN", strauth);
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth);
+		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);		 

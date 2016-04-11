@@ -456,7 +456,7 @@ int Run()
 			break;
 		}
         
-        //Watch Dog
+		//Watch Dog
 		int watchdog_pids;
 		pipe(pfd);
 		watchdog_pids = fork();
@@ -506,12 +506,12 @@ static int Stop()
 {
 	printf("Stop eRisemail service ...\n");
 	
-    WatchDog wdog;
-    wdog.Stop();
-    
+	WatchDog wdog;
+	wdog.Stop();
+	
 	Service smtp_svr(stSMTP);
 	smtp_svr.Stop();
-
+	
 	Service pop3_svr(stPOP3);
 	pop3_svr.Stop();
 
@@ -523,7 +523,7 @@ static int Stop()
 
 	Service smtps_svr(stSMTPS);
 	smtps_svr.Stop();
-
+		
 	Service pop3s_svr(stPOP3S);
 	pop3s_svr.Stop();
 
@@ -722,10 +722,10 @@ int main(int argc, char* argv[])
 		
 		// Set up the signal handler
 		signal(SIGPIPE, SIG_IGN);
-        sigset_t signals;
-        sigemptyset(&signals);
-        sigaddset(&signals, SIGPIPE);
-        sigprocmask(SIG_BLOCK, &signals, NULL);
+		sigset_t signals;
+		sigemptyset(&signals);
+		sigaddset(&signals, SIGPIPE);
+		sigprocmask(SIG_BLOCK, &signals, NULL);
 
 		if(argc == 2)
 		{

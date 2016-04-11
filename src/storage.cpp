@@ -32,6 +32,8 @@ void MailStorage::SqlSafetyString(string& strInOut)
 
 MailStorage::MailStorage(const char* encoding, const char* private_path, unsigned global_uid)
 {
+    m_userpwd_cache.clear();
+    m_userpwd_cache_update_time = 0;
     m_encoding = encoding;
     m_private_path = private_path;
     m_global_uid = global_uid;
@@ -41,8 +43,9 @@ MailStorage::MailStorage(const char* encoding, const char* private_path, unsigne
 	{
 		exit(1);
 	}
-	m_hMySQL = mysql_init(NULL);
     pthread_mutex_init(&m_thread_pool_mutex, NULL);
+    
+    m_hMySQL = NULL;
 }
 
 MailStorage::~MailStorage()
@@ -61,6 +64,8 @@ int MailStorage::Connect(const char * host, const char* username, const char* pa
 	else
 	{
 		mysql_thread_init();
+        
+        m_hMySQL = mysql_init(NULL);
 
 		if(mysql_real_connect(m_hMySQL, host, username, password, database, 0 ,NULL ,0) != NULL)
 		{
@@ -77,6 +82,7 @@ int MailStorage::Connect(const char * host, const char* username, const char* pa
 		else
 		{
 			m_bOpened = FALSE;
+            m_hMySQL = NULL;
 			printf("mysql_real_connect %s\n", mysql_error(m_hMySQL));
 			return -1;	
 		}
@@ -87,7 +93,10 @@ void MailStorage::Close()
 {
 	if(m_bOpened)
 	{
-		mysql_close(m_hMySQL);
+		//printf("mysql closed\n");
+        if(m_hMySQL)
+            mysql_close(m_hMySQL);
+        m_hMySQL = NULL;
 		mysql_thread_end();
 		m_bOpened = FALSE;
 		m_bOpened = FALSE;
@@ -98,6 +107,7 @@ int MailStorage::Ping()
 {
 	if(m_bOpened)
 	{
+		//printf("mysql ping\n");
 		return mysql_ping(m_hMySQL);
 	}
 	else
@@ -133,18 +143,19 @@ int MailStorage::Install(const char* database)
 	mysql_autocommit(m_hMySQL, 0);
 	if(strcasecmp(m_encoding.c_str(),"GB2312") == 0)
 	{
-		sprintf(sqlcmd,"CREATE DATABASE %s DEFAULT CHARACTER SET gb2312 COLLATE gb2312_chinese_ci", database);
+		sprintf(sqlcmd,"CREATE DATABASE IF NOT EXISTS %s DEFAULT CHARACTER SET gb2312 COLLATE gb2312_chinese_ci", database);
 	}
 	else if(strcasecmp(m_encoding.c_str(),"UTF-8") == 0)
 	{
-		sprintf(sqlcmd,"CREATE DATABASE %s DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci", database);
+		sprintf(sqlcmd,"CREATE DATABASE IF NOT EXISTS %s DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci", database);
 	}
 	else if(strcasecmp(m_encoding.c_str(),"UCS2") == 0)
 	{
-		sprintf(sqlcmd,"CREATE DATABASE %s DEFAULT CHARACTER SET ucs2 COLLATE ucs2_general_ci", database);
+		sprintf(sqlcmd,"CREATE DATABASE IF NOT EXISTS %s DEFAULT CHARACTER SET ucs2 COLLATE ucs2_general_ci", database);
 	}
 	else
 	{
+		printf("%s\n",mysql_error(m_hMySQL));
 		return -1;
 	}
 	mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd));
@@ -154,7 +165,7 @@ int MailStorage::Install(const char* database)
 	
 	//Create level table
 	sprintf(sqlcmd, 
-		"CREATE TABLE `%s`.`leveltbl` ("
+		"CREATE TABLE IF NOT EXISTS `%s`.`leveltbl` ("
 		"`lid` INT UNSIGNED NOT NULL AUTO_INCREMENT ,"
 		"`lname` VARCHAR( 64 ) NOT NULL ,"
 		"`ldescription` LONGTEXT NOT NULL ,"
@@ -171,7 +182,7 @@ int MailStorage::Install(const char* database)
 
 	//Create dir table
 	sprintf(sqlcmd, 
-		"CREATE TABLE `%s`.`dirtbl` ("
+		"CREATE TABLE IF NOT EXISTS `%s`.`dirtbl` ("
 		"`did` INT UNSIGNED NOT NULL AUTO_INCREMENT ,"
 		"`dname` VARCHAR( 256 ) NOT NULL ,"
 		"`downer` VARCHAR( 64 ) NOT NULL ,"
@@ -185,7 +196,7 @@ int MailStorage::Install(const char* database)
 		
 	//Crate User table
 	sprintf(sqlcmd,
-		"CREATE TABLE `%s`.`usertbl` ("
+		"CREATE TABLE IF NOT EXISTS `%s`.`usertbl` ("
 		"`uid` INT UNSIGNED NOT NULL AUTO_INCREMENT ,"
 		"`uname` VARCHAR( 64 ) NOT NULL ,"
 		"`upasswd` BLOB NOT NULL ,"
@@ -202,7 +213,7 @@ int MailStorage::Install(const char* database)
 			
 	//Create group table
 	sprintf(sqlcmd,
-		"CREATE TABLE `%s`.`grouptbl` ("
+		"CREATE TABLE IF NOT EXISTS `%s`.`grouptbl` ("
 		"`gid` INT UNSIGNED NOT NULL AUTO_INCREMENT ,"
 		"`groupname` VARCHAR( 64 ) NOT NULL ,"
 		"`membername` VARCHAR( 64 ) NOT NULL ,"
@@ -213,7 +224,7 @@ int MailStorage::Install(const char* database)
 			
 	//Create mail table
 	sprintf(sqlcmd, 
-		"CREATE TABLE `%s`.`mailtbl` ("
+		"CREATE TABLE IF NOT EXISTS `%s`.`mailtbl` ("
 		"`mid` INT UNSIGNED NOT NULL AUTO_INCREMENT ,"
 		"`muniqid` VARCHAR( 256 ) NOT NULL ,"
 		"`mfrom` VARCHAR( 256 ) NULL ,"
@@ -228,8 +239,26 @@ int MailStorage::Install(const char* database)
 		database);
 	mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd));
 	
+	sprintf(sqlcmd, "DROP FUNCTION IF EXISTS post_notify");
+	mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd));
+	
+	sprintf(sqlcmd, "CREATE FUNCTION post_notify RETURNS STRING SONAME \"postudf.so\"");
+	mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd));
+	
+	sprintf(sqlcmd, "DROP TRIGGER IF EXISTS postmail_notify_insert");
+	mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd));
+	
+	sprintf(sqlcmd, "DROP TRIGGER IF EXISTS postmail_notify_update");
+	mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd));
+	
+	sprintf(sqlcmd, "CREATE TRIGGER postmail_notify_insert AFTER INSERT ON mailtbl FOR EACH ROW BEGIN set @rs = post_notify(); END");
+	mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd));
+	
+	sprintf(sqlcmd, "CREATE TRIGGER postmail_notify_update AFTER UPDATE ON mailtbl FOR EACH ROW BEGIN set @rs = post_notify(); END");
+	mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd));
+	
 	if(mysql_commit(m_hMySQL) == 0)
-    {
+	{
 		mysql_autocommit(m_hMySQL, 1);
 	}
         else
@@ -239,18 +268,18 @@ int MailStorage::Install(const char* database)
 		mysql_autocommit(m_hMySQL, 1);
 		return -1;
 	}
-        
-    unsigned int lid;
+	
+        unsigned int lid;
 	if(AddLevel("default", "The system's default level", 5000*1024, 500000*1024, eaFalse, 5000*1024, 5000*1024, lid) == 0)
 	{
 		SetDefaultLevel(lid);
 	}
-    else
+	else
 	{
 		return -1;
 	}	
 
-    if(AddID("admin", "admin", "Administrator", utMember, urAdministrator, MAX_EMAIL_LEN, -1) == -1)
+	if(AddID("admin", "admin", "Administrator", utMember, urAdministrator, MAX_EMAIL_LEN, -1) == -1)
 	{
 		return -1;
 	}
@@ -322,33 +351,49 @@ int MailStorage::CheckLogin(const char* username, const char* password)
 	char sqlcmd[1024];
 	string strSafetyUsername = username;
 	SqlSafetyString(strSafetyUsername);
-	sprintf(sqlcmd, "select uname from usertbl where uname='%s' and DECODE(upasswd,'%s') = '%s' and ustatus = %d and utype = %d", strSafetyUsername.c_str(), CODE_KEY, password, usActive, utMember);
+    
+    if(m_userpwd_cache.size() == 0 || time(NULL) - m_userpwd_cache_update_time > 300)
+    {
+        m_userpwd_cache.clear();
+        m_userpwd_cache_update_time = time(NULL);
+        
+        sprintf(sqlcmd, "select uname, DECODE(upasswd,'%s') from usertbl where ustatus = %d and utype = %d", CODE_KEY, usActive, utMember);
 
-	if( mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
-	{
-		MYSQL_RES *qResult;
-		qResult = mysql_store_result(m_hMySQL);
-		if(qResult)
-		{
-			if( mysql_num_rows(qResult) > 0 )
-			{
-				mysql_free_result(qResult);
-				return 0;
-			}
-			else
-			{
-				mysql_free_result(qResult);
-				return -1;
-			}
-		}
-		else
-			return -1;
+        if( mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+        {
+            MYSQL_RES *qResult;
+            MYSQL_ROW row;
+            
+            qResult = mysql_store_result(m_hMySQL);
+            if(qResult)
+            {           
+                while((row = mysql_fetch_row(qResult)))
+                {
+                    m_userpwd_cache.insert(make_pair<string, string>(row[0], row[1]));
+                }
+
+                mysql_free_result(qResult);
+                return 0;
+            }
+            else
+            {
+                return -1;
+            }
+        }
+        else
+        {
+            printf("%s\n", mysql_error(m_hMySQL));
+            return -1;
+        }
 	}
-	else
-	{
-		printf("%s", mysql_error(m_hMySQL));
-		return -1;
-	}
+	
+	map<string, string>::iterator it = m_userpwd_cache.find(username);
+	if(it != m_userpwd_cache.end() && it->second == password)
+    {
+        return 0;
+    }
+    else
+        return -1;
 }
 
 int MailStorage::GetPassword(const char* username, string& password)
@@ -488,7 +533,10 @@ int MailStorage::AddLevel(const char* lname, const char* ldescription, unsigned 
 		return 0;
 	}
 	else
+	{
+	    printf("%s\n",mysql_error(m_hMySQL));
 		return -1;
+	}
 }
 
 int MailStorage::UpdateLevel(unsigned int lid, const char* lname, const char* ldescription, unsigned long long mailmaxsize, unsigned long long boxmaxsize, EnableAudit lenableaudit, unsigned int mailsizethreshold, unsigned int attachsizethreshold)
@@ -858,7 +906,9 @@ int MailStorage::AddID(const char* username, const char* password, const char* a
 		}
 	}
 	else
+	{
 		return -1;
+	}
 }
 
 int MailStorage::UpdateID(const char* username, const char* alias, UserStatus status, int level)

@@ -34,8 +34,9 @@ protected:
 	Service_Type m_st;
 
 	StorageEngine* m_storageEngine;
+	memcached_st * m_memcached;
 public:
-	Session(int sockfd, const char* clientip, Service_Type st, StorageEngine* storage_engine, memory_cache* ch);
+	Session(int sockfd, const char* clientip, Service_Type st, StorageEngine* storage_engine, memory_cache* ch, memcached_st * memcached);
 	virtual ~Session();
 	
 	void Process();

@@ -1,6 +1,8 @@
 #include "base.h"
 #include "util/security.h"
 
+static char CHAR_TBL[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890-=~!@#$%^&*()_+[]\\{}|;':\",./<>?";
+
 //////////////////////////////////////////////////////////////////////////
 //CMailBase
 //
@@ -19,6 +21,8 @@ string CMailBase::m_email_domain = "erisesoft.com";
 string CMailBase::m_dns_server = "";
 string CMailBase::m_hostip = "";
 
+map<string, int> CMailBase::m_memcached_list;
+
 unsigned short CMailBase::m_smtpport = 110;
 BOOL CMailBase::m_enablesmtptls = FALSE;
 BOOL CMailBase::m_enablerelay = FALSE;
@@ -26,7 +30,6 @@ BOOL CMailBase::m_enablerelay = FALSE;
 BOOL   CMailBase::m_enablepop3 = TRUE;
 unsigned short CMailBase::m_pop3port = 25;
 BOOL CMailBase::m_enablepop3tls = TRUE;
-
 
 BOOL   CMailBase::m_enableimap = TRUE;
 unsigned short CMailBase::m_imapport = 143;
@@ -83,6 +86,8 @@ vector<string> CMailBase::m_webadmin_list;
 unsigned char CMailBase::m_rsa_pub_key[128];
 unsigned char CMailBase::m_rsa_pri_key[128];
 
+char CMailBase::m_des_key[9];
+
 CMailBase::CMailBase()
 {
 
@@ -106,6 +111,17 @@ void CMailBase::SetConfigFile(const char* config_file, const char* permit_list_f
 
 BOOL CMailBase::LoadConfig()
 {	
+    srand(time(NULL));
+    for(int x = 0; x < 8; x++)
+    {
+        int ind = rand()%(sizeof(CHAR_TBL) - 1);
+        
+        m_des_key[x] = CHAR_TBL[ind];
+    }
+    m_des_key[8] = '\0';
+    
+    //printf("%s\n", DESKey());
+    
 	m_domain_list.clear();	
 	m_permit_list.clear();
 	m_reject_list.clear();
@@ -421,6 +437,25 @@ BOOL CMailBase::LoadConfig()
 				strcut(strline.c_str(), "=", NULL, SMTPHostNameCheck );
 				strtrim(SMTPHostNameCheck);
 				m_enablesmtphostnamecheck = (strcasecmp(SMTPHostNameCheck.c_str(), "yes")) == 0 ? TRUE : FALSE;
+			}
+			else if(strncasecmp(strline.c_str(), "MEMCACHEDList", strlen("MEMCACHEDList")) == 0)
+			{
+				string memc_list;
+				strcut(strline.c_str(), "=", NULL, memc_list );
+				strtrim(memc_list);
+				
+				string memc_addr, memc_port_str;
+				int memc_port;
+				
+				strcut(memc_list.c_str(), NULL, ":", memc_addr );
+				strcut(memc_list.c_str(), ":", NULL, memc_port_str );
+				
+				strtrim(memc_addr);
+				strtrim(memc_port_str);
+
+				memc_port = atoi(memc_port_str.c_str());
+				
+				m_memcached_list.insert(make_pair<string, int>(memc_addr.c_str(), memc_port));
 			}
 			else
 			{

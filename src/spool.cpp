@@ -19,6 +19,7 @@ typedef struct
 {
 	Mail_Info mail_info;
 	StorageEngine* _storageEngine;
+	memcached_st * _memcached;
 }ReplyInfo;
 
 
@@ -30,7 +31,7 @@ static pthread_mutex_t gs_thread_pool_mutex;
 static sem_t gs_thread_pool_sem;
 static volatile unsigned int gs_thread_pool_size = 0;
 
-static BOOL ReturnMail(MailStorage* mailStg, int mid, const char* uniqid, const char *mail_from, const char *rcpt_to, const char * errormsg)
+static BOOL ReturnMail(MailStorage* mailStg, memcached_st * memcached, int mid, const char* uniqid, const char *mail_from, const char *rcpt_to, const char * errormsg)
 {	
 	int nBoundary = 0;
 	char szBoundary[64];
@@ -83,7 +84,7 @@ static BOOL ReturnMail(MailStorage* mailStg, int mid, const char* uniqid, const 
 		strMailTo = strRcptTo.c_str();		
 	}
 	
-	MailLetter newLetter(szUid, usermaxsize);
+	MailLetter newLetter(memcached, szUid, usermaxsize);
 	
 	//printf("newLetter.m_emlmapfd: %d\n", newLetter.m_emlmapfd);
 	
@@ -159,7 +160,7 @@ static BOOL ReturnMail(MailStorage* mailStg, int mid, const char* uniqid, const 
 
 	char codebuf[73];
 	
-	MailLetter oldLetter(emlfile.c_str());
+	MailLetter oldLetter(memcached, emlfile.c_str());
 	if(oldLetter.GetSize() > 0)
 	{
 		int llen;
@@ -193,7 +194,7 @@ static BOOL ReturnMail(MailStorage* mailStg, int mid, const char* uniqid, const 
 }
 
 
-static BOOL SendMail(MailStorage* mailStg, const char* mxserver, const char* fromaddr, const char* toaddr, unsigned int mid, string& errormsg)
+static BOOL SendMail(MailStorage* mailStg, memcached_st * memcached, const char* mxserver, const char* fromaddr, const char* toaddr, unsigned int mid, string& errormsg)
 {		
 	char realip[20];
 	struct sockaddr_in ser_addr;
@@ -311,7 +312,7 @@ static BOOL SendMail(MailStorage* mailStg, const char* mxserver, const char* fro
 	string emlfile;
 	mailStg->GetMailIndex(mid, emlfile);
 	
-	MailLetter Letter(emlfile.c_str());
+	MailLetter Letter(memcached, emlfile.c_str());
 	if(Letter.GetSize() > 0)
 	{
 		int llen;
@@ -341,7 +342,7 @@ static BOOL SendMail(MailStorage* mailStg, const char* mxserver, const char* fro
 }
 
 
-static BOOL RelayMail(MailStorage* mailStg, int mid, const char* uniqid, const char *mail_from, const char *rcpt_to, string& errormsg)
+static BOOL RelayMail(MailStorage* mailStg, memcached_st * memcached, int mid, const char* uniqid, const char *mail_from, const char *rcpt_to, string& errormsg)
 {
 	string svraddr;
 	strcut(rcpt_to, "@", NULL, svraddr);
@@ -370,7 +371,7 @@ static BOOL RelayMail(MailStorage* mailStg, int mid, const char* uniqid, const c
 	for(int x = 0; x < mxcount; x++)
 	{				
 		//printf("MX: %d/%d %s\n", x, mxcount, list[x].address);
-		if(SendMail(mailStg, list[x].address, "", rcpt_to, mid, errormsg) == TRUE)
+		if(SendMail(mailStg, memcached, list[x].address, "", rcpt_to, mid, errormsg) == TRUE)
 		{
 			return TRUE;
 		}
@@ -425,14 +426,14 @@ static void* begin_relay_handler(void* arg)
 				mailStg->EntryThread();
 				string errormsg;
 				
-				if(RelayMail(mailStg, reply_info->mail_info.mid, reply_info->mail_info.uniqid, reply_info->mail_info.mailfrom.c_str(), 
+				if(RelayMail(mailStg, reply_info->_memcached, reply_info->mail_info.mid, reply_info->mail_info.uniqid, reply_info->mail_info.mailfrom.c_str(), 
 					reply_info->mail_info.rcptto.c_str(), errormsg) == FALSE)
 				{
 					CUplusTrace uTrace(LOGNAME, LCKNAME);
 					uTrace.Write(Trace_Error, "%s", errormsg.c_str());
 					
 					mailStg->KeepLive();
-					ReturnMail(mailStg, reply_info->mail_info.mid, reply_info->mail_info.uniqid, reply_info->mail_info.mailfrom.c_str(), 
+					ReturnMail(mailStg, reply_info->_memcached, reply_info->mail_info.mid, reply_info->mail_info.uniqid, reply_info->mail_info.mailfrom.c_str(), 
 						reply_info->mail_info.rcptto.c_str(), errormsg.c_str());
 				}
 
@@ -486,6 +487,7 @@ Spool::Spool()
 	char sztmp[64];
 	sprintf(sztmp, "%s", SPOOL_SERVICE);
 	m_spool_name = sztmp;
+	m_memcached = NULL;
 }
 
 Spool::~Spool()
@@ -547,7 +549,9 @@ void Spool::Stop()
 		mq_close(m_spool_qid);
 	if(m_spool_sid != SEM_FAILED)
 		sem_close(m_spool_sid);
-	
+	if(m_memcached)
+	  memcached_free(m_memcached);
+	m_memcached = NULL;
 	printf("Stop Relay Service OK\n");
 }
 
@@ -557,7 +561,17 @@ int Spool::Run(int fd)
 	int retVal = 0;
 	do
 	{
-		m_storageEngine = new StorageEngine(CMailBase::m_db_host.c_str(), CMailBase::m_db_username.c_str(), CMailBase::m_db_password.c_str(), CMailBase::m_db_name.c_str(), CMailBase::m_db_max_conn);
+		memcached_server_st * memcached_servers = NULL;
+		memcached_return memc_rc;
+		m_memcached = memcached_create(NULL);
+		for (map<string, int>::iterator iter = CMailBase::m_memcached_list.begin( ); iter != CMailBase::m_memcached_list.end( ); ++iter)
+		{
+			memcached_servers = memcached_server_list_append(memcached_servers, (*iter).first.c_str(), (*iter).second, &memc_rc);
+			memc_rc = memcached_server_push(m_memcached, memcached_servers);
+		}
+	
+		m_storageEngine = new StorageEngine(CMailBase::m_db_host.c_str(), CMailBase::m_db_username.c_str(), CMailBase::m_db_password.c_str(), 
+			CMailBase::m_db_name.c_str(), CMailBase::m_db_max_conn);
 		if(!m_storageEngine)
 		{	
 			retVal = -1;
@@ -582,7 +596,8 @@ int Spool::Run(int fd)
 		m_spool_qid = mq_open(strqueue.c_str(), O_CREAT|O_RDWR, 0644, &attr);
 		m_spool_sid = sem_open(strsem.c_str(), O_CREAT|O_RDWR, 0644, 1);
 		
-		if((m_spool_qid == (mqd_t)-1) || (m_spool_sid ==  SEM_FAILED))
+		sem_t * postmail_sid = sem_open(".ERISEMAIL_POST_NOTIFY", O_CREAT|O_RDWR, 0666, 0);
+		if((m_spool_qid == (mqd_t)-1) || (m_spool_sid ==  SEM_FAILED) || postmail_sid == SEM_FAILED)
 		{
 			if(m_spool_sid != SEM_FAILED)
 				sem_close(m_spool_sid);
@@ -608,7 +623,7 @@ int Spool::Run(int fd)
 		
 		int qBufLen = attr.mq_msgsize;
 		char* qBufPtr = (char*)malloc(qBufLen);
-		struct timespec ts;
+		struct timespec ts1, ts2;
 		stQueueMsg* pQMsg;
 		int rc;
 
@@ -616,9 +631,9 @@ int Spool::Run(int fd)
 
 		while(1)
 		{
-			clock_gettime(CLOCK_REALTIME, &ts);
-			ts.tv_sec += 1;
-			rc = mq_timedreceive(m_spool_qid, qBufPtr, qBufLen, 0, &ts);
+			clock_gettime(CLOCK_REALTIME, &ts1);
+			ts1.tv_sec += 1;
+			rc = mq_timedreceive(m_spool_qid, qBufPtr, qBufLen, 0, &ts1);
 			if( rc != -1)
 			{
 				pQMsg = (stQueueMsg*)qBufPtr;
@@ -641,48 +656,57 @@ int Spool::Run(int fd)
 					break;
 				}
 			}
-            
-			MailStorage* mailStg = NULL;
-			StorageEngineInstance stgengine_instance(m_storageEngine, &mailStg);
-			if(!mailStg)
+            		clock_gettime(CLOCK_REALTIME, &ts2);
+			if(sem_timedwait(postmail_sid, &ts2) == 0)
 			{
-				continue;
-			}		
-			vector<Mail_Info> mitbl;
-			if(mailStg->ListExternMail(mitbl) == 0)
-			{
-				int vlen = mitbl.size();
-				
-				if(vlen > 0)
+				MailStorage* mailStg = NULL;
+				StorageEngineInstance stgengine_instance(m_storageEngine, &mailStg);
+				if(!mailStg)
 				{
-					for(int x = 0; x < vlen; x++)
+					continue;
+				}		
+				vector<Mail_Info> mitbl;
+				if(mailStg->ListExternMail(mitbl) == 0)
+				{
+					int vlen = mitbl.size();
+				
+					if(vlen > 0)
 					{
-						ReplyInfo* reply_info = new ReplyInfo;
+						for(int x = 0; x < vlen; x++)
+						{
+							ReplyInfo* reply_info = new ReplyInfo;
 						
-						reply_info->mail_info.mid = mitbl[x].mid;
-						memcpy(reply_info->mail_info.uniqid, mitbl[x].uniqid, 256);
-						reply_info->mail_info.mailfrom = mitbl[x].mailfrom;
-						reply_info->mail_info.rcptto = mitbl[x].rcptto;
-						reply_info->mail_info.mtime = mitbl[x].mtime;
-						reply_info->mail_info.mstatus = mitbl[x].mstatus;
-						reply_info->mail_info.mtype = mitbl[x].mtype;
-						reply_info->mail_info.mdid = mitbl[x].mdid;
-						reply_info->mail_info.length = mitbl[x].length;
-						reply_info->mail_info.reserve = mitbl[x].reserve;
-						reply_info->_storageEngine = m_storageEngine;
+							reply_info->mail_info.mid = mitbl[x].mid;
+							memcpy(reply_info->mail_info.uniqid, mitbl[x].uniqid, 256);
+							reply_info->mail_info.mailfrom = mitbl[x].mailfrom;
+							reply_info->mail_info.rcptto = mitbl[x].rcptto;
+							reply_info->mail_info.mtime = mitbl[x].mtime;
+							reply_info->mail_info.mstatus = mitbl[x].mstatus;
+							reply_info->mail_info.mtype = mitbl[x].mtype;
+							reply_info->mail_info.mdid = mitbl[x].mdid;
+							reply_info->mail_info.length = mitbl[x].length;
+							reply_info->mail_info.reserve = mitbl[x].reserve;
+							reply_info->_storageEngine = m_storageEngine;
+							reply_info->_memcached = m_memcached;
+							pthread_mutex_lock(&gs_thread_pool_mutex);
+							gs_thread_pool_arg_queue.push(reply_info);
+							pthread_mutex_unlock(&gs_thread_pool_mutex);
 						
-						pthread_mutex_lock(&gs_thread_pool_mutex);
-						gs_thread_pool_arg_queue.push(reply_info);
-						pthread_mutex_unlock(&gs_thread_pool_mutex);
+							sem_post(&gs_thread_pool_sem);
+							mailStg->Prefoward(mitbl[x].mid);
 						
-						sem_post(&gs_thread_pool_sem);
-						mailStg->Prefoward(mitbl[x].mid);
-						
+						}
 					}
 				}
+				stgengine_instance.Release();
 			}
-			stgengine_instance.Release();
 		}
+
+		if(postmail_sid != SEM_FAILED)
+  		{ 
+    			sem_close(postmail_sid);
+		}
+   
 
 		if(thd_pool)
 			delete thd_pool;

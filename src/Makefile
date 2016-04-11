@@ -5,6 +5,7 @@ OBJSTG = storage.o
 
 LIBJKS = liberiseantijunk.so
 OBJJKS = antijunk.o
+SQLUDF = postudf.so
 
 EXESVR = erisemaild
 OBJSVR = mainsrv.o service.o session.o base.o smtp.o pop.o imap.o calendar.o\
@@ -21,6 +22,7 @@ OBJSVR = mainsrv.o service.o session.o base.o smtp.o pop.o imap.o calendar.o\
 
 EXEUTL = eriseutil
 OBJUTL = maintools.o base.o util/DES.o stgengine.o
+OBJUDF = postudf.o
 
 ifdef SOLARIS
 MDEF = _SOLARIS_OS_
@@ -41,21 +43,24 @@ LDLIST_UTL = -lstdc++ -lssl -lcrypto
 else
 MDEF = _LINUX_OS_
 INCDIR = -I/usr/include/mysql/ 
-LDDIRS = -L/usr/lib64/mysql/ 
-LDLIST_STG = -lstdc++ -lrt -lmysqlclient_r -lpthread
+LDDIRS = -L/usr/lib/x86_64-linux-gnu/ 
+LDLIST_STG = -lstdc++ -lrt -lmariadbclient_r -lpthread
 LDLIST_JKS = -lstdc++
-LDLIST_SVR = -lstdc++ -lrt -ldl -lssl -lcrypto -lpthread
+LDLIST_SVR = -lstdc++ -lrt -ldl -lssl -lcrypto -lpthread -lmemcached
 LDLIST_UTL = -lstdc++ -lssl -lcrypto -lpthread
+LDLIST_UDF = -lstdc++ -lrt
+
 endif
 
 FLAGS = -O2 -fPIC -w
 
-all: stg svr utl jks
+all: stg svr utl jks udf
 
 svr: $(EXESVR)
 utl: $(EXEUTL)
 stg: $(LIBSTG)
 jks: $(LIBJKS)
+udf: $(SQLUDF)
 
 $(LIBSTG): $(OBJSTG)
 	$(CC) -shared -W -fPIC -o $@ $(OBJSTG) $(LDDIRS) $(LDLIST_STG)
@@ -68,9 +73,12 @@ $(EXESVR): $(OBJSVR)
 	
 $(EXEUTL): $(OBJUTL)
 	$(CC) -o $@ $(OBJUTL) $(LDDIRS) $(LIBSTG) $(LDLIST_UTL)
+
+$(SQLUDF): $(OBJUDF)
+	$(CC) -shared -W -fPIC -o $@ $(OBJUDF) $(LDLIST_UDF)
 	
 %.o : %.cpp
 	$(CC) -D$(MDEF) $(INCDIR) $(FLAGS) -c $< -o $@
 
 clean:
-	-rm -f $(LIBSTG) $(LIBJKS) $(EXESVR) $(EXEUTL) $(OBJSVR) $(OBJJKS) $(OBJSTG) *.elf *.gdb *.o *.a *.so
+	-rm -f $(LIBSTG) $(LIBJKS) $(EXESVR) $(EXEUTL) $(SQLUDF) $(OBJSVR) $(OBJJKS) $(OBJSTG) $(OBJUDF) *.elf *.gdb *.o *.a *.so

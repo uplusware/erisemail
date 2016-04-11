@@ -1,6 +1,6 @@
 #include "session.h"
 
-Session::Session(int sockfd, const char* clientip, Service_Type st, StorageEngine* storage_engine, memory_cache* ch)
+Session::Session(int sockfd, const char* clientip, Service_Type st, StorageEngine* storage_engine, memory_cache* ch, memcached_st * memcached)
 {
 	m_sockfd = sockfd;
 	m_clientip = clientip;
@@ -9,6 +9,7 @@ Session::Session(int sockfd, const char* clientip, Service_Type st, StorageEngin
 	m_cache = ch;
 
 	m_storageEngine = storage_engine;
+	m_memcached = memcached;
 }
 
 Session::~Session()
@@ -22,42 +23,43 @@ void Session::Process()
 	try{
 	if(m_st == stSMTP)
 	{
-		pProtocol = new CMailSmtp(m_sockfd, m_clientip.c_str(), m_storageEngine);
+		pProtocol = new CMailSmtp(m_sockfd, m_clientip.c_str(), m_storageEngine, m_memcached);
 	}
 	else if(m_st == stPOP3)
 	{
-		pProtocol = new CMailPop(m_sockfd, m_clientip.c_str(), m_storageEngine);
+		pProtocol = new CMailPop(m_sockfd, m_clientip.c_str(), m_storageEngine, m_memcached);
 	}
 	else if(m_st == stIMAP)
 	{
-		pProtocol = new CMailImap(m_sockfd, m_clientip.c_str(), m_storageEngine);
+		pProtocol = new CMailImap(m_sockfd, m_clientip.c_str(), m_storageEngine, m_memcached);
 	}
 	else if(m_st == stSMTPS)
 	{
-		pProtocol = new CMailSmtp(m_sockfd, m_clientip.c_str(), m_storageEngine, TRUE);
+		pProtocol = new CMailSmtp(m_sockfd, m_clientip.c_str(), m_storageEngine, m_memcached, TRUE);
 	}
 	else if(m_st == stPOP3S)
 	{
-		pProtocol = new CMailPop(m_sockfd, m_clientip.c_str(), m_storageEngine, TRUE);
+		pProtocol = new CMailPop(m_sockfd, m_clientip.c_str(), m_storageEngine, m_memcached, TRUE);
 	}
 	else if(m_st == stIMAPS)
 	{
-		pProtocol = new CMailImap(m_sockfd, m_clientip.c_str(), m_storageEngine, TRUE);
+		pProtocol = new CMailImap(m_sockfd, m_clientip.c_str(), m_storageEngine, m_memcached, TRUE);
 	}
 	else if(m_st == stHTTP)
 	{
-		pProtocol = new CHttp(m_sockfd, m_clientip.c_str(), m_storageEngine, m_cache);
+		pProtocol = new CHttp(m_sockfd, m_clientip.c_str(), m_storageEngine, m_cache, m_memcached);
 	}
 	else if(m_st == stHTTPS)
 	{
-		pProtocol = new CHttp(m_sockfd, m_clientip.c_str(), m_storageEngine, m_cache, TRUE);
+		pProtocol = new CHttp(m_sockfd, m_clientip.c_str(), m_storageEngine, m_cache, m_memcached, TRUE);
 	}
 	else
 	{
 		return;
 	}
 	}
-	catch(string* e){
+	catch(string* e)
+	{
 		//printf("Exception: %s\n", e->c_str());
 		return;
 	}

@@ -16,7 +16,7 @@
 
 static char CHAR_TBL[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890=/";
 
-CMailSmtp::CMailSmtp(int sockfd, const char* clientip, StorageEngine* storage_engine, BOOL isSSL)
+CMailSmtp::CMailSmtp(int sockfd, const char* clientip, StorageEngine* storage_engine, memcached_st * memcached, BOOL isSSL)
 {
 	m_sockfd = sockfd;
 	m_clientip = clientip;
@@ -25,6 +25,7 @@ CMailSmtp::CMailSmtp(int sockfd, const char* clientip, StorageEngine* storage_en
 	m_lssl = NULL;
 	
 	m_storageEngine = storage_engine;
+	m_memcached = memcached;
 	
 	m_letter_obj_vector.clear();
 	
@@ -1158,7 +1159,7 @@ void CMailSmtp::On_Data_Handler(char* text)
 					usermaxsize = 5000*1024;
 				}
 						
-				m_letter_obj_vector[x]->letter = new MailLetter(uid, usermaxsize /*mailStg, m_mailfrom.c_str(),
+				m_letter_obj_vector[x]->letter = new MailLetter(m_memcached, uid, usermaxsize /*mailStg, m_mailfrom.c_str(),
 					m_letter_obj_vector[x].rcpt_to->c_str(), mtLocal, uid, DirID, mstatus, (unsigned int)time(NULL), usermaxsize*/);
 
 				m_letter_obj_vector[x]->letter_info.mail_from = m_mailfrom.c_str();
@@ -1183,7 +1184,7 @@ void CMailSmtp::On_Data_Handler(char* text)
 				}
 
 				
-				m_letter_obj_vector[x]->letter = new MailLetter(uid, usermaxsize /*mailStg, m_mailfrom.c_str(), 
+				m_letter_obj_vector[x]->letter = new MailLetter(m_memcached, uid, usermaxsize /*mailStg, m_mailfrom.c_str(), 
 					m_letter_obj_vector[x].rcpt_to->c_str(), mtLocal, uid, DirID, mstatus, (unsigned int)time(NULL), usermaxsize*/);
 
 				m_letter_obj_vector[x]->letter_info.mail_from = m_mailfrom.c_str();
@@ -1210,7 +1211,7 @@ void CMailSmtp::On_Data_Handler(char* text)
 					usermaxsize = 5000*1024;
 				}
 				
-				m_letter_obj_vector[x]->letter = new MailLetter(uid, usermaxsize /*mailStg, 
+				m_letter_obj_vector[x]->letter = new MailLetter(m_memcached, uid, usermaxsize /*mailStg, 
 				m_mailfrom.c_str(), m_letter_obj_vector[x].rcpt_to->c_str(), mtExtern, uid, -1, mstatus, time(NULL), usermaxsize*/);
 
 				m_letter_obj_vector[x]->letter_info.mail_from = m_mailfrom.c_str();
@@ -1230,7 +1231,7 @@ void CMailSmtp::On_Data_Handler(char* text)
 				{
 					usermaxsize = 5000*1024;
 				}
-				m_letter_obj_vector[x]->letter = new MailLetter(uid, usermaxsize /*mailStg, 
+				m_letter_obj_vector[x]->letter = new MailLetter(m_memcached, uid, usermaxsize /*mailStg, 
 				m_mailfrom.c_str(), m_letter_obj_vector[x].rcpt_to->c_str(), mtExtern, uid, -1, mstatus, time(NULL), usermaxsize*/);
 
 				m_letter_obj_vector[x]->letter_info.mail_from = m_mailfrom.c_str();

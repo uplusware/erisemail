@@ -309,7 +309,7 @@ void DES::Done(void)
 }
 /* Set key (initialize key schedule array) */
 
-void DES::SetKey(char *key)
+void DES::SetKey(const char *key)
 {
 	char pc1m[56];		/* place to modify pc1 into */
 	char pcr[56];		/* place to rotate pc1 into */

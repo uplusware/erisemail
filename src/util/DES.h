@@ -32,7 +32,7 @@ public:
 	int Init(int mode);
 
 	/* Set key (initialize key schedule array) */
-	void SetKey(char *key);
+	void SetKey(const char *key);
 
 	/* In-place encryption of 64-bit block */
 	void Encode(char *block);

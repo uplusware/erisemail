@@ -17,7 +17,7 @@
 #define MAX_APPLICATION_X_WWW_FORM_URLENCODED_LEN (1024*512)
 #define MAX_MULTIPART_FORM_DATA_LEN (1024*1024*4)
 
-CHttp::CHttp(int sockfd, const char* clientip, StorageEngine* storage_engine, memory_cache* ch, BOOL isSSL)
+CHttp::CHttp(int sockfd, const char* clientip, StorageEngine* storage_engine, memory_cache* ch, memcached_st * memcached, BOOL isSSL)
 {
 	m_cache = ch;
 
@@ -28,6 +28,7 @@ CHttp::CHttp(int sockfd, const char* clientip, StorageEngine* storage_engine, me
 	m_lssl = NULL;
 	
 	m_storageEngine = storage_engine;
+	m_memcached = memcached;
 	
 	m_content_length = 0;
 	

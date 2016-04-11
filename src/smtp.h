@@ -1,6 +1,6 @@
 #ifndef _SMTP_H_
 #define _SMTP_H_
-
+#include <libmemcached/memcached.h>
 #include <vector>
 #include "letter.h"
 #include "base.h"
@@ -48,7 +48,7 @@ typedef enum
 class CMailSmtp : public CMailBase
 {
 public:
-	CMailSmtp(int socket, const char* clientip, StorageEngine* storage_engine, BOOL isSSL = FALSE);
+	CMailSmtp(int socket, const char* clientip, StorageEngine* storage_engine, memcached_st * memcached, BOOL isSSL = FALSE);
 	virtual ~CMailSmtp();
 	virtual BOOL Parse(char* text);
 	virtual int ProtRecv(char* buf, int len);
@@ -125,6 +125,7 @@ private:
 protected:
 	BOOL Check_Helo_Domain(const char* domain);
 	StorageEngine* m_storageEngine;
+	memcached_st * m_memcached;
 
 };
 

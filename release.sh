@@ -66,6 +66,7 @@ cp src/erisemaild $3-erisemail-bin-cn-$2-${m}-${o}/erisemaild
 cp src/eriseutil $3-erisemail-bin-cn-$2-${m}-${o}/eriseutil
 cp src/liberisestorage.so $3-erisemail-bin-cn-$2-${m}-${o}/liberisestorage.so
 cp src/liberiseantijunk.so $3-erisemail-bin-cn-$2-${m}-${o}/liberiseantijunk.so
+cp src/postudf.so $3-erisemail-bin-cn-$2-${m}-${o}/postudf.so
 
 cp script/eriseaddgroup $3-erisemail-bin-cn-$2-${m}-${o}/eriseaddgroup
 cp script/eriseadduser $3-erisemail-bin-cn-$2-${m}-${o}/eriseadduser
@@ -122,6 +123,7 @@ cp src/erisemaild $3-erisemail-bin-en-$2-${m}-${o}/erisemaild
 cp src/eriseutil $3-erisemail-bin-en-$2-${m}-${o}/eriseutil
 cp src/liberisestorage.so $3-erisemail-bin-en-$2-${m}-${o}/liberisestorage.so
 cp src/liberiseantijunk.so $3-erisemail-bin-en-$2-${m}-${o}/liberiseantijunk.so
+cp src/postudf.so $3-erisemail-bin-en-$2-${m}-${o}/postudf.so
 
 cp script/eriseaddgroup $3-erisemail-bin-en-$2-${m}-${o}/eriseaddgroup
 cp script/eriseadduser $3-erisemail-bin-en-$2-${m}-${o}/eriseadduser

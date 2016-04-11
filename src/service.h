@@ -15,6 +15,8 @@
 #include "session.h"
 #include <mqueue.h>
 #include <semaphore.h>
+#include <libmemcached/memcached.h>
+
 #include "cache.h"
 
 static char LOGNAME[256] = "/var/log/erisemail/SERVICE.log";
@@ -36,6 +38,7 @@ public:
 	void ReloadList();
 	
 	memory_cache* m_cache;
+	
 protected:
 	mqd_t m_service_qid;
 	
@@ -46,6 +49,7 @@ protected:
 	list<pid_t> m_child_list;
 
 	StorageEngine* m_storageEngine;
+	memcached_st * m_memcached;
 };
 
 class WatchDog

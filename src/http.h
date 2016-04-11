@@ -1,6 +1,8 @@
 #ifndef _HTTP_H_
 #define _HTTP_H_
 
+#include <libmemcached/memcached.h>
+
 #include "base.h"
 #include "fstring.h"
 #include "cache.h"
@@ -133,7 +135,7 @@ public:
 class CHttp : public CMailBase
 {
 public:
-	CHttp(int sockfd, const char* clientip, StorageEngine* storage_engine, memory_cache* ch, BOOL isSSL = FALSE);
+	CHttp(int sockfd, const char* clientip, StorageEngine* storage_engine, memory_cache* ch, memcached_st * memcached, BOOL isSSL = FALSE);
 	virtual ~CHttp();
 
 	virtual BOOL Parse(char* text);
@@ -164,6 +166,7 @@ public:
 	Http_Method GetMethod() { return m_http_method; };
 
 	StorageEngine* GetStorageEngine() { return m_storageEngine; }
+	memcached_st * GetMemCached() { return m_memcached; }
 protected:
 	BOOL m_isSSL;
 	SSL* m_ssl;
@@ -192,6 +195,7 @@ protected:
 	string m_cookie;
 
 	StorageEngine* m_storageEngine;
+	memcached_st * m_memcached;
 };
 
 #endif /* _HTTP_H_ */

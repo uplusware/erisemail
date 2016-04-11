@@ -24,6 +24,7 @@ typedef struct _session_arg_
 	Service_Type svr_type;
 	memory_cache* cache;
 	StorageEngine* storage_engine;
+	memcached_st * memcached;
 } Session_Arg;
 
 static std::queue<Session_Arg*> s_thread_pool_arg_queue;
@@ -36,7 +37,7 @@ static volatile unsigned int s_thread_pool_size = 0;
 static void session_handler(Session_Arg* session_arg)
 {
 	Session* pSession = NULL;
-	pSession = new Session(session_arg->sockfd, session_arg->client_ip.c_str(), session_arg->svr_type, session_arg->storage_engine, session_arg->cache);
+	pSession = new Session(session_arg->sockfd, session_arg->client_ip.c_str(), session_arg->svr_type, session_arg->storage_engine, session_arg->cache, session_arg->memcached);
 	if(pSession != NULL)
 	{
 		pSession->Process();
@@ -177,6 +178,7 @@ Service::Service(Service_Type st)
 	m_service_name = SVR_NAME_TBL[m_st];
 
 	m_cache = NULL;
+	m_memcached = NULL;
 	
 	if((m_st == stHTTP) || (m_st == stHTTPS))
 	{
@@ -218,7 +220,10 @@ void Service::Stop()
 
 	if(m_service_sid != SEM_FAILED)
 		sem_close(m_service_sid);
-
+	
+	if(m_memcached)
+	  memcached_free(m_memcached);
+	m_memcached = NULL;
 	printf("Stop %s OK\n", SVR_DESP_TBL[m_st]);
 }
 
@@ -284,7 +289,17 @@ int Service::Run(int fd, const char* hostip, unsigned short nPort)
 {	
 	CUplusTrace uTrace(LOGNAME, LCKNAME);
 	CMailBase::LoadConfig();
-
+	memcached_server_st * memcached_servers = NULL;
+	memcached_return rc;
+	m_memcached = memcached_create(NULL);
+	for (map<string, int>::iterator iter = CMailBase::m_memcached_list.begin( ); iter != CMailBase::m_memcached_list.end( ); ++iter)
+	{
+		memcached_servers = memcached_server_list_append(memcached_servers, (*iter).first.c_str(), (*iter).second, &rc);
+		rc = memcached_server_push(m_memcached, memcached_servers);
+		
+		//printf("memcached: %s %d %d\n", (*iter).first.c_str(), (*iter).second, rc);
+	}
+	
 	m_storageEngine = new StorageEngine(CMailBase::m_db_host.c_str(), CMailBase::m_db_username.c_str(), CMailBase::m_db_password.c_str(), CMailBase::m_db_name.c_str(), CMailBase::m_db_max_conn);
 
 	if(!m_storageEngine)
@@ -303,9 +318,9 @@ int Service::Run(int fd, const char* hostip, unsigned short nPort)
 	strsem += "_lock";
 	
 	mq_attr attr;
-    attr.mq_maxmsg = 8;
-    attr.mq_msgsize = 1448; 
-    attr.mq_flags = 0;
+	attr.mq_maxmsg = 8;
+	attr.mq_msgsize = 1448; 
+	attr.mq_flags = 0;
 
 	m_service_qid = (mqd_t)-1;
 	m_service_sid = SEM_FAILED;
@@ -507,6 +522,7 @@ int Service::Run(int fd, const char* hostip, unsigned short nPort)
 						session_arg->client_ip = client_ip;
 						session_arg->svr_type = m_st;
 						session_arg->cache = m_cache;
+						session_arg->memcached = m_memcached;
 						session_arg->storage_engine = m_storageEngine;
 
 						/*
@@ -620,9 +636,9 @@ int WatchDog::Run(int fd)
 	unsigned int result = 0;
     
 	mq_attr attr;
-    attr.mq_maxmsg = 8;
-    attr.mq_msgsize = 1448; 
-    attr.mq_flags = 0;
+	attr.mq_maxmsg = 8;
+	attr.mq_msgsize = 1448; 
+	attr.mq_flags = 0;
 
 	m_watchdog_qid = (mqd_t)-1;
 	m_watchdog_sid = SEM_FAILED;
@@ -647,9 +663,9 @@ int WatchDog::Run(int fd)
 		return -1;
 	}
 	
-    result = 0;
-    write(fd, &result, sizeof(unsigned int));
-    close(fd);
+	result = 0;
+	write(fd, &result, sizeof(unsigned int));
+	close(fd);
     
 	clear_queue(m_watchdog_qid);
 
@@ -665,7 +681,7 @@ int WatchDog::Run(int fd)
 		while(1)
 		{		
 			clock_gettime(CLOCK_REALTIME, &ts);
-            ts.tv_sec += 5;
+			ts.tv_sec += 5;
 			rc = mq_timedreceive(m_watchdog_qid, qBufPtr, qBufLen, 0, &ts);
 			if( rc != -1)
 			{

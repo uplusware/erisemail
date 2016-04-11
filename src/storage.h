@@ -4,6 +4,7 @@
 #include <mysql.h>
 #include <pthread.h>
 #include <vector>
+#include <map>
 #include <string>
 #include "util/general.h"
 using namespace std; 
@@ -323,6 +324,8 @@ protected:
     
     pthread_mutex_t m_thread_pool_mutex;
     
+    map<string, string> m_userpwd_cache;
+    int m_userpwd_cache_update_time;
 private:
     int mysql_thread_real_query(MYSQL *mysql, const char *stmt_str, unsigned long length)
     {

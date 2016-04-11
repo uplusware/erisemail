@@ -9,7 +9,7 @@
 #include "util/md5.h"
 #include "service.h"
 
-CMailPop::CMailPop(int sockfd, const char* clientip, StorageEngine* storage_engine, BOOL isSSL)
+CMailPop::CMailPop(int sockfd, const char* clientip, StorageEngine* storage_engine, memcached_st * memcached, BOOL isSSL)
 {		
 	m_status = STATUS_ORIGINAL;
 	m_sockfd = sockfd;
@@ -19,6 +19,7 @@ CMailPop::CMailPop(int sockfd, const char* clientip, StorageEngine* storage_engi
 	m_lssl = NULL;
 	
 	m_storageEngine = storage_engine;
+	m_memcached = memcached;
 	
 	m_ssl = NULL;
 	m_ssl_ctx = NULL;
@@ -266,7 +267,7 @@ void CMailPop::On_Apop_Handler(char* text)
 				string emlfile;
 				mailStg->GetMailIndex(m_mailTbl[x].mid, emlfile);
 							
-				Letter = new MailLetter(emlfile.c_str());
+				Letter = new MailLetter(m_memcached, emlfile.c_str());
 				m_lettersTotalSize += Letter->GetSize();
 				delete Letter;
 			}
@@ -318,7 +319,7 @@ void CMailPop::On_Stat_Handler(char* text)
 			string emlfile;
 			mailStg->GetMailIndex(m_mailTbl[x].mid, emlfile);
 
-			Letter = new MailLetter(emlfile.c_str());
+			Letter = new MailLetter(m_memcached, emlfile.c_str());
 			m_lettersTotalSize += Letter->GetSize();
 			delete Letter;
 		}
@@ -384,7 +385,7 @@ BOOL CMailPop::On_Supose_Checking_Handler()
 			string emlfile;
 			mailStg->GetMailIndex(m_mailTbl[x].mid, emlfile);
 			
-			Letter = new MailLetter(emlfile.c_str());
+			Letter = new MailLetter(m_memcached, emlfile.c_str());
 			m_lettersTotalSize += Letter->GetSize();
 			delete Letter;
 		}
@@ -434,7 +435,7 @@ void CMailPop::On_List_Handler(char* text)
 				string emlfile;
 				mailStg->GetMailIndex(m_mailTbl[i].mid, emlfile);
 			
-				Letter = new MailLetter(emlfile.c_str());
+				Letter = new MailLetter(m_memcached, emlfile.c_str());
 				sprintf(cmd, "%d %u\r\n", i + 1, Letter->GetSize());
 				delete Letter;
 				PopSend(cmd,strlen(cmd));
@@ -455,7 +456,7 @@ void CMailPop::On_List_Handler(char* text)
 				string emlfile;
 				mailStg->GetMailIndex(m_mailTbl[index - 1].mid, emlfile);
 			
-				Letter = new MailLetter(emlfile.c_str());
+				Letter = new MailLetter(m_memcached, emlfile.c_str());
 				sprintf(cmd,"+OK %d %u\r\n",index, Letter->GetSize());
 				delete Letter;
 			}
@@ -592,7 +593,7 @@ void CMailPop::On_Retr_Handler(char* text)
 			string emlfile;
 			mailStg->GetMailIndex(m_mailTbl[index - 1].mid, emlfile);
 				
-			Letter = new MailLetter(emlfile.c_str());
+			Letter = new MailLetter(m_memcached, emlfile.c_str());
 			if(Letter->GetSize() > 0)
 			{
 				sprintf(cmd,"+OK %u byte(s)\r\n",Letter->GetSize());
@@ -676,7 +677,7 @@ void CMailPop::On_Top_Handler(char* text)
 			string emlfile;
 			mailStg->GetMailIndex(m_mailTbl[index - 1].mid, emlfile);
 			
-			Letter = new MailLetter(emlfile.c_str());
+			Letter = new MailLetter(m_memcached, emlfile.c_str());
 			sprintf(cmd,"+OK %u byte(s)\r\n",Letter->GetSize());
 			
 			PopSend(cmd,strlen(cmd));

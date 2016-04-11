@@ -6,7 +6,7 @@
 #include <fcntl.h>
 #include "letter.h"
 
-MailLetter::MailLetter(const char* uid, unsigned long long maxsize)
+MailLetter::MailLetter(memcached_st * memcached, const char* uid, unsigned long long maxsize)
 {
 	m_maxsize = maxsize;
 	
@@ -17,6 +17,7 @@ MailLetter::MailLetter(const char* uid, unsigned long long maxsize)
 	
 	m_ofile = NULL;
 	m_body = NULL;
+    m_body_memtype = MMAPED;
 	m_size = 0;
 	m_real_size = 0;
 
@@ -25,11 +26,11 @@ MailLetter::MailLetter(const char* uid, unsigned long long maxsize)
 	m_emlmapfd = -1;
 	
 	m_uid = uid;
-	
-	m_letterSummary = new LetterSummary();
+	m_memcached = memcached;
+	m_letterSummary = new LetterSummary(m_memcached);
 }
 
-MailLetter::MailLetter(const char* emlfile)
+MailLetter::MailLetter(memcached_st * memcached, const char* emlfile)
 {	
 	m_att = laOut;
 	
@@ -39,6 +40,7 @@ MailLetter::MailLetter(const char* emlfile)
 	m_LetterOk = TRUE;
 	m_ofile = NULL;
 	m_body = NULL;
+    m_body_memtype = MMAPED;
 	m_real_size = 0;
 	
 	m_letterSummary = NULL;
@@ -46,31 +48,63 @@ MailLetter::MailLetter(const char* emlfile)
 	m_size = 0;
 
 	m_emlfile = emlfile;
+	m_memcached = memcached;
 	
 	m_tmpfile = CMailBase::m_private_path.c_str();
 	m_tmpfile += "/eml/";
 	m_tmpfile += m_emlfile;
 	
-	m_emlmapfd = open(m_tmpfile.c_str(), O_RDONLY);
-	
-	if(m_emlmapfd > 0)
-	{
-  		struct stat file_stat;
-  		fstat(m_emlmapfd, &file_stat);
-		m_size = file_stat.st_size;
-		
-		m_body = (char*)mmap(NULL, m_size, PROT_READ, MAP_SHARED , m_emlmapfd, 0);
-	}
-	else
-	{
-		printf("Unable to open %s\r\n", m_tmpfile.c_str());
-	}
+    memcached_return memc_rc;
+    size_t memc_value_length;
+    uint32_t memc_flags;
+    
+    char* mail_text = NULL;
+    if(m_memcached)
+        mail_text = memcached_get(m_memcached, m_tmpfile.c_str(), m_tmpfile.length(), &memc_value_length, &memc_flags, &memc_rc);
+    if (m_memcached && mail_text && memc_rc == MEMCACHED_SUCCESS)
+    {
+        
+        m_body = mail_text;
+        m_size = memc_value_length;
+        //printf("get: %s %d\n", m_tmpfile.c_str(), memc_value_length);
+        m_body_memtype = CACHED;
+    }
+    else
+    {
+        m_emlmapfd = open(m_tmpfile.c_str(), O_RDONLY);
+        
+        if(m_emlmapfd > 0)
+        {
+            struct stat file_stat;
+            fstat(m_emlmapfd, &file_stat);
+            m_size = file_stat.st_size;
+            
+            m_body = (char*)mmap(NULL, m_size, PROT_READ, MAP_SHARED , m_emlmapfd, 0);
+            m_body_memtype = MMAPED;
+            if(m_size < 4*1024*1024)
+            {
+                if(m_memcached)
+                {                   
+                    memc_rc = memcached_set(m_memcached, m_tmpfile.c_str(), m_tmpfile.length(), m_body, m_size, (time_t)0, (uint32_t)0);
+                    if(memc_rc == MEMCACHED_SUCCESS)
+                    {
+                        //printf("set: %s %d\n", m_tmpfile.c_str(), m_size);
+                    }
+                }
+                
+            }
+        }
+        else
+        {
+            printf("Unable to open %s\r\n", m_tmpfile.c_str());
+        }
+    }
 	string strSummaryPath = m_tmpfile;
 	strSummaryPath += POSTFIX_CACHE;
 		
 	if(access(strSummaryPath.c_str(), F_OK) != 0)
 	{
-		m_letterSummary = new LetterSummary();
+		m_letterSummary = new LetterSummary(m_memcached);
 		
 		int nParsed = 0;
 		while(1)
@@ -94,7 +128,7 @@ MailLetter::MailLetter(const char* emlfile)
 
 	m_ifilestream = NULL;
 	
-	m_letterSummary =  new LetterSummary(strSummaryPath.c_str());
+	m_letterSummary =  new LetterSummary(strSummaryPath.c_str(), m_memcached);
 }
 
 MailLetter::~MailLetter()
@@ -249,13 +283,16 @@ void MailLetter::Close()
 	if(m_emlmapfd > 0)
 	{
 		munmap(m_body, m_size);
+        m_body = NULL;
 		close(m_emlmapfd);
+        m_emlmapfd = -1;
 	}
 	
-	m_emlmapfd = -1;
-	
-	m_body = NULL;
-	
+	if(m_body_memtype == CACHED && m_body)
+    {
+        free(m_body);
+        m_body = NULL;
+    }
 	if(m_ofile)
 	{
 		if(m_ofile->is_open())
@@ -318,8 +355,9 @@ void MailLetter::get_attach_summary(MimeSummary* part, unsigned long& count, uns
 ////////////////////////////////////////////////////////////////////////////////////
 // LetterSummary
 
-LetterSummary::LetterSummary() : BlockSummary(0, NULL)
+LetterSummary::LetterSummary(memcached_st * memcached) : BlockSummary(0, NULL)
 {
+	m_memcached = memcached;
 	m_xml = NULL;
 	m_isheader = TRUE;
 	m_strfield = "";
@@ -335,12 +373,12 @@ LetterSummary::LetterSummary() : BlockSummary(0, NULL)
 	m_header = NULL;
 	m_data = NULL;
 	m_mime = NULL;
-	
 	m_pParentElement = m_xml->RootElement();
 }
 
-LetterSummary::LetterSummary(const char* szpath) 
+LetterSummary::LetterSummary(const char* szpath, memcached_st * memcached) 
 {
+	m_memcached = memcached;
 	m_isheader = TRUE;
 	m_xmlpath = szpath;
 	m_strfield = "";
@@ -352,7 +390,6 @@ LetterSummary::LetterSummary(const char* szpath)
 	
 	m_header = NULL;
 	m_data = NULL;
-	
 	m_xml = new TiXmlDocument();
 	
 	loadXML();
@@ -387,11 +424,9 @@ LetterSummary::~LetterSummary()
 				m_xml->SaveFile(m_xmlpath.c_str());
 		}
 	}
-
+	
 	if(m_xml)
 		delete m_xml;
-
-
 }
 
 void LetterSummary::setPath(const char* szpath)
@@ -495,9 +530,38 @@ void LetterSummary::fieldParse(const char* field)
 void LetterSummary::loadXML()
 {
 	if(m_mode != sRD && m_mode != sWR)
-		return;
+	  return;
 	
-	m_xml->LoadFile(m_xmlpath.c_str());
+	memcached_return memc_rc;
+	size_t memc_value_length;
+	uint32_t memc_flags;
+	
+	char* xml_text = NULL;
+    if(m_memcached)
+        xml_text = memcached_get(m_memcached, m_xmlpath.c_str(), m_xmlpath.length(), &memc_value_length, &memc_flags, &memc_rc);
+	if (m_memcached && xml_text && memc_rc == MEMCACHED_SUCCESS)
+	{
+        //printf("get: %s %d\n", m_xmlpath.c_str(), memc_value_length);
+		m_xml->Parse(xml_text);
+		if(xml_text)
+		    free(xml_text);
+	}
+	else
+	{
+		m_xml->LoadFile(m_xmlpath.c_str());
+		if(m_memcached)
+        {
+            TiXmlPrinter xml_printer;
+            m_xml->Accept( &xml_printer );
+            
+            memc_rc = memcached_set(m_memcached, m_xmlpath.c_str(), m_xmlpath.length(), xml_printer.CStr(), xml_printer.Size(), (time_t)0, (uint32_t)0);
+            if(memc_rc == MEMCACHED_SUCCESS)
+            {
+                //printf("set: %s %d\n", m_xmlpath.c_str(), xml_printer.Size());
+            }
+        }
+  
+	}
 	if(m_xml && m_xml->RootElement())
 	{
 		TiXmlNode * pLetterHeaderNode = m_xml->RootElement()->FirstChild("letterHeader");

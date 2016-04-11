@@ -10,6 +10,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+#include <libmemcached/memcached.h>
 #include "util/general.h"
 #include "base.h"
 #include "storage.h"
@@ -34,6 +35,7 @@ private:
 	string m_spool_name;
 	
 	StorageEngine* m_storageEngine;
+	memcached_st * m_memcached;
 };
 
 #endif /* _SPOOL_H_ */

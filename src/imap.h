@@ -1,5 +1,7 @@
 #ifndef _IMAP_H_
 #define _IMAP_H_
+#include <libmemcached/memcached.h>
+
 #include "base.h"
 #include "util/general.h"
 #include "storage.h"
@@ -32,7 +34,7 @@ typedef struct
 class CMailImap : public CMailBase
 {
 public:
-	CMailImap(int sockfd, const char* clientip, StorageEngine* storage_engine, BOOL isSSL = FALSE);
+	CMailImap(int sockfd, const char* clientip, StorageEngine* storage_engine, memcached_st * memcached, BOOL isSSL = FALSE);
 	virtual ~CMailImap();
 
 	virtual BOOL Parse(char* text);
@@ -108,6 +110,7 @@ protected:
 	void ParseSearch(const char* text, vector<Search_Item>& vDst);
 
 	StorageEngine* m_storageEngine;
+	memcached_st * m_memcached;
 };
 
 #endif /* _IMAP_H_ */
