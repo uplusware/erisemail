@@ -139,7 +139,7 @@ Parameter:
 Return:
 	None
 */
-void mfilter_data(void * filter, const char* from, unsigned int len)
+void mfilter_data(void * filter, const char* buffer, unsigned int len)
 {
 	
 }
