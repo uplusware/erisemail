@@ -50,7 +50,7 @@ extern "C"
 
 	void mfilter_rcptto(void * filter, const char* to, unsigned int len);
 
-	void mfilter_data(void * filter, const char* from, unsigned int len);
+	void mfilter_data(void * filter, const char* buffer, unsigned int len);
 
 	void mfilter_result(void * filter, int* isjunk);
 
