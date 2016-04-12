@@ -1,5 +1,5 @@
 # erisemail
-### Free e-mail server which supports Linux/Solaris
+### Free e-mail server for Linux
 
 * C++ program
 * Support SMTP, POP3, IMAP4, SSL/TLS, Web mail and Web management
