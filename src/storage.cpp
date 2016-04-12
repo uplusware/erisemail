@@ -118,7 +118,7 @@ int MailStorage::Ping()
 
 void MailStorage::KeepLive()
 {
-	if(Ping() == -1)
+	if(Ping() != 0)
 	{
 		Close();
 		Connect(m_host.c_str(), m_username.c_str(), m_password.c_str(), m_database.c_str());
