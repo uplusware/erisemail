@@ -17,11 +17,15 @@
 #define MAX_APPLICATION_X_WWW_FORM_URLENCODED_LEN (1024*512)
 #define MAX_MULTIPART_FORM_DATA_LEN (1024*1024*4)
 
-CHttp::CHttp(int sockfd, const char* clientip, StorageEngine* storage_engine, memory_cache* ch, memcached_st * memcached, BOOL isSSL)
+CHttp::CHttp(int sockfd, SSL * ssl, SSL_CTX * ssl_ctx, const char* clientip,
+    StorageEngine* storage_engine, memory_cache* ch, memcached_st * memcached, BOOL isSSL)
 {
 	m_cache = ch;
 
 	m_sockfd = sockfd;
+    m_ssl = ssl;
+    m_ssl_ctx = ssl_ctx;
+
 	m_clientip = clientip;
 
 	m_lsockfd = NULL;
@@ -31,9 +35,6 @@ CHttp::CHttp(int sockfd, const char* clientip, StorageEngine* storage_engine, me
 	m_memcached = memcached;
 	
 	m_content_length = 0;
-	
-	m_ssl = NULL;
-	m_ssl_ctx = NULL;
 
 	m_data_ex = NULL;
 	m_formdata = NULL;
@@ -41,71 +42,8 @@ CHttp::CHttp(int sockfd, const char* clientip, StorageEngine* storage_engine, me
 	m_data = "";
 	m_http_method = hmUser;
 
-	if(isSSL)
+	if(m_isSSL && m_ssl)
 	{	
-		X509* client_cert;
-		SSL_METHOD* meth;
-		SSL_load_error_strings();
-		OpenSSL_add_ssl_algorithms();
-		meth = (SSL_METHOD*)SSLv3_server_method();
-		m_ssl_ctx = SSL_CTX_new(meth);
-		if(!m_ssl_ctx)
-		{
-			printf("SSL_CTX_use_certificate_file: %s\n", ERR_error_string(ERR_get_error(),NULL));
-			goto clean_ssl;
-		}
-
-		SSL_CTX_set_verify(m_ssl_ctx, SSL_VERIFY_PEER, NULL);
-		
-		SSL_CTX_load_verify_locations(m_ssl_ctx, m_ca_crt_root.c_str(), NULL);
-		if(SSL_CTX_use_certificate_file(m_ssl_ctx, m_ca_crt_server.c_str(), SSL_FILETYPE_PEM) <= 0)
-		{
-			printf("SSL_CTX_use_certificate_file: %s\n", ERR_error_string(ERR_get_error(),NULL));
-			goto clean_ssl;
-		}
-		SSL_CTX_set_default_passwd_cb_userdata(m_ssl_ctx, (char*)m_ca_password.c_str());
-		if(SSL_CTX_use_PrivateKey_file(m_ssl_ctx, m_ca_key_server.c_str(), SSL_FILETYPE_PEM) <= 0)
-		{
-			printf("SSL_CTX_use_certificate_file: %s\n", ERR_error_string(ERR_get_error(),NULL));
-			goto clean_ssl;
-
-		}
-		if(!SSL_CTX_check_private_key(m_ssl_ctx))
-		{
-			printf("SSL_CTX_use_certificate_file: %s\n", ERR_error_string(ERR_get_error(),NULL));
-			goto clean_ssl;
-		}
-		
-		SSL_CTX_set_cipher_list(m_ssl_ctx, "RC4-MD5");
-		SSL_CTX_set_mode(m_ssl_ctx, SSL_MODE_AUTO_RETRY);
-
-		m_ssl = SSL_new(m_ssl_ctx);
-		if(!m_ssl)
-		{
-			printf("SSL_new: %s\n", ERR_error_string(ERR_get_error(),NULL));
-			goto clean_ssl;
-		}
-		SSL_set_fd(m_ssl, m_sockfd);
-		if(SSL_accept(m_ssl) == -1)
-		{
-			printf("SSL_accept: %s\n", ERR_error_string(ERR_get_error(),NULL));
-			goto clean_ssl;
-		}
-		if(m_enableclientcacheck)
-		{
-			X509* client_cert;
-			client_cert = SSL_get_peer_certificate(m_ssl);
-			if (client_cert != NULL)
-			{
-				X509_free (client_cert);
-			}
-			else
-			{
-				printf("SSL_get_peer_certificate: %s\n", ERR_error_string(ERR_get_error(),NULL));
-				goto clean_ssl;
-			}
-		}
-
 		int flags = fcntl(m_sockfd, F_GETFL, 0); 
 		fcntl(m_sockfd, F_SETFL, flags | O_NONBLOCK); 
 		
@@ -124,35 +62,10 @@ CHttp::CHttp(int sockfd, const char* clientip, StorageEngine* storage_engine, me
 	m_content_type = application_x_www_form_urlencoded;
 
 	return;	//DON'T Delete it
-
-clean_ssl:
-	if(m_ssl)
-		SSL_shutdown(m_ssl);
-	if(m_ssl)
-		SSL_free(m_ssl);
-	if(m_ssl_ctx)
-		SSL_CTX_free(m_ssl_ctx);
-	throw new string(ERR_error_string(ERR_get_error(), NULL));
 }
 
 CHttp::~CHttp()
 {
-	if(m_ssl)
-		SSL_shutdown(m_ssl);
-	if(m_ssl)
-		SSL_free(m_ssl);
-	if(m_ssl_ctx)
-		SSL_CTX_free(m_ssl_ctx);
-
-	m_ssl = NULL;
-	m_ssl_ctx = NULL;
-
-	if(m_sockfd > 0)
-	{
-		close(m_sockfd);
-		m_sockfd = -1;
-	}
-
 	if(m_data_ex)
 		delete m_data_ex;
 
@@ -169,37 +82,26 @@ CHttp::~CHttp()
 
 int CHttp::HttpSend(const char* buf, int len)
 {
-	if(m_isSSL)
-		if(m_ssl)
-			return SSLWrite(m_sockfd, m_ssl, buf, len);
-		else
-			return -1;
+	if(m_ssl)
+		return SSLWrite(m_sockfd, m_ssl, buf, len);
 	else
-		return Send( m_sockfd, buf, len);
+		return Send( m_sockfd, buf, len);	
 }
 
 int CHttp::HttpRecv(char* buf, int len)
 {
-	if(m_isSSL)
-		if(m_ssl)
-			return m_lssl->drecv(buf, len);
-		else
-			return -1;
-	else
-		return m_lsockfd->drecv(buf, len);
+    if(m_ssl)
+	    return m_lssl->drecv(buf, len);
+    else
+	    return m_lsockfd->drecv(buf, len);	
 }
 
 int CHttp::ProtRecv(char* buf, int len)
 {
-	if(m_isSSL)
-		if(m_ssl)
-			return m_lssl->lrecv(buf, len);//SSLReadOneLine(m_ssl, buf, len);
-		else
-			return -1;
+	if(m_ssl)
+		return m_lssl->lrecv(buf, len);
 	else
-	{
 		return m_lsockfd->lrecv(buf, len);
-	}
 }
 
 BOOL CHttp::Parse(char* text)
@@ -335,6 +237,16 @@ BOOL CHttp::Parse(char* text)
 		m_http_method = hmWrapped;
 
 		strcut(strtext.c_str(), "WRAPPED /", " ", m_pagename);
+		strcut(m_pagename.c_str(), NULL, "?", m_pagename);
+
+		strcut(strtext.c_str(), "?", " ", m_data);
+		m_data +="&";
+	}
+    else if(strncasecmp(strtext.c_str(), "CONNECT ", 8) == 0)
+	{
+		m_http_method = hmConnect;
+
+		strcut(strtext.c_str(), "CONNECT /", " ", m_pagename);
 		strcut(m_pagename.c_str(), NULL, "?", m_pagename);
 
 		strcut(strtext.c_str(), "?", " ", m_data);
@@ -549,7 +461,8 @@ int CHttp::parse_multipart_value(const char* szKey, fbufseg & seg)
 		for(int x = 0; x < m_formdata->m_paramters.size(); x++)
 		{
 			char* szHeader = (char*)malloc(m_formdata->m_paramters[x].m_header.m_byte_end - m_formdata->m_paramters[x].m_header.m_byte_beg + 2);
-			memcpy(szHeader, m_formdata->c_buffer() + m_formdata->m_paramters[x].m_header.m_byte_beg, m_formdata->m_paramters[x].m_header.m_byte_end - m_formdata->m_paramters[x].m_header.m_byte_beg + 1);
+			memcpy(szHeader, m_formdata->c_buffer() + m_formdata->m_paramters[x].m_header.m_byte_beg, 
+                m_formdata->m_paramters[x].m_header.m_byte_end - m_formdata->m_paramters[x].m_header.m_byte_beg + 1);
 			szHeader[m_formdata->m_paramters[x].m_header.m_byte_end - m_formdata->m_paramters[x].m_header.m_byte_beg + 1] = '\0';
 			string name;
 			fnfy_strcut(szHeader, " name=", " \t\r\n\"", "\r\n\";", name);
@@ -583,7 +496,8 @@ int CHttp::parse_multipart_filename(const char* szKey, string& filename)
 		for(int x = 0; x < m_formdata->m_paramters.size(); x++)
 		{			
 			char* szHeader = (char*)malloc(m_formdata->m_paramters[x].m_header.m_byte_end - m_formdata->m_paramters[x].m_header.m_byte_beg + 2);
-			memcpy(szHeader, m_formdata->c_buffer() + m_formdata->m_paramters[x].m_header.m_byte_beg, m_formdata->m_paramters[x].m_header.m_byte_end - m_formdata->m_paramters[x].m_header.m_byte_beg + 1);
+			memcpy(szHeader, m_formdata->c_buffer() + m_formdata->m_paramters[x].m_header.m_byte_beg,
+                m_formdata->m_paramters[x].m_header.m_byte_end - m_formdata->m_paramters[x].m_header.m_byte_beg + 1);
 			szHeader[m_formdata->m_paramters[x].m_header.m_byte_end - m_formdata->m_paramters[x].m_header.m_byte_beg + 1] = '\0';
 			string name;
 			fnfy_strcut(szHeader, " name=", " \t\r\n\"", "\r\n\";", name);
@@ -616,7 +530,8 @@ int CHttp::parse_multipart_type(const char* szKey, string & type)
 		{
 			
 			char* szHeader = (char*)malloc(m_formdata->m_paramters[x].m_header.m_byte_end - m_formdata->m_paramters[x].m_header.m_byte_beg + 2);
-			memcpy(szHeader, m_formdata->c_buffer() + m_formdata->m_paramters[x].m_header.m_byte_beg, m_formdata->m_paramters[x].m_header.m_byte_end - m_formdata->m_paramters[x].m_header.m_byte_beg + 1);
+			memcpy(szHeader, m_formdata->c_buffer() + m_formdata->m_paramters[x].m_header.m_byte_beg,
+                m_formdata->m_paramters[x].m_header.m_byte_end - m_formdata->m_paramters[x].m_header.m_byte_beg + 1);
 			szHeader[m_formdata->m_paramters[x].m_header.m_byte_end - m_formdata->m_paramters[x].m_header.m_byte_beg + 1] = '\0';
 			
 			string name;

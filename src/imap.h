@@ -34,7 +34,8 @@ typedef struct
 class CMailImap : public CMailBase
 {
 public:
-	CMailImap(int sockfd, const char* clientip, StorageEngine* storage_engine, memcached_st * memcached, BOOL isSSL = FALSE);
+	CMailImap(int sockfd, SSL * ssl, SSL_CTX * ssl_ctx, const char* clientip,
+        StorageEngine* storage_engine, memcached_st * memcached, BOOL isSSL = FALSE);
 	virtual ~CMailImap();
 
 	virtual BOOL Parse(char* text);
@@ -84,6 +85,7 @@ public:
 protected:
 	vector<Mail_Info> m_maillisttbl;
 	BOOL m_isSSL;
+    BOOL m_bSTARTTLS;
 	SSL* m_ssl;
 	SSL_CTX* m_ssl_ctx;
 	

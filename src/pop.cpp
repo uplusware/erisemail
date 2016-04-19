@@ -9,11 +9,14 @@
 #include "util/md5.h"
 #include "service.h"
 
-CMailPop::CMailPop(int sockfd, const char* clientip, StorageEngine* storage_engine, memcached_st * memcached, BOOL isSSL)
+CMailPop::CMailPop(int sockfd, SSL * ssl, SSL_CTX * ssl_ctx, const char* clientip,
+    StorageEngine* storage_engine, memcached_st * memcached, BOOL isSSL)
 {		
 	m_status = STATUS_ORIGINAL;
 	m_sockfd = sockfd;
 	m_clientip = clientip;
+
+    m_bSTARTTLS = FALSE;
 
 	m_lsockfd = NULL;
 	m_lssl = NULL;
@@ -21,85 +24,12 @@ CMailPop::CMailPop(int sockfd, const char* clientip, StorageEngine* storage_engi
 	m_storageEngine = storage_engine;
 	m_memcached = memcached;
 	
-	m_ssl = NULL;
-	m_ssl_ctx = NULL;
+    m_ssl = ssl;
+    m_ssl_ctx = ssl_ctx;
 
 	m_isSSL = isSSL;
-	if(isSSL)
+	if(m_isSSL && m_ssl)
 	{	
-		SSL_METHOD* meth;
-		SSL_load_error_strings();
-		OpenSSL_add_ssl_algorithms();
-		meth = (SSL_METHOD*)SSLv23_server_method();
-		m_ssl_ctx = SSL_CTX_new(meth);
-		if(!m_ssl_ctx)
-			return;
-		SSL_CTX_set_verify(m_ssl_ctx, SSL_VERIFY_PEER, NULL);
-		
-		SSL_CTX_load_verify_locations(m_ssl_ctx, m_ca_crt_root.c_str(), NULL);
-		if(SSL_CTX_use_certificate_file(m_ssl_ctx, m_ca_crt_server.c_str(), SSL_FILETYPE_PEM) <= 0)
-		{
-			printf("SSL_CTX_use_certificate_file: %s\n", ERR_error_string(ERR_get_error(),NULL));
-			throw new string(ERR_error_string(ERR_get_error(), NULL));
-			return;
-		}
-		//m_ssl_ctx->default_passwd_callback_userdata = (char*)m_ca_password.c_str();
-		SSL_CTX_set_default_passwd_cb_userdata(m_ssl_ctx, (char*)m_ca_password.c_str());
-
-		if(SSL_CTX_use_PrivateKey_file(m_ssl_ctx, m_ca_key_server.c_str(), SSL_FILETYPE_PEM) <= 0)
-		{
-			printf("SSL_CTX_use_PrivateKey_file: %s\n", ERR_error_string(ERR_get_error(),NULL));
-			throw new string(ERR_error_string(ERR_get_error(), NULL));
-			return;
-		}
-		if(!SSL_CTX_check_private_key(m_ssl_ctx))
-		{
-			printf("SSL_CTX_check_private_key: %s\n", ERR_error_string(ERR_get_error(),NULL));
-			throw new string(ERR_error_string(ERR_get_error(), NULL));
-			return;
-		}
-		SSL_CTX_set_cipher_list(m_ssl_ctx,"RC4-MD5");
-		SSL_CTX_set_mode(m_ssl_ctx, SSL_MODE_AUTO_RETRY);
-
-		m_ssl = SSL_new(m_ssl_ctx);
-		if(!m_ssl)
-		{
-			printf("m_ssl invaild\n");
-			return;
-		}
-		SSL_set_fd(m_ssl, m_sockfd);
-		int err = SSL_accept(m_ssl);
-		if(err == -1)
-		{
-			printf("SSL_accept: %s\n", ERR_error_string(ERR_get_error(),NULL));
-			throw new string(ERR_error_string(ERR_get_error(), NULL));
-			return;
-		}
-
-		if(m_enableclientcacheck)
-		{
-			X509* client_cert;
-			client_cert = SSL_get_peer_certificate (m_ssl);
-			if (client_cert != NULL)
-			{
-				X509_free (client_cert);
-			}
-			else
-			{
-				printf("SSL_get_peer_certificate: %s\n", ERR_error_string(ERR_get_error(),NULL));
-				if(m_ssl)
-					SSL_shutdown(m_ssl);
-				if(m_ssl)
-					SSL_free(m_ssl);
-				if(m_ssl_ctx)
-					SSL_CTX_free(m_ssl_ctx);
-				m_ssl = NULL;
-				m_ssl_ctx = NULL;
-				throw new string(ERR_error_string(ERR_get_error(), NULL));
-				return;
-			}
-		}
-
 		int flags = fcntl(m_sockfd, F_GETFL, 0); 
 		fcntl(m_sockfd, F_SETFL, flags | O_NONBLOCK); 
 
@@ -119,22 +49,8 @@ CMailPop::CMailPop(int sockfd, const char* clientip, StorageEngine* storage_engi
 CMailPop::~CMailPop()
 {
 	
-	if(m_ssl)
-		SSL_shutdown(m_ssl);
-	if(m_ssl)
-		SSL_free(m_ssl);
-	if(m_ssl_ctx)
-		SSL_CTX_free(m_ssl_ctx);
-
-	m_ssl = NULL;
-	m_ssl_ctx = NULL;
-
-	if(m_sockfd > 0)
-	{
-		m_sockfd = -1;
-		close(m_sockfd);
-	}
-	
+    if(m_bSTARTTLS)
+	    close_ssl(m_ssl, m_ssl_ctx);
 	if(m_lsockfd)
 		delete m_lsockfd;
 
@@ -147,26 +63,18 @@ CMailPop::~CMailPop()
 int CMailPop::PopSend(const char* buf, int len)
 {
 	//printf("%s", buf);
-	if(m_isSSL)
 		if(m_ssl)
 			return SSLWrite(m_sockfd, m_ssl, buf, len);
 		else
-			return -1;
-	else
-		return Send(m_sockfd, buf, len);
+			return Send(m_sockfd, buf, len);	
 }
 
 int CMailPop::ProtRecv(char* buf, int len)
 {
-	if(m_isSSL)
 		if(m_ssl)
 			return m_lssl->lrecv(buf, len);
 		else
-			return -1;
-	else
-	{
-		return m_lsockfd->lrecv(buf, len);
-	}
+			return m_lsockfd->lrecv(buf, len);
 }
 
 void CMailPop::On_Service_Ready_Handler()
@@ -643,8 +551,7 @@ void CMailPop::On_Retr_Handler(char* text)
 }
 
 void CMailPop::On_Top_Handler(char* text)
-{
-	
+{	
 	if((m_status&STATUS_AUTHED) == STATUS_AUTHED)
 	{
 		MailStorage* mailStg;
@@ -738,7 +645,7 @@ void CMailPop::On_STLS_Handler()
 		PopSend(cmd,strlen(cmd));
 		return;
 	}
-	if(m_isSSL == TRUE)
+	if(m_bSTARTTLS == TRUE)
 	{
 		sprintf(cmd,"-ERR Command not permitted when TLS active\r\n");
 		PopSend(cmd,strlen(cmd));
@@ -749,145 +656,27 @@ void CMailPop::On_STLS_Handler()
 		sprintf(cmd,"+OK Begin TLS negotiation\r\n");
 		PopSend(cmd,strlen(cmd));
 	}
+
+    m_bSTARTTLS = TRUE;
+
+	int flags = fcntl(m_sockfd, F_GETFL, 0); 
+	fcntl(m_sockfd, F_SETFL, flags & (~O_NONBLOCK)); 
 	
-	m_isSSL = TRUE;
-	if(m_isSSL)
-	{	
-		int flags = fcntl(m_sockfd, F_GETFL, 0); 
-		fcntl(m_sockfd, F_SETFL, flags & (~O_NONBLOCK)); 
-		
-		SSL_METHOD* meth;
-		SSL_load_error_strings();
-		OpenSSL_add_ssl_algorithms();
-		meth = (SSL_METHOD*)TLSv1_server_method();
-		m_ssl_ctx = SSL_CTX_new(meth);
-		if(!m_ssl_ctx)
-		{
-			m_isSSL = FALSE;
-			return;
-		}
-		SSL_CTX_set_verify(m_ssl_ctx, SSL_VERIFY_PEER, NULL);
-		
-		SSL_CTX_load_verify_locations(m_ssl_ctx, m_ca_crt_root.c_str(), NULL);
-		if(SSL_CTX_use_certificate_file(m_ssl_ctx, m_ca_crt_server.c_str(), SSL_FILETYPE_PEM) <= 0)
-		{
-			printf("SSL_CTX_use_certificate_file: %s\n", ERR_error_string(ERR_get_error(),NULL));
-			
-			m_isSSL = FALSE;
-			if(m_ssl)
-				SSL_shutdown(m_ssl);
-			if(m_ssl)
-				SSL_free(m_ssl);
-			if(m_ssl_ctx)
-				SSL_CTX_free(m_ssl_ctx);
-			m_ssl = NULL;
-			m_ssl_ctx = NULL;
-			return;
-		}
-		//m_ssl_ctx->default_passwd_callback_userdata = (char*)m_ca_password.c_str();
-		SSL_CTX_set_default_passwd_cb_userdata(m_ssl_ctx, (char*)m_ca_password.c_str());
+	if(!create_ssl(m_sockfd, 
+        m_ca_crt_root.c_str(),
+        m_ca_crt_server.c_str(),
+        m_ca_password.c_str(),
+        m_ca_key_server.c_str(),
+        m_enableclientcacheck,
+        &m_ssl, &m_ssl_ctx))
+    {
+        throw new string(ERR_error_string(ERR_get_error(), NULL));
+        return;
+    }
 
-		if(SSL_CTX_use_PrivateKey_file(m_ssl_ctx, m_ca_key_server.c_str(), SSL_FILETYPE_PEM) <= 0)
-		{
-			printf("SSL_CTX_use_PrivateKey_file: %s\n", ERR_error_string(ERR_get_error(),NULL));
-			m_isSSL = FALSE;
-			if(m_ssl)
-					SSL_shutdown(m_ssl);
-			if(m_ssl)
-				SSL_free(m_ssl);
-			if(m_ssl_ctx)
-				SSL_CTX_free(m_ssl_ctx);
-			m_ssl = NULL;
-			m_ssl_ctx = NULL;
-			return;
-		}
-		if(!SSL_CTX_check_private_key(m_ssl_ctx))
-		{
-			printf("SSL_CTX_check_private_key: %s\n", ERR_error_string(ERR_get_error(),NULL));
-			m_isSSL = FALSE;
-			if(m_ssl)
-				SSL_shutdown(m_ssl);
-			if(m_ssl)
-				SSL_free(m_ssl);
-			if(m_ssl_ctx)
-				SSL_CTX_free(m_ssl_ctx);
-			m_ssl = NULL;
-			m_ssl_ctx = NULL;
-			return;
-		}
-		SSL_CTX_set_cipher_list(m_ssl_ctx,"RC4-MD5");
-		SSL_CTX_set_mode(m_ssl_ctx, SSL_MODE_AUTO_RETRY);
-
-		m_ssl = SSL_new(m_ssl_ctx);
-		if(!m_ssl)
-		{
-			printf("m_ssl invaild\n");
-			m_isSSL = FALSE;
-			if(m_ssl)
-				SSL_shutdown(m_ssl);
-			if(m_ssl)
-				SSL_free(m_ssl);
-			if(m_ssl_ctx)
-				SSL_CTX_free(m_ssl_ctx);
-			m_ssl = NULL;
-			m_ssl_ctx = NULL;
-			return;
-		}
-		if(SSL_set_fd(m_ssl, m_sockfd) <= 0)
-		{
-			printf("SSL_set_fd: %s\n", ERR_error_string(ERR_get_error(),NULL));
-			m_isSSL = FALSE;
-			if(m_ssl)
-				SSL_shutdown(m_ssl);
-			if(m_ssl)
-				SSL_free(m_ssl);
-			if(m_ssl_ctx)
-				SSL_CTX_free(m_ssl_ctx);
-			m_ssl = NULL;
-			m_ssl_ctx = NULL;
-			return;
-		}
-		
-		if(SSL_accept(m_ssl) <= 0)
-		{
-			printf("SSL_accept: %s\n", ERR_error_string(ERR_get_error(),NULL));
-			m_isSSL = FALSE;
-			if(m_ssl)
-				SSL_shutdown(m_ssl);
-			if(m_ssl)
-				SSL_free(m_ssl);
-			if(m_ssl_ctx)
-				SSL_CTX_free(m_ssl_ctx);
-			m_ssl = NULL;
-			m_ssl_ctx = NULL;
-			return;
-		}
-		if(m_enableclientcacheck)
-		{
-			X509* client_cert;
-			client_cert = SSL_get_peer_certificate (m_ssl);
-			if (client_cert != NULL)
-			{
-				X509_free (client_cert);
-			}
-			else
-			{
-				printf("SSL_get_peer_certificate: %s\n", ERR_error_string(ERR_get_error(),NULL));
-				if(m_ssl)
-					SSL_shutdown(m_ssl);
-				if(m_ssl)
-					SSL_free(m_ssl);
-				if(m_ssl_ctx)
-					SSL_CTX_free(m_ssl_ctx);
-				m_ssl = NULL;
-				m_ssl_ctx = NULL;
-				return;
-			}
-		}
-		flags = fcntl(m_sockfd, F_GETFL, 0); 
-		fcntl(m_sockfd, F_SETFL, flags | O_NONBLOCK); 
-		m_lssl = new linessl(m_sockfd, m_ssl);
-	}
+	flags = fcntl(m_sockfd, F_GETFL, 0); 
+	fcntl(m_sockfd, F_SETFL, flags | O_NONBLOCK); 
+	m_lssl = new linessl(m_sockfd, m_ssl);
 }
 
 BOOL CMailPop::Parse(char* text)

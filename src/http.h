@@ -28,6 +28,7 @@ typedef enum
 	hmLink,
 	hmUnlink,
 	hmWrapped,
+    hmConnect,
 	hmUser
 }Http_Method;
 
@@ -135,7 +136,8 @@ public:
 class CHttp : public CMailBase
 {
 public:
-	CHttp(int sockfd, const char* clientip, StorageEngine* storage_engine, memory_cache* ch, memcached_st * memcached, BOOL isSSL = FALSE);
+	CHttp(int sockfd, SSL * ssl, SSL_CTX * ssl_ctx, const char* clientip,
+        StorageEngine* storage_engine, memory_cache* ch, memcached_st * memcached, BOOL isSSL = FALSE);
 	virtual ~CHttp();
 
 	virtual BOOL Parse(char* text);

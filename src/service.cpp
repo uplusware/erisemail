@@ -22,6 +22,8 @@ typedef struct _session_arg_
 	int sockfd;
 	string client_ip;
 	Service_Type svr_type;
+    SSL * ssl;
+    SSL_CTX * ssl_ctx;
 	memory_cache* cache;
 	StorageEngine* storage_engine;
 	memcached_st * memcached;
@@ -37,13 +39,15 @@ static volatile unsigned int s_thread_pool_size = 0;
 static void session_handler(Session_Arg* session_arg)
 {
 	Session* pSession = NULL;
-	pSession = new Session(session_arg->sockfd, session_arg->client_ip.c_str(), session_arg->svr_type, session_arg->storage_engine, session_arg->cache, session_arg->memcached);
+	pSession = new Session(session_arg->sockfd, session_arg->ssl, session_arg->ssl_ctx, session_arg->client_ip.c_str(), session_arg->svr_type,
+        session_arg->storage_engine, session_arg->cache, session_arg->memcached);
 	if(pSession != NULL)
 	{
 		pSession->Process();
 
 		delete pSession;
 	}
+    close_ssl(session_arg->ssl, session_arg->ssl_ctx);
 	close(session_arg->sockfd);
 }
 
@@ -300,7 +304,8 @@ int Service::Run(int fd, const char* hostip, unsigned short nPort)
 		//printf("memcached: %s %d %d\n", (*iter).first.c_str(), (*iter).second, rc);
 	}
 	
-	m_storageEngine = new StorageEngine(CMailBase::m_db_host.c_str(), CMailBase::m_db_username.c_str(), CMailBase::m_db_password.c_str(), CMailBase::m_db_name.c_str(), CMailBase::m_db_max_conn);
+	m_storageEngine = new StorageEngine(CMailBase::m_db_host.c_str(), 
+        CMailBase::m_db_username.c_str(), CMailBase::m_db_password.c_str(), CMailBase::m_db_name.c_str(), CMailBase::m_db_max_conn);
 
 	if(!m_storageEngine)
 	{
@@ -489,7 +494,8 @@ int Service::Run(int fd, const char* hostip, unsigned short nPort)
 						
 						for(int x = 0; x < CMailBase::m_reject_list.size(); x++)
 						{
-							if( (strlike(CMailBase::m_reject_list[x].ip.c_str(), (char*)client_ip.c_str()) == TRUE) && (time(NULL) < CMailBase::m_reject_list[x].expire) )
+							if( (strlike(CMailBase::m_reject_list[x].ip.c_str(), (char*)client_ip.c_str()) == TRUE) 
+                               && (time(NULL) < CMailBase::m_reject_list[x].expire) )
 							{
 								access_result = FALSE;
 								break;
@@ -501,7 +507,8 @@ int Service::Run(int fd, const char* hostip, unsigned short nPort)
 						access_result = TRUE;
 						for(int x = 0; x < CMailBase::m_reject_list.size(); x++)
 						{
-							if( (strlike(CMailBase::m_reject_list[x].ip.c_str(), (char*)client_ip.c_str()) == TRUE) && (time(NULL) < CMailBase::m_reject_list[x].expire) )
+							if( (strlike(CMailBase::m_reject_list[x].ip.c_str(), (char*)client_ip.c_str()) == TRUE)
+                                && (time(NULL) < CMailBase::m_reject_list[x].expire) )
 							{
 								access_result = FALSE;
 								break;
@@ -524,22 +531,25 @@ int Service::Run(int fd, const char* hostip, unsigned short nPort)
 						session_arg->cache = m_cache;
 						session_arg->memcached = m_memcached;
 						session_arg->storage_engine = m_storageEngine;
-
-						/*
-						pthread_attr_t attr;
-						pthread_attr_init(&attr);
-						pthread_attr_setdetachstate (&attr, PTHREAD_CREATE_DETACHED);
-						pthread_t new_session_pth_id;
-						
-						if( pthread_create(&new_session_pth_id, &attr, new_session_handler, (void*)session_arg) != 0 )
-						{
-							close(clt_sockfd);
-							delete session_arg;
-						}
-
-						pthread_attr_destroy (&attr);
-						*/
-
+                        SSL* ssl = NULL;
+                        SSL_CTX* ssl_ctx = NULL;
+                        if(m_st == stSMTPS || m_st == stPOP3S
+                            || m_st == stIMAPS || m_st == stHTTPS)
+                        {
+                            if(!create_ssl(clt_sockfd, 
+                                CMailBase::m_ca_crt_root.c_str(),
+                                CMailBase::m_ca_crt_server.c_str(),
+                                CMailBase::m_ca_password.c_str(),
+                                CMailBase::m_ca_key_server.c_str(),
+                                CMailBase::m_enableclientcacheck,
+                                &ssl, &ssl_ctx))
+                                {
+                                    continue;
+                                }
+                        }
+                        session_arg->ssl = ssl;
+                        session_arg->ssl_ctx = ssl_ctx;
+                        
 						pthread_mutex_lock(&s_thread_pool_mutex);
 						s_thread_pool_arg_queue.push(session_arg);
 						pthread_mutex_unlock(&s_thread_pool_mutex);

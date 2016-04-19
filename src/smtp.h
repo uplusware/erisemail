@@ -48,7 +48,8 @@ typedef enum
 class CMailSmtp : public CMailBase
 {
 public:
-	CMailSmtp(int socket, const char* clientip, StorageEngine* storage_engine, memcached_st * memcached, BOOL isSSL = FALSE);
+	CMailSmtp(int socket, SSL * ssl, SSL_CTX * ssl_ctx, const char* clientip,
+        StorageEngine* storage_engine, memcached_st * memcached, BOOL isSSL = FALSE);
 	virtual ~CMailSmtp();
 	virtual BOOL Parse(char* text);
 	virtual int ProtRecv(char* buf, int len);
@@ -101,6 +102,7 @@ public:
 private:
 	vector<FilterHandle> m_filterHandle;
 	BOOL m_isSSL;
+    BOOL m_bSTARTTLS;
 	SSL* m_ssl;
 	SSL_CTX* m_ssl_ctx;
 	

@@ -32,11 +32,13 @@ protected:
 	int m_sockfd;
 	string m_clientip;
 	Service_Type m_st;
-
+    SSL * m_ssl;
+    SSL_CTX * m_ssl_ctx;
 	StorageEngine* m_storageEngine;
 	memcached_st * m_memcached;
 public:
-	Session(int sockfd, const char* clientip, Service_Type st, StorageEngine* storage_engine, memory_cache* ch, memcached_st * memcached);
+	Session(int sockfd, SSL *ssl, SSL_CTX * ssl_ctx, const char* clientip, Service_Type st, 
+        StorageEngine* storage_engine, memory_cache* ch, memcached_st * memcached);
 	virtual ~Session();
 	
 	void Process();

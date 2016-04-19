@@ -10,7 +10,8 @@ using namespace std;
 class CMailPop  : public CMailBase
 {
 public:
-	CMailPop(int sockfd, const char* clientip, StorageEngine* storage_engine, memcached_st * memcached, BOOL isSSL = FALSE);
+	CMailPop(int sockfd, SSL * ssl, SSL_CTX * ssl_ctx, const char* clientip,
+        StorageEngine* storage_engine, memcached_st * memcached, BOOL isSSL = FALSE);
 	virtual ~CMailPop();
 	virtual BOOL Parse(char* text);
 	virtual int ProtRecv(char* buf, int len);
@@ -45,6 +46,7 @@ protected:
 	DWORD m_status;
 
 	BOOL m_isSSL;
+    BOOL m_bSTARTTLS;
 	SSL* m_ssl;
 	SSL_CTX* m_ssl_ctx;
 	
