@@ -55,7 +55,7 @@ MailStorage::~MailStorage()
     pthread_mutex_destroy(&m_thread_pool_mutex);
 }
 
-int MailStorage::Connect(const char * host, const char* username, const char* password, const char* database)
+int MailStorage::Connect(const char * host, const char* username, const char* password, const char* database, unsigned short port)
 {
 	if(m_bOpened)
 	{
@@ -67,11 +67,12 @@ int MailStorage::Connect(const char * host, const char* username, const char* pa
         
         m_hMySQL = mysql_init(NULL);
 
-		if(mysql_real_connect(m_hMySQL, host, username, password, database, 0 ,NULL ,0) != NULL)
+		if(mysql_real_connect(m_hMySQL, host, username, password, database, port, NULL, 0) != NULL)
 		{
 			m_host = host;
 			m_username = username;
 			m_password = password;
+			m_port = port;
 			if(database != NULL)
 				m_database = database;
 			
@@ -895,6 +896,7 @@ int MailStorage::AddID(const char* username, const char* password, const char* a
 			}
 			if(mysql_commit(m_hMySQL) == 0)
 			{
+				m_userpwd_cache_update_time = 0;
 				mysql_autocommit(m_hMySQL, 1);
 				return 0;
 			}
@@ -1064,7 +1066,7 @@ int MailStorage::DelID(const char* username)
 			printf("%s: %s\n", sqlcmd, mysql_error(m_hMySQL));
 			return -1;
 		}
-		
+		m_userpwd_cache_update_time = 0;
 		return 0;
 	}
 	else
@@ -1977,6 +1979,7 @@ int MailStorage::Passwd(const char* uname, const char* password)
 		sprintf(sqlcmd, "update usertbl set upasswd=ENCODE('%s','%s') where uname='%s'", strSafetyPassword.c_str(), CODE_KEY, strSafetyUsername.c_str());
 		if( mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 		{
+			m_userpwd_cache_update_time = 0;
 			return 0;
 		}
 		else

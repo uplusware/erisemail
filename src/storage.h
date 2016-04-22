@@ -156,7 +156,7 @@ public:
 	virtual ~MailStorage();
 
 	//system
-	int Connect(const char * host, const char* username, const char* password, const char* database);
+	int Connect(const char * host, const char* username, const char* password, const char* database, unsigned short port = 0);
 	void Close();
 	int Ping();
 	
@@ -317,6 +317,7 @@ protected:
 	string m_username;
 	string m_password;
 	string m_database;
+	unsigned short m_port;
     
     string m_encoding;
     string m_private_path;
