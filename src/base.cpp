@@ -88,6 +88,8 @@ unsigned char CMailBase::m_rsa_pri_key[128];
 
 char CMailBase::m_des_key[9];
 
+BOOL CMailBase::m_userpwd_cache_updated = TRUE;
+
 CMailBase::CMailBase()
 {
 

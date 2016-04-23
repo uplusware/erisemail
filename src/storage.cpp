@@ -34,6 +34,7 @@ MailStorage::MailStorage(const char* encoding, const char* private_path, unsigne
 {
     m_userpwd_cache.clear();
     m_userpwd_cache_update_time = 0;
+    CMailBase::m_userpwd_cache_updated = TRUE;
     m_encoding = encoding;
     m_private_path = private_path;
     m_global_uid = global_uid;
@@ -353,11 +354,9 @@ int MailStorage::CheckLogin(const char* username, const char* password)
 	string strSafetyUsername = username;
 	SqlSafetyString(strSafetyUsername);
     
-    if(m_userpwd_cache.size() == 0 || time(NULL) - m_userpwd_cache_update_time > 300)
+    if(m_userpwd_cache.size() == 0 || time(NULL) - m_userpwd_cache_update_time > 300 || CMailBase::m_userpwd_cache_updated == TRUE)
     {
         m_userpwd_cache.clear();
-        m_userpwd_cache_update_time = time(NULL);
-        
         sprintf(sqlcmd, "select uname, DECODE(upasswd,'%s') from usertbl where ustatus = %d and utype = %d", CODE_KEY, usActive, utMember);
 
         if( mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
@@ -374,6 +373,9 @@ int MailStorage::CheckLogin(const char* username, const char* password)
                 }
 
                 mysql_free_result(qResult);
+                
+                m_userpwd_cache_update_time = time(NULL);
+                CMailBase::m_userpwd_cache_updated = FALSE;
                 return 0;
             }
             else
@@ -897,6 +899,7 @@ int MailStorage::AddID(const char* username, const char* password, const char* a
 			if(mysql_commit(m_hMySQL) == 0)
 			{
 				m_userpwd_cache_update_time = 0;
+				CMailBase::m_userpwd_cache_updated = TRUE;
 				mysql_autocommit(m_hMySQL, 1);
 				return 0;
 			}
@@ -1067,6 +1070,7 @@ int MailStorage::DelID(const char* username)
 			return -1;
 		}
 		m_userpwd_cache_update_time = 0;
+		CMailBase::m_userpwd_cache_updated = TRUE;
 		return 0;
 	}
 	else
@@ -1980,6 +1984,7 @@ int MailStorage::Passwd(const char* uname, const char* password)
 		if( mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 		{
 			m_userpwd_cache_update_time = 0;
+			CMailBase::m_userpwd_cache_updated = TRUE;
 			return 0;
 		}
 		else

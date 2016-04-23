@@ -573,6 +573,8 @@ public:
 	static BOOL Is_Local_Domain(const char* domain);
     
     static char m_des_key[9];
+    
+    static BOOL m_userpwd_cache_updated;
 	
 public:	
 	CMailBase();
