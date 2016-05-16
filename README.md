@@ -8,7 +8,7 @@
 * Support popular email client( Outlook, Thunderbird ...)
 * Support the mail with huge size attachment( Maximum size is 2G )
 * Support loading and extending anti-junkmail engine
-* Recommend Ubuntu or CentOS 7 as host OS
+* Recommend Ubuntu or CentOS as host OS
 * Winodows platform, please use Cygwin to compile and run it.
 * Any question please mail to uplusware@gmail.com
 
