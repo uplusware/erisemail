@@ -362,20 +362,34 @@ int Service::Run(int fd, const char* hostip, unsigned short nPort)
 	{
 		int nFlag;
 		
-		struct sockaddr_in svr_addr;
+		struct sockaddr_in6 svr_addr;
 		
-		bzero(&svr_addr, sizeof(struct sockaddr_in));
+		bzero(&svr_addr, sizeof(struct sockaddr_in6));
 		
-		m_sockfd = socket(AF_INET, SOCK_STREAM, 0);
+		m_sockfd = socket(AF_INET6, SOCK_STREAM, 0);
 		
-		svr_addr.sin_family = AF_INET;
-		svr_addr.sin_port = htons(nPort);
-		svr_addr.sin_addr.s_addr = (checkip(hostip) == -1 ? INADDR_ANY : inet_addr(hostip));
-		
+		svr_addr.sin6_family = AF_INET6;
+		svr_addr.sin6_port = htons(nPort);
+		if(hostip && hostip[0] != '\0')
+		{
+		    string stripv6;
+	        if(strstr(hostip, ":") == NULL)
+	        {
+	            stripv6 = "::ffff:";
+	            stripv6 += hostip;
+	        }
+	        else
+	            stripv6 = hostip;
+	        
+		    inet_pton(AF_INET6, stripv6.c_str(), &svr_addr.sin6_addr);
+    	}
+		else
+		    svr_addr.sin6_addr = in6addr_any;
+		    
 		nFlag =1;
 		setsockopt(m_sockfd, SOL_SOCKET, SO_REUSEADDR, (char*)&nFlag, sizeof(nFlag));
 		
-		if(bind(m_sockfd, (struct sockaddr*)&svr_addr, sizeof(struct sockaddr_in)) == -1)
+		if(bind(m_sockfd, (struct sockaddr*)&svr_addr, sizeof(struct sockaddr_in6)) == -1)
 		{
 			uTrace.Write(Trace_Error, "Service BIND error, Port: %d.", nPort);
 			result = 1;
@@ -465,8 +479,8 @@ int Service::Run(int fd, const char* hostip, unsigned short nPort)
 			}
 			else if(rc == 1)
 			{
-				struct sockaddr_in clt_addr;
-				socklen_t clt_size = sizeof(struct sockaddr_in);
+				struct sockaddr_in6 clt_addr;
+				socklen_t clt_size = sizeof(struct sockaddr_in6);
 				int clt_sockfd;
 				if(FD_ISSET(m_sockfd, &accept_mask))
 				{
@@ -478,8 +492,24 @@ int Service::Run(int fd, const char* hostip, unsigned short nPort)
 					{
 						continue;
 					}
-					string client_ip = inet_ntoa(clt_addr.sin_addr);
-					int access_result;
+					
+					char szclientip[INET6_ADDRSTRLEN];
+					if(inet_ntop(AF_INET6, (void*)&clt_addr.sin6_addr, szclientip, INET6_ADDRSTRLEN) == NULL)
+				    {    
+                        close(clt_sockfd);
+                        continue;
+                    }
+                    string client_ip;
+                    if(strncmp(szclientip, "::ffff:", 7) == 0 && strstr(szclientip, ".") != NULL)
+                    {
+                        client_ip = szclientip + 7;
+                    }
+                    else
+                    {
+                        client_ip = szclientip;
+                    }
+                    
+                    int access_result;
 					if(CMailBase::m_permit_list.size() > 0)
 					{
 						access_result = FALSE;

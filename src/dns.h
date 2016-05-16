@@ -143,16 +143,25 @@ public:
 		
 		//connect dns server;
 		int dns_sockfd;
-		struct sockaddr_in server_sockaddr;
+		struct sockaddr_in6 server_sockaddr;
 		struct sockaddr client_sockaddr;
-		if((dns_sockfd = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
+		if((dns_sockfd = socket(AF_INET6, SOCK_DGRAM, 0)) == -1)
 		{
 			return -1;
 		}
-		server_sockaddr.sin_family = AF_INET;
-		server_sockaddr.sin_port = htons(53);
-		server_sockaddr.sin_addr.s_addr = inet_addr(m_server.c_str());
-
+		server_sockaddr.sin6_family = AF_INET6;
+		server_sockaddr.sin6_port = htons(53);
+		
+		string stripv6;
+        if(strstr(m_server.c_str(), ":") == NULL)
+        {
+            stripv6 = "::ffff:";
+            stripv6 += m_server;
+        }
+        else
+            stripv6 = m_server;
+        inet_pton(AF_INET6, stripv6.c_str(), &server_sockaddr.sin6_addr);
+        
 		int flags = fcntl(dns_sockfd, F_GETFL, 0); 
 		fcntl(dns_sockfd, F_SETFL, flags | O_NONBLOCK); 
 

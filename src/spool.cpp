@@ -197,7 +197,7 @@ static BOOL ReturnMail(MailStorage* mailStg, memcached_st * memcached, int mid, 
 static BOOL SendMail(MailStorage* mailStg, memcached_st * memcached, const char* mxserver, const char* fromaddr, const char* toaddr, unsigned int mid, string& errormsg)
 {		
 	char realip[20];
-	struct sockaddr_in ser_addr;
+	struct sockaddr_in6 ser_addr;
 	if(checkip(mxserver) != 0)
 	{
 		struct hostent *hostEnt = NULL;
@@ -224,7 +224,7 @@ static BOOL SendMail(MailStorage* mailStg, memcached_st * memcached, const char*
 	struct timeval timeout; 
 	int transfer_sockfd = -1;
 	
-	transfer_sockfd = socket(AF_INET, SOCK_STREAM, 0);
+	transfer_sockfd = socket(AF_INET6, SOCK_STREAM, 0);
 	if(transfer_sockfd < 0)
 	{
 		errormsg = "system error\r\n";
@@ -234,14 +234,23 @@ static BOOL SendMail(MailStorage* mailStg, memcached_st * memcached, const char*
 	int flags = fcntl(transfer_sockfd, F_GETFL, 0); 
 	fcntl(transfer_sockfd, F_SETFL, flags | O_NONBLOCK); 
 	
-	ser_addr.sin_family = AF_INET;
-	ser_addr.sin_port = htons(25);
-	ser_addr.sin_addr.s_addr = inet_addr(realip);
+	ser_addr.sin6_family = AF_INET6;
+	ser_addr.sin6_port = htons(25);
 	
+	string stripv6;
+    if(strstr(realip, ":") == NULL)
+    {
+        stripv6 = "::ffff:";
+        stripv6 += realip;
+    }
+    else
+        stripv6 = realip;
+    inet_pton(AF_INET6, stripv6.c_str(), &ser_addr.sin6_addr);
+    
 	timeout.tv_sec = 10; 
 	timeout.tv_usec = 0;
 	
-	connect(transfer_sockfd,(struct sockaddr*)&ser_addr,sizeof(struct sockaddr));
+	connect(transfer_sockfd,(struct sockaddr*)&ser_addr,sizeof(struct sockaddr_in6));
 	
 	FD_ZERO(&mask_r);
 	FD_ZERO(&mask_w);
