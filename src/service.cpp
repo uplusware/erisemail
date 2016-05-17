@@ -291,8 +291,8 @@ void Service::ReloadList()
 
 int Service::Run(int fd, const char* hostip, unsigned short nPort)
 {	
-	CUplusTrace uTrace(LOGNAME, LCKNAME);
-	CMailBase::LoadConfig();
+    CUplusTrace uTrace(LOGNAME, LCKNAME);
+	/* CMailBase::LoadConfig(); */
 	memcached_server_st * memcached_servers = NULL;
 	memcached_return rc;
 	m_memcached = memcached_create(NULL);
@@ -362,42 +362,51 @@ int Service::Run(int fd, const char* hostip, unsigned short nPort)
 	{
 		int nFlag;
 		
-		struct sockaddr_in6 svr_addr;
+		struct addrinfo hints;
+        struct addrinfo *server_addr, *rp;
+        
+        memset(&hints, 0, sizeof(struct addrinfo));
+        hints.ai_family = AF_UNSPEC;    /* Allow IPv4 or IPv6 */
+        hints.ai_socktype = SOCK_STREAM; /* Datagram socket */
+        hints.ai_flags = AI_PASSIVE;    /* For wildcard IP address */
+        hints.ai_protocol = 0;          /* Any protocol */
+        hints.ai_canonname = NULL;
+        hints.ai_addr = NULL;
+        hints.ai_next = NULL;
+        
+        char szPort[32];
+        sprintf(szPort, "%u", nPort);
+                
+        int s = getaddrinfo((hostip && hostip[0] != '\0') ? hostip : NULL, szPort, &hints, &server_addr);
+        if (s != 0)
+        {
+           fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(s));
+           break;
+        }
+        
+        for (rp = server_addr; rp != NULL; rp = rp->ai_next)
+        {
+           m_sockfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
+           if (m_sockfd == -1)
+               continue;
+           
+           nFlag = 1;
+		   setsockopt(m_sockfd, SOL_SOCKET, SO_REUSEADDR, (char*)&nFlag, sizeof(nFlag));
 		
-		bzero(&svr_addr, sizeof(struct sockaddr_in6));
-		
-		m_sockfd = socket(AF_INET6, SOCK_STREAM, 0);
-		
-		svr_addr.sin6_family = AF_INET6;
-		svr_addr.sin6_port = htons(nPort);
-		if(hostip && hostip[0] != '\0')
-		{
-		    string stripv6;
-	        if(strstr(hostip, ":") == NULL)
-	        {
-	            stripv6 = "::ffff:";
-	            stripv6 += hostip;
-	        }
-	        else
-	            stripv6 = hostip;
-	        
-		    inet_pton(AF_INET6, stripv6.c_str(), &svr_addr.sin6_addr);
-    	}
-		else
-		    svr_addr.sin6_addr = in6addr_any;
-		    
-		nFlag =1;
-		setsockopt(m_sockfd, SOL_SOCKET, SO_REUSEADDR, (char*)&nFlag, sizeof(nFlag));
-		
-		if(bind(m_sockfd, (struct sockaddr*)&svr_addr, sizeof(struct sockaddr_in6)) == -1)
-		{
-			uTrace.Write(Trace_Error, "Service BIND error, Port: %d.", nPort);
-			result = 1;
-			write(fd, &result, sizeof(unsigned int));
-			close(fd);
-			break;
-		}
-		
+           if (bind(m_sockfd, rp->ai_addr, rp->ai_addrlen) == 0)
+               break;                  /* Success */
+
+           close(m_sockfd);
+        }
+        
+        if (rp == NULL)
+        {               /* No address succeeded */
+              fprintf(stderr, "Could not bind\n");
+              break;
+        }
+
+        freeaddrinfo(server_addr);           /* No longer needed */
+           	
 		nFlag = fcntl(m_sockfd, F_GETFL, 0);
 		fcntl(m_sockfd, F_SETFL, nFlag|O_NONBLOCK);
 		
@@ -499,15 +508,7 @@ int Service::Run(int fd, const char* hostip, unsigned short nPort)
                         close(clt_sockfd);
                         continue;
                     }
-                    string client_ip;
-                    if(strncmp(szclientip, "::ffff:", 7) == 0 && strstr(szclientip, ".") != NULL)
-                    {
-                        client_ip = szclientip + 7;
-                    }
-                    else
-                    {
-                        client_ip = szclientip;
-                    }
+                    string client_ip = szclientip;
                     
                     int access_result;
 					if(CMailBase::m_permit_list.size() > 0)

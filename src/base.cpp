@@ -18,8 +18,8 @@ string CMailBase::m_html_path = "/var/erisemail/html";
 
 string CMailBase::m_localhostname = "mail.erisesoft.com";
 string CMailBase::m_email_domain = "erisesoft.com";
-string CMailBase::m_dns_server = "";
-string CMailBase::m_hostip = "";
+string CMailBase::m_dns_server;
+string CMailBase::m_hostip;
 
 map<string, int> CMailBase::m_memcached_list;
 
@@ -142,7 +142,7 @@ BOOL CMailBase::LoadConfig()
 		
 		if(strline == "")
 			continue;
-		strtrim(strline);
+	    /* printf("<%s>\n", strline.c_str()); */
 		if(strncasecmp(strline.c_str(), "#", strlen("#")) != 0)
 		{	
 			if(strncasecmp(strline.c_str(), "Encoding", strlen("Encoding")) == 0)
@@ -169,7 +169,7 @@ BOOL CMailBase::LoadConfig()
 				strtrim(m_localhostname);
 				//printf("%s\n", m_localhostname.c_str());
 			}
-			else if(strncasecmp(strline.c_str(), "EmailDomainName", strlen("EmailDomain")) == 0)
+			else if(strncasecmp(strline.c_str(), "EmailDomainName", strlen("EmailDomainName")) == 0)
 			{
 				strcut(strline.c_str(), "=", NULL, m_email_domain );
 				strtrim(m_email_domain);
@@ -183,13 +183,13 @@ BOOL CMailBase::LoadConfig()
 			{
 				strcut(strline.c_str(), "=", NULL, m_hostip );
 				strtrim(m_hostip);
-				//printf("[%s]\n", m_hostip.c_str());
+				printf("[%s]\n", m_hostip.c_str());
 			}
 			else if(strncasecmp(strline.c_str(), "DNSServer", strlen("DNSServer")) == 0)
 			{
 				strcut(strline.c_str(), "=", NULL, m_dns_server );
 				strtrim(m_dns_server);
-				//printf("%s\n", m_dns_server.c_str());
+				/* printf("%s\n", m_dns_server.c_str()); */
 			}
 			else if(strncasecmp(strline.c_str(), "MaxConnPerProtocal", strlen("MaxConnPerProtocal")) == 0)
 			{
@@ -463,11 +463,12 @@ BOOL CMailBase::LoadConfig()
 			{
 				//printf("%s\n", strline.c_str());
 			}
+			strline = "";
 		}
 		
 	}
 	configfilein.close();
-
+	
 	ifstream permitfilein(m_permit_list_file.c_str(), ios_base::binary);
 	if(!permitfilein.is_open())
 	{
@@ -535,7 +536,6 @@ BOOL CMailBase::LoadConfig()
 		
 		RSA_free(rsa);
 	}
-	
 	return TRUE;
 }
 

@@ -50,18 +50,22 @@ CMailSmtp::CMailSmtp(int sockfd, SSL * ssl, SSL_CTX * ssl_ctx, const char* clien
 	}
 
 	m_status = STATUS_ORIGINAL;
-			
-	struct sockaddr_in peer_name;
-	int peer_name_len = sizeof(struct sockaddr_in);
-	getpeername(m_sockfd, (struct sockaddr*)&peer_name,(socklen_t*)&peer_name_len);
-	struct hostent* remoteHost;
-	int slen = sizeof(peer_name.sin_addr);
-	remoteHost = gethostbyaddr((char *)&peer_name.sin_addr, slen, AF_INET);
-	if(remoteHost)
+	
+	/*INET6_ADDRSTRLEN*/
+	
+	char client_hostname[256];
+	memset(client_hostname, 0, 256);
+	struct sockaddr_storage peer_addr;
+	int peer_addr_len = sizeof(struct sockaddr_storage);
+	getpeername(m_sockfd, (struct sockaddr*)&peer_addr, (socklen_t*)&peer_addr_len);
+	
+	if(getnameinfo((const struct sockaddr*)&peer_addr, peer_addr_len,
+	    client_hostname, 256, NULL, 0, NI_NAMEREQD) == 0) 
 	{
-		m_clientdomain = remoteHost->h_name;
+	    m_clientdomain = client_hostname;
+	    
 	}
-
+	
 	TiXmlDocument xmlFileterDoc;
 	xmlFileterDoc.LoadFile(CONFIG_FILTER_PATH);
 	TiXmlElement * pRootElement = xmlFileterDoc.RootElement();
@@ -1610,21 +1614,52 @@ BOOL CMailSmtp::Check_Helo_Domain(const char* domain)
 		return TRUE;
 	else
 	{
-		char realip[32];
-		struct hostent *hostEnt = NULL;
-		hostEnt = gethostbyname(domain);
-		if(hostEnt != NULL)
-		{
-			strcpy(realip, (char*)inet_ntoa(*(struct in_addr *)(hostEnt->h_addr_list[0])));
-			if( strcmp(realip, m_clientip.c_str()) == 0)
-				return TRUE;
-			else
-				return FALSE;
-		}
-		else
-		{
-			return FALSE;
-		}
+	    BOOL bResult = FALSE;
+	    
+		char realip[INET6_ADDRSTRLEN];
+		struct addrinfo hints;      
+        struct addrinfo *servinfo, *curr;  
+        struct sockaddr_in *sa;
+        struct sockaddr_in6 *sa6;
+
+        memset(&hints, 0, sizeof hints);
+        hints.ai_family = AF_UNSPEC;
+        hints.ai_flags = AI_CANONNAME; 
+        
+        if (getaddrinfo(domain, NULL, &hints, &servinfo) != 0)
+        {
+            return FALSE;
+        }
+        
+        curr = servinfo; 
+        while (curr && curr->ai_canonname)
+        {  
+            if(servinfo->ai_family == AF_INET6)
+            {
+                sa6 = (struct sockaddr_in6 *)curr->ai_addr;  
+                inet_ntop(AF_INET6, (void*)&sa6->sin6_addr, realip, sizeof (realip));
+                if(strcmp(realip, m_clientip.c_str()) == 0)
+                {
+                    bResult = TRUE;
+                    break;
+                }
+            }
+            else if(servinfo->ai_family == AF_INET)
+            {
+                sa = (struct sockaddr_in *)curr->ai_addr;  
+                inet_ntop(AF_INET, (void*)&sa->sin_addr, realip, sizeof (realip));
+                if(strcmp(realip, m_clientip.c_str()) == 0)
+                {
+                    bResult = TRUE;
+                    break;
+                }
+            }
+            curr = curr->ai_next;
+        }     
+
+        freeaddrinfo(servinfo);
+        
+        return bResult;
 	}
 }
 

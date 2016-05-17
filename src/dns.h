@@ -145,26 +145,44 @@ public:
 		int dns_sockfd;
 		struct sockaddr_in6 server_sockaddr;
 		struct sockaddr client_sockaddr;
-		if((dns_sockfd = socket(AF_INET6, SOCK_DGRAM, 0)) == -1)
-		{
-			return -1;
-		}
-		server_sockaddr.sin6_family = AF_INET6;
-		server_sockaddr.sin6_port = htons(53);
-		
-		string stripv6;
-        if(strstr(m_server.c_str(), ":") == NULL)
-        {
-            stripv6 = "::ffff:";
-            stripv6 += m_server;
-        }
-        else
-            stripv6 = m_server;
-        inet_pton(AF_INET6, stripv6.c_str(), &server_sockaddr.sin6_addr);
+		        
+        struct addrinfo hints;
+        struct addrinfo *server_addr, *rp;
         
+        memset(&hints, 0, sizeof(struct addrinfo));
+        hints.ai_family = AF_UNSPEC;    /* Allow IPv4 or IPv6 */
+        hints.ai_socktype =  SOCK_DGRAM; /* Datagram socket */
+        hints.ai_flags = AI_PASSIVE;    /* For wildcard IP address */
+        hints.ai_protocol = 0;          /* Any protocol */
+        hints.ai_canonname = NULL;
+        hints.ai_addr = NULL;
+        hints.ai_next = NULL;
+                    
+        int s = getaddrinfo(m_server != "" ? m_server.c_str() : NULL, "53", &hints, &server_addr);
+        if (s != 0)
+        {
+           fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(s));
+           return FALSE;
+        }
+        
+        for (rp = server_addr; rp != NULL; rp = rp->ai_next)
+        {
+           dns_sockfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
+           if (dns_sockfd == -1)
+               continue;
+        }
+         
+        if (rp == NULL)
+        {               /* No address succeeded */
+              fprintf(stderr, "Could not socket\n");
+              return -1;
+        }
+
+        freeaddrinfo(server_addr);           /* No longer needed */
+
 		int flags = fcntl(dns_sockfd, F_GETFL, 0); 
 		fcntl(dns_sockfd, F_SETFL, flags | O_NONBLOCK); 
-
+		
 		int res;
 		fd_set mask; 
 		struct timeval dns_timeout; 

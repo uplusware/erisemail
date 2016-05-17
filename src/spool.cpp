@@ -196,27 +196,49 @@ static BOOL ReturnMail(MailStorage* mailStg, memcached_st * memcached, int mid, 
 
 static BOOL SendMail(MailStorage* mailStg, memcached_st * memcached, const char* mxserver, const char* fromaddr, const char* toaddr, unsigned int mid, string& errormsg)
 {		
-	char realip[20];
-	struct sockaddr_in6 ser_addr;
-	if(checkip(mxserver) != 0)
-	{
-		struct hostent *hostEnt = NULL;
-		hostEnt = gethostbyname(mxserver);
-		if(hostEnt != NULL)
-		{
-			strcpy(realip, (char*)inet_ntoa(*(struct in_addr *)(hostEnt->h_addr_list[0])));
-		}
-		else
-		{
-			errormsg = "can not get the corresponding mx server's ip\r\n";
-			return FALSE;
-		}
-	}
-	else
-	{
-		strcpy(realip, mxserver);
-	}
-		
+	char realip[INET6_ADDRSTRLEN];
+	struct addrinfo hints;      
+    struct addrinfo *servinfo, *curr;  
+    struct sockaddr_in *sa;
+    struct sockaddr_in6 *sa6;
+
+    memset(&hints, 0, sizeof hints);
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_flags = AI_CANONNAME; 
+    
+    if (getaddrinfo(mxserver, NULL, &hints, &servinfo) != 0)
+    {
+        errormsg = "can not get the corresponding mx server's ip\r\n";
+        return FALSE;
+    }
+    
+    BOOL bFound = FALSE;
+    curr = servinfo; 
+    while (curr && curr->ai_canonname)
+    {  
+        if(servinfo->ai_family == AF_INET6)
+        {
+            sa6 = (struct sockaddr_in6 *)curr->ai_addr;  
+            inet_ntop(AF_INET6, (void*)&sa6->sin6_addr, realip, sizeof (realip));
+            bFound = TRUE;
+        }
+        else if(servinfo->ai_family == AF_INET)
+        {
+            sa = (struct sockaddr_in *)curr->ai_addr;  
+            inet_ntop(AF_INET, (void*)&sa->sin_addr, realip, sizeof (realip));
+            bFound = TRUE;
+        }
+        curr = curr->ai_next;
+    }     
+
+    freeaddrinfo(servinfo);
+    
+    if(bFound == FALSE)
+    {
+        errormsg = "can not get the corresponding mx server's ip\r\n";
+        return FALSE;
+    }
+           
 	int errorCode = 1;
 	int errorCodeLen = sizeof(errorCode);
 	int res;
@@ -224,51 +246,71 @@ static BOOL SendMail(MailStorage* mailStg, memcached_st * memcached, const char*
 	struct timeval timeout; 
 	int transfer_sockfd = -1;
 	
-	transfer_sockfd = socket(AF_INET6, SOCK_STREAM, 0);
-	if(transfer_sockfd < 0)
-	{
-		errormsg = "system error\r\n";
-		return FALSE;
-	}
-	
-	int flags = fcntl(transfer_sockfd, F_GETFL, 0); 
-	fcntl(transfer_sockfd, F_SETFL, flags | O_NONBLOCK); 
-	
-	ser_addr.sin6_family = AF_INET6;
-	ser_addr.sin6_port = htons(25);
-	
-	string stripv6;
-    if(strstr(realip, ":") == NULL)
-    {
-        stripv6 = "::ffff:";
-        stripv6 += realip;
-    }
-    else
-        stripv6 = realip;
-    inet_pton(AF_INET6, stripv6.c_str(), &ser_addr.sin6_addr);
+	/* struct addrinfo hints; */
+    struct addrinfo *server_addr, *rp;
     
-	timeout.tv_sec = 10; 
-	timeout.tv_usec = 0;
+    memset(&hints, 0, sizeof(struct addrinfo));
+    hints.ai_family = AF_UNSPEC;    /* Allow IPv4 or IPv6 */
+    hints.ai_socktype = SOCK_STREAM; /* Datagram socket */
+    hints.ai_flags = AI_PASSIVE;    /* For wildcard IP address */
+    hints.ai_protocol = 0;          /* Any protocol */
+    hints.ai_canonname = NULL;
+    hints.ai_addr = NULL;
+    hints.ai_next = NULL;
+                
+    int s = getaddrinfo((realip && realip[0] != '\0') ? realip : NULL, "25", &hints, &server_addr);
+    if (s != 0)
+    {
+       fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(s));
+       return FALSE;
+    }
+    
+    for (rp = server_addr; rp != NULL; rp = rp->ai_next)
+    {
+       transfer_sockfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
+       if (transfer_sockfd == -1)
+           continue;
+       
+	    int flags = fcntl(transfer_sockfd, F_GETFL, 0); 
+	    fcntl(transfer_sockfd, F_SETFL, flags | O_NONBLOCK);
 	
-	connect(transfer_sockfd,(struct sockaddr*)&ser_addr,sizeof(struct sockaddr_in6));
+	    timeout.tv_sec = 10; 
+	    timeout.tv_usec = 0;
 	
-	FD_ZERO(&mask_r);
-	FD_ZERO(&mask_w);
+        connect(transfer_sockfd, rp->ai_addr, rp->ai_addrlen);
+        
+        FD_ZERO(&mask_r);
+	    FD_ZERO(&mask_w);
 	
-	FD_SET(transfer_sockfd, &mask_r);
-	FD_SET(transfer_sockfd, &mask_w);
-	res = select(transfer_sockfd + 1, &mask_r, &mask_w, NULL, &timeout);
-	if( res != 1) 
-	{
-		close(transfer_sockfd);
-		errormsg = "can not connect the ";
-		errormsg += mxserver;
-		errormsg += "(";
-		errormsg += realip;
-		errormsg += ").\r\n";
+	    FD_SET(transfer_sockfd, &mask_r);
+	    FD_SET(transfer_sockfd, &mask_w);
+	    
+	    if(select(transfer_sockfd + 1, &mask_r, &mask_w, NULL, &timeout) == 1) 
+	        break;  /* Success */
+	    else
+	    {
+		    close(transfer_sockfd);
+		    errormsg = "can not connect the ";
+		    errormsg += mxserver;
+		    errormsg += "(";
+		    errormsg += realip;
+		    errormsg += ").\r\n";
+		    continue;
+	    }  
+           
+       close(transfer_sockfd);
+    }
+     
+    if (rp == NULL)
+    {               /* No address succeeded */
+          fprintf(stderr, "Could not bind\n");
+          return FALSE;
+    }
 
-		return FALSE;
-	}
+    freeaddrinfo(server_addr);           /* No longer needed */
+        
+    printf("%s %s\n", mxserver, realip);	
+	
 	getsockopt(transfer_sockfd,SOL_SOCKET,SO_ERROR,(char*)&errorCode,(socklen_t*)&errorCodeLen);
 	if(errorCode !=0)
 	{
