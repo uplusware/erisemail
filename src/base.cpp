@@ -183,7 +183,7 @@ BOOL CMailBase::LoadConfig()
 			{
 				strcut(strline.c_str(), "=", NULL, m_hostip );
 				strtrim(m_hostip);
-				printf("[%s]\n", m_hostip.c_str());
+				/*printf("[%s]\n", m_hostip.c_str());*/
 			}
 			else if(strncasecmp(strline.c_str(), "DNSServer", strlen("DNSServer")) == 0)
 			{
