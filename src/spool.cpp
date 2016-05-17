@@ -194,8 +194,13 @@ static BOOL ReturnMail(MailStorage* mailStg, memcached_st * memcached, int mid, 
 }
 
 
-static BOOL SendMail(MailStorage* mailStg, memcached_st * memcached, const char* mxserver, const char* fromaddr, const char* toaddr, unsigned int mid, string& errormsg)
-{		
+static BOOL SendMail(MailStorage* mailStg, memcached_st * memcached, 
+    const char* mxserver, const char* fromaddr, const char* toaddr,
+    unsigned int mid, string& errormsg)
+{
+    /* Empty the error message */
+    errormsg = "";
+    /* Get the IP from the name */
 	char realip[INET6_ADDRSTRLEN];
 	struct addrinfo hints;      
     struct addrinfo *servinfo, *curr;  
@@ -238,7 +243,8 @@ static BOOL SendMail(MailStorage* mailStg, memcached_st * memcached, const char*
         errormsg = "can not get the corresponding mx server's ip\r\n";
         return FALSE;
     }
-           
+    
+    /* Connect to the MX server*/   
 	int errorCode = 1;
 	int errorCodeLen = sizeof(errorCode);
 	int res;
@@ -285,16 +291,13 @@ static BOOL SendMail(MailStorage* mailStg, memcached_st * memcached, const char*
 	    FD_SET(transfer_sockfd, &mask_r);
 	    FD_SET(transfer_sockfd, &mask_w);
 	    
-	    if(select(transfer_sockfd + 1, &mask_r, &mask_w, NULL, &timeout) == 1) 
+	    if(select(transfer_sockfd + 1, &mask_r, &mask_w, NULL, &timeout) == 1)
+	    {
 	        break;  /* Success */
+	    }
 	    else
 	    {
 		    close(transfer_sockfd);
-		    errormsg = "can not connect the ";
-		    errormsg += mxserver;
-		    errormsg += "(";
-		    errormsg += realip;
-		    errormsg += ").\r\n";
 		    continue;
 	    }  
            
@@ -302,14 +305,18 @@ static BOOL SendMail(MailStorage* mailStg, memcached_st * memcached, const char*
     }
      
     if (rp == NULL)
-    {               /* No address succeeded */
-          fprintf(stderr, "Could not bind\n");
-          return FALSE;
+    {
+        errormsg = "can not connect the ";
+		errormsg += mxserver;
+        errormsg += ".\r\n";
+        /* No address succeeded */
+        fprintf(stderr, "Could not connect\n");
+        return FALSE;
     }
 
     freeaddrinfo(server_addr);           /* No longer needed */
         
-    printf("%s %s\n", mxserver, realip);	
+    printf("[%s]: <%s>\n", mxserver, realip);	
 	
 	getsockopt(transfer_sockfd,SOL_SOCKET,SO_ERROR,(char*)&errorCode,(socklen_t*)&errorCodeLen);
 	if(errorCode !=0)
