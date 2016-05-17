@@ -292,7 +292,7 @@ void Service::ReloadList()
 int Service::Run(int fd, const char* hostip, unsigned short nPort)
 {	
     CUplusTrace uTrace(LOGNAME, LCKNAME);
-	/* CMailBase::LoadConfig(); */
+	CMailBase::LoadConfig();
 	memcached_server_st * memcached_servers = NULL;
 	memcached_return rc;
 	m_memcached = memcached_create(NULL);
@@ -488,8 +488,10 @@ int Service::Run(int fd, const char* hostip, unsigned short nPort)
 			}
 			else if(rc == 1)
 			{
-				struct sockaddr_in6 clt_addr;
-				socklen_t clt_size = sizeof(struct sockaddr_in6);
+				struct sockaddr_storage clt_addr;
+				struct sockaddr_in * v4_addr;
+				struct sockaddr_in6 * v6_addr;
+				socklen_t clt_size = sizeof(struct sockaddr_storage);
 				int clt_sockfd;
 				if(FD_ISSET(m_sockfd, &accept_mask))
 				{
@@ -503,11 +505,27 @@ int Service::Run(int fd, const char* hostip, unsigned short nPort)
 					}
 					
 					char szclientip[INET6_ADDRSTRLEN];
-					if(inet_ntop(AF_INET6, (void*)&clt_addr.sin6_addr, szclientip, INET6_ADDRSTRLEN) == NULL)
-				    {    
-                        close(clt_sockfd);
-                        continue;
+					if (clt_addr.ss_family == AF_INET)
+					{
+					    v4_addr = (struct sockaddr_in*)&clt_addr;
+                        if(inet_ntop(AF_INET, (void*)&v4_addr->sin_addr, szclientip, INET6_ADDRSTRLEN) == NULL)
+				        {    
+                            close(clt_sockfd);
+                            continue;
+                        }
+                        
                     }
+                    else if(clt_addr.ss_family == AF_INET6)
+                    {
+                        v6_addr = (struct sockaddr_in6*)&clt_addr;
+                        if(inet_ntop(AF_INET6, (void*)&v6_addr->sin6_addr, szclientip, INET6_ADDRSTRLEN) == NULL)
+				        {    
+                            close(clt_sockfd);
+                            continue;
+                        }
+                        
+                    }
+					
                     string client_ip = szclientip;
                     
                     int access_result;
