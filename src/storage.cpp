@@ -85,7 +85,7 @@ int MailStorage::Connect(const char * host, const char* username, const char* pa
 		{
 			m_bOpened = FALSE;
             m_hMySQL = NULL;
-			printf("mysql_real_connect %s\n", mysql_error(m_hMySQL));
+			printf("mysql_real_connect: %s\n", mysql_error(m_hMySQL));
 			return -1;	
 		}
 	}
