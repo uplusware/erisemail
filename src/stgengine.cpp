@@ -68,17 +68,31 @@ MailStorage* StorageEngine::WaitEngine(int &index)
     m_engine[index].lTime = time(NULL);
     m_engine[index].owner = pthread_self();
     m_engine[index].usedCount++;
-    freeOne = m_engine[index].storage;
-    
-	pthread_mutex_unlock(&m_engineMutex);
+    pthread_mutex_unlock(&m_engineMutex);
     
 	if(m_engine[index].storage->Ping() != 0)
 	{
 		printf("Reconnect\n");
 		m_engine[index].storage->Close();
-		if(m_engine[index].storage->Connect(m_host.c_str(), m_username.c_str(), m_password.c_str(), m_database.c_str()) < 0)
-			freeOne = NULL;
+		for(int x = 0; x < 10; x++)
+		{
+		    if(m_engine[index].storage->Connect(m_host.c_str(),
+		        m_username.c_str(), m_password.c_str(), m_database.c_str()) == 0)
+		    {
+		        freeOne = m_engine[index].storage;
+		        break;
+		    }
+		    else
+		    {
+		        printf("sleep 1000 for ");
+		        usleep(1000*500);
+		    }
+		}
 	}
+	else
+	{
+	    freeOne = m_engine[index].storage;
+    }
 	return freeOne;
 }
 
