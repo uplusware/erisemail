@@ -143,7 +143,6 @@ public:
 		
 		//connect dns server;
 		int dns_sockfd;
-		struct sockaddr_in6 server_sockaddr;
 		struct sockaddr client_sockaddr;
 		        
         struct addrinfo hints;
@@ -167,65 +166,70 @@ public:
         
         for (rp = server_addr; rp != NULL; rp = rp->ai_next)
         {
-           dns_sockfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
-           if (dns_sockfd == -1)
+            dns_sockfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
+            if (dns_sockfd == -1)
                continue;
+            
+            int flags = fcntl(dns_sockfd, F_GETFL, 0); 
+            fcntl(dns_sockfd, F_SETFL, flags | O_NONBLOCK); 
+
+            int res;
+            fd_set mask; 
+            struct timeval dns_timeout; 
+            dns_timeout.tv_sec = 5; 
+            dns_timeout.tv_usec = 0;
+
+            FD_ZERO(&mask);
+            FD_SET(dns_sockfd, &mask);
+
+            res = select(dns_sockfd + 1, NULL, &mask, NULL, &dns_timeout);
+
+            if( res != 1) 
+            {
+                close(dns_sockfd);
+                continue;
+            }
+
+            int n = sendto(dns_sockfd, (char*)dnsbufptr, dnsbuflength, 0,
+                (struct sockaddr*)rp->ai_addr, rp->ai_addrlen);
+            /* printf("n: %d\n", n); */
+            if(n != dnsbuflength || n <= 0)
+            {
+                close(dns_sockfd);
+                continue;
+            }
+
+            //Recv Ack
+            memset(dnsbufptr, 0, 1024);
+            int nLen=sizeof(struct sockaddr);
+            FD_ZERO(&mask);
+            FD_SET(dns_sockfd, &mask);
+
+            res = select(dns_sockfd + 1,&mask, NULL, NULL, &dns_timeout);
+            if( res != 1) /* error or timeout*/
+            {
+                close(dns_sockfd);
+                continue;
+            }
+            n = recvfrom(dns_sockfd, (char*)dnsbufptr, 1024, 0,
+                (struct sockaddr*)&client_sockaddr, (socklen_t*)&nLen);
+            if(n < 12)
+            {
+                continue;
+            }
+            //succed to be here, them jump out the loop
+            break;
         }
-         
+        
         if (rp == NULL)
         {               /* No address succeeded */
               fprintf(stderr, "Could not socket\n");
+              freeaddrinfo(server_addr);           /* No longer needed */
               return -1;
         }
 
         freeaddrinfo(server_addr);           /* No longer needed */
 
-		int flags = fcntl(dns_sockfd, F_GETFL, 0); 
-		fcntl(dns_sockfd, F_SETFL, flags | O_NONBLOCK); 
-		
-		int res;
-		fd_set mask; 
-		struct timeval dns_timeout; 
-		dns_timeout.tv_sec = 5; 
-		dns_timeout.tv_usec = 0;
-
-		FD_ZERO(&mask);
-		FD_SET(dns_sockfd, &mask);
-
-		res = select(dns_sockfd + 1,NULL, &mask, NULL, &dns_timeout);
-
-		if( res != 1) 
-		{
-			close(dns_sockfd);
-			return -1;
-		}
-		
-		int n = sendto(dns_sockfd, (char*)dnsbufptr, dnsbuflength, 0, (struct sockaddr*)&server_sockaddr, sizeof(server_sockaddr));
-		//printf("n: %d\n", n);
-		if(n != dnsbuflength)
-		{
-			return -1;
-		}
-
-		//Recv Ack
-		memset(dnsbufptr, 0, 1024);
-		int nLen=sizeof(struct sockaddr);
-		FD_ZERO(&mask);
-		FD_SET(dns_sockfd, &mask);
-
-		res = select(dns_sockfd + 1,&mask, NULL, NULL, &dns_timeout);
-		if( res != 1) 
-		{
-			close(dns_sockfd);
-			return -1;
-		}
-		n = recvfrom(dns_sockfd, (char*)dnsbufptr, 1024, 0, (struct sockaddr*)&client_sockaddr, (socklen_t*)&nLen);
-		if(n < 12)
-		{
-			return -1;
-		}
-
-		
 		Dns_Header* pAckHeader = (Dns_Header*)dnsbufptr;
 		//printf("%d %d %d\n", n, pAckHeader->Tag, DnsHdr.Tag);
 		if(pAckHeader->Tag != DnsHdr.Tag)
