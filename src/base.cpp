@@ -122,15 +122,13 @@ BOOL CMailBase::LoadConfig()
     }
     m_des_key[8] = '\0';
     
-    //printf("%s\n", DESKey());
-    
 	m_domain_list.clear();	
 	m_permit_list.clear();
 	m_reject_list.clear();
 	m_webadmin_list.clear();
 	
 	ifstream configfilein(m_config_file.c_str(), ios_base::binary);
-	string strline;
+	string strline = "";
 	if(!configfilein.is_open())
 	{
 		printf("%s is not exist.", m_config_file.c_str());
@@ -142,9 +140,9 @@ BOOL CMailBase::LoadConfig()
 		
 		if(strline == "")
 			continue;
-	    /* printf("<%s>\n", strline.c_str()); */
+	    
 		if(strncasecmp(strline.c_str(), "#", strlen("#")) != 0)
-		{	
+		{
 			if(strncasecmp(strline.c_str(), "Encoding", strlen("Encoding")) == 0)
 			{
 				strcut(strline.c_str(), "=", NULL, m_encoding);
@@ -183,7 +181,7 @@ BOOL CMailBase::LoadConfig()
 			{
 				strcut(strline.c_str(), "=", NULL, m_hostip );
 				strtrim(m_hostip);
-				/*printf("[%s]\n", m_hostip.c_str());*/
+				/* printf("[%s]\n", m_hostip.c_str()); */
 			}
 			else if(strncasecmp(strline.c_str(), "DNSServer", strlen("DNSServer")) == 0)
 			{
@@ -461,7 +459,7 @@ BOOL CMailBase::LoadConfig()
 			}
 			else
 			{
-				//printf("%s\n", strline.c_str());
+				printf("%s\n", strline.c_str());
 			}
 			strline = "";
 		}

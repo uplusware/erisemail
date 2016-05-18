@@ -290,10 +290,9 @@ void Service::ReloadList()
 }
 
 int Service::Run(int fd, const char* hostip, unsigned short nPort)
-{	
+{
     CUplusTrace uTrace(LOGNAME, LCKNAME);
-	CMailBase::LoadConfig();
-	memcached_server_st * memcached_servers = NULL;
+    memcached_server_st * memcached_servers = NULL;
 	memcached_return rc;
 	m_memcached = memcached_create(NULL);
 	for (map<string, int>::iterator iter = CMailBase::m_memcached_list.begin( ); iter != CMailBase::m_memcached_list.end( ); ++iter)
