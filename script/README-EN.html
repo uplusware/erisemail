@@ -62,7 +62,7 @@ td {
 </head>
 
 <body>
-<h1 class="STYLE4">eRisemail Server v1.6 Manual</h1>
+<h1 class="STYLE4">eRisemail Server v1.6.08 Manual</h1>
 <hr>
 <h2 class="STYLE4">About e-risemail server</h2>
 <ul class="STYLE4">
@@ -80,7 +80,7 @@ td {
   <li>Storage is based on MariaDB. So it's easy to maintain and backup mail data via scripts. </li>
   <li class="STYLE3">The best selection for small and medium-sized E-mail application. </li>
   <li>Recommend <em>to</em> install the sytem at <strong><em>Ubutun or CentOS</em></strong></li>
-  <li>The lastest version can be get at <a href="http://www.uplusware.com" target="_blank">www.uplusware.com</a></li>
+  <li>The lastest version can be get at <a href="http://uplusware.com" target="_blank">uplusware.com</a></li>
   <li>Any question please mail to <a href="mailto:uplusware@gmail.com">uplusware@gmail.com</a>  </li>
 </ul>
 <h2 class="STYLE4">New Installation</h2>
@@ -89,14 +89,12 @@ td {
   <ul>
     <li>Prepare the of <em>MySQL Client Library</em> and <em>MySQL Server</em>.</li>
     <li>Recommend to change the value of <font color="#0000FF">max_connections</font> 
-      in <font color="#0000FF">/etc/mysql/my.cnf </font>according your requirement. 
-      (Most often，the value should ve more than <strong><em>MaxConnPerProtocal</em></strong><em> 
-      * 8 + <strong>NumOfForwardTask</strong></em>) </li>
-    <li>Copy the program to local system, two ways are provided. One is installation script, the other is deb.
+      in <font color="#0000FF">/etc/mysql/my.cnf </font>according your requirement.)
+	</li>
+    <li>Copy the program to local system.
       <ul>
         <li><strong>Installation script:</strong> Run the install shell script to copy the mail system files to your local 
           computer: <font color="#0000FF"><strong><em>sudo ./install.sh</em></strong></font></li>
-        <li><strong>deb:</strong> eg.: <span class="STYLE5">sudo dpkg -i erisemail-bin-en-utf8-i686.deb</span></li>
       </ul>
     </li>
   </ul>
@@ -128,20 +126,6 @@ td {
     <li> If you want to delete the installation files, please backup the <strong><em>uninstall.sh</em></strong></li>
   </ul>
 </blockquote>
-<h2 class="STYLE4">Upgrade from v1.3</h2>
-<ul class="STYLE4">
-  <li>    Please backup erisemail database firstly before upgrading</li>
-  <li>    Run <strong><font color="#0000FF"><em>sudo eriseutil --upgrade</em></font></strong></li>
-  <li>     Following the steps of New Installation (Ignore step 4) </li>
-</ul>
-<blockquote class="STYLE4">
-  <ul>
-  </ul>
-</blockquote>
-<h2 class="STYLE4">Upgrade from v1.4</h2>
-<ul class="STYLE4">
-  <li>    Following the steps of New Installation (Ignore step 4)  </li>
-</ul>
 <h2 class="STYLE4">Uninstallation</h2>
 <ul class="STYLE4">
   <li>if you want to delete the database of erisemail, please run<em><font color="#0000FF"><strong> 
@@ -149,19 +133,6 @@ td {
   <li>Remove the program from system. Same as installation, two ways are provided.
     <ul>
       <li> <strong>Uninstall script: </strong>Delete the program's source files:<font color="#0000FF"><em><strong>sudo /var/erisemail/uninstall.sh</strong></em></font></li>
-      <li><strong>deb: </strong><span class="STYLE5">sudo dpkg -r erisemail</span>
-        <ul>
-          <li><span class="STYLE2">Note</span>: The following warnning is correct in remove process. Please don't remove the
-            <span class="STYLE7">&quot;/var/erisemail/private/</span>&quot; because the mail data storage there.
-
-            <ul>
-              <li><span class="STYLE8">dpkg - warning: while removing erisemail, directory `/var/erisemail/private/eml' not empty so not removed.<br>
-                dpkg - warning: while removing erisemail, directory `/var/erisemail/private' not empty so not removed.<br>
-                dpkg - warning: while removing erisemail, directory `/var/erisemail' not empty so not removed.</span><br>
-              </li>
-            </ul>
-          </li>
-        </ul>
       </li>
     </ul>
   </li>

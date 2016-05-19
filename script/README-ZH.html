@@ -57,7 +57,7 @@ td {
 </head>
 
 <body>
-<h1 class="STYLE3"> eRisemail Server v1.6安装使用手册</h1>
+<h1 class="STYLE3"> eRisemail Server v1.6.08 安装使用手册</h1>
 <hr>
 <h2 class="STYLE3">关于 e-risemail server</h2>
 <ul class="STYLE3">
@@ -76,8 +76,8 @@ td {
   <li>支持动态扩充加载反垃圾邮件引擎，支持反垃圾引擎的二次开发 </li>
   <li>数据存储基于MariaDB，很容易通过编写脚本程序维护备份系统数据 </li>
   <li class="STYLE2">部署中小规模邮件系统的最好选择 </li>
-  <li>推荐安装环境为<strong><em>Ubutun 9.10/OpenSolaris 2009.06 + MySQL 5.0</em></strong></li>
-  <li>官方发布网址 <a href="http://www.uplusware.com" target="_blank">www.uplusware.com</a></li>
+  <li>推荐安装OS: Ubutun或CentOS </li>
+  <li>官方发布网址 <a href="http://uplusware.com" target="_blank">uplusware.com</a></li>
   <li>如有任何疑问请发信垂询<a href="mailto:erisesoft@gmail.com">uplusware@gmail.com</a></li>
 </ul>
 <h2 class="STYLE3">全新安装</h2>
@@ -85,14 +85,11 @@ td {
   <h3>步骤 1:</h3>
   <ul>
     <li>准备MySQL Server和客户端运行库.</li>
-    <li>建议根据您的需求修改<font color="#0000FF">max_connections </font>的值（ <font color="#0000FF">/etc/mysql/my.cnf 
-      </font>）(一般值应该大于 <strong><em>MaxConnPerProtocal</em></strong><em> * 8 + 
-      <strong>NumOfForwardTask</strong></em>) </li>
-    <li>安装系统程序，系统提供两种安装方式
-      。一种是通过安装脚本安装，另外一种是通过deb安装包安装
+    <li>建议根据您的需求修改<font color="#0000FF">max_connections </font>的值(<font color="#0000FF">/etc/mysql/my.cnf 
+      </font>)</li>
+    <li>安装系统程序:
       <ul>
         <li><strong>安装脚本：</strong>运行安装脚本复制文件到本地计算机: <font color="#0000FF"><strong><em>sudo ./install.sh</em></strong></font></li>
-        <li><strong>deb安装包：例如: </strong> <span class="STYLE5">sudo dpkg -i erisemail-bin-cn-gb2312-i686.deb</span></li>
       </ul>
     </li>
   </ul>
@@ -120,33 +117,12 @@ td {
     <li> 为了以后卸载程序方便，请备份<strong><em>uninstall.sh</em></strong></li>
   </ul>
 </blockquote>
-<h2 class="STYLE3">从v1.3版本升级</h2>
-<ul class="STYLE3">
-  <li>    先备份数据库</li>
-  <li>    运行<strong><em><font color="#0000FF">sudo eriseutil --upgrade</font></em></strong></li>
-  <li>    执行全新安装步骤（忽略步骤4）</li>
-</ul>
-<h2 class="STYLE3">从v1.4版本升级</h2>
-<ul class="STYLE3">
-  <li>    执行全新安装步骤（忽略步骤4）</li>
-</ul>
 <h2 class="STYLE3">卸载</h2>
 <ul class="STYLE3">
   <li>如果您希望连数据库一起卸载请运行<em><font color="#0000FF"><strong> ./eriseutil --uninstall</strong></font></em>.（注意:以前的信件将全部丢失）</li>
-  <li>删除程序，同样系统提供两种卸载程序方式：
+  <li>删除程序：
     <ul>
       <li><strong>卸载脚本:</strong> <font color="#0000FF"><em><strong>sudo /var/erisemail/uninstall.sh </strong></em></font>删除程序文件</li>
-      <li><strong>deb:</strong> <span class="STYLE5">sudo dpkg -r erisemail</span>
-        <ul>
-          <li>注意: 卸载过程中出现以下告警信息是正常的.请不要试图删除 <span class="STYLE7">&quot;/var/erisemail/private/</span>&quot;，本目录存储了邮件数据.
-            <ul>
-                <li><span class="STYLE8">dpkg - warning: while removing erisemail, directory `/var/erisemail/private/eml' not empty so not removed.<br>
-                  dpkg - warning: while removing erisemail, directory `/var/erisemail/private' not empty so not removed.<br>
-                  dpkg - warning: while removing erisemail, directory `/var/erisemail' not empty so not removed.</span></li>
-            </ul>
-          </li>
-        </ul>
-      </li>
     </ul>
   </li>
 </ul>
