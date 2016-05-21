@@ -1,7 +1,4 @@
-# erisemail
-### Free e-mail server for Linux
-
-* C++ program
+# erisemail - Free e-mail server for Linux
 * Support SMTP, POP3, IMAP4, SSL/TLS, Web mail and Web management
 * Support iCalendar and Mozilla Thunderbird Lightning Plugin
 * Support Mail Group, Customize User Policy and Mail audit
