@@ -199,11 +199,11 @@ Service::~Service()
 
 void Service::Stop()
 {
-	string strqueue = "/.";
+	string strqueue = "/.erisemail_";
 	strqueue += m_service_name;
 	strqueue += "_queue";
 
-	string strsem = "/.";
+	string strsem = "/.erisemail_";
 	strsem += m_service_name;
 	strsem += "_lock";
 	
@@ -233,11 +233,11 @@ void Service::Stop()
 
 void Service::ReloadConfig()
 {
-	string strqueue = "/.";
+	string strqueue = "/.erisemail_";
 	strqueue += m_service_name;
 	strqueue += "_queue";
 
-	string strsem = "/.";
+	string strsem = "/.erisemail_";
 	strsem += m_service_name;
 	strsem += "_lock";
 	
@@ -263,11 +263,11 @@ void Service::ReloadConfig()
 
 void Service::ReloadList()
 {
-	string strqueue = "/.";
+	string strqueue = "/.erisemail_";
 	strqueue += m_service_name;
 	strqueue += "_queue";
 
-	string strsem = "/.";
+	string strsem = "/.erisemail_";
 	strsem += m_service_name;
 	strsem += "_lock";
 	
@@ -313,11 +313,11 @@ int Service::Run(int fd, const char* hostip, unsigned short nPort)
 	}
 	m_child_list.clear();
 	unsigned int result = 0;
-	string strqueue = "/.";
+	string strqueue = "/.erisemail_";
 	strqueue += m_service_name;
 	strqueue += "_queue";
 
-	string strsem = "/.";
+	string strsem = "/.erisemail_";
 	strsem += m_service_name;
 	strsem += "_lock";
 	
