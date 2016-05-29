@@ -1,31 +1,19 @@
 #!/bin/bash
-rm *.key *.csr *.crt
-openssl genrsa -des3 -out ca.key 1024
-#chmod 400 ca.key
-#openssl rsa -noout -text -in ca.key
+touch index.txt serial
+echo 01 > serial
+mkdir private
+mkdir certs
+openssl genrsa -aes256 -out private/cakey.pem 1024
+openssl req -new -key private/cakey.pem -out private/ca.csr -subj "/C=CN/ST=BJ/L=BJ/O=uplusware/OU=uplusware/CN=uplusware"
+openssl x509 -req -days 365 -sha1 -extensions v3_ca -signkey private/cakey.pem -in private/ca.csr -out certs/ca.cer
 
-openssl req -new -x509 -days 3650 -key ca.key -out ca.crt
-#chmod 400 ca.crt 
-#openssl x509 -noout -text -in ca.crt
+openssl genrsa -aes256 -out private/server-key.pem 1024
+openssl req -new -key private/server-key.pem -out private/server.csr -subj "/C=CN/ST=BJ/L=BJ/O=uplusware/OU=uplusware/CN=uplusware"
+openssl x509 -req -days 365 -sha1 -extensions v3_req -CA certs/ca.cer -CAkey private/cakey.pem -CAserial ca.srl -CAcreateserial -in private/server.csr -out certs/server.cer
 
-rm ca.db* -rf
+openssl genrsa -aes256 -out private/client-key.pem 1024
+openssl req -new -key private/client-key.pem -out private/client.csr -subj "/C=CN/ST=BJ/L=BJ/O=uplusware/OU=uplusware/CN=uplusware"
+openssl x509 -req -days 365 -sha1 -extensions v3_req -CA certs/ca.cer -CAkey private/cakey.pem -CAserial ca.srl -in private/client.csr -out certs/client.cer
 
-openssl genrsa -des3 -out server.key 1024 
-#openssl rsa -in server.key -out server.key
-#chmod 400 server.key 
-#openssl rsa -noout -text -in server.key 
-openssl req -new -key server.key -out server.csr 
-#openssl req -noout -text -in server.csr 
-./sign.sh server.csr 
-#chmod 400 server.crt 
-rm ca.db* -rf
-
-openssl genrsa -des3 -out client.key 1024
-#openssl rsa -in client.key -out client.key
-#chmod 400 client.key
-#openssl rsa -noout -text -in client.key
-openssl req -new -key client.key -out client.csr
-#openssl req -noout -text -in client.csr
-./sign.sh client.csr
-#chmod 400 client.crt
-rm ca.db* -rf
+openssl pkcs12 -export -clcerts -name myclient -inkey private/client-key.pem -in certs/client.cer -out certs/client.p12
+openssl pkcs12 -export -clcerts -name myserver -inkey private/server-key.pem -in certs/server.cer -out certs/server.p12

@@ -38,20 +38,20 @@ cp -rf ${path}/html/* /var/erisemail/html/
 cp -f ${path}/erisemail.conf /etc/erisemail/erisemail.conf
 chmod 600 /etc/erisemail/erisemail.conf
 
-cp -f ${path}/erise-root.crt /etc/erisemail/erise-root.crt
-chmod 600 /etc/erisemail/erise-root.crt
+cp -f ${path}/ca.cer /etc/erisemail/ca.cer
+chmod 600 /etc/erisemail/ca.cer
 
-cp -f ${path}/erise-server.key /etc/erisemail/erise-server.key
-chmod 600 /etc/erisemail/erise-server.key
+cp -f ${path}/server-key.pem /etc/erisemail/server-key.pem
+chmod 600 /etc/erisemail/server-key.pem
 
-cp -f ${path}/erise-server.crt /etc/erisemail/erise-server.crt
-chmod 600 /etc/erisemail/erise-server.crt
+cp -f ${path}/server.cer /etc/erisemail/server.cer
+chmod 600 /etc/erisemail/server.cer
 
-cp -f ${path}/erise-server.key /etc/erisemail/erise-client.key
-chmod 600 /etc/erisemail/erise-client.key
+cp -f ${path}/client-key.pem /etc/erisemail/client-key.pem
+chmod 600 /etc/erisemail/client-key.pem
  
-cp -f ${path}/erise-server.crt /etc/erisemail/erise-client.crt
-chmod 600 /etc/erisemail/erise-client.crt
+cp -f ${path}/client.cer /etc/erisemail/client.cer
+chmod 600 /etc/erisemail/client.cer
 
 cp -f ${path}/domain.list /etc/erisemail/domain.list
 chmod a-x /etc/erisemail/domain.list
