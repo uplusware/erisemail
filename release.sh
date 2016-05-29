@@ -149,12 +149,12 @@ cp script/webadmin.list $3-erisemail-bin-en-$2-${m}-${o}/
 
 cp script/erisemail.sh $3-erisemail-bin-en-$2-${m}-${o}/
 
-cp ca/erise-root.crt $3-erisemail-bin-en-$2-${m}-${o}/erise-root.crt
-cp ca/erise-server.crt $3-erisemail-bin-en-$2-${m}-${o}/erise-server.crt
-cp ca/erise-server.key $3-erisemail-bin-en-$2-${m}-${o}/erise-server.key
+cp ca/ca.cer $3-erisemail-bin-en-$2-${m}-${o}/ca.cer
+cp ca/server.cer $3-erisemail-bin-en-$2-${m}-${o}/server.cer
+cp ca/server-key.pem $3-erisemail-bin-en-$2-${m}-${o}/server-key.pem
 
-cp ca/erise-client.crt $3-erisemail-bin-en-$2-${m}-${o}/erise-client.crt
-cp ca/erise-client.key $3-erisemail-bin-en-$2-${m}-${o}/erise-client.key
+cp ca/client.cer $3-erisemail-bin-en-$2-${m}-${o}/client.cer
+cp ca/client-key.pem $3-erisemail-bin-en-$2-${m}-${o}/client-key.pem
 
 cp script/README-EN.html $3-erisemail-bin-en-$2-${m}-${o}/README.html
 cp script/README-ZH.html $3-erisemail-bin-en-$2-${m}-${o}/README.html
