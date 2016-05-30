@@ -741,7 +741,11 @@ BOOL inline create_ssl(int sockfd,
 		goto clean_ssl3;
 	}
 
-	SSL_CTX_set_verify(*pp_ssl_ctx, SSL_VERIFY_PEER, NULL);
+	if(enableclientcacheck)
+	{
+    	SSL_CTX_set_verify(*pp_ssl_ctx, SSL_VERIFY_PEER|SSL_VERIFY_FAIL_IF_NO_PEER_CERT, NULL);
+    	SSL_CTX_set_verify_depth(*pp_ssl_ctx, 4);
+	}
 	
 	SSL_CTX_load_verify_locations(*pp_ssl_ctx, ca_crt_root, NULL);
 	if(SSL_CTX_use_certificate_file(*pp_ssl_ctx, ca_crt_server, SSL_FILETYPE_PEM) <= 0)
@@ -801,7 +805,17 @@ BOOL inline create_ssl(int sockfd,
 	}
 
     bSSLAccepted = TRUE;
-
+    
+    if(enableclientcacheck)
+    {
+        ssl_rc = SSL_get_verify_result(*pp_ssl);
+        if(ssl_rc != X509_V_OK)
+        {
+            fprintf(stderr, "SSL_get_verify_result: %s\n", ERR_error_string(ERR_get_error(),NULL));
+            goto clean_ssl1;
+        }
+    }
+        
 	if(enableclientcacheck)
 	{
 		X509* client_cert;
