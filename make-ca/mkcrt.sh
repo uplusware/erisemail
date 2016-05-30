@@ -3,7 +3,7 @@ _PASSWORD_=123456
 _COUNTRY_="CN"
 _COMMON_NAME_="localhost"
 _ORG_="Uplusware"
-_ORG_UNIT_=
+_ORG_UNIT_="erisemail"
 
 test -x index.txt || touch index.txt
 test -x serial || ( touch serial && echo 01 > serial )
