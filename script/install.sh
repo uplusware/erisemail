@@ -27,6 +27,7 @@ cp -f ${path}/postudf.so /usr/lib/mysql/plugin
 test -x /etc/erisemail || mkdir /etc/erisemail
 test -x /var/erisemail || mkdir /var/erisemail
 test -x /var/erisemail/html || mkdir /var/erisemail/html
+test -x /var/erisemail/cert || mkdir /var/erisemail/cert
 test -x /var/erisemail/private || mkdir /var/erisemail/private
 test -x /var/erisemail/private/eml || mkdir /var/erisemail/private/eml
 test -x /var/erisemail/private/tmp || mkdir /var/erisemail/private/tmp
@@ -38,20 +39,20 @@ cp -rf ${path}/html/* /var/erisemail/html/
 cp -f ${path}/erisemail.conf /etc/erisemail/erisemail.conf
 chmod 600 /etc/erisemail/erisemail.conf
 
-cp -f ${path}/ca.cer /etc/erisemail/ca.cer
-chmod 600 /etc/erisemail/ca.cer
+cp -f ${path}/ca.crt /var/erisemail/cert/ca.crt
+chmod 600 /var/erisemail/cert/ca.crt
 
-cp -f ${path}/server-key.pem /etc/erisemail/server-key.pem
-chmod 600 /etc/erisemail/server-key.pem
+cp -f ${path}/server.key /var/erisemail/cert/server.key
+chmod 600 /var/erisemail/cert/server.key
 
-cp -f ${path}/server.cer /etc/erisemail/server.cer
-chmod 600 /etc/erisemail/server.cer
+cp -f ${path}/server.cer /var/erisemail/cert/server.crt
+chmod 600 /var/erisemail/cert/server.crt
 
-cp -f ${path}/client-key.pem /etc/erisemail/client-key.pem
-chmod 600 /etc/erisemail/client-key.pem
+cp -f ${path}/client-key.pem /var/erisemail/cert/client.key
+chmod 600 /var/erisemail/cert/client.key
  
-cp -f ${path}/client.cer /etc/erisemail/client.cer
-chmod 600 /etc/erisemail/client.cer
+cp -f ${path}/client.cer /var/erisemail/cert/client.crt
+chmod 600 /var/erisemail/cert/client.crt
 
 cp -f ${path}/domain.list /etc/erisemail/domain.list
 chmod a-x /etc/erisemail/domain.list

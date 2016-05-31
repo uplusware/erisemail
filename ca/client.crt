@@ -1,0 +1,69 @@
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number: 2 (0x2)
+    Signature Algorithm: sha256WithRSAEncryption
+        Issuer: C=CN, ST=BJ, O=Uplusware, OU=erisemail, CN=localhost
+        Validity
+            Not Before: May 31 03:18:26 2016 GMT
+            Not After : May 29 03:18:26 2026 GMT
+        Subject: C=CN, ST=BJ, O=Uplusware, OU=erisemail, CN=127.0.0.1
+        Subject Public Key Info:
+            Public Key Algorithm: rsaEncryption
+                Public-Key: (1024 bit)
+                Modulus:
+                    00:cb:8f:94:39:71:57:cb:c9:7a:71:48:55:ae:bf:
+                    14:85:62:89:f4:34:02:b0:7f:81:54:c6:a7:2c:56:
+                    c1:16:8f:c8:d1:8c:d4:85:d3:c6:6e:6d:16:27:f8:
+                    5e:82:cc:66:aa:01:ae:80:45:0f:50:c6:3a:00:e4:
+                    0d:40:c8:87:c2:37:65:68:92:7f:d4:54:78:2b:56:
+                    3b:90:42:ec:f4:42:f8:10:c9:ff:bc:46:f3:ae:63:
+                    c3:87:e9:a5:a8:f8:5f:95:a8:f7:64:2d:8a:4e:a3:
+                    08:5b:9b:bc:b1:7f:a2:96:82:02:89:15:0a:73:38:
+                    e7:31:23:4d:28:14:fe:ac:cd
+                Exponent: 65537 (0x10001)
+        X509v3 extensions:
+            X509v3 Basic Constraints: 
+                CA:FALSE
+            Netscape Comment: 
+                OpenSSL Generated Certificate
+            X509v3 Subject Key Identifier: 
+                B7:1E:AA:C8:DE:E3:DF:04:05:B7:86:EB:69:9F:B5:AB:4F:73:57:A9
+            X509v3 Authority Key Identifier: 
+                keyid:56:13:7E:99:DE:12:0E:DC:EB:C5:C3:A3:70:FC:F1:C7:12:1D:1B:00
+
+    Signature Algorithm: sha256WithRSAEncryption
+         93:99:92:bb:91:4d:dc:d8:a5:9e:eb:81:92:4a:ae:14:b1:79:
+         d3:8c:c8:0d:cd:aa:f7:33:76:82:db:6e:55:0e:79:a0:99:01:
+         e2:65:84:0a:64:49:92:a8:9d:84:30:05:08:57:9e:fd:a9:c2:
+         28:9f:3a:3a:9d:69:d3:86:86:08:50:32:14:13:b3:6f:c2:6e:
+         6f:e7:f9:a2:ca:64:38:db:6e:47:ae:19:90:47:43:a1:b7:2e:
+         f4:94:35:42:5c:d2:c4:ec:e4:86:5f:a6:21:0d:96:e9:46:b3:
+         12:81:f7:3b:88:80:bf:7f:b8:06:9f:72:30:0d:83:35:4e:5a:
+         47:3b:8b:4c:49:5d:aa:dd:14:57:d4:78:b5:3f:31:90:97:e6:
+         6b:46:d2:33:de:bb:48:a4:69:8f:6a:c8:45:35:6e:54:a9:fb:
+         72:1f:d3:07:c3:5e:e6:9c:59:53:b4:f4:f7:55:0e:c9:30:b1:
+         3c:78:54:e5:d0:61:fc:0f:b0:b2:97:e2:b1:f3:f9:6e:7b:80:
+         b3:f8:d0:d1:1d:1d:67:99:14:c4:2e:76:2a:41:3d:a8:85:80:
+         43:53:98:82:d0:7f:08:00:1a:04:c4:cd:f5:21:da:65:6f:2c:
+         0f:9e:cb:94:4b:a7:4a:36:f4:bc:aa:88:b4:eb:a4:7c:47:f9:
+         d2:ac:3f:be
+-----BEGIN CERTIFICATE-----
+MIIDHjCCAgagAwIBAgIBAjANBgkqhkiG9w0BAQsFADBWMQswCQYDVQQGEwJDTjEL
+MAkGA1UECAwCQkoxEjAQBgNVBAoMCVVwbHVzd2FyZTESMBAGA1UECwwJZXJpc2Vt
+YWlsMRIwEAYDVQQDDAlsb2NhbGhvc3QwHhcNMTYwNTMxMDMxODI2WhcNMjYwNTI5
+MDMxODI2WjBWMQswCQYDVQQGEwJDTjELMAkGA1UECAwCQkoxEjAQBgNVBAoMCVVw
+bHVzd2FyZTESMBAGA1UECwwJZXJpc2VtYWlsMRIwEAYDVQQDDAkxMjcuMC4wLjEw
+gZ8wDQYJKoZIhvcNAQEBBQADgY0AMIGJAoGBAMuPlDlxV8vJenFIVa6/FIViifQ0
+ArB/gVTGpyxWwRaPyNGM1IXTxm5tFif4XoLMZqoBroBFD1DGOgDkDUDIh8I3ZWiS
+f9RUeCtWO5BC7PRC+BDJ/7xG865jw4fppaj4X5Wo92Qtik6jCFubvLF/opaCAokV
+CnM45zEjTSgU/qzNAgMBAAGjezB5MAkGA1UdEwQCMAAwLAYJYIZIAYb4QgENBB8W
+HU9wZW5TU0wgR2VuZXJhdGVkIENlcnRpZmljYXRlMB0GA1UdDgQWBBS3HqrI3uPf
+BAW3hutpn7WrT3NXqTAfBgNVHSMEGDAWgBRWE36Z3hIO3OvFw6Nw/PHHEh0bADAN
+BgkqhkiG9w0BAQsFAAOCAQEAk5mSu5FN3NilnuuBkkquFLF504zIDc2q9zN2gttu
+VQ55oJkB4mWECmRJkqidhDAFCFee/anCKJ86Op1p04aGCFAyFBOzb8Jub+f5ospk
+ONtuR64ZkEdDobcu9JQ1QlzSxOzkhl+mIQ2W6UazEoH3O4iAv3+4Bp9yMA2DNU5a
+RzuLTEldqt0UV9R4tT8xkJfma0bSM967SKRpj2rIRTVuVKn7ch/TB8Ne5pxZU7T0
+91UOyTCxPHhU5dBh/A+wspfisfP5bnuAs/jQ0R0dZ5kUxC52KkE9qIWAQ1OYgtB/
+CAAaBMTN9SHaZW8sD57LlEunSjb0vKqItOukfEf50qw/vg==
+-----END CERTIFICATE-----

@@ -92,12 +92,14 @@ cp script/webadmin.list $3-erisemail-bin-cn-$2-${m}-${o}/
 
 cp script/erisemail.sh $3-erisemail-bin-cn-$2-${m}-${o}/
 
-cp ca/ca.cer $3-erisemail-bin-cn-$2-${m}-${o}/ca.cer
-cp ca/server.cer $3-erisemail-bin-cn-$2-${m}-${o}/server.cer
-cp ca/server-key.pem $3-erisemail-bin-cn-$2-${m}-${o}/server-key.pem
+cp ca/ca.crt $3-erisemail-bin-cn-$2-${m}-${o}/ca.crt
+cp ca/server.crt $3-erisemail-bin-cn-$2-${m}-${o}/server.crt
+cp ca/server.p12 $3-erisemail-bin-cn-$2-${m}-${o}/server.p12
+cp ca/server.key $3-erisemail-bin-cn-$2-${m}-${o}/server.key
 
-cp ca/client.cer $3-erisemail-bin-cn-$2-${m}-${o}/client.cer
-cp ca/client-key.pem $3-erisemail-bin-cn-$2-${m}-${o}/client-key.pem
+cp ca/client.crt $3-erisemail-bin-cn-$2-${m}-${o}/client.crt
+cp ca/client.p12 $3-erisemail-bin-cn-$2-${m}-${o}/client.p12
+cp ca/client.key $3-erisemail-bin-cn-$2-${m}-${o}/client.key
 
 cp script/README-EN.html $3-erisemail-bin-cn-$2-${m}-${o}/
 cp script/README-ZH.html $3-erisemail-bin-cn-$2-${m}-${o}/
@@ -149,12 +151,14 @@ cp script/webadmin.list $3-erisemail-bin-en-$2-${m}-${o}/
 
 cp script/erisemail.sh $3-erisemail-bin-en-$2-${m}-${o}/
 
-cp ca/ca.cer $3-erisemail-bin-en-$2-${m}-${o}/ca.cer
-cp ca/server.cer $3-erisemail-bin-en-$2-${m}-${o}/server.cer
-cp ca/server-key.pem $3-erisemail-bin-en-$2-${m}-${o}/server-key.pem
+cp ca/ca.crt $3-erisemail-bin-en-$2-${m}-${o}/ca.crt
+cp ca/server.p12 $3-erisemail-bin-en-$2-${m}-${o}/server.p12
+cp ca/server.crt $3-erisemail-bin-en-$2-${m}-${o}/server.crt
+cp ca/server.key $3-erisemail-bin-en-$2-${m}-${o}/server.key
 
-cp ca/client.cer $3-erisemail-bin-en-$2-${m}-${o}/client.cer
-cp ca/client-key.pem $3-erisemail-bin-en-$2-${m}-${o}/client-key.pem
+cp ca/client.p12 $3-erisemail-bin-en-$2-${m}-${o}/client.p12
+cp ca/client.crt $3-erisemail-bin-en-$2-${m}-${o}/client.crt
+cp ca/client.key $3-erisemail-bin-en-$2-${m}-${o}/client.key
 
 cp script/README-EN.html $3-erisemail-bin-en-$2-${m}-${o}/README.html
 cp script/README-ZH.html $3-erisemail-bin-en-$2-${m}-${o}/README.html
