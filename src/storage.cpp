@@ -58,7 +58,7 @@ MailStorage::~MailStorage()
 
 int MailStorage::Connect(const char * host, const char* username, const char* password, const char* database, unsigned short port)
 {
-	if(m_bOpened)
+	if(m_hMySQL && Ping() == 0)
 	{
 		return 0;
 	}
@@ -85,7 +85,7 @@ int MailStorage::Connect(const char * host, const char* username, const char* pa
 		{
 			m_bOpened = FALSE;
             m_hMySQL = NULL;
-			printf("mysql_real_connect: %s\n", mysql_error(m_hMySQL));
+			fprintf(stderr, "mysql_real_connect: %s\n", mysql_error(m_hMySQL));
 			return -1;	
 		}
 	}
@@ -93,24 +93,20 @@ int MailStorage::Connect(const char * host, const char* username, const char* pa
 
 void MailStorage::Close()
 {
-	if(m_bOpened)
-	{
-		//printf("mysql closed\n");
-        if(m_hMySQL)
-            mysql_close(m_hMySQL);
-        m_hMySQL = NULL;
-		mysql_thread_end();
-		m_bOpened = FALSE;
-		m_bOpened = FALSE;
-	}
+    if(m_hMySQL)
+        mysql_close(m_hMySQL);
+    m_hMySQL = NULL;
+	mysql_thread_end();
+	m_bOpened = FALSE;
+	m_bOpened = FALSE;
 }
 
 int MailStorage::Ping()
 {
 	if(m_bOpened)
 	{
-		//printf("mysql ping\n");
-		return mysql_ping(m_hMySQL);
+	    int rc = mysql_ping(m_hMySQL);
+		return rc;
 	}
 	else
 	{

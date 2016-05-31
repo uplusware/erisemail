@@ -28,7 +28,7 @@ ifdef SOLARIS
 MDEF = _SOLARIS_OS_
 INCDIR = -I/usr/mysql/5.0/include/mysql/
 LDDIRS = -L/usr/mysql/5.0/lib/mysql/
-LDLIST_STG = -lstdc++ -lrt -lmysqlclient_r
+LDLIST_STG = -lstdc++ -lrt -lmysqlclient
 LDLIST_JKS = -lstdc++
 LDLIST_SVR = -lstdc++ -lrt -lssl -ldl -lsocket -lnsl -lcrypto -lpthread
 LDLIST_UTL = -lstdc++ -lssl -lcrypto -lnsl
@@ -36,7 +36,7 @@ else ifdef CYGWIN
 MDEF = _CYGWIN_
 INCDIR = -I/usr/include/mysql/ 
 LDDIRS = 
-LDLIST_STG = -lstdc++ -lrt -lmysqlclient_r -lpthread
+LDLIST_STG = -lstdc++ -lrt -lmysqlclient -lpthread
 LDLIST_JKS = -lstdc++
 LDLIST_SVR = -lstdc++ -lrt -ldl -lssl -lcrypto -liconv -lpthread
 LDLIST_UTL = -lstdc++ -lssl -lcrypto
@@ -44,7 +44,7 @@ else
 MDEF = _LINUX_OS_
 INCDIR = -I/usr/include/mysql/ 
 LDDIRS = -L/usr/lib/x86_64-linux-gnu/ 
-LDLIST_STG = -lstdc++ -lrt -lmariadbclient_r -lpthread
+LDLIST_STG = -lstdc++ -lrt -lmariadbclient -lpthread
 LDLIST_JKS = -lstdc++
 LDLIST_SVR = -lstdc++ -lrt -ldl -lssl -lcrypto -lpthread -lmemcached
 LDLIST_UTL = -lstdc++ -lssl -lcrypto -lpthread

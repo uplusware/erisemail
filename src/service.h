@@ -22,8 +22,8 @@
 static char LOGNAME[256] = "/var/log/erisemail/SERVICE.log";
 static char LCKNAME[256] = "/.ERISEMAIL_SYS.LOG";
 
-static const char* SVR_NAME_TBL[] = {NULL, "SMTP",	"POP3",	"IMAP",	"WebMail",	"SMTPS", 		"POP3S", 		"IMAPS", 		"WebMailSecure",		"RELAY", NULL};
-static const char* SVR_DESP_TBL[] = {NULL, "SMTP",	"POP3",	"IMAP",	"WebMail",	"SMTP on SSL",	"POP3 on SSL",	"IMAP on SSL",	"WebMail Secure",	"Relay", NULL};
+static const char* SVR_NAME_TBL[] = {NULL, "SMTP",	"POP3",	"IMAP",	"WebMail",	"SMTPS", 		"POP3S", 		"IMAPS", 		"WebMailS",		"RELAY", NULL};
+static const char* SVR_DESP_TBL[] = {NULL, "SMTP",	"POP3",	"IMAP",	"WebMail",	"SMTP on SSL",	"POP3 on SSL",	"IMAP on SSL",	"WebMail on SSL",	"Relay", NULL};
 
 void push_reject_list(Service_Type st, const char* ip);
 

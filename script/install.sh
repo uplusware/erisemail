@@ -45,13 +45,13 @@ chmod 600 /var/erisemail/cert/ca.crt
 cp -f ${path}/server.key /var/erisemail/cert/server.key
 chmod 600 /var/erisemail/cert/server.key
 
-cp -f ${path}/server.cer /var/erisemail/cert/server.crt
+cp -f ${path}/server.crt /var/erisemail/cert/server.crt
 chmod 600 /var/erisemail/cert/server.crt
 
-cp -f ${path}/client-key.pem /var/erisemail/cert/client.key
+cp -f ${path}/client.key /var/erisemail/cert/client.key
 chmod 600 /var/erisemail/cert/client.key
  
-cp -f ${path}/client.cer /var/erisemail/cert/client.crt
+cp -f ${path}/client.crt /var/erisemail/cert/client.crt
 chmod 600 /var/erisemail/cert/client.crt
 
 cp -f ${path}/domain.list /etc/erisemail/domain.list

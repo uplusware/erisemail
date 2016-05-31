@@ -9,7 +9,7 @@ StorageEngine::StorageEngine(const char * host, const char* username, const char
 	m_maxConn = maxConn;
 	m_realConn = 0;
 	m_engine = new stStorageEngine[m_maxConn];
-	
+	sem_init(&m_engineSem, 0, m_maxConn);
 	for(int i = 0; i < m_maxConn; i++)
 	{
 		m_engine[i].storage = new MailStorage(CMailBase::m_encoding.c_str(), CMailBase::m_private_path.c_str(), CMailBase::m_global_uid);
@@ -43,6 +43,8 @@ StorageEngine::~StorageEngine()
 		delete[] m_engine;
 	pthread_mutex_unlock(&m_engineMutex);
 	pthread_mutex_destroy(&m_engineMutex);
+	
+	sem_close(&m_engineSem);
 }
 
 MailStorage* StorageEngine::WaitEngine(int &index)
@@ -52,17 +54,16 @@ MailStorage* StorageEngine::WaitEngine(int &index)
     index = 0;
 	MailStorage* freeOne = NULL;
 	pthread_mutex_lock(&m_engineMutex);
+	sem_wait(&m_engineSem);
 	for(i = 0; i < m_maxConn; i++)
 	{
-		if(m_engine[i].opened == TRUE && m_engine[i].storage != NULL)
+		if(m_engine[i].opened == TRUE && m_engine[i].storage != NULL && m_engine[index].inUse == FALSE)
 		{
-		      if(lastMinCount > m_engine[i].usedCount)
-		      {
-			  lastMinCount = m_engine[i].usedCount;
-			  index = i;
-		      }
+		    index = i;
+		    break;
 		}
 	}
+    sem_post(&m_engineSem);
     
     m_engine[index].inUse = TRUE;
     m_engine[index].lTime = time(NULL);
@@ -72,22 +73,18 @@ MailStorage* StorageEngine::WaitEngine(int &index)
     
 	if(m_engine[index].storage->Ping() != 0)
 	{
-		printf("Reconnect\n");
+		
 		m_engine[index].storage->Close();
-		for(int x = 0; x < 10; x++)
-		{
-		    if(m_engine[index].storage->Connect(m_host.c_str(),
-		        m_username.c_str(), m_password.c_str(), m_database.c_str()) == 0)
-		    {
-		        freeOne = m_engine[index].storage;
-		        break;
-		    }
-		    else
-		    {
-		        printf("sleep 1000 for ");
-		        usleep(1000*500);
-		    }
-		}
+		if(m_engine[index].storage->Connect(m_host.c_str(),
+	        m_username.c_str(), m_password.c_str(), m_database.c_str()) == 0)
+	    {
+	        freeOne = m_engine[index].storage;
+	    }
+	    else
+	    {
+	       fprintf(stderr, "the mysql connection is not avaliable.\n");
+	       freeOne = NULL;
+	    }
 	}
 	else
 	{
