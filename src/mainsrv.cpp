@@ -220,11 +220,11 @@ int Run()
 				close(pfd[1]);
 				read(pfd[0], &result, sizeof(unsigned int));
 				if(result == 0)
-					printf("Start HTTP Service OK \t\t\t[%u]\n", http_pid);
+					printf("Start WebMail Service OK \t\t[%u]\n", http_pid);
 				else
 				{
-					uTrace.Write(Trace_Error, "%s", "Start HTTP Service Failed.");
-					printf("Start HTTP Service Failed. \t\t\t[Error]\n");
+					uTrace.Write(Trace_Error, "%s", "Start WebMail Service Failed.");
+					printf("Start WebMail Service Failed. \t\t[Error]\n");
 				}
 				close(pfd[0]);
 			}
@@ -397,11 +397,11 @@ int Run()
 				close(pfd[1]);
 				read(pfd[0], &result, sizeof(unsigned int));
 				if(result == 0)
-					printf("Start HTTP on SSL Service OK \t\t[%u]\n", https_pid);
+					printf("Start WebMail on SSL Service OK \t[%u]\n", https_pid);
 				else
 				{
-					uTrace.Write(Trace_Error, "%s", "Start HTTP on SSL Service Failed.");
-					printf("Start HTTP on SSL Service Failed. \t\t[Error]\n");
+					uTrace.Write(Trace_Error, "%s", "Start WebMail on SSL Service Failed.");
+					printf("Start WebMail on SSL Service Failed. \t[Error]\n");
 				}
 				close(pfd[0]);
 			}

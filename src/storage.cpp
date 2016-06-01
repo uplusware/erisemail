@@ -316,11 +316,12 @@ int MailStorage::CheckAdmin(const char* username, const char* password)
 	sprintf(sqlcmd, "select uname from usertbl where uname='%s' and DECODE(upasswd,'%s') = '%s' and ustatus = %d and urole=%d and utype = %d", strSafetyUsername.c_str(), CODE_KEY, password, usActive, urAdministrator, utMember);
 
 	//printf("%s\r\n", sqlcmd);
-	
-	if( mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	pthread_mutex_lock(&m_thread_pool_mutex);
+	if( mysql_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		qResult = mysql_store_result(m_hMySQL);
+		pthread_mutex_unlock(&m_thread_pool_mutex);
 		if(qResult)
 		{
 			if( mysql_num_rows(qResult) > 0 )
@@ -339,6 +340,7 @@ int MailStorage::CheckAdmin(const char* username, const char* password)
 	}
 	else
 	{
+	    pthread_mutex_unlock(&m_thread_pool_mutex);
 		printf("%s", mysql_error(m_hMySQL));
 		return -1;
 	}
@@ -354,13 +356,14 @@ int MailStorage::CheckLogin(const char* username, const char* password)
     {
         m_userpwd_cache.clear();
         sprintf(sqlcmd, "select uname, DECODE(upasswd,'%s') from usertbl where ustatus = %d and utype = %d", CODE_KEY, usActive, utMember);
-
-        if( mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+        pthread_mutex_lock(&m_thread_pool_mutex);
+        if( mysql_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
         {
             MYSQL_RES *qResult;
             MYSQL_ROW row;
             
             qResult = mysql_store_result(m_hMySQL);
+            pthread_mutex_unlock(&m_thread_pool_mutex);
             if(qResult)
             {           
                 while((row = mysql_fetch_row(qResult)))
@@ -381,6 +384,7 @@ int MailStorage::CheckLogin(const char* username, const char* password)
         }
         else
         {
+            pthread_mutex_unlock(&m_thread_pool_mutex);
             printf("%s\n", mysql_error(m_hMySQL));
             return -1;
         }
@@ -403,10 +407,12 @@ int MailStorage::GetPassword(const char* username, string& password)
 	SqlSafetyString(strSafetyUsername);
 		
 	sprintf(sqlcmd, "select DECODE(upasswd,'%s') from usertbl where uname='%s' and utype=%d", CODE_KEY, strSafetyUsername.c_str(), utMember);
-	if( mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	pthread_mutex_lock(&m_thread_pool_mutex);
+	if( mysql_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		qResult = mysql_store_result(m_hMySQL);
+		pthread_mutex_unlock(&m_thread_pool_mutex);
 		if(qResult)
 		{
 			if( mysql_num_rows(qResult) == 1 )
@@ -436,6 +442,7 @@ int MailStorage::GetPassword(const char* username, string& password)
 	}
 	else
 	{
+	    pthread_mutex_unlock(&m_thread_pool_mutex);
 		printf("%s\n", mysql_error(m_hMySQL));
 		return -1;
 	}
@@ -448,10 +455,12 @@ int MailStorage::VerifyUser(const char* username)
 	SqlSafetyString(strSafetyUsername);
 	
 	sprintf(sqlcmd, "select uname from usertbl where uname='%s' and utype=%d", strSafetyUsername.c_str(), utMember);
-	if( mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	pthread_mutex_lock(&m_thread_pool_mutex);
+	if( mysql_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		qResult = mysql_store_result(m_hMySQL);
+		pthread_mutex_unlock(&m_thread_pool_mutex);
 		if(qResult)
 		{
 			if( mysql_num_rows(qResult) > 0 )
@@ -469,17 +478,22 @@ int MailStorage::VerifyUser(const char* username)
 			return -1;
 	}
 	else
+	{
+	    pthread_mutex_unlock(&m_thread_pool_mutex);
 		return -1;
+	}
 }
 
 int MailStorage::VerifyGroup(const char* groupname)
 {
 	char sqlcmd[1024];
 	sprintf(sqlcmd, "select uname from usertbl where uname='%s' and utype=%d", groupname, utGroup);
-	if( mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	pthread_mutex_lock(&m_thread_pool_mutex);
+	if( mysql_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		qResult = mysql_store_result(m_hMySQL);
+		pthread_mutex_unlock(&m_thread_pool_mutex);
 		if(qResult)
 		{
 			if( mysql_num_rows(qResult) > 0 )
@@ -497,7 +511,10 @@ int MailStorage::VerifyGroup(const char* groupname)
 			return -1;
 	}
 	else
+	{
+	    pthread_mutex_unlock(&m_thread_pool_mutex);
 		return -1;
+	}
 }
 
 int MailStorage::AddLevel(const char* lname, const char* ldescription, unsigned long long mailmaxsize, unsigned long long boxmaxsize, EnableAudit lenableaudit, unsigned int mailsizethreshold, unsigned int attachsizethreshold, unsigned int& lid)
@@ -642,12 +659,14 @@ int MailStorage::GetDefaultLevel(int& lid)
 	char sqlcmd[1024];
 
 	sprintf(sqlcmd, "select lid from leveltbl where ldefault = %d", ldTrue);
-	if( mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	pthread_mutex_lock(&m_thread_pool_mutex);
+	if( mysql_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
 		
 		qResult = mysql_store_result(m_hMySQL);
+		pthread_mutex_unlock(&m_thread_pool_mutex);
 		if(qResult)
 		{
 			row = mysql_fetch_row(qResult);
@@ -672,7 +691,10 @@ int MailStorage::GetDefaultLevel(int& lid)
 		}
 	}
 	else
+	{
+	    pthread_mutex_unlock(&m_thread_pool_mutex);
 		return -1;
+	}
 }
 
 int MailStorage::GetDefaultLevel(Level_Info& liinfo)
@@ -680,12 +702,14 @@ int MailStorage::GetDefaultLevel(Level_Info& liinfo)
 	char sqlcmd[1024];
 
 	sprintf(sqlcmd, "select lid, lname, ldescription, lmailmaxsize, lboxmaxsize, lenableaudit, lmailsizethreshold, lattachsizethreshold, ldefault, ltime  from leveltbl where ldefault = %d", ldTrue);
-	if( mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	pthread_mutex_lock(&m_thread_pool_mutex);
+	if( mysql_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
 		
 		qResult = mysql_store_result(m_hMySQL);
+		pthread_mutex_unlock(&m_thread_pool_mutex);
 		if(qResult)
 		{
 			row = mysql_fetch_row(qResult);
@@ -717,7 +741,10 @@ int MailStorage::GetDefaultLevel(Level_Info& liinfo)
 		}
 	}
 	else
+	{
+	    pthread_mutex_unlock(&m_thread_pool_mutex);
 		return -1;
+	}
 }
 
 int MailStorage::ListLevel(vector<Level_Info>& litbl)
@@ -726,13 +753,14 @@ int MailStorage::ListLevel(vector<Level_Info>& litbl)
 	char sqlcmd[1024];
 
 	sprintf(sqlcmd, "select lid, lname, ldescription, lmailmaxsize, lboxmaxsize, lenableaudit, lmailsizethreshold, lattachsizethreshold, ldefault, ltime from leveltbl order by ltime");
-
-	if( mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	pthread_mutex_lock(&m_thread_pool_mutex);
+	if( mysql_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{		
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
 		
 		qResult = mysql_store_result(m_hMySQL);
+		pthread_mutex_unlock(&m_thread_pool_mutex);
 		if(qResult)
 		{			
 			while((row = mysql_fetch_row(qResult)))
@@ -762,7 +790,8 @@ int MailStorage::ListLevel(vector<Level_Info>& litbl)
 	}
 	else
 	{
-		//printf("%s: %s\n", sqlcmd, mysql_error(m_hMySQL));
+	    pthread_mutex_unlock(&m_thread_pool_mutex);
+		printf("%s: %s\n", sqlcmd, mysql_error(m_hMySQL));
 		return -1;
 	}
 		
@@ -779,13 +808,15 @@ int MailStorage::GetLevel(int lid, Level_Info& linfo)
 	{
 		return -1;
 	}
-
-	if( mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	
+	pthread_mutex_lock(&m_thread_pool_mutex);
+	if( mysql_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{		
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
 		
 		qResult = mysql_store_result(m_hMySQL);
+		pthread_mutex_unlock(&m_thread_pool_mutex);
 		if(qResult)
 		{
 			row = mysql_fetch_row(qResult);
@@ -817,7 +848,8 @@ int MailStorage::GetLevel(int lid, Level_Info& linfo)
 	}
 	else
 	{
-		//printf("%s: %s\n", sqlcmd, mysql_error(m_hMySQL));
+	    pthread_mutex_unlock(&m_thread_pool_mutex);
+		printf("%s: %s\n", sqlcmd, mysql_error(m_hMySQL));
 		return -1;
 	}
 		
@@ -957,10 +989,12 @@ int MailStorage::DelAllMailOfDir(int mdirid)
 {
 	char sqlcmd[1024];
 	sprintf(sqlcmd, "update mailtbl set mstatus=(mstatus|%d) where mdirid=%d", MSG_ATTR_DELETED, mdirid);
-	if( mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	pthread_mutex_lock(&m_thread_pool_mutex);
+	if( mysql_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;		
 		qResult = mysql_store_result(m_hMySQL);
+		pthread_mutex_unlock(&m_thread_pool_mutex);
 		if(qResult)
 		{
 			mysql_free_result(qResult);
@@ -974,6 +1008,7 @@ int MailStorage::DelAllMailOfDir(int mdirid)
 	}
 	else
 	{
+	    pthread_mutex_unlock(&m_thread_pool_mutex);
 		printf("%s: %s\n", sqlcmd, mysql_error(m_hMySQL));
 		return -1;
 	}
@@ -985,12 +1020,14 @@ int MailStorage::DelAllMailOfID(const char* username)
 	char sqlcmd[1024];
 
 	sprintf(sqlcmd, "select did from dirtbl where downer='%s'", username);
-	if( mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	pthread_mutex_lock(&m_thread_pool_mutex);
+	if( mysql_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
 		
 		qResult = mysql_store_result(m_hMySQL);
+		pthread_mutex_unlock(&m_thread_pool_mutex);
 		if(qResult)
 		{
 			while((row = mysql_fetch_row(qResult)))
@@ -1007,7 +1044,10 @@ int MailStorage::DelAllMailOfID(const char* username)
 		return 0;
 	}
 	else
+	{
+	    pthread_mutex_unlock(&m_thread_pool_mutex);
 		return -1;	
+	}
 }
 
 int MailStorage::DelID(const char* username)
@@ -1427,12 +1467,14 @@ int MailStorage::ListMailByDir(const char* username, vector<Mail_Info>& listtbl,
 		return -1;
 	}
 	sprintf(sqlcmd, "select mbody, muniqid,mid,mtime,mstatus,mfrom,mto,mtx,mdirid from mailtbl where mdirid=%d and mstatus&%d<>%d order by mid", did , MSG_ATTR_DELETED, MSG_ATTR_DELETED);
-	if( mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	pthread_mutex_lock(&m_thread_pool_mutex);
+	if( mysql_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
 		
 		qResult = mysql_store_result(m_hMySQL);
+		pthread_mutex_unlock(&m_thread_pool_mutex);
 		if(qResult)
 		{
 			while((row = mysql_fetch_row(qResult)))
@@ -1478,7 +1520,10 @@ int MailStorage::ListMailByDir(const char* username, vector<Mail_Info>& listtbl,
 		}
 	}
 	else
+	{
+	    pthread_mutex_unlock(&m_thread_pool_mutex);
 		return -1;
+	}
 }
 
 int MailStorage::ListMailByDir(const char* username, vector<Mail_Info>& listtbl, unsigned int dirid)
@@ -1486,12 +1531,14 @@ int MailStorage::ListMailByDir(const char* username, vector<Mail_Info>& listtbl,
 	listtbl.clear();
 	char sqlcmd[1024];
 	sprintf(sqlcmd, "select mbody, muniqid,mid,mtime,mstatus,mfrom,mto,mtx,mdirid from mailtbl where mdirid=%d and mstatus&%d<>%d order by mtime desc", dirid , MSG_ATTR_DELETED, MSG_ATTR_DELETED);
-	if( mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	pthread_mutex_lock(&m_thread_pool_mutex);
+	if( mysql_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
 		
 		qResult = mysql_store_result(m_hMySQL);
+		pthread_mutex_unlock(&m_thread_pool_mutex);
 		if(qResult)
 		{
 			while((row = mysql_fetch_row(qResult)))
@@ -1536,7 +1583,10 @@ int MailStorage::ListMailByDir(const char* username, vector<Mail_Info>& listtbl,
 		}
 	}
 	else
+	{
+		pthread_mutex_unlock(&m_thread_pool_mutex);
 		return -1;
+	}
 }
 
 int MailStorage::LimitListMailByDir(const char* username, vector<Mail_Info>& listtbl, unsigned int dirid, int beg, int rows)
@@ -1544,12 +1594,14 @@ int MailStorage::LimitListMailByDir(const char* username, vector<Mail_Info>& lis
 	listtbl.clear();
 	char sqlcmd[1024];
 	sprintf(sqlcmd, "select mbody,muniqid,mid,mtime,mstatus,mfrom,mto,mtx,mdirid from mailtbl where mdirid=%d and mstatus&%d<>%d order by mtime desc limit %d, %d", dirid , MSG_ATTR_DELETED, MSG_ATTR_DELETED, beg, rows);
-	if( mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	pthread_mutex_lock(&m_thread_pool_mutex);
+	if( mysql_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
 		
 		qResult = mysql_store_result(m_hMySQL);
+		pthread_mutex_unlock(&m_thread_pool_mutex);
 		if(qResult)
 		{
 			while((row = mysql_fetch_row(qResult)))
@@ -1595,7 +1647,10 @@ int MailStorage::LimitListMailByDir(const char* username, vector<Mail_Info>& lis
 		}
 	}
 	else
+	{
+	    pthread_mutex_unlock(&m_thread_pool_mutex);
 		return -1;
+	}
 }
 
 int MailStorage::LimitListUnauditedMailByDir(const char* username, vector<Mail_Info>& listtbl, int beg, int rows)
@@ -1603,12 +1658,14 @@ int MailStorage::LimitListUnauditedMailByDir(const char* username, vector<Mail_I
 	listtbl.clear();
 	char sqlcmd[1024];
 	sprintf(sqlcmd, "select mbody,muniqid,mid,mtime,mstatus,mfrom,mto,mtx,mdirid from mailtbl where mstatus&%d<>%d and mstatus&%d=%d order by mtime limit %d, %d", MSG_ATTR_DELETED, MSG_ATTR_DELETED, MSG_ATTR_UNAUDITED, MSG_ATTR_UNAUDITED, beg, rows);
-	if( mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	pthread_mutex_lock(&m_thread_pool_mutex);
+	if( mysql_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
 		
 		qResult = mysql_store_result(m_hMySQL);
+		pthread_mutex_unlock(&m_thread_pool_mutex);
 		if(qResult)
 		{
 			while((row = mysql_fetch_row(qResult)))
@@ -1654,7 +1711,10 @@ int MailStorage::LimitListUnauditedMailByDir(const char* username, vector<Mail_I
 		}
 	}
 	else
+	{
+	    pthread_mutex_unlock(&m_thread_pool_mutex);
 		return -1;
+	}
 }
 
 int MailStorage::ListAllMail(vector<Mail_Info>& listtbl)
@@ -1662,12 +1722,14 @@ int MailStorage::ListAllMail(vector<Mail_Info>& listtbl)
 	listtbl.clear();
 	char sqlcmd[1024];
 	sprintf(sqlcmd, "select mbody,muniqid,mid,mtime,mstatus,mfrom,mto,mtx,mdirid from mailtbl where mstatus&%d<>%d order by mtime desc", MSG_ATTR_DELETED, MSG_ATTR_DELETED);
-	if( mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	pthread_mutex_lock(&m_thread_pool_mutex);
+	if( mysql_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
 		
 		qResult = mysql_store_result(m_hMySQL);
+		pthread_mutex_unlock(&m_thread_pool_mutex);
 		if(qResult)
 		{
 			while((row = mysql_fetch_row(qResult)))
@@ -1712,7 +1774,10 @@ int MailStorage::ListAllMail(vector<Mail_Info>& listtbl)
 		}
 	}
 	else
+	{
+	    pthread_mutex_unlock(&m_thread_pool_mutex);
 		return -1;
+	}
 }
 
 int MailStorage::ListExternMail(vector<Mail_Info>& listtbl)
@@ -1720,12 +1785,14 @@ int MailStorage::ListExternMail(vector<Mail_Info>& listtbl)
 	listtbl.clear();
 	char sqlcmd[1024];
 	sprintf(sqlcmd, "select mfrom, mto, muniqid, mid from mailtbl where mtx='%d' and mstatus&%d<>%d and mstatus&%d<>%d order by mid", mtExtern, MSG_ATTR_DELETED, MSG_ATTR_DELETED, MSG_ATTR_UNAUDITED, MSG_ATTR_UNAUDITED);
-	if( mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	pthread_mutex_lock(&m_thread_pool_mutex);
+	if( mysql_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
 		
 		qResult = mysql_store_result(m_hMySQL);
+		pthread_mutex_unlock(&m_thread_pool_mutex);
 		if(qResult)
 		{
 			while((row = mysql_fetch_row(qResult)))
@@ -1744,7 +1811,10 @@ int MailStorage::ListExternMail(vector<Mail_Info>& listtbl)
 			return -1;
 	}
 	else
+	{
+	    pthread_mutex_unlock(&m_thread_pool_mutex);
 		return -1;
+	}
 }
 
 int MailStorage::Prefoward(int mid)
@@ -1776,12 +1846,14 @@ int MailStorage::ListMemberOfGroup(const char* group, vector<User_Info>& listtbl
 	listtbl.clear();
 	char sqlcmd[1024];
 	sprintf(sqlcmd, "select membername from grouptbl where groupname='%s'", group);
-	if( mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	pthread_mutex_lock(&m_thread_pool_mutex);
+	if( mysql_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
 		
 		qResult = mysql_store_result(m_hMySQL);
+		pthread_mutex_unlock(&m_thread_pool_mutex);
 		if(qResult)
 		{
 			while((row = mysql_fetch_row(qResult)))
@@ -1807,7 +1879,10 @@ int MailStorage::ListMemberOfGroup(const char* group, vector<User_Info>& listtbl
 		}
 	}
 	else
+	{
+	    pthread_mutex_unlock(&m_thread_pool_mutex);
 		return -1;
+	}
 }
 
 int MailStorage::ListID(vector<User_Info>& listtbl, string orderby, BOOL desc)
@@ -1817,13 +1892,14 @@ int MailStorage::ListID(vector<User_Info>& listtbl, string orderby, BOOL desc)
 
 	sprintf(sqlcmd, "select uname, ualias, utype, urole, usize, ustatus, ulevel from usertbl order by %s %s", orderby == "" ? "utime" : orderby.c_str(), desc ? "desc" : "");
 
-	//printf("%s\n", sqlcmd);
-	if( mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	pthread_mutex_lock(&m_thread_pool_mutex);
+	if( mysql_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
 		
 		qResult = mysql_store_result(m_hMySQL);
+		pthread_mutex_unlock(&m_thread_pool_mutex);
 		if(qResult)
 		{
 			while((row = mysql_fetch_row(qResult)))
@@ -1845,7 +1921,10 @@ int MailStorage::ListID(vector<User_Info>& listtbl, string orderby, BOOL desc)
 			return -1;
 	}
 	else
+	{
+	    pthread_mutex_unlock(&m_thread_pool_mutex);
 		return -1;
+	}
 }
 
 int MailStorage::GetID(const char* uname, User_Info& uinfo)
@@ -1859,13 +1938,14 @@ int MailStorage::GetID(const char* uname, User_Info& uinfo)
 		SqlSafetyString(strSafetyUsername);
 		sprintf(sqlcmd, "select uname, ualias, utype, urole, usize, ustatus, ulevel from usertbl where uname='%s'", strSafetyUsername.c_str());
 	}
-
-	if( mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	pthread_mutex_lock(&m_thread_pool_mutex);
+	if( mysql_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
 		
 		qResult = mysql_store_result(m_hMySQL);
+		pthread_mutex_unlock(&m_thread_pool_mutex);
 		if(qResult)
 		{
 			row = mysql_fetch_row(qResult);
@@ -1892,7 +1972,10 @@ int MailStorage::GetID(const char* uname, User_Info& uinfo)
 			return -1;
 	}
 	else
+	{
+	    pthread_mutex_unlock(&m_thread_pool_mutex);
 		return -1;
+	}
 }
 
 
@@ -1901,12 +1984,14 @@ int MailStorage::ListGroup(vector<User_Info>& listtbl)
 	listtbl.clear();
 	char sqlcmd[1024];
 	sprintf(sqlcmd, "select uname, ualias, utype, urole, usize, ustatus from usertbl where utype=%d group by uname order by utime", utGroup);
-	if( mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	pthread_mutex_lock(&m_thread_pool_mutex);
+	if( mysql_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
 		
 		qResult = mysql_store_result(m_hMySQL);
+		pthread_mutex_unlock(&m_thread_pool_mutex);
 		if(qResult)
 		{
 			while((row = mysql_fetch_row(qResult)))
@@ -1927,7 +2012,10 @@ int MailStorage::ListGroup(vector<User_Info>& listtbl)
 			return -1;
 	}
 	else
+	{
+	    pthread_mutex_unlock(&m_thread_pool_mutex);
 		return -1;
+	}
 }
 
 int MailStorage::ListMember(vector<User_Info>& listtbl)
@@ -1935,12 +2023,14 @@ int MailStorage::ListMember(vector<User_Info>& listtbl)
 	listtbl.clear();
 	char sqlcmd[1024];
 	sprintf(sqlcmd, "select uname, ualias, utype, urole, usize, ustatus from usertbl where utype=%d group by uname order by utime", utMember);
-	if( mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	pthread_mutex_lock(&m_thread_pool_mutex);
+	if( mysql_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
 		
 		qResult = mysql_store_result(m_hMySQL);
+		pthread_mutex_unlock(&m_thread_pool_mutex);
 		if(qResult)
 		{
 			while((row = mysql_fetch_row(qResult)))
@@ -1961,7 +2051,10 @@ int MailStorage::ListMember(vector<User_Info>& listtbl)
 			return -1;
 	}
 	else
+	{
+	    pthread_mutex_unlock(&m_thread_pool_mutex);
 		return -1;
+	}
 }
 
 
@@ -2099,13 +2192,14 @@ int MailStorage::GetMailBody(int mid, char* body)
 {
 	char sqlcmd[1024];
 	sprintf(sqlcmd, "select mbody from mailtbl where mid='%d' and mstatus&%d<>%d", mid, MSG_ATTR_DELETED, MSG_ATTR_DELETED);
-	
-	if( mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	pthread_mutex_lock(&m_thread_pool_mutex);
+	if( mysql_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
 		
 		qResult = mysql_store_result(m_hMySQL);
+		pthread_mutex_unlock(&m_thread_pool_mutex);
 		if(qResult)
 		{
 			row = mysql_fetch_row(qResult);
@@ -2125,7 +2219,10 @@ int MailStorage::GetMailBody(int mid, char* body)
 			return -1;
 	}
 	else
+	{
+	    pthread_mutex_unlock(&m_thread_pool_mutex);
 		return -1;
+	}
 }
 
 int MailStorage::GetMailIndex(int mid, string& path)
@@ -2134,11 +2231,13 @@ int MailStorage::GetMailIndex(int mid, string& path)
 	
 	char sqlcmd[1024];
 	sprintf(sqlcmd, "select mbody from mailtbl where mid='%d' and mstatus&%d<>%d;", mid, MSG_ATTR_DELETED, MSG_ATTR_DELETED);
-	if( mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	pthread_mutex_lock(&m_thread_pool_mutex);
+	if( mysql_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{	
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
 		qResult = mysql_store_result(m_hMySQL);
+		pthread_mutex_unlock(&m_thread_pool_mutex);
 		if(qResult)
 		{
 			row = mysql_fetch_row(qResult);
@@ -2159,6 +2258,7 @@ int MailStorage::GetMailIndex(int mid, string& path)
 	}
 	else
 	{
+	    pthread_mutex_unlock(&m_thread_pool_mutex);
 		printf("%s\n",mysql_error(m_hMySQL));	
 		return -1;
 	}
@@ -2168,12 +2268,14 @@ int MailStorage::GetMailDir(int mid, int & dirid)
 {
 	char sqlcmd[1024];
 	sprintf(sqlcmd, "select mdirid from mailtbl where mid='%d'", mid);
-	if( mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	pthread_mutex_lock(&m_thread_pool_mutex);
+	if( mysql_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
 		
 		qResult = mysql_store_result(m_hMySQL);
+		pthread_mutex_unlock(&m_thread_pool_mutex);
 		if(qResult)
 		{
 			row = mysql_fetch_row(qResult);
@@ -2194,6 +2296,7 @@ int MailStorage::GetMailDir(int mid, int & dirid)
 	}
 	else
 	{
+	    pthread_mutex_unlock(&m_thread_pool_mutex);
 		return -1;
 	}
 }
@@ -2208,9 +2311,11 @@ int MailStorage::GetMailOwner(int mid, string & owner)
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
 		sprintf(sqlcmd, "select downer from dirtbl where did='%d'", dirid);
-		if( mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+		pthread_mutex_lock(&m_thread_pool_mutex);
+		if( mysql_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 		{					
 			qResult = mysql_store_result(m_hMySQL);
+			pthread_mutex_unlock(&m_thread_pool_mutex);
 			if(qResult)
 			{
 				row = mysql_fetch_row(qResult);
@@ -2231,6 +2336,7 @@ int MailStorage::GetMailOwner(int mid, string & owner)
 		}
 		else
 		{
+		    pthread_mutex_unlock(&m_thread_pool_mutex);
 			return -1;
 		}
 	}
@@ -2245,9 +2351,11 @@ int MailStorage::GetMailFromAndTo(int mid, string & from, string &to)
 	MYSQL_RES *qResult;
 	MYSQL_ROW row;
 	sprintf(sqlcmd, "select mfrom, mto from mailtbl where mid='%d'", mid);
-	if( mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	pthread_mutex_lock(&m_thread_pool_mutex);
+	if( mysql_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{					
 		qResult = mysql_store_result(m_hMySQL);
+		pthread_mutex_unlock(&m_thread_pool_mutex);
 		if(qResult)
 		{
 			row = mysql_fetch_row(qResult);
@@ -2269,6 +2377,7 @@ int MailStorage::GetMailFromAndTo(int mid, string & from, string &to)
 	}
 	else
 	{
+	    pthread_mutex_unlock(&m_thread_pool_mutex);
 		return -1;
 	}
 }
@@ -2280,9 +2389,11 @@ int MailStorage::IsAdmin(const char* username)
 	MYSQL_RES *qResult;
 	MYSQL_ROW row;
 	sprintf(sqlcmd, "select uname from usertbl where uname='%s' and urole=%d", username, urAdministrator);
-	if( mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	pthread_mutex_lock(&m_thread_pool_mutex);
+	if( mysql_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{					
 		qResult = mysql_store_result(m_hMySQL);
+		pthread_mutex_unlock(&m_thread_pool_mutex);
 		if(qResult)
 		{
 			row = mysql_fetch_row(qResult);
@@ -2302,6 +2413,7 @@ int MailStorage::IsAdmin(const char* username)
 	}
 	else
 	{
+	    pthread_mutex_unlock(&m_thread_pool_mutex);
 		return -1;
 	}
 }
@@ -2313,9 +2425,11 @@ int MailStorage::GetDirOwner(int dirid, string & owner)
 	MYSQL_ROW row;
 	sprintf(sqlcmd, "select downer from dirtbl where did='%d'", dirid);
 
-	if( mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+    pthread_mutex_lock(&m_thread_pool_mutex);
+	if( mysql_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{					
 		qResult = mysql_store_result(m_hMySQL);
+		pthread_mutex_unlock(&m_thread_pool_mutex);
 		if(qResult)
 		{
 			row = mysql_fetch_row(qResult);
@@ -2336,6 +2450,7 @@ int MailStorage::GetDirOwner(int dirid, string & owner)
 	}
 	else
 	{
+	    pthread_mutex_unlock(&m_thread_pool_mutex);
 		return -1;
 	}
 }
@@ -2422,10 +2537,12 @@ int MailStorage::AppendUserToGroup(const char* username, const char* groupname)
 		SqlSafetyString(strSafetyGroupname);
 		
 		sprintf(sqlcmd, "select gid from grouptbl where groupname='%s' and membername='%s'", strSafetyGroupname.c_str(), strSafetyUsername.c_str());
-		if( mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+		pthread_mutex_lock(&m_thread_pool_mutex);
+		if( mysql_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 		{
 			MYSQL_RES *qResult;
 			qResult = mysql_store_result(m_hMySQL);
+			pthread_mutex_unlock(&m_thread_pool_mutex);
 			if(qResult)
 			{
 				int count = mysql_num_rows(qResult);
@@ -2437,7 +2554,10 @@ int MailStorage::AppendUserToGroup(const char* username, const char* groupname)
 				return -1;
 		}
 		else
+		{
+		    pthread_mutex_unlock(&m_thread_pool_mutex);
 			return -1;
+		}
 		
 		sprintf(sqlcmd, "insert into grouptbl(groupname, membername, gtime) values('%s', '%s', %d)",
 		strSafetyGroupname.c_str(), strSafetyUsername.c_str(), time(NULL));
@@ -2559,11 +2679,13 @@ int MailStorage::DeleteDir(const char* username, int dirid)
 	//delete subdir of ownself
 	sprintf(sqlcmd, "select did from dirtbl where dparent=%d", dirid);
 	//printf("%s\n",sqlcmd);
-	if( mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	pthread_mutex_lock(&m_thread_pool_mutex);
+	if( mysql_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
 		qResult = mysql_store_result(m_hMySQL);
+		pthread_mutex_unlock(&m_thread_pool_mutex);
 		if(qResult)
 		{
 			while(row = mysql_fetch_row(qResult))
@@ -2577,7 +2699,10 @@ int MailStorage::DeleteDir(const char* username, int dirid)
 			return -1;
 	}
 	else
+	{
+		pthread_mutex_unlock(&m_thread_pool_mutex);
 		return -1;
+	}
 }
 
 int MailStorage::DeleteDir(const char* username, const char* dirref)
@@ -2642,10 +2767,11 @@ int MailStorage::GetDirParentID(const char* username, int dirid, int& parentid)
 	MYSQL_ROW row;
 	
 	sprintf(sqlcmd, "select dparent from dirtbl where did='%d'", dirid);
-
-	if( mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	pthread_mutex_lock(&m_thread_pool_mutex);
+	if( mysql_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{					
 		qResult = mysql_store_result(m_hMySQL);
+		pthread_mutex_unlock(&m_thread_pool_mutex);
 		if(qResult)
 		{
 			row = mysql_fetch_row(qResult);
@@ -2666,6 +2792,7 @@ int MailStorage::GetDirParentID(const char* username, int dirid, int& parentid)
 	}
 	else
 	{
+	    pthread_mutex_unlock(&m_thread_pool_mutex);
 		return -1;
 	}
 }
@@ -2697,12 +2824,14 @@ int MailStorage::IsDirExist(const char* username, const char* dirref)
 		//else
 		//	sprintf(sqlcmd, "select did from dirtbl where downer='%s' and dname like '%s' and dparent=%d", 
 		//		strSafetyUsername.c_str(), strSafetyDirname.c_str(), parentid);
-
-		if( mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+		
+		pthread_mutex_lock(&m_thread_pool_mutex);
+		if( mysql_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 		{
 			MYSQL_RES *qResult;
 			MYSQL_ROW row;
 			qResult = mysql_store_result(m_hMySQL);
+			pthread_mutex_unlock(&m_thread_pool_mutex);
 			if(qResult)
 			{
 				//can not find the current dir via its name
@@ -2720,7 +2849,10 @@ int MailStorage::IsDirExist(const char* username, const char* dirref)
 			}
 		}
 		else
+		{
+		    pthread_mutex_unlock(&m_thread_pool_mutex);
 			return -1;
+		}
 	}
 	return 0;
 }
@@ -2733,12 +2865,13 @@ int MailStorage::IsDirExist(const char* username, int dirid)
 
 	sprintf(sqlcmd, "select did from dirtbl where downer='%s' and did=%d", 
 		strSafetyUsername.c_str(), dirid);
-	
-	if( mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	pthread_mutex_lock(&m_thread_pool_mutex);
+	if( mysql_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
 		qResult = mysql_store_result(m_hMySQL);
+		pthread_mutex_unlock(&m_thread_pool_mutex);
 		if(qResult)
 		{
 			//can not find the current dir via its name
@@ -2756,7 +2889,10 @@ int MailStorage::IsDirExist(const char* username, int dirid)
 		}
 	}
 	else
+	{
+	    pthread_mutex_unlock(&m_thread_pool_mutex);
 		return -1;
+	}
 }
 
 int MailStorage::IsSubDirExist(const char* username, int parentid, const char* dirname)
@@ -2775,12 +2911,13 @@ int MailStorage::IsSubDirExist(const char* username, int parentid, const char* d
 	//else
 	//	sprintf(sqlcmd, "select did from dirtbl where downer='%s' and dname like '%s' and dparent=%d", 
 	//		strSafetyUsername.c_str(), strSafetyDirname.c_str(), parentid);
-
-	if( mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	pthread_mutex_lock(&m_thread_pool_mutex);
+	if( mysql_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
 		qResult = mysql_store_result(m_hMySQL);
+		pthread_mutex_unlock(&m_thread_pool_mutex);
 		if(qResult)
 		{
 			//can not find the current dir via its name
@@ -2802,7 +2939,10 @@ int MailStorage::IsSubDirExist(const char* username, int parentid, const char* d
 		}
 	}
 	else
+	{
+	    pthread_mutex_unlock(&m_thread_pool_mutex);
 		return -1;
+	}
 }
 
 
@@ -2829,42 +2969,45 @@ int MailStorage::GetDirID(const char* username, const char* dirref, vector<int>&
 		vchildid.clear();
 		for(int i = 0; i < vparentid.size(); i++)
 		{
-		string strSafetyUsername = username;
-		SqlSafetyString(strSafetyUsername);
+		    string strSafetyUsername = username;
+		    SqlSafetyString(strSafetyUsername);
 
-		string strSafetyDirname = vDirRef[x];
-		SqlSafetyString(strSafetyDirname);
-		if(strSafetyDirname.find("%") == string::npos)
-			sprintf(sqlcmd, "select did from dirtbl where downer='%s' and dname='%s' and dparent=%d", 
-				strSafetyUsername.c_str(), strSafetyDirname.c_str(), vparentid[i]);
-		else
-			sprintf(sqlcmd, "select did from dirtbl where downer='%s' and dname like '%s' and dparent=%d", 
-				strSafetyUsername.c_str(), strSafetyDirname.c_str(), vparentid[i]);
-		if( mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
-		{
-			MYSQL_RES *qResult;
-			MYSQL_ROW row;
-			qResult = mysql_store_result(m_hMySQL);
-			if(qResult)
-			{
-				//can not find the current dir via its name
-				while((row = mysql_fetch_row(qResult)))
-				{
-					vchildid.push_back(atoi(row[0]));
-				}
-				mysql_free_result(qResult);
-			}
-			else
-			{
-				printf("%s: %s\n", sqlcmd, mysql_error(m_hMySQL));
-				return -1;
-			}
-		}
-		else
-		{
-			printf("%s: %s\n", sqlcmd, mysql_error(m_hMySQL));
-			return -1;
-		}
+		    string strSafetyDirname = vDirRef[x];
+		    SqlSafetyString(strSafetyDirname);
+		    if(strSafetyDirname.find("%") == string::npos)
+			    sprintf(sqlcmd, "select did from dirtbl where downer='%s' and dname='%s' and dparent=%d", 
+				    strSafetyUsername.c_str(), strSafetyDirname.c_str(), vparentid[i]);
+		    else
+			    sprintf(sqlcmd, "select did from dirtbl where downer='%s' and dname like '%s' and dparent=%d", 
+				    strSafetyUsername.c_str(), strSafetyDirname.c_str(), vparentid[i]);
+		    pthread_mutex_lock(&m_thread_pool_mutex);
+		    if( mysql_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+		    {
+			    MYSQL_RES *qResult;
+			    MYSQL_ROW row;
+			    qResult = mysql_store_result(m_hMySQL);
+			    pthread_mutex_unlock(&m_thread_pool_mutex);
+			    if(qResult)
+			    {
+				    //can not find the current dir via its name
+				    while((row = mysql_fetch_row(qResult)))
+				    {
+					    vchildid.push_back(atoi(row[0]));
+				    }
+				    mysql_free_result(qResult);
+			    }
+			    else
+			    {
+				    printf("%s: %s\n", sqlcmd, mysql_error(m_hMySQL));
+				    return -1;
+			    }
+		    }
+		    else
+		    {
+		        pthread_mutex_unlock(&m_thread_pool_mutex);
+			    printf("%s: %s\n", sqlcmd, mysql_error(m_hMySQL));
+			    return -1;
+		    }
 		}
 	}
 	vdirid.assign(vchildid.begin(), vchildid.end());
@@ -2900,11 +3043,13 @@ int MailStorage::GetDirID(const char* username, const char* dirref, int& dirid)
 		//else
 		//	sprintf(sqlcmd, "select did from dirtbl where downer='%s' and dname like '%s' and dparent=%d", 
 		//		strSafetyUsername.c_str(), strSafetyDirname.c_str(), parentid);
-		if( mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+		pthread_mutex_lock(&m_thread_pool_mutex);
+		if( mysql_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 		{
 			MYSQL_RES *qResult;
 			MYSQL_ROW row;
 			qResult = mysql_store_result(m_hMySQL);
+			pthread_mutex_unlock(&m_thread_pool_mutex);
 			if(qResult)
 			{
 				//can not find the current dir via its name
@@ -2929,6 +3074,7 @@ int MailStorage::GetDirID(const char* username, const char* dirref, int& dirid)
 		}
 		else
 		{
+		    pthread_mutex_unlock(&m_thread_pool_mutex);
 			printf("%s: %s\n", sqlcmd, mysql_error(m_hMySQL));
 			return -1;
 		}
@@ -2946,11 +3092,13 @@ int MailStorage::GetInboxID(const char* username, int &dirid)
 	sprintf(sqlcmd, "select did from dirtbl where downer='%s' and dusage=%d",
 			strSafetyUsername.c_str(), duInbox);
 	//printf("%s\n",sqlcmd );
-	if( mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	pthread_mutex_lock(&m_thread_pool_mutex);
+	if( mysql_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
 		qResult = mysql_store_result(m_hMySQL);
+		pthread_mutex_unlock(&m_thread_pool_mutex);
 		if(qResult)
 		{
 			row = mysql_fetch_row(qResult);
@@ -2982,7 +3130,10 @@ int MailStorage::GetInboxID(const char* username, int &dirid)
 			return -1;
 	}
 	else
+	{
+	    pthread_mutex_unlock(&m_thread_pool_mutex);
 		return -1;
+	}
 }
 
 int MailStorage::GetJunkID(const char* username, int &dirid)
@@ -2993,12 +3144,13 @@ int MailStorage::GetJunkID(const char* username, int &dirid)
 		
 	sprintf(sqlcmd, "select did from dirtbl where downer='%s' and dusage=%d",
 			strSafetyUsername.c_str(), duJunk);
-	
-	if( mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	pthread_mutex_lock(&m_thread_pool_mutex);
+	if( mysql_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
 		qResult = mysql_store_result(m_hMySQL);
+		pthread_mutex_unlock(&m_thread_pool_mutex);
 		if(qResult)
 		{
 			row = mysql_fetch_row(qResult);
@@ -3031,7 +3183,10 @@ int MailStorage::GetJunkID(const char* username, int &dirid)
 			return -1;
 	}
 	else
+	{
+	    pthread_mutex_unlock(&m_thread_pool_mutex);
 		return -1;
+	}
 }
 
 int MailStorage::GetDraftsID(const char* username, int &dirid)
@@ -3043,11 +3198,13 @@ int MailStorage::GetDraftsID(const char* username, int &dirid)
 	sprintf(sqlcmd, "select did from dirtbl where downer='%s' and dusage=%d",
 			strSafetyUsername.c_str(), duDrafts);
 	//printf("%s\n",sqlcmd );
-	if( mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	pthread_mutex_lock(&m_thread_pool_mutex);
+	if( mysql_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
 		qResult = mysql_store_result(m_hMySQL);
+		pthread_mutex_unlock(&m_thread_pool_mutex);
 		if(qResult)
 		{
 			row = mysql_fetch_row(qResult);
@@ -3079,7 +3236,10 @@ int MailStorage::GetDraftsID(const char* username, int &dirid)
 			return -1;
 	}
 	else
+	{
+	    pthread_mutex_unlock(&m_thread_pool_mutex);
 		return -1;
+	}
 }
 
 int MailStorage::GetSentID(const char* username, int &dirid)
@@ -3091,11 +3251,13 @@ int MailStorage::GetSentID(const char* username, int &dirid)
 	sprintf(sqlcmd, "select did from dirtbl where downer='%s' and dusage=%d",
 			strSafetyUsername.c_str(), duSent);
 	//printf("%s\n",sqlcmd );
-	if( mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	pthread_mutex_lock(&m_thread_pool_mutex);
+	if( mysql_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
 		qResult = mysql_store_result(m_hMySQL);
+		pthread_mutex_unlock(&m_thread_pool_mutex);
 		if(qResult)
 		{
 			row = mysql_fetch_row(qResult);
@@ -3130,7 +3292,10 @@ int MailStorage::GetSentID(const char* username, int &dirid)
 			return -1;
 	}
 	else
+	{
+	    pthread_mutex_unlock(&m_thread_pool_mutex);
 		return -1;
+	}
 }
 
 int MailStorage::GetTrashID(const char* username, int &dirid)
@@ -3141,12 +3306,13 @@ int MailStorage::GetTrashID(const char* username, int &dirid)
 		
 	sprintf(sqlcmd, "select did from dirtbl where downer='%s' and dusage=%d",
 			strSafetyUsername.c_str(), duTrash);
-	
-	if( mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	pthread_mutex_lock(&m_thread_pool_mutex);
+	if( mysql_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
 		qResult = mysql_store_result(m_hMySQL);
+		pthread_mutex_unlock(&m_thread_pool_mutex);
 		if(qResult)
 		{
 			row = mysql_fetch_row(qResult);
@@ -3178,7 +3344,10 @@ int MailStorage::GetTrashID(const char* username, int &dirid)
 			return -1;
 	}
 	else
+	{
+	    pthread_mutex_unlock(&m_thread_pool_mutex);
 		return -1;
+	}
 }
 
 
@@ -3186,11 +3355,13 @@ int MailStorage::GetDirMailCount(const char* username, int dirid, unsigned int& 
 {
 	char sqlcmd[1024];
 	sprintf(sqlcmd, "select mdirid from mailtbl where mdirid =%d and mstatus&%d<>%d", dirid, MSG_ATTR_DELETED, MSG_ATTR_DELETED);
-	if( mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	pthread_mutex_lock(&m_thread_pool_mutex);
+	if( mysql_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
 		qResult = mysql_store_result(m_hMySQL);
+		pthread_mutex_unlock(&m_thread_pool_mutex);
 		if(qResult)
 		{
 			count = mysql_num_rows(qResult);
@@ -3201,18 +3372,23 @@ int MailStorage::GetDirMailCount(const char* username, int dirid, unsigned int& 
 			return -1;
 	}
 	else
+	{
+	    pthread_mutex_unlock(&m_thread_pool_mutex);
 		return -1;
+	}
 }
 
 int MailStorage::GetUnauditedMailCount(const char* username, unsigned int& count)
 {
 	char sqlcmd[1024];
 	sprintf(sqlcmd, "select mdirid from mailtbl where mstatus&%d<>%d and mstatus&%d=%d", MSG_ATTR_DELETED, MSG_ATTR_DELETED, MSG_ATTR_UNAUDITED, MSG_ATTR_UNAUDITED);
-	if( mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	pthread_mutex_lock(&m_thread_pool_mutex);
+	if( mysql_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
 		qResult = mysql_store_result(m_hMySQL);
+		pthread_mutex_unlock(&m_thread_pool_mutex);
 		if(qResult)
 		{
 			count = mysql_num_rows(qResult);
@@ -3223,7 +3399,10 @@ int MailStorage::GetUnauditedMailCount(const char* username, unsigned int& count
 			return -1;
 	}
 	else
+	{
+	    pthread_mutex_unlock(&m_thread_pool_mutex);
 		return -1;
+	}
 }
 
 int MailStorage::GetDirStatus(const char* username, const char* dirref, unsigned int& status)
@@ -3233,11 +3412,13 @@ int MailStorage::GetDirStatus(const char* username, const char* dirref, unsigned
 		return -1;
 	char sqlcmd[1024];
 	sprintf(sqlcmd, "select dstatus from dirtbl where did=%d", dirID);
-	if( mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	pthread_mutex_lock(&m_thread_pool_mutex);
+	if( mysql_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
 		qResult = mysql_store_result(m_hMySQL);
+		pthread_mutex_unlock(&m_thread_pool_mutex);
 		if(qResult)
 		{
 			row = mysql_fetch_row(qResult);
@@ -3257,7 +3438,10 @@ int MailStorage::GetDirStatus(const char* username, const char* dirref, unsigned
 			return -1;
 	}
 	else
+	{
+	    pthread_mutex_unlock(&m_thread_pool_mutex);
 		return -1;
+	}
 }
 
 int MailStorage::SetDirStatus(const char* username, const char* dirref,unsigned int status)
@@ -3281,11 +3465,13 @@ int MailStorage::GetMailStatus(int mid, unsigned int& status)
 	char sqlcmd[1024];
 	sprintf(sqlcmd, "select mstatus from mailtbl where mid=%d", mid);
 	//printf("%s\n", sqlcmd);
-	if( mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	pthread_mutex_lock(&m_thread_pool_mutex);
+	if( mysql_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
 		qResult = mysql_store_result(m_hMySQL);
+		pthread_mutex_unlock(&m_thread_pool_mutex);
 		if(qResult)
 		{
 			row = mysql_fetch_row(qResult);
@@ -3305,7 +3491,10 @@ int MailStorage::GetMailStatus(int mid, unsigned int& status)
 			return -1;
 	}
 	else
+	{
+	    pthread_mutex_unlock(&m_thread_pool_mutex);
 		return -1;
+	}
 }
 
 int MailStorage::GetMailUID(int mid, string uid)
@@ -3313,11 +3502,13 @@ int MailStorage::GetMailUID(int mid, string uid)
 	char sqlcmd[1024];
 	sprintf(sqlcmd, "select muniqid from mailtbl where mid=%d", mid);
 	//printf("%s\n", sqlcmd);
-	if( mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	pthread_mutex_lock(&m_thread_pool_mutex);
+	if( mysql_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
 		qResult = mysql_store_result(m_hMySQL);
+		pthread_mutex_unlock(&m_thread_pool_mutex);
 		if(qResult)
 		{
 			row = mysql_fetch_row(qResult);
@@ -3337,7 +3528,10 @@ int MailStorage::GetMailUID(int mid, string uid)
 			return -1;
 	}
 	else
+	{
+	    pthread_mutex_unlock(&m_thread_pool_mutex);
 		return -1;
+	}
 }
 
 int MailStorage::SetMailStatus(const char* username, int mid, unsigned int status)
@@ -3420,11 +3614,13 @@ int MailStorage::TraversalListDir(const char* username, const char* dirref, vect
 		sprintf(sqlcmd, "select dname, dstatus, did from dirtbl where downer='%s' and dparent=%d and dname like '%s' order by dtime",
 		strSafetyUsername.c_str(), dirParentID[x], dirname.c_str());
 		string nextdir = "";
-		if( mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+		pthread_mutex_lock(&m_thread_pool_mutex);
+		if( mysql_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 		{
 			MYSQL_RES *qResult;
 			MYSQL_ROW row;
 			qResult = mysql_store_result(m_hMySQL);
+			pthread_mutex_unlock(&m_thread_pool_mutex);
 			if(qResult)
 			{
 				while(row = mysql_fetch_row(qResult))
@@ -3458,7 +3654,10 @@ int MailStorage::TraversalListDir(const char* username, const char* dirref, vect
 				return -1;
 		}
 		else
+		{
+		    pthread_mutex_unlock(&m_thread_pool_mutex);
 			return -1;
+		}
 	}
 	return 0;
 }
@@ -3470,12 +3669,13 @@ int MailStorage::ListSubDir(const char* username, int pid, vector<Dir_Info>& lis
 	SqlSafetyString(strSafetyUsername);
 	
 	sprintf(sqlcmd, "select dname, dstatus, did from dirtbl where downer='%s' and dparent=%d order by did", strSafetyUsername.c_str(), pid);
-		
-	if( mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	pthread_mutex_lock(&m_thread_pool_mutex);
+	if( mysql_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
 		qResult = mysql_store_result(m_hMySQL);
+		pthread_mutex_unlock(&m_thread_pool_mutex);
 		if(qResult)
 		{
 			while(row = mysql_fetch_row(qResult))
@@ -3489,17 +3689,23 @@ int MailStorage::ListSubDir(const char* username, int pid, vector<Dir_Info>& lis
 				di.childrennum = 0;
 				
 				sprintf(sqlcmd, "select count(*) from dirtbl where dparent=%d", di.did);
-				if( mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+				pthread_mutex_lock(&m_thread_pool_mutex);
+				if( mysql_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 				{
 					MYSQL_RES *qResult2;
 					MYSQL_ROW row2;
 					qResult2 = mysql_store_result(m_hMySQL);
+					pthread_mutex_unlock(&m_thread_pool_mutex);
 					if(qResult2)
 					{
 						row2 = mysql_fetch_row(qResult2);
 						di.childrennum = atoi(row2[0]);
 						mysql_free_result(qResult2);
 					}
+				}
+				else
+				{
+				    pthread_mutex_unlock(&m_thread_pool_mutex);
 				}
 				listtbl.push_back(di);
 			}
@@ -3510,7 +3716,10 @@ int MailStorage::ListSubDir(const char* username, int pid, vector<Dir_Info>& lis
 			return -1;
 	}
 	else
+	{
+	    pthread_mutex_unlock(&m_thread_pool_mutex);
 		return -1;
+	}
 }
 
 int MailStorage::SplitDir(const char* dirref, string& parentdir, string& dirname)
@@ -3544,10 +3753,11 @@ int MailStorage::GetUnseenMail(int dirid, int& num)
 	MYSQL_ROW row;
 	
 	sprintf(sqlcmd, "select COUNT(*) from mailtbl where mdirid='%d' and mstatus&%d<>%d and mstatus&%d<>%d", dirid, MSG_ATTR_DELETED, MSG_ATTR_DELETED, MSG_ATTR_SEEN, MSG_ATTR_SEEN);
-
-	if( mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	pthread_mutex_lock(&m_thread_pool_mutex);
+	if( mysql_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{					
 		qResult = mysql_store_result(m_hMySQL);
+		pthread_mutex_unlock(&m_thread_pool_mutex);
 		if(qResult)
 		{
 			row = mysql_fetch_row(qResult);
@@ -3558,9 +3768,11 @@ int MailStorage::GetUnseenMail(int dirid, int& num)
 				mysql_free_result(qResult);
 
 				sprintf(sqlcmd, "select did from dirtbl where dparent=%d", dirid);
-				if( mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+				pthread_mutex_lock(&m_thread_pool_mutex);
+				if( mysql_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 				{					
 					qResult = mysql_store_result(m_hMySQL);
+					pthread_mutex_unlock(&m_thread_pool_mutex);
 					if(qResult)
 					{
 						while((row = mysql_fetch_row(qResult)))
@@ -3577,7 +3789,10 @@ int MailStorage::GetUnseenMail(int dirid, int& num)
 					}
 				}
 				else
+				{
+				    pthread_mutex_unlock(&m_thread_pool_mutex);
 					return -1;
+				}
 			}
 			else
 			{
@@ -3590,6 +3805,7 @@ int MailStorage::GetUnseenMail(int dirid, int& num)
 	}
 	else
 	{
+	    pthread_mutex_unlock(&m_thread_pool_mutex);
 		return -1;
 	}
 }
@@ -3607,18 +3823,21 @@ int MailStorage::EmptyDir(const char* username, int dirid)
 	MYSQL_ROW row;
 	
 	sprintf(sqlcmd, "update mailtbl set mstatus=(mstatus|%d) where mdirid='%d' and mstatus&%d<>%d", MSG_ATTR_DELETED, dirid, MSG_ATTR_DELETED, MSG_ATTR_DELETED);
-
-	if( mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+    pthread_mutex_lock(&m_thread_pool_mutex);
+	if( mysql_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{					
 		qResult = mysql_store_result(m_hMySQL);
+		pthread_mutex_unlock(&m_thread_pool_mutex);
 		if(qResult)
 		{
 			mysql_free_result(qResult);
 
 			sprintf(sqlcmd, "select did from dirtbl where dparent=%d", dirid);
-			if( mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+			pthread_mutex_lock(&m_thread_pool_mutex);
+			if( mysql_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 			{					
 				qResult = mysql_store_result(m_hMySQL);
+				pthread_mutex_unlock(&m_thread_pool_mutex);
 				if(qResult)
 				{
 					while((row = mysql_fetch_row(qResult)))
@@ -3635,13 +3854,17 @@ int MailStorage::EmptyDir(const char* username, int dirid)
 				}
 			}
 			else
+			{
+				pthread_mutex_unlock(&m_thread_pool_mutex);
 				return -1;
+			}
 		}
 		else
 			return -1;
 	}
 	else
 	{
+	    pthread_mutex_unlock(&m_thread_pool_mutex);
 		return -1;
 	}
 }
@@ -3658,10 +3881,11 @@ int MailStorage::GetDirName(const char * username, int dirid, string& dirname)
 	MYSQL_ROW row;
 	
 	sprintf(sqlcmd, "select dname from dirtbl where did='%d'", dirid);
-
-	if( mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	pthread_mutex_lock(&m_thread_pool_mutex);
+	if( mysql_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{					
 		qResult = mysql_store_result(m_hMySQL);
+		pthread_mutex_unlock(&m_thread_pool_mutex);
 		if(qResult)
 		{
 			row = mysql_fetch_row(qResult);
@@ -3682,6 +3906,7 @@ int MailStorage::GetDirName(const char * username, int dirid, string& dirname)
 	}
 	else
 	{
+	    pthread_mutex_unlock(&m_thread_pool_mutex);
 		return -1;
 	}
 }
@@ -3729,12 +3954,14 @@ int MailStorage::GetGlobalStorage(unsigned int& commonMailNumber, unsigned int& 
 	sprintf(sqlcmd, "select count(*) from mailtbl where mstatus&%d<>%d", MSG_ATTR_DELETED, MSG_ATTR_DELETED);
 
 	//printf("%s\n", sqlcmd);
-	if( mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	pthread_mutex_lock(&m_thread_pool_mutex);
+	if( mysql_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
 	
 		qResult = mysql_store_result(m_hMySQL);
+		pthread_mutex_unlock(&m_thread_pool_mutex);
 		if(qResult)
 		{
 			row = mysql_fetch_row(qResult);
@@ -3754,17 +3981,20 @@ int MailStorage::GetGlobalStorage(unsigned int& commonMailNumber, unsigned int& 
 	}
 	else
 	{
+	    pthread_mutex_unlock(&m_thread_pool_mutex);
 		return -1;
 	}
 	
 	sprintf(sqlcmd, "select count(*) from mailtbl where mstatus&%d=%d", MSG_ATTR_DELETED, MSG_ATTR_DELETED);
 	//printf("%s\n", sqlcmd);
-	if( mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	pthread_mutex_lock(&m_thread_pool_mutex);
+	if( mysql_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
 	
 		qResult = mysql_store_result(m_hMySQL);
+		pthread_mutex_unlock(&m_thread_pool_mutex);
 		if(qResult)
 		{
 			row = mysql_fetch_row(qResult);
@@ -3784,17 +4014,20 @@ int MailStorage::GetGlobalStorage(unsigned int& commonMailNumber, unsigned int& 
 	}
 	else
 	{
+	    pthread_mutex_unlock(&m_thread_pool_mutex);
 		return -1;
 	}
 
 	sprintf(sqlcmd, "select SUM(msize) from mailtbl where mstatus&%d<>%d", MSG_ATTR_DELETED, MSG_ATTR_DELETED);
 	//printf("%s\n", sqlcmd);
-	if( mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	pthread_mutex_lock(&m_thread_pool_mutex);
+	if( mysql_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
 	
 		qResult = mysql_store_result(m_hMySQL);
+		pthread_mutex_unlock(&m_thread_pool_mutex);
 		if(qResult)
 		{
 			row = mysql_fetch_row(qResult);
@@ -3814,17 +4047,20 @@ int MailStorage::GetGlobalStorage(unsigned int& commonMailNumber, unsigned int& 
 	}
 	else
 	{
+	    pthread_mutex_unlock(&m_thread_pool_mutex);
 		return -1;
 	}
 
 	sprintf(sqlcmd, "select SUM(msize) from mailtbl where mstatus&%d=%d", MSG_ATTR_DELETED, MSG_ATTR_DELETED);
 	//printf("%s\n", sqlcmd);
-	if( mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	pthread_mutex_lock(&m_thread_pool_mutex);
+	if( mysql_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
 	
 		qResult = mysql_store_result(m_hMySQL);
+		pthread_mutex_unlock(&m_thread_pool_mutex);
 		if(qResult)
 		{
 			row = mysql_fetch_row(qResult);
@@ -3844,6 +4080,7 @@ int MailStorage::GetGlobalStorage(unsigned int& commonMailNumber, unsigned int& 
 	}
 	else
 	{
+	    pthread_mutex_unlock(&m_thread_pool_mutex);
 		return -1;
 	}
 
@@ -3855,12 +4092,14 @@ int MailStorage::GetAllDirOfID(const char* username, vector<int>& didtbl)
 	char sqlcmd[1024];
 
 	sprintf(sqlcmd, "select did from dirtbl where downer='%s'", username);
-	if( mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	pthread_mutex_lock(&m_thread_pool_mutex);
+	if( mysql_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
 		
 		qResult = mysql_store_result(m_hMySQL);
+		pthread_mutex_unlock(&m_thread_pool_mutex);
 		if(qResult)
 		{
 			while((row = mysql_fetch_row(qResult)))
@@ -3877,7 +4116,10 @@ int MailStorage::GetAllDirOfID(const char* username, vector<int>& didtbl)
 		return 0;
 	}
 	else
+	{
+	    pthread_mutex_unlock(&m_thread_pool_mutex);
 		return -1;
+	}
 }
 
 int MailStorage::GetUserStorage(const char* username, unsigned int& commonMailNumber, unsigned int& deletedMailNumber, unsigned int& commonMailSize, unsigned int& deletedMailSize )
@@ -3895,13 +4137,14 @@ int MailStorage::GetUserStorage(const char* username, unsigned int& commonMailNu
 	for(int x = 0; x < didtbl.size(); x++)
 	{
 		sprintf(sqlcmd, "select count(*) from mailtbl where mstatus&%d<>%d and mdirid=%d", MSG_ATTR_DELETED, MSG_ATTR_DELETED, didtbl[x]);
-
-		if( mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+		pthread_mutex_lock(&m_thread_pool_mutex);
+		if( mysql_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 		{
 			MYSQL_RES *qResult;
 			MYSQL_ROW row;
 		
 			qResult = mysql_store_result(m_hMySQL);
+			pthread_mutex_unlock(&m_thread_pool_mutex);
 			if(qResult)
 			{
 				row = mysql_fetch_row(qResult);
@@ -3921,16 +4164,19 @@ int MailStorage::GetUserStorage(const char* username, unsigned int& commonMailNu
 		}
 		else
 		{
+		    pthread_mutex_unlock(&m_thread_pool_mutex);
 			return -1;
 		}
 		
 		sprintf(sqlcmd, "select count(*) from mailtbl where mstatus&%d=%d and mdirid=%d", MSG_ATTR_DELETED, MSG_ATTR_DELETED, didtbl[x]);
-		if( mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+		pthread_mutex_lock(&m_thread_pool_mutex);
+		if( mysql_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 		{
 			MYSQL_RES *qResult;
 			MYSQL_ROW row;
 		
 			qResult = mysql_store_result(m_hMySQL);
+			pthread_mutex_unlock(&m_thread_pool_mutex);
 			if(qResult)
 			{
 				row = mysql_fetch_row(qResult);
@@ -3950,16 +4196,19 @@ int MailStorage::GetUserStorage(const char* username, unsigned int& commonMailNu
 		}
 		else
 		{
+		    pthread_mutex_unlock(&m_thread_pool_mutex);
 			return -1;
 		}
 
 		sprintf(sqlcmd, "select SUM(msize) from mailtbl where mstatus&%d<>%d and mdirid=%d", MSG_ATTR_DELETED, MSG_ATTR_DELETED, didtbl[x]);
-		if( mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+		pthread_mutex_lock(&m_thread_pool_mutex);
+		if( mysql_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 		{
 			MYSQL_RES *qResult;
 			MYSQL_ROW row;
 		
 			qResult = mysql_store_result(m_hMySQL);
+			pthread_mutex_unlock(&m_thread_pool_mutex);
 			if(qResult)
 			{
 				row = mysql_fetch_row(qResult);
@@ -3979,16 +4228,19 @@ int MailStorage::GetUserStorage(const char* username, unsigned int& commonMailNu
 		}
 		else
 		{
+		    pthread_mutex_unlock(&m_thread_pool_mutex);
 			return -1;
 		}
 
 		sprintf(sqlcmd, "select SUM(msize) from mailtbl where mstatus&%d=%d and mdirid=%d", MSG_ATTR_DELETED, MSG_ATTR_DELETED, didtbl[x]);
-		if( mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+		pthread_mutex_lock(&m_thread_pool_mutex);
+		if( mysql_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 		{
 			MYSQL_RES *qResult;
 			MYSQL_ROW row;
 		
 			qResult = mysql_store_result(m_hMySQL);
+			pthread_mutex_unlock(&m_thread_pool_mutex);
 			if(qResult)
 			{
 				row = mysql_fetch_row(qResult);
@@ -4008,6 +4260,7 @@ int MailStorage::GetUserStorage(const char* username, unsigned int& commonMailNu
 		}
 		else
 		{
+		    pthread_mutex_unlock(&m_thread_pool_mutex);
 			return -1;
 		}
 	}

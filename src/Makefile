@@ -44,12 +44,11 @@ else
 MDEF = _LINUX_OS_
 INCDIR = -I/usr/include/mysql/ 
 LDDIRS = -L/usr/lib/x86_64-linux-gnu/ 
-LDLIST_STG = -lstdc++ -lrt -lmariadbclient -lpthread
+LDLIST_STG = -lstdc++ -lrt -lmariadbclient_r -lpthread
 LDLIST_JKS = -lstdc++
 LDLIST_SVR = -lstdc++ -lrt -ldl -lssl -lcrypto -lpthread -lmemcached
 LDLIST_UTL = -lstdc++ -lssl -lcrypto -lpthread
 LDLIST_UDF = -lstdc++ -lrt
-
 endif
 
 FLAGS = -O2 -fPIC -w

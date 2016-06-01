@@ -34,6 +34,7 @@ private:
 	string m_password;
 	string m_database;
 	int m_maxConn;
+	unsigned long m_next;
 	stStorageEngine* m_engine;
 	
 	sem_t m_engineSem;

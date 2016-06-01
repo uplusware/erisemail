@@ -336,6 +336,28 @@ private:
         return ret;
     }
 };
-	
+
+class mysql_query_lock
+{
+public:
+    mysql_query_lock(pthread_mutex_t * lock)
+    {
+        m_lock = lock;
+        pthread_mutex_lock(m_lock);
+    }
+    
+    virtual ~mysql_query_lock()
+    {
+        pthread_mutex_unlock(m_lock);
+    }
+private:
+    pthread_mutex_t * m_lock;
+    
+    void * operator new   (size_t);
+    void * operator new[] (size_t);
+    void   operator delete   (void *);
+    void   operator delete[] (void*);
+};
+
 #endif /* _STORAGE_H_ */
 
