@@ -6,4 +6,3 @@
 * Support the mail with huge size attachment( Maximum size is 2G )
 * Support loading and extending anti-junkmail engine [Anti-Junk hook functions] (https://github.com/uplusware/erisemail/wiki/Anti-Junk-hook-functions)
 * Recommend Ubuntu or CentOS as host OS [Installation](https://github.com/uplusware/erisemail/wiki/Installation)
-* 
