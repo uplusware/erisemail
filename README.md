@@ -7,6 +7,5 @@
 * Support loading and extending anti-junkmail engine
 * Recommend Ubuntu or CentOS as host OS
 * Winodows platform, please use Cygwin to compile and run it.
-* Any question please mail to uplusware@gmail.com
-
-![eRisemail](erisemail.gif) ![Anti-JunkMail](antijunk.gif)
+* [Installation](https://github.com/uplusware/erisemail/wiki/Installation)
+* [Anti-Junk hook functions] (https://github.com/uplusware/erisemail/wiki/Anti-Junk-hook-functions)
