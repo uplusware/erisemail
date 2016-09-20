@@ -330,16 +330,34 @@ int __inline__ Send(int sockfd, const char * buf, unsigned int buf_len)
 int __inline__ SSLRead(int sockfd, SSL* ssl, char * buf, unsigned int buf_len)
 {
 #if 0
-	int len;
+	int len, ret;
 	unsigned int nRecv = 0;
 	while(1)
 	{
 		len = SSL_read(ssl, buf + nRecv, buf_len - nRecv);
-		if(len <= 0)
-		{
-			close(sockfd);
-			return -1;
-		}
+		if(len == 0)
+        {
+            ret = SSL_get_error(ssl, len);
+            if(ret == SSL_ERROR_ZERO_RETURN)
+            {
+                printf("SSL_read: shutdown by the peer\n");
+            }
+            shutdown(sockfd, 2);
+            return -1;
+        }
+        else if(len < 0)
+        {
+            ret = SSL_get_error(ssl, len);
+            if(ret == SSL_ERROR_WANT_READ || ret == SSL_ERROR_WANT_WRITE)
+            {
+                continue;
+            }
+            else
+            {
+                shutdown(sockfd, 2);
+                return -1;
+            }
+        }
 		nRecv = nRecv + len;
 		if(nRecv == buf_len)
 			return nRecv;	
@@ -356,59 +374,67 @@ int __inline__ SSLRead(int sockfd, SSL* ssl, char * buf, unsigned int buf_len)
 	
 	int len;
 	unsigned int nRecv = 0;
+	FD_ZERO(&mask);
 	while(1)
 	{
-		timeout.tv_sec = WAIT_TIME_INTERVAL; 
-		timeout.tv_usec = 0;
-
-		FD_ZERO(&mask);
-		FD_SET(sockfd, &mask);
-		res = select(sockfd + 1, &mask, NULL, NULL, &timeout);
-		
-		if( res == 1) 
-		{
-			taketime = 0;
-			len = SSL_read(ssl, buf + nRecv, buf_len - nRecv);
-            if(len == 0)
+        len = SSL_read(ssl, buf + nRecv, buf_len - nRecv);
+        //printf("SSL_read, %d %d %d\n", sockfd, len, buf_len);
+        if(len == 0)
+        {
+            ret = SSL_get_error(ssl, len);
+            if(ret == SSL_ERROR_ZERO_RETURN)
             {
-                close(sockfd);
-				return -1;
+                printf("SSL_read: shutdown by the peer\n");
             }
-			else if(len < 0)
-			{
-				
-				ret = SSL_get_error(ssl, len);
-				if(ret == SSL_ERROR_WANT_READ || ret == SSL_ERROR_WANT_WRITE)
-				{
-					continue;
-				}
-				else
-				{
-					close(sockfd);
-					return -1;
-				}
-			}
-			nRecv = nRecv + len;
-			if(nRecv == buf_len)
-				return nRecv;
-		}
-		else if(res == 0)
-		{
-			//printf("taketime: %d/%d\n", taketime, MAX_TRY_TIMEOUT);
-			taketime = taketime + WAIT_TIME_INTERVAL;
-			if(taketime > MAX_TRY_TIMEOUT)
-			{
-				close(sockfd);
-				return -1;
-			}
-			continue;
-		}
-		else
-		{
-			close(sockfd);
-			return -1;
-		}
-		
+            shutdown(sockfd, 2);
+            return -1;
+        }
+        else if(len < 0)
+        {
+            ret = SSL_get_error(ssl, len);
+            if(ret == SSL_ERROR_WANT_READ || ret == SSL_ERROR_WANT_WRITE)
+            {
+                while(1)
+                {
+                    timeout.tv_sec = WAIT_TIME_INTERVAL; 
+                    timeout.tv_usec = 0;
+
+                    FD_SET(sockfd, &mask);
+                    res = select(sockfd + 1, &mask, NULL, NULL, &timeout);
+                    
+                    if( res == 1) 
+                    {
+                        taketime = 0;
+                        break;
+                    }
+                    else if(res == 0)
+                    {
+                        //printf("taketime: %d/%d, have recieved: %d\n", taketime, MAX_TRY_TIMEOUT, nRecv);
+                        taketime = taketime + WAIT_TIME_INTERVAL;
+                        if(taketime > MAX_TRY_TIMEOUT)
+                        {
+                            shutdown(sockfd, 2);
+                            return -1;
+                        }
+                        continue;
+                    }
+                    else
+                    {
+                        shutdown(sockfd, 2);
+                        return -1;
+                    }
+                }
+                continue;
+            }
+            else
+            {
+                shutdown(sockfd, 2);
+                return -1;
+            }
+        }
+        nRecv = nRecv + len;
+        if(nRecv == buf_len)
+            return nRecv;
 	}
 #endif
 	return nRecv;
@@ -420,11 +446,29 @@ int __inline__ SSLWrite(int sockfd, SSL* ssl, const char * buf, unsigned int buf
 	if(buf_len == 0)
 		return 0;
 	unsigned int nSend = 0;
+    int len, ret;
 	while(1)
 	{
-		int len = SSL_write(ssl, buf + nSend, buf_len - nSend);
-		if(len <= 0)
-			return -1;
+		len = SSL_write(ssl, buf + nSend, buf_len - nSend);
+		if(len == 0)
+        {
+            shutdown(sockfd, 2);
+            return -1;
+        }
+        else if(len < 0)
+        {
+            ret = SSL_get_error(ssl, len);
+            if(ret == SSL_ERROR_WANT_WRITE || ret == SSL_ERROR_WANT_READ)
+            {
+                continue;
+            }
+            else
+            {
+                shutdown(sockfd, 2);
+                return -1;
+            }
+
+        }
 		nSend = nSend + len;
 		if(nSend == buf_len)
 			break;
@@ -439,58 +483,62 @@ int __inline__ SSLWrite(int sockfd, SSL* ssl, const char * buf, unsigned int buf
 	struct timeval timeout; 
 	int ret;
 	unsigned int nSend = 0;
+	FD_ZERO(&mask);
 	
 	while(1)
 	{
-		timeout.tv_sec = WAIT_TIME_INTERVAL; 
-		timeout.tv_usec = 0;
-
-		FD_ZERO(&mask);
-		FD_SET(sockfd, &mask);
-		
-		res = select(sockfd + 1, NULL, &mask, NULL, &timeout);
-		if( res == 1) 
-		{
-			taketime = 0;
-			int len = SSL_write(ssl, buf + nSend, buf_len - nSend);
-            if(len == 0)
+        int len = SSL_write(ssl, buf + nSend, buf_len - nSend);
+        if(len == 0)
+        {
+            shutdown(sockfd, 2);
+            return -1;
+        }
+        else if(len < 0)
+        {
+            ret = SSL_get_error(ssl, len);
+            if(ret == SSL_ERROR_WANT_READ || ret == SSL_ERROR_WANT_WRITE)
             {
-                close(sockfd);
-				return -1;
-            }
-			else if(len < 0)
-			{
-				ret = SSL_get_error(ssl, len);
-				if(ret == SSL_ERROR_WANT_READ || ret == SSL_ERROR_WANT_WRITE)
-				{
-					continue;
-				}
-				else
-				{
-					close(sockfd);
-					return -1;
-				}
+                while(1)
+                {
+                    timeout.tv_sec = WAIT_TIME_INTERVAL; 
+                    timeout.tv_usec = 0;
 
-			}
-			nSend = nSend + len;
-			if(nSend == buf_len)
-				return 0;
-		}
-		else if(res == 0)
-		{
-			taketime = taketime + WAIT_TIME_INTERVAL;
-			if(taketime > MAX_TRY_TIMEOUT)
-			{
-				close(sockfd);
-				return -1;
-			}
-			continue;
-		}
-		else
-		{
-			close(sockfd);
-			return -1;
-		}
+                    FD_SET(sockfd, &mask);
+                    
+                    res = select(sockfd + 1, NULL, &mask, NULL, &timeout);
+                    if( res == 1) 
+                    {
+                        taketime = 0;
+                        break;
+                    }
+                    else if(res == 0)
+                    {
+                        taketime = taketime + WAIT_TIME_INTERVAL;
+                        if(taketime > MAX_TRY_TIMEOUT)
+                        {
+                            shutdown(sockfd, 2);
+                            return -1;
+                        }
+                        continue;
+                    }
+                    else
+                    {
+                        shutdown(sockfd, 2);
+                        return -1;
+                    }
+                }
+                continue;
+            }
+            else
+            {
+                shutdown(sockfd, 2);
+                return -1;
+            }
+
+        }
+        nSend = nSend + len;
+        if(nSend == buf_len)
+            return 0;
 	}
 	return 0;
 #endif
