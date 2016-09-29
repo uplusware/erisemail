@@ -83,9 +83,6 @@ vector<string> CMailBase::m_permit_list;
 vector<string> CMailBase::m_domain_list;
 vector<string> CMailBase::m_webadmin_list;
 
-unsigned char CMailBase::m_rsa_pub_key[128];
-unsigned char CMailBase::m_rsa_pri_key[128];
-
 char CMailBase::m_des_key[9];
 
 BOOL CMailBase::m_userpwd_cache_updated = TRUE;
@@ -525,15 +522,6 @@ BOOL CMailBase::LoadConfig()
 	
 	m_runtime = time(NULL);
 
-	//generate the RSA keys
-	RSA* rsa = RSA_generate_key(1024, 0x10001, NULL, NULL);
-	if(rsa)
-	{
-		BN_bn2bin( rsa->n, m_rsa_pub_key);
-		BN_bn2bin( rsa->d, m_rsa_pri_key );
-		
-		RSA_free(rsa);
-	}
 	return TRUE;
 }
 

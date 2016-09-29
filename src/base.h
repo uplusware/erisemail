@@ -567,9 +567,6 @@ public:
 	static vector<string> m_domain_list;
 	static vector<string> m_webadmin_list;
 
-	static unsigned char m_rsa_pub_key[128];
-	static unsigned char m_rsa_pri_key[128];
-
 	static BOOL Is_Local_Domain(const char* domain);
     
     static char m_des_key[9];

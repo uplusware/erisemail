@@ -10,7 +10,7 @@
 #include <time.h>
 
 #include "util/base64.h"
-#include "htdoc.h"
+#include "webmail.h"
 #include "fstring.h"
 #include "http.h"
 
@@ -395,10 +395,10 @@ BOOL CHttp::Parse(char* text)
 			m_pagename = "index.html";
 		}
 
-		Htdoc *doc = new Htdoc(this);
-		doc->Response();
+		Webmail *web_mail = new Webmail(this);
+		web_mail->Response();
 			
-		delete doc;
+		delete web_mail;
 
 		return FALSE;
 	}

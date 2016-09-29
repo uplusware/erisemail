@@ -94,6 +94,7 @@
 ** 'type' in the mysql.func table.  If not, run 'mysql_upgrade'.
 **
 */
+#define HAVE_BOOL 1
 
 #ifdef STANDARD
 /* STANDARD is defined, don't use any mysql functions */
