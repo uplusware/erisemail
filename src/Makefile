@@ -42,8 +42,8 @@ LDLIST_SVR = -lstdc++ -lrt -ldl -lssl -lcrypto -liconv -lpthread
 LDLIST_UTL = -lstdc++ -lssl -lcrypto
 else
 MDEF = _LINUX_OS_
-INCDIR = -I/usr/include/mariadb/
-LDDIRS = -L/usr/lib/x86_64-linux-gnu/ 
+INCDIR = -I/usr/local/include/mariadb/
+LDDIRS = -L/usr/local/lib/mariadb/ 
 LDLIST_STG = -lstdc++ -lrt -lmariadb -lpthread
 LDLIST_JKS = -lstdc++
 LDLIST_SVR = -lstdc++ -lrt -ldl -lssl -lcrypto -lpthread -lmemcached

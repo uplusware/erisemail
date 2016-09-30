@@ -46,8 +46,7 @@ fpool::fpool(const char* buf, int len)
 	{
 		char srcfile[1024];
 		srand(time(NULL));
-		sprintf(srcfile, "%08x_%08x_%016lx_%08x.fpl", time(NULL), getpid(), pthread_self(), CMailBase::m_global_uid);
-		CMailBase::m_global_uid++;
+		sprintf(srcfile, "%08x_%08x_%016lx_%08x.fpl", time(NULL), getpid(), pthread_self(), random());
 		m_srcfile = srcfile;
 		ofstream* srcfd =  new ofstream(m_srcfile.c_str(), ios_base::binary|ios::out|ios::trunc);
 		srcfd->write(buf, len);
@@ -236,8 +235,7 @@ void fbuffer::bufcat(const char* buf, int len)
 		else
 		{
 			char tfile[256];
-			sprintf(tfile, "%s/tmp/%08x_%08x_%016lx_%08x.fbf", CMailBase::m_private_path.c_str(), time(NULL), getpid(), pthread_self(), CMailBase::m_global_uid);
-			CMailBase::m_global_uid++;
+			sprintf(tfile, "%s/tmp/%08x_%08x_%016lx_%08x.fbf", CMailBase::m_private_path.c_str(), time(NULL), getpid(), pthread_self(), random());
 			m_tmpfile = tfile;
 			
 			m_tmpfd =  new ofstream(m_tmpfile.c_str(), ios_base::binary|ios::out|ios::trunc);

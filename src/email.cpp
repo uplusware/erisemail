@@ -31,8 +31,7 @@ email::email(const char* domain, const char* username, const char* alias)
 	m_attaches.clear();
 	
 	char newuid[256];
-	sprintf(newuid, "%08x_%08x_%08x_%08x%s%s", time(NULL), getpid(), pthread_self(), CMailBase::m_global_uid, "@", m_domain.c_str());
-	CMailBase::m_global_uid++;
+	sprintf(newuid, "%08x_%08x_%08x_%08x%s%s", time(NULL), getpid(), pthread_self(), random(), "@", m_domain.c_str());
 	m_message_id = newuid;
 
 	m_content_type = "plain";

@@ -313,8 +313,7 @@ void Calendar::save()
 			int b = sprintf(calpath + a, "/%d%02d%02d", tmTmp->tm_year + 1900, tmTmp->tm_mon + 1, tmTmp->tm_mday);
 			mkdir(calpath, 0744);
 			
-			sprintf(calpath + a + b, "/%08x_%08x_%016lx_%08x.cal", time(NULL), getpid(), pthread_self(), CMailBase::m_global_uid);
-			CMailBase::m_global_uid++;
+			sprintf(calpath + a + b, "/%08x_%08x_%016lx_%08x.cal", time(NULL), getpid(), pthread_self(), random());
 
 			m_file = fopen(calpath, "wb+");
 			if(m_file)

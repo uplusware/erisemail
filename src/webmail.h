@@ -386,8 +386,7 @@ protected:
 						att.filename = strDst;
 						
 						char szFileName[1024];
-						sprintf(szFileName, "%s_%08x_%08x_%016lx_%08x.att", username, time(NULL), getpid(), pthread_self(), CMailBase::m_global_uid);
-						CMailBase::m_global_uid++;
+						sprintf(szFileName, "%s_%08x_%08x_%016lx_%08x.att", username, time(NULL), getpid(), pthread_self(), random());
 						
 						string strFilePath;
 						strFilePath = CMailBase::m_private_path.c_str();
@@ -783,7 +782,25 @@ public:
 		m_session->parse_cookie_value("AUTH_TOKEN", strauth);
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
+		if(Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey()) == -1)
+        {
+            strResp = RSP_200_OK_XML;
+			string strHTTPDate;
+			OutHTTPDateString(time(NULL), strHTTPDate);
+			strResp += "Date: ";
+			strResp += strHTTPDate;
+			strResp += "\r\n";
+			
+			strResp +="\r\n";
+			
+			strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+			strResp += "<erisemail>"
+				"<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+				"</erisemail>";
+            m_session->HttpSend(strResp.c_str(), strResp.length());
+            
+            return;
+        }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -875,7 +892,25 @@ public:
 		m_session->parse_cookie_value("AUTH_TOKEN", strauth);
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
+		if(Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey()) == -1)
+        {
+            strResp = RSP_200_OK_XML;
+			string strHTTPDate;
+			OutHTTPDateString(time(NULL), strHTTPDate);
+			strResp += "Date: ";
+			strResp += strHTTPDate;
+			strResp += "\r\n";
+			
+			strResp +="\r\n";
+			
+			strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+			strResp += "<erisemail>"
+				"<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+				"</erisemail>";
+            m_session->HttpSend(strResp.c_str(), strResp.length());
+            
+            return;
+        }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -966,7 +1001,25 @@ public:
 		m_session->parse_cookie_value("AUTH_TOKEN", strauth);
 
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
+		if(Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey()) == -1)
+        {
+            strResp = RSP_200_OK_XML;
+			string strHTTPDate;
+			OutHTTPDateString(time(NULL), strHTTPDate);
+			strResp += "Date: ";
+			strResp += strHTTPDate;
+			strResp += "\r\n";
+			
+			strResp +="\r\n";
+			
+			strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+			strResp += "<erisemail>"
+				"<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+				"</erisemail>";
+            m_session->HttpSend(strResp.c_str(), strResp.length());
+            
+            return;
+        }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -1074,7 +1127,25 @@ public:
 		m_session->parse_cookie_value("AUTH_TOKEN", strauth);
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
+		if(Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey()) == -1)
+        {
+            strResp = RSP_200_OK_XML;
+			string strHTTPDate;
+			OutHTTPDateString(time(NULL), strHTTPDate);
+			strResp += "Date: ";
+			strResp += strHTTPDate;
+			strResp += "\r\n";
+			
+			strResp +="\r\n";
+			
+			strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+			strResp += "<erisemail>"
+				"<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+				"</erisemail>";
+            m_session->HttpSend(strResp.c_str(), strResp.length());
+            
+            return;
+        }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -1178,7 +1249,25 @@ public:
 		m_session->parse_cookie_value("AUTH_TOKEN", strauth);
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
+		if(Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey()) == -1)
+        {
+            strResp = RSP_200_OK_XML;
+			string strHTTPDate;
+			OutHTTPDateString(time(NULL), strHTTPDate);
+			strResp += "Date: ";
+			strResp += strHTTPDate;
+			strResp += "\r\n";
+			
+			strResp +="\r\n";
+			
+			strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+			strResp += "<erisemail>"
+				"<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+				"</erisemail>";
+            m_session->HttpSend(strResp.c_str(), strResp.length());
+            
+            return;
+        }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -1267,7 +1356,25 @@ public:
 		m_session->parse_cookie_value("AUTH_TOKEN", strauth);
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
+		if(Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey()) == -1)
+        {
+            strResp = RSP_200_OK_XML;
+			string strHTTPDate;
+			OutHTTPDateString(time(NULL), strHTTPDate);
+			strResp += "Date: ";
+			strResp += strHTTPDate;
+			strResp += "\r\n";
+			
+			strResp +="\r\n";
+			
+			strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+			strResp += "<erisemail>"
+				"<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+				"</erisemail>";
+            m_session->HttpSend(strResp.c_str(), strResp.length());
+            
+            return;
+        }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -1394,7 +1501,25 @@ public:
 		m_session->parse_cookie_value("AUTH_TOKEN", strauth);
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
+		if(Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey()) == -1)
+        {
+            strResp = RSP_200_OK_XML;
+			string strHTTPDate;
+			OutHTTPDateString(time(NULL), strHTTPDate);
+			strResp += "Date: ";
+			strResp += strHTTPDate;
+			strResp += "\r\n";
+			
+			strResp +="\r\n";
+			
+			strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+			strResp += "<erisemail>"
+				"<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+				"</erisemail>";
+            m_session->HttpSend(strResp.c_str(), strResp.length());
+            
+            return;
+        }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -1484,7 +1609,25 @@ public:
 		m_session->parse_cookie_value("AUTH_TOKEN", strauth);
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
+		if(Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey()) == -1)
+        {
+            strResp = RSP_200_OK_XML;
+			string strHTTPDate;
+			OutHTTPDateString(time(NULL), strHTTPDate);
+			strResp += "Date: ";
+			strResp += strHTTPDate;
+			strResp += "\r\n";
+			
+			strResp +="\r\n";
+			
+			strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+			strResp += "<erisemail>"
+				"<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+				"</erisemail>";
+            m_session->HttpSend(strResp.c_str(), strResp.length());
+            
+            return;
+        }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -1576,7 +1719,25 @@ public:
 		m_session->parse_cookie_value("AUTH_TOKEN", strauth);
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
+		if(Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey()) == -1)
+        {
+            strResp = RSP_200_OK_XML;
+			string strHTTPDate;
+			OutHTTPDateString(time(NULL), strHTTPDate);
+			strResp += "Date: ";
+			strResp += strHTTPDate;
+			strResp += "\r\n";
+			
+			strResp +="\r\n";
+			
+			strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+			strResp += "<erisemail>"
+				"<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+				"</erisemail>";
+            m_session->HttpSend(strResp.c_str(), strResp.length());
+            
+            return;
+        }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -1699,7 +1860,25 @@ public:
 		m_session->parse_cookie_value("AUTH_TOKEN", strauth);
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
+		if(Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey()) == -1)
+        {
+            strResp = RSP_200_OK_XML;
+			string strHTTPDate;
+			OutHTTPDateString(time(NULL), strHTTPDate);
+			strResp += "Date: ";
+			strResp += strHTTPDate;
+			strResp += "\r\n";
+			
+			strResp +="\r\n";
+			
+			strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+			strResp += "<erisemail>"
+				"<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+				"</erisemail>";
+            m_session->HttpSend(strResp.c_str(), strResp.length());
+            
+            return;
+        }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -1810,7 +1989,25 @@ public:
 		m_session->parse_cookie_value("AUTH_TOKEN", strauth);
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
+		if(Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey()) == -1)
+        {
+            strResp = RSP_200_OK_XML;
+			string strHTTPDate;
+			OutHTTPDateString(time(NULL), strHTTPDate);
+			strResp += "Date: ";
+			strResp += strHTTPDate;
+			strResp += "\r\n";
+			
+			strResp +="\r\n";
+			
+			strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+			strResp += "<erisemail>"
+				"<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+				"</erisemail>";
+            m_session->HttpSend(strResp.c_str(), strResp.length());
+            
+            return;
+        }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -1911,7 +2108,25 @@ public:
 		m_session->parse_cookie_value("AUTH_TOKEN", strauth);
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
+		if(Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey()) == -1)
+        {
+            strResp = RSP_200_OK_XML;
+			string strHTTPDate;
+			OutHTTPDateString(time(NULL), strHTTPDate);
+			strResp += "Date: ";
+			strResp += strHTTPDate;
+			strResp += "\r\n";
+			
+			strResp +="\r\n";
+			
+			strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+			strResp += "<erisemail>"
+				"<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+				"</erisemail>";
+            m_session->HttpSend(strResp.c_str(), strResp.length());
+            
+            return;
+        }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -1995,7 +2210,25 @@ public:
 		m_session->parse_cookie_value("AUTH_TOKEN", strauth);
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
+		if(Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey()) == -1)
+        {
+            strResp = RSP_200_OK_XML;
+			string strHTTPDate;
+			OutHTTPDateString(time(NULL), strHTTPDate);
+			strResp += "Date: ";
+			strResp += strHTTPDate;
+			strResp += "\r\n";
+			
+			strResp +="\r\n";
+			
+			strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+			strResp += "<erisemail>"
+				"<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+				"</erisemail>";
+            m_session->HttpSend(strResp.c_str(), strResp.length());
+            
+            return;
+        }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -2081,7 +2314,25 @@ public:
 		m_session->parse_urlencode_value("GROUP_NAME", strgroup);
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
+		if(Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey()) == -1)
+        {
+            strResp = RSP_200_OK_XML;
+			string strHTTPDate;
+			OutHTTPDateString(time(NULL), strHTTPDate);
+			strResp += "Date: ";
+			strResp += strHTTPDate;
+			strResp += "\r\n";
+			
+			strResp +="\r\n";
+			
+			strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+			strResp += "<erisemail>"
+				"<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+				"</erisemail>";
+            m_session->HttpSend(strResp.c_str(), strResp.length());
+            
+            return;
+        }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -2224,7 +2475,25 @@ public:
 			nPID = atoi(strParentID.c_str());
 		}
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
+		if(Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey()) == -1)
+        {
+            strResp = RSP_200_OK_XML;
+			string strHTTPDate;
+			OutHTTPDateString(time(NULL), strHTTPDate);
+			strResp += "Date: ";
+			strResp += strHTTPDate;
+			strResp += "\r\n";
+			
+			strResp +="\r\n";
+			
+			strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+			strResp += "<erisemail>"
+				"<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+				"</erisemail>";
+            m_session->HttpSend(strResp.c_str(), strResp.length());
+            
+            return;
+        }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -2351,7 +2620,25 @@ public:
 		}
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
+		if(Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey()) == -1)
+        {
+            strResp = RSP_200_OK_XML;
+			string strHTTPDate;
+			OutHTTPDateString(time(NULL), strHTTPDate);
+			strResp += "Date: ";
+			strResp += strHTTPDate;
+			strResp += "\r\n";
+			
+			strResp +="\r\n";
+			
+			strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+			strResp += "<erisemail>"
+				"<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+				"</erisemail>";
+            m_session->HttpSend(strResp.c_str(), strResp.length());
+            
+            return;
+        }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -2421,7 +2708,25 @@ public:
 		m_session->parse_urlencode_value("ROW", strRow);
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
+		if(Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey()) == -1)
+        {
+            strResp = RSP_200_OK_XML;
+			string strHTTPDate;
+			OutHTTPDateString(time(NULL), strHTTPDate);
+			strResp += "Date: ";
+			strResp += strHTTPDate;
+			strResp += "\r\n";
+			
+			strResp +="\r\n";
+			
+			strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+			strResp += "<erisemail>"
+				"<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+				"</erisemail>";
+            m_session->HttpSend(strResp.c_str(), strResp.length());
+            
+            return;
+        }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -2483,23 +2788,28 @@ public:
 					m_mailStg->GetMailIndex(listtbl[x].mid, emlfile);
 					
 					MailLetter * Letter = NULL;
-					Letter = new MailLetter(m_session->GetMemCached(), emlfile.c_str());
+					Letter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_session->GetMemCached(), emlfile.c_str());
 					if(Letter && Letter->GetSize() > 0)
 					{
 						int llen = 0;
 						char* lbuf = Letter->Body(llen);
-						
-						string strSubject = Letter->GetSummary()->m_header->GetDecodedSubject();
-						XMLSaftyString(strSubject);
-						string strSender = Letter->GetSummary()->m_header->GetFrom() == NULL ? "" : Letter->GetSummary()->m_header->GetFrom()->m_addrs[0].pName;
-						string strFromAddr = "";
-						if(Letter->GetSummary()->m_header->GetFrom() != NULL)
-						{
-							strFromAddr = Letter->GetSummary()->m_header->GetFrom()->m_addrs[0].mName;
-							strFromAddr += "@";
-							strFromAddr += Letter->GetSummary()->m_header->GetFrom()->m_addrs[0].dName;
-						}
-						XMLSaftyString(strSender);
+                        string strSubject;
+                        string strSender;
+                        string strFromAddr;
+						if(Letter->GetSummary()->m_header)
+                        {    
+                            strSubject = Letter->GetSummary()->m_header->GetDecodedSubject();
+                            XMLSaftyString(strSubject);
+                            strSender = Letter->GetSummary()->m_header->GetFrom() == NULL ? "" : Letter->GetSummary()->m_header->GetFrom()->m_addrs[0].pName;
+                            strFromAddr = "";
+                            if(Letter->GetSummary()->m_header->GetFrom() != NULL)
+                            {
+                                strFromAddr = Letter->GetSummary()->m_header->GetFrom()->m_addrs[0].mName;
+                                strFromAddr += "@";
+                                strFromAddr += Letter->GetSummary()->m_header->GetFrom()->m_addrs[0].dName;
+                            }
+                            XMLSaftyString(strSender);
+                        }
 						sprintf(szTmp, "%u", Letter->GetSize());
 						string strSize = szTmp;
 						unsigned long attach_sumsize, attach_count;
@@ -2693,7 +3003,25 @@ public:
 		m_session->parse_urlencode_value("ROW", strRow);
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
+		if(Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey()) == -1)
+        {
+            strResp = RSP_200_OK_XML;
+			string strHTTPDate;
+			OutHTTPDateString(time(NULL), strHTTPDate);
+			strResp += "Date: ";
+			strResp += strHTTPDate;
+			strResp += "\r\n";
+			
+			strResp +="\r\n";
+			
+			strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+			strResp += "<erisemail>"
+				"<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+				"</erisemail>";
+            m_session->HttpSend(strResp.c_str(), strResp.length());
+            
+            return;
+        }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -2743,23 +3071,27 @@ public:
 					m_mailStg->GetMailIndex(listtbl[x].mid, emlfile);
 					
 					MailLetter * Letter = NULL;
-					Letter = new MailLetter(m_session->GetMemCached(), emlfile.c_str());
+					Letter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_session->GetMemCached(), emlfile.c_str());
 					if(Letter && Letter->GetSize() > 0)
 					{
 						int llen = 0;
 						char* lbuf = Letter->Body(llen);
-						
-						string strSubject = Letter->GetSummary()->m_header->GetDecodedSubject();
-						XMLSaftyString(strSubject);
-						string strSender = Letter->GetSummary()->m_header->GetFrom() == NULL ? "" : Letter->GetSummary()->m_header->GetFrom()->m_addrs[0].pName;
-						string strFromAddr = "";
-						if(Letter->GetSummary()->m_header->GetFrom() != NULL)
-						{
-							strFromAddr = Letter->GetSummary()->m_header->GetFrom()->m_addrs[0].mName;
-							strFromAddr += "@";
-							strFromAddr += Letter->GetSummary()->m_header->GetFrom()->m_addrs[0].dName;
+                        string strSubject;
+                        string strSender;
+                        string strFromAddr;
+						if(Letter->GetSummary()->m_header)
+                        {
+                            string strSubject = Letter->GetSummary()->m_header->GetDecodedSubject();
+                            XMLSaftyString(strSubject);
+                            string strSender = Letter->GetSummary()->m_header->GetFrom() == NULL ? "" : Letter->GetSummary()->m_header->GetFrom()->m_addrs[0].pName;
+                            strFromAddr = "";
+                            if(Letter->GetSummary()->m_header->GetFrom() != NULL)
+                            {
+                                strFromAddr = Letter->GetSummary()->m_header->GetFrom()->m_addrs[0].mName;
+                                strFromAddr += "@";
+                                strFromAddr += Letter->GetSummary()->m_header->GetFrom()->m_addrs[0].dName;
+                            }
 						}
-						
 						XMLSaftyString(strSender);
 						sprintf(szTmp, "%u", Letter->GetSize());
 						string strSize = szTmp;
@@ -2917,7 +3249,25 @@ public:
 		
 		unsigned int nMailID = atoi(strID.c_str());
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
+		if(Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey()) == -1)
+        {
+            strResp = RSP_200_OK_XML;
+			string strHTTPDate;
+			OutHTTPDateString(time(NULL), strHTTPDate);
+			strResp += "Date: ";
+			strResp += strHTTPDate;
+			strResp += "\r\n";
+			
+			strResp +="\r\n";
+			
+			strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+			strResp += "<erisemail>"
+				"<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+				"</erisemail>";
+            m_session->HttpSend(strResp.c_str(), strResp.length());
+            
+            return;
+        }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -2990,48 +3340,50 @@ public:
 			m_mailStg->GetMailIndex(nMailID, emlfile);
 					
 			MailLetter * Letter;
-			Letter = new MailLetter(m_session->GetMemCached(), emlfile.c_str());
+			Letter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_session->GetMemCached(), emlfile.c_str());
 			if(Letter->GetSize() > 0)
 			{	
 				int llen = 0;
 				char* lbuf = Letter->Body(llen);
 				
-				string strFrom = Letter->GetSummary()->m_header->GetFrom() == NULL ? "" : Letter->GetSummary()->m_header->GetFrom()->m_strfiled;
-				XMLSaftyString(strFrom);
-				strResp += "<from>";
-				strResp += strFrom;
-				strResp += "</from>";
-				
-				string strTo = Letter->GetSummary()->m_header->GetTo() == NULL ? "" : Letter->GetSummary()->m_header->GetTo()->m_strfiled;
-				XMLSaftyString(strTo);
-				strResp += "<to>";
-				strResp += strTo;
-				strResp += "</to>";
-				
-				string strCC = Letter->GetSummary()->m_header->GetCc() == NULL ? "" : Letter->GetSummary()->m_header->GetCc()->m_strfiled;
-				XMLSaftyString(strCC);
-				strResp += "<cc>";
-				strResp += strCC;
-				strResp += "</cc>";
-				
-				string strBCC = Letter->GetSummary()->m_header->GetBcc() == NULL ? "" : Letter->GetSummary()->m_header->GetBcc()->m_strfiled;
-				XMLSaftyString(strBCC);
-				strResp += "<bcc>";
-				strResp += strBCC;
-				strResp += "</bcc>";
-				
-				string strDate = Letter->GetSummary()->m_header->GetDate();
-				XMLSaftyString(strDate);
-				strResp += "<date>";
-				strResp += strDate;
-				strResp += "</date>";
-				
-				string strSubject = Letter->GetSummary()->m_header->GetDecodedSubject();
-				XMLSaftyString(strSubject);
-				strResp += "<subject>";
-				strResp += strSubject;
-				strResp += "</subject>";
-				
+                if(Letter->GetSummary()->m_header)
+                {
+                    string strFrom = Letter->GetSummary()->m_header->GetFrom() == NULL ? "" : Letter->GetSummary()->m_header->GetFrom()->m_strfiled;
+                    XMLSaftyString(strFrom);
+                    strResp += "<from>";
+                    strResp += strFrom;
+                    strResp += "</from>";
+                    
+                    string strTo = Letter->GetSummary()->m_header->GetTo() == NULL ? "" : Letter->GetSummary()->m_header->GetTo()->m_strfiled;
+                    XMLSaftyString(strTo);
+                    strResp += "<to>";
+                    strResp += strTo;
+                    strResp += "</to>";
+                    
+                    string strCC = Letter->GetSummary()->m_header->GetCc() == NULL ? "" : Letter->GetSummary()->m_header->GetCc()->m_strfiled;
+                    XMLSaftyString(strCC);
+                    strResp += "<cc>";
+                    strResp += strCC;
+                    strResp += "</cc>";
+                    
+                    string strBCC = Letter->GetSummary()->m_header->GetBcc() == NULL ? "" : Letter->GetSummary()->m_header->GetBcc()->m_strfiled;
+                    XMLSaftyString(strBCC);
+                    strResp += "<bcc>";
+                    strResp += strBCC;
+                    strResp += "</bcc>";
+                    
+                    string strDate = Letter->GetSummary()->m_header->GetDate();
+                    XMLSaftyString(strDate);
+                    strResp += "<date>";
+                    strResp += strDate;
+                    strResp += "</date>";
+                    
+                    string strSubject = Letter->GetSummary()->m_header->GetDecodedSubject();
+                    XMLSaftyString(strSubject);
+                    strResp += "<subject>";
+                    strResp += strSubject;
+                    strResp += "</subject>";
+				}
 				string strTextBody = "";
 				string strHTMLBody = "";
 				string strCalendar = "";
@@ -3107,7 +3459,25 @@ public:
 		string strauth;
 		m_session->parse_cookie_value("AUTH_TOKEN", strauth);
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
+		if(Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey()) == -1)
+        {
+            strResp = RSP_200_OK_XML;
+			string strHTTPDate;
+			OutHTTPDateString(time(NULL), strHTTPDate);
+			strResp += "Date: ";
+			strResp += strHTTPDate;
+			strResp += "\r\n";
+			
+			strResp +="\r\n";
+			
+			strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+			strResp += "<erisemail>"
+				"<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+				"</erisemail>";
+            m_session->HttpSend(strResp.c_str(), strResp.length());
+            
+            return;
+        }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -3249,8 +3619,7 @@ public:
 					strcut(mailaddr.c_str(), NULL, "@", id);
 					if(m_mailStg && m_mailStg->VerifyUser(id.c_str()) == 0)
 					{
-						sprintf(newuid, "%08x_%08x_%016lx_%08x", time(NULL), getpid(), pthread_self(), CMailBase::m_global_uid);
-						CMailBase::m_global_uid++;
+						sprintf(newuid, "%08x_%08x_%016lx_%08x", time(NULL), getpid(), pthread_self(), random());
 						int DirID;
 						m_mailStg->GetInboxID(id.c_str(), DirID);
 						unsigned int mstatus = MSG_ATTR_RECENT;
@@ -3261,7 +3630,7 @@ public:
 							usermaxsize = 5000*1024;
 						}
 						
-						pLetter = new MailLetter(m_session->GetMemCached(), newuid, usermaxsize /*m_mailStg, "", 
+						pLetter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_session->GetMemCached(), newuid, usermaxsize /*m_mailStg, "", 
 							"", mtLocal, newuid, DirID, mstatus, time(NULL), usermaxsize*/);
 
 						Letter_Info* letter_info = new Letter_Info;
@@ -3293,8 +3662,7 @@ public:
 				}
 				else
 				{
-					sprintf(newuid, "%08x_%08x_%016lx_%08x", time(NULL), getpid(), pthread_self(), CMailBase::m_global_uid);
-					CMailBase::m_global_uid++;
+					sprintf(newuid, "%08x_%08x_%016lx_%08x", time(NULL), getpid(), pthread_self(), random());
 					int DirID;
 					m_mailStg->GetInboxID(id.c_str(), DirID);
 					unsigned int mstatus = MSG_ATTR_RECENT;
@@ -3310,7 +3678,7 @@ public:
 					mailfrom += CMailBase::m_email_domain;
 
 							
-					pLetter = new MailLetter(m_session->GetMemCached(), newuid, usermaxsize /*m_mailStg, mailfrom.c_str(),
+					pLetter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_session->GetMemCached(), newuid, usermaxsize /*m_mailStg, mailfrom.c_str(),
 						mailaddr.c_str(), mtExtern, newuid, -1, mstatus, time(NULL), usermaxsize*/);
 
 					Letter_Info* letter_info = new Letter_Info;
@@ -3495,7 +3863,25 @@ public:
 		m_session->parse_cookie_value("AUTH_TOKEN", strauth);
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
+		if(Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey()) == -1)
+        {
+            strResp = RSP_200_OK_XML;
+			string strHTTPDate;
+			OutHTTPDateString(time(NULL), strHTTPDate);
+			strResp += "Date: ";
+			strResp += strHTTPDate;
+			strResp += "\r\n";
+			
+			strResp +="\r\n";
+			
+			strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+			strResp += "<erisemail>"
+				"<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+				"</erisemail>";
+            m_session->HttpSend(strResp.c_str(), strResp.length());
+            
+            return;
+        }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -3572,8 +3958,7 @@ public:
 				else
 				{
 					char szFileName[1024];
-					sprintf(szFileName, "%s_%08x_%08x_%016lx_%08x.att", username.c_str(), time(NULL), getpid(), pthread_self(), CMailBase::m_global_uid);
-					CMailBase::m_global_uid++;
+					sprintf(szFileName, "%s_%08x_%08x_%016lx_%08x.att", username.c_str(), time(NULL), getpid(), pthread_self(), random());
 					string strFilePath;
 					strFilePath = CMailBase::m_private_path.c_str();
 					strFilePath += "/tmp/";
@@ -3709,7 +4094,25 @@ public:
 		m_session->parse_cookie_value("AUTH_TOKEN", strauth);
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
+		if(Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey()) == -1)
+        {
+            strResp = RSP_200_OK_XML;
+			string strHTTPDate;
+			OutHTTPDateString(time(NULL), strHTTPDate);
+			strResp += "Date: ";
+			strResp += strHTTPDate;
+			strResp += "\r\n";
+			
+			strResp +="\r\n";
+			
+			strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+			strResp += "<erisemail>"
+				"<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+				"</erisemail>";
+            m_session->HttpSend(strResp.c_str(), strResp.length());
+            
+            return;
+        }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -3771,7 +4174,25 @@ public:
 		m_session->parse_urlencode_value("TODIRS", strToDirID);
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
+		if(Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey()) == -1)
+        {
+            strResp = RSP_200_OK_XML;
+			string strHTTPDate;
+			OutHTTPDateString(time(NULL), strHTTPDate);
+			strResp += "Date: ";
+			strResp += strHTTPDate;
+			strResp += "\r\n";
+			
+			strResp +="\r\n";
+			
+			strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+			strResp += "<erisemail>"
+				"<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+				"</erisemail>";
+            m_session->HttpSend(strResp.c_str(), strResp.length());
+            
+            return;
+        }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -3798,8 +4219,7 @@ public:
 				{
 					
 					char newuid[256];
-					sprintf(newuid, "%08x_%08x_%016lx_%08x", time(NULL), getpid(), pthread_self(), CMailBase::m_global_uid);
-					CMailBase::m_global_uid++;
+					sprintf(newuid, "%08x_%08x_%016lx_%08x", time(NULL), getpid(), pthread_self(), random());
 					
 					unsigned long long usermaxsize;
 					if(m_mailStg && m_mailStg->GetUserSize(username.c_str(), usermaxsize) == -1)
@@ -3816,8 +4236,8 @@ public:
 					string emlfile;
 					m_mailStg->GetMailIndex(nMailID, emlfile);
 			
-					oldLetter = new MailLetter(m_session->GetMemCached(), emlfile.c_str());
-					newLetter = new MailLetter(m_session->GetMemCached(), newuid, usermaxsize /*m_mailStg, "", "", mtLocal,
+					oldLetter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_session->GetMemCached(), emlfile.c_str());
+					newLetter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_session->GetMemCached(), newuid, usermaxsize /*m_mailStg, "", "", mtLocal,
 						newuid, nToDirID, mstatus, (unsigned int)time(NULL), usermaxsize*/);
 
 					Letter_Info letter_info;
@@ -3916,7 +4336,25 @@ public:
 		m_session->parse_urlencode_value("TODIRS", strToDirID);
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
+		if(Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey()) == -1)
+        {
+            strResp = RSP_200_OK_XML;
+			string strHTTPDate;
+			OutHTTPDateString(time(NULL), strHTTPDate);
+			strResp += "Date: ";
+			strResp += strHTTPDate;
+			strResp += "\r\n";
+			
+			strResp +="\r\n";
+			
+			strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+			strResp += "<erisemail>"
+				"<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+				"</erisemail>";
+            m_session->HttpSend(strResp.c_str(), strResp.length());
+            
+            return;
+        }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -3943,8 +4381,7 @@ public:
 				{
 					
 					char newuid[256];
-					sprintf(newuid, "%08x_%08x_%016lx_%08x", time(NULL), getpid(), pthread_self(), CMailBase::m_global_uid);
-					CMailBase::m_global_uid++;
+					sprintf(newuid, "%08x_%08x_%016lx_%08x", time(NULL), getpid(), pthread_self(), random());
 					
 					unsigned long long usermaxsize;
 					if(m_mailStg && m_mailStg->GetUserSize(username.c_str(), usermaxsize) == -1)
@@ -3961,9 +4398,9 @@ public:
 					string emlfile;
 					m_mailStg->GetMailIndex(nMailID, emlfile);
 			
-					oldLetter = new MailLetter(m_session->GetMemCached(), emlfile.c_str());
+					oldLetter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_session->GetMemCached(), emlfile.c_str());
 					
-					newLetter = new MailLetter(m_session->GetMemCached(), newuid, usermaxsize /*m_mailStg, "", "", mtLocal,
+					newLetter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_session->GetMemCached(), newuid, usermaxsize /*m_mailStg, "", "", mtLocal,
 						newuid, nToDirID, mstatus, (unsigned int)time(NULL), usermaxsize*/);
 
 					Letter_Info letter_info;
@@ -4067,7 +4504,25 @@ public:
 		
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
+		if(Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey()) == -1)
+        {
+            strResp = RSP_200_OK_XML;
+			string strHTTPDate;
+			OutHTTPDateString(time(NULL), strHTTPDate);
+			strResp += "Date: ";
+			strResp += strHTTPDate;
+			strResp += "\r\n";
+			
+			strResp +="\r\n";
+			
+			strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+			strResp += "<erisemail>"
+				"<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+				"</erisemail>";
+            m_session->HttpSend(strResp.c_str(), strResp.length());
+            
+            return;
+        }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -4161,7 +4616,25 @@ public:
 		m_session->parse_urlencode_value("MAILID", strMailID);
 		unsigned int nMailID = atoi(strMailID.c_str());
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
+		if(Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey()) == -1)
+        {
+            strResp = RSP_200_OK_XML;
+			string strHTTPDate;
+			OutHTTPDateString(time(NULL), strHTTPDate);
+			strResp += "Date: ";
+			strResp += strHTTPDate;
+			strResp += "\r\n";
+			
+			strResp +="\r\n";
+			
+			strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+			strResp += "<erisemail>"
+				"<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+				"</erisemail>";
+            m_session->HttpSend(strResp.c_str(), strResp.length());
+            
+            return;
+        }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -4262,7 +4735,25 @@ public:
 		m_session->parse_urlencode_value("MAILID", strMailID);
 		unsigned int nMailID = atoi(strMailID.c_str());
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
+		if(Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey()) == -1)
+        {
+            strResp = RSP_200_OK_XML;
+			string strHTTPDate;
+			OutHTTPDateString(time(NULL), strHTTPDate);
+			strResp += "Date: ";
+			strResp += strHTTPDate;
+			strResp += "\r\n";
+			
+			strResp +="\r\n";
+			
+			strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+			strResp += "<erisemail>"
+				"<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+				"</erisemail>";
+            m_session->HttpSend(strResp.c_str(), strResp.length());
+            
+            return;
+        }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -4364,7 +4855,25 @@ public:
 		m_session->parse_urlencode_value("MAILID", strMailID);
 		unsigned int nMailID = atoi(strMailID.c_str());
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
+		if(Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey()) == -1)
+        {
+            strResp = RSP_200_OK_XML;
+			string strHTTPDate;
+			OutHTTPDateString(time(NULL), strHTTPDate);
+			strResp += "Date: ";
+			strResp += strHTTPDate;
+			strResp += "\r\n";
+			
+			strResp +="\r\n";
+			
+			strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+			strResp += "<erisemail>"
+				"<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+				"</erisemail>";
+            m_session->HttpSend(strResp.c_str(), strResp.length());
+            
+            return;
+        }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -4397,8 +4906,7 @@ public:
 					unsigned int mstatus;
 					
 					char newuid[256];
-					sprintf(newuid, "%08x_%08x_%016lx_%08x", time(NULL), getpid(), pthread_self(), CMailBase::m_global_uid);
-					CMailBase::m_global_uid++;
+					sprintf(newuid, "%08x_%08x_%016lx_%08x", time(NULL), getpid(), pthread_self(), random());
 					
 					unsigned long long usermaxsize;
 					if(m_mailStg && m_mailStg->GetUserSize(username.c_str(), usermaxsize) == -1)
@@ -4415,8 +4923,8 @@ public:
 					string emlfile;
 					m_mailStg->GetMailIndex(nMailID, emlfile);
 					
-					oldLetter = new MailLetter(m_session->GetMemCached(), emlfile.c_str());
-					newLetter = new MailLetter(m_session->GetMemCached(), newuid, usermaxsize /*m_mailStg, postmaster.c_str(), strFrom.c_str(), isLocal ? mtLocal : mtExtern,
+					oldLetter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_session->GetMemCached(), emlfile.c_str());
+					newLetter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_session->GetMemCached(), newuid, usermaxsize /*m_mailStg, postmaster.c_str(), strFrom.c_str(), isLocal ? mtLocal : mtExtern,
 						newuid, nToDirID, mstatus & (~MSG_ATTR_UNAUDITED), (unsigned int)time(NULL), usermaxsize*/);
 
 					Letter_Info letter_info;
@@ -4555,7 +5063,25 @@ public:
 		m_session->parse_urlencode_value("FLAG", strFlag);
 		unsigned int nMailID = atoi(strID.c_str());
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
+		if(Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey()) == -1)
+        {
+            strResp = RSP_200_OK_XML;
+			string strHTTPDate;
+			OutHTTPDateString(time(NULL), strHTTPDate);
+			strResp += "Date: ";
+			strResp += strHTTPDate;
+			strResp += "\r\n";
+			
+			strResp +="\r\n";
+			
+			strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+			strResp += "<erisemail>"
+				"<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+				"</erisemail>";
+            m_session->HttpSend(strResp.c_str(), strResp.length());
+            
+            return;
+        }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -4647,7 +5173,25 @@ public:
 		m_session->parse_urlencode_value("SEEN", strSeen);
 		unsigned int nMailID = atoi(strID.c_str());
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
+		if(Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey()) == -1)
+        {
+            strResp = RSP_200_OK_XML;
+			string strHTTPDate;
+			OutHTTPDateString(time(NULL), strHTTPDate);
+			strResp += "Date: ";
+			strResp += strHTTPDate;
+			strResp += "\r\n";
+			
+			strResp +="\r\n";
+			
+			strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+			strResp += "<erisemail>"
+				"<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+				"</erisemail>";
+            m_session->HttpSend(strResp.c_str(), strResp.length());
+            
+            return;
+        }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -4734,7 +5278,25 @@ public:
 		m_session->parse_urlencode_value("DIRID", strDirID);
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
+		if(Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey()) == -1)
+        {
+            strResp = RSP_200_OK_XML;
+			string strHTTPDate;
+			OutHTTPDateString(time(NULL), strHTTPDate);
+			strResp += "Date: ";
+			strResp += strHTTPDate;
+			strResp += "\r\n";
+			
+			strResp +="\r\n";
+			
+			strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+			strResp += "<erisemail>"
+				"<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+				"</erisemail>";
+            m_session->HttpSend(strResp.c_str(), strResp.length());
+            
+            return;
+        }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -4826,7 +5388,25 @@ public:
 		m_session->parse_cookie_value("AUTH_TOKEN", strauth);
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
+		if(Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey()) == -1)
+        {
+            strResp = RSP_200_OK_XML;
+			string strHTTPDate;
+			OutHTTPDateString(time(NULL), strHTTPDate);
+			strResp += "Date: ";
+			strResp += strHTTPDate;
+			strResp += "\r\n";
+			
+			strResp +="\r\n";
+			
+			strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+			strResp += "<erisemail>"
+				"<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+				"</erisemail>";
+            m_session->HttpSend(strResp.c_str(), strResp.length());
+            
+            return;
+        }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -4898,7 +5478,25 @@ public:
 		code_convert_ex("UTF-8", CMailBase::m_encoding.c_str(), strSrc.c_str(), strFileName);		
 		unsigned int nMailID = atoi(strID.c_str());
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
+		if(Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey()) == -1)
+        {
+            strResp = RSP_200_OK_XML;
+			string strHTTPDate;
+			OutHTTPDateString(time(NULL), strHTTPDate);
+			strResp += "Date: ";
+			strResp += strHTTPDate;
+			strResp += "\r\n";
+			
+			strResp +="\r\n";
+			
+			strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+			strResp += "<erisemail>"
+				"<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+				"</erisemail>";
+            m_session->HttpSend(strResp.c_str(), strResp.length());
+            
+            return;
+        }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -4912,7 +5510,7 @@ public:
 			string emlfile;
 			m_mailStg->GetMailIndex(nMailID, emlfile);
 					
-			Letter = new MailLetter(m_session->GetMemCached(), emlfile.c_str());
+			Letter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_session->GetMemCached(), emlfile.c_str());
 			if(Letter->GetSize() > 0)
 			{	
 				int llen = 0;
@@ -5076,7 +5674,25 @@ public:
 		m_session->parse_urlencode_value("TMPFILENAME", strTmpFileName);
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
+		if(Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey()) == -1)
+        {
+            strResp = RSP_200_OK_XML;
+			string strHTTPDate;
+			OutHTTPDateString(time(NULL), strHTTPDate);
+			strResp += "Date: ";
+			strResp += strHTTPDate;
+			strResp += "\r\n";
+			
+			strResp +="\r\n";
+			
+			strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+			strResp += "<erisemail>"
+				"<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+				"</erisemail>";
+            m_session->HttpSend(strResp.c_str(), strResp.length());
+            
+            return;
+        }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -5198,8 +5814,7 @@ public:
 					tmpfd.close();
 					
 					char szBackup[256];
-					sprintf(szBackup, "Attachment_%08x", CMailBase::m_global_uid);
-					CMailBase::m_global_uid++;
+					sprintf(szBackup, "Attachment_%08x", random());
 					
 					//read and send file data
 					strResp = RSP_200_OK_NO_CACHE;
@@ -5289,7 +5904,25 @@ public:
 		
 		unsigned int nMailID = atoi(strID.c_str());
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
+		if(Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey()) == -1)
+        {
+            strResp = RSP_200_OK_XML;
+			string strHTTPDate;
+			OutHTTPDateString(time(NULL), strHTTPDate);
+			strResp += "Date: ";
+			strResp += strHTTPDate;
+			strResp += "\r\n";
+			
+			strResp +="\r\n";
+			
+			strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+			strResp += "<erisemail>"
+				"<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+				"</erisemail>";
+            m_session->HttpSend(strResp.c_str(), strResp.length());
+            
+            return;
+        }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -5303,7 +5936,7 @@ public:
 			string emlfile;
 			m_mailStg->GetMailIndex(nMailID, emlfile);
 			
-			Letter = new MailLetter(m_session->GetMemCached(), emlfile.c_str());
+			Letter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_session->GetMemCached(), emlfile.c_str());
 			if(Letter->GetSize() > 0)
 			{
 				int llen = 0;
@@ -5375,7 +6008,25 @@ public:
 		m_session->parse_cookie_value("AUTH_TOKEN", strauth);
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
+		if(Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey()) == -1)
+        {
+            strResp = RSP_200_OK_XML;
+			string strHTTPDate;
+			OutHTTPDateString(time(NULL), strHTTPDate);
+			strResp += "Date: ";
+			strResp += strHTTPDate;
+			strResp += "\r\n";
+			
+			strResp +="\r\n";
+			
+			strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+			strResp += "<erisemail>"
+				"<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+				"</erisemail>";
+            m_session->HttpSend(strResp.c_str(), strResp.length());
+            
+            return;
+        }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -5447,8 +6098,7 @@ public:
 			*/
 			
 			char newuid[256];
-			sprintf(newuid, "%08x_%08x_%016lx_%08x", time(NULL), getpid(), pthread_self(), CMailBase::m_global_uid);
-			CMailBase::m_global_uid++;
+			sprintf(newuid, "%08x_%08x_%016lx_%08x", time(NULL), getpid(), pthread_self(), random());
 			int DraftID;
 			if(strDraftID == "")
 				DraftID = -1;
@@ -5473,7 +6123,7 @@ public:
 				usermaxsize = 5000*1024;
 			}
 			
-			MailLetter* pLetter = new MailLetter(m_session->GetMemCached(), newuid, usermaxsize /*m_mailStg, 
+			MailLetter* pLetter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_session->GetMemCached(), newuid, usermaxsize /*m_mailStg, 
 				"", "", mtLocal, newuid, DirID, mstatus, time(NULL), usermaxsize, DraftID*/);
 
 			Letter_Info letter_info;
@@ -5618,7 +6268,25 @@ public:
 		m_session->parse_cookie_value("AUTH_TOKEN", strauth);
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
+		if(Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey()) == -1)
+        {
+            strResp = RSP_200_OK_XML;
+			string strHTTPDate;
+			OutHTTPDateString(time(NULL), strHTTPDate);
+			strResp += "Date: ";
+			strResp += strHTTPDate;
+			strResp += "\r\n";
+			
+			strResp +="\r\n";
+			
+			strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+			strResp += "<erisemail>"
+				"<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+				"</erisemail>";
+            m_session->HttpSend(strResp.c_str(), strResp.length());
+            
+            return;
+        }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -5693,8 +6361,7 @@ public:
 				utf8_to_ucs2_ex(strAttachFiles.c_str(), strAttachFiles);
 			*/
 			char newuid[256];
-			sprintf(newuid, "%08x_%08x_%016lx_%08x", time(NULL), getpid(), pthread_self(), CMailBase::m_global_uid);
-			CMailBase::m_global_uid++;
+			sprintf(newuid, "%08x_%08x_%016lx_%08x", time(NULL), getpid(), pthread_self(), random());
 			int DraftID;
 			if(strDraftID == "")
 				DraftID = -1;
@@ -5719,7 +6386,7 @@ public:
 				usermaxsize = 5000*1024;
 			}
 			
-			MailLetter* pLetter = new MailLetter(m_session->GetMemCached(), newuid, usermaxsize /*m_mailStg, 
+			MailLetter* pLetter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_session->GetMemCached(), newuid, usermaxsize /*m_mailStg, 
 				"", "", mtLocal, newuid, DirID, mstatus, time(NULL), usermaxsize, DraftID*/);
 
 			Letter_Info letter_info;
@@ -6054,7 +6721,25 @@ public:
 		m_session->parse_urlencode_value("OLD_PWD", strOldPwd);
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
+		if(Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey()) == -1)
+        {
+            strResp = RSP_200_OK_XML;
+			string strHTTPDate;
+			OutHTTPDateString(time(NULL), strHTTPDate);
+			strResp += "Date: ";
+			strResp += strHTTPDate;
+			strResp += "\r\n";
+			
+			strResp +="\r\n";
+			
+			strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+			strResp += "<erisemail>"
+				"<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+				"</erisemail>";
+            m_session->HttpSend(strResp.c_str(), strResp.length());
+            
+            return;
+        }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -6126,7 +6811,25 @@ public:
 		m_session->parse_urlencode_value("ALIAS", strAlias);
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
+		if(Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey()) == -1)
+        {
+            strResp = RSP_200_OK_XML;
+			string strHTTPDate;
+			OutHTTPDateString(time(NULL), strHTTPDate);
+			strResp += "Date: ";
+			strResp += strHTTPDate;
+			strResp += "\r\n";
+			
+			strResp +="\r\n";
+			
+			strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+			strResp += "<erisemail>"
+				"<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+				"</erisemail>";
+            m_session->HttpSend(strResp.c_str(), strResp.length());
+            
+            return;
+        }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -6194,7 +6897,25 @@ public:
 		m_session->parse_cookie_value("AUTH_TOKEN", strauth);
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
+		if(Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey()) == -1)
+        {
+            strResp = RSP_200_OK_XML;
+			string strHTTPDate;
+			OutHTTPDateString(time(NULL), strHTTPDate);
+			strResp += "Date: ";
+			strResp += strHTTPDate;
+			strResp += "\r\n";
+			
+			strResp +="\r\n";
+			
+			strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+			strResp += "<erisemail>"
+				"<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+				"</erisemail>";
+            m_session->HttpSend(strResp.c_str(), strResp.length());
+            
+            return;
+        }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -6314,7 +7035,25 @@ public:
 		m_session->parse_cookie_value("AUTH_TOKEN", strauth);
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
+		if(Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey()) == -1)
+        {
+            strResp = RSP_200_OK_XML;
+			string strHTTPDate;
+			OutHTTPDateString(time(NULL), strHTTPDate);
+			strResp += "Date: ";
+			strResp += strHTTPDate;
+			strResp += "\r\n";
+			
+			strResp +="\r\n";
+			
+			strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+			strResp += "<erisemail>"
+				"<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+				"</erisemail>";
+            m_session->HttpSend(strResp.c_str(), strResp.length());
+            
+            return;
+        }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -6375,7 +7114,25 @@ public:
 		m_session->parse_cookie_value("AUTH_TOKEN", strauth);
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
+		if(Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey()) == -1)
+        {
+            strResp = RSP_200_OK_XML;
+			string strHTTPDate;
+			OutHTTPDateString(time(NULL), strHTTPDate);
+			strResp += "Date: ";
+			strResp += strHTTPDate;
+			strResp += "\r\n";
+			
+			strResp +="\r\n";
+			
+			strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+			strResp += "<erisemail>"
+				"<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+				"</erisemail>";
+            m_session->HttpSend(strResp.c_str(), strResp.length());
+            
+            return;
+        }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -6452,7 +7209,25 @@ public:
 		m_session->parse_cookie_value("AUTH_TOKEN", strauth);
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
+		if(Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey()) == -1)
+        {
+            strResp = RSP_200_OK_XML;
+			string strHTTPDate;
+			OutHTTPDateString(time(NULL), strHTTPDate);
+			strResp += "Date: ";
+			strResp += strHTTPDate;
+			strResp += "\r\n";
+			
+			strResp +="\r\n";
+			
+			strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+			strResp += "<erisemail>"
+				"<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+				"</erisemail>";
+            m_session->HttpSend(strResp.c_str(), strResp.length());
+            
+            return;
+        }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -6534,7 +7309,25 @@ public:
 		m_session->parse_cookie_value("AUTH_TOKEN", strauth);
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
+		if(Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey()) == -1)
+        {
+            strResp = RSP_200_OK_XML;
+			string strHTTPDate;
+			OutHTTPDateString(time(NULL), strHTTPDate);
+			strResp += "Date: ";
+			strResp += strHTTPDate;
+			strResp += "\r\n";
+			
+			strResp +="\r\n";
+			
+			strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+			strResp += "<erisemail>"
+				"<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+				"</erisemail>";
+            m_session->HttpSend(strResp.c_str(), strResp.length());
+            
+            return;
+        }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -6627,7 +7420,25 @@ public:
 		m_session->parse_cookie_value("AUTH_TOKEN", strauth);
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
+		if(Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey()) == -1)
+        {
+            strResp = RSP_200_OK_XML;
+			string strHTTPDate;
+			OutHTTPDateString(time(NULL), strHTTPDate);
+			strResp += "Date: ";
+			strResp += strHTTPDate;
+			strResp += "\r\n";
+			
+			strResp +="\r\n";
+			
+			strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+			strResp += "<erisemail>"
+				"<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+				"</erisemail>";
+            m_session->HttpSend(strResp.c_str(), strResp.length());
+            
+            return;
+        }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -6840,7 +7651,25 @@ public:
 		m_session->parse_cookie_value("AUTH_TOKEN", strauth);
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
+		if(Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey()) == -1)
+        {
+            strResp = RSP_200_OK_XML;
+			string strHTTPDate;
+			OutHTTPDateString(time(NULL), strHTTPDate);
+			strResp += "Date: ";
+			strResp += strHTTPDate;
+			strResp += "\r\n";
+			
+			strResp +="\r\n";
+			
+			strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+			strResp += "<erisemail>"
+				"<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+				"</erisemail>";
+            m_session->HttpSend(strResp.c_str(), strResp.length());
+            
+            return;
+        }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -7164,7 +7993,25 @@ public:
 		m_session->parse_cookie_value("AUTH_TOKEN", strauth);
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
+		if(Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey()) == -1)
+        {
+            strResp = RSP_200_OK_XML;
+			string strHTTPDate;
+			OutHTTPDateString(time(NULL), strHTTPDate);
+			strResp += "Date: ";
+			strResp += strHTTPDate;
+			strResp += "\r\n";
+			
+			strResp +="\r\n";
+			
+			strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+			strResp += "<erisemail>"
+				"<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+				"</erisemail>";
+            m_session->HttpSend(strResp.c_str(), strResp.length());
+            
+            return;
+        }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -7282,7 +8129,25 @@ public:
 		m_session->parse_cookie_value("AUTH_TOKEN", strauth);
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
+		if(Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey()) == -1)
+        {
+            strResp = RSP_200_OK_XML;
+			string strHTTPDate;
+			OutHTTPDateString(time(NULL), strHTTPDate);
+			strResp += "Date: ";
+			strResp += strHTTPDate;
+			strResp += "\r\n";
+			
+			strResp +="\r\n";
+			
+			strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+			strResp += "<erisemail>"
+				"<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+				"</erisemail>";
+            m_session->HttpSend(strResp.c_str(), strResp.length());
+            
+            return;
+        }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -7399,7 +8264,25 @@ public:
 		m_session->parse_cookie_value("AUTH_TOKEN", strauth);
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
+		if(Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey()) == -1)
+        {
+            strResp = RSP_200_OK_XML;
+			string strHTTPDate;
+			OutHTTPDateString(time(NULL), strHTTPDate);
+			strResp += "Date: ";
+			strResp += strHTTPDate;
+			strResp += "\r\n";
+			
+			strResp +="\r\n";
+			
+			strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+			strResp += "<erisemail>"
+				"<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+				"</erisemail>";
+            m_session->HttpSend(strResp.c_str(), strResp.length());
+            
+            return;
+        }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);
@@ -7603,7 +8486,25 @@ public:
 		m_session->parse_cookie_value("AUTH_TOKEN", strauth);
 		
 		string username, password;
-		Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey());
+		if(Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey()) == -1)
+        {
+            strResp = RSP_200_OK_XML;
+			string strHTTPDate;
+			OutHTTPDateString(time(NULL), strHTTPDate);
+			strResp += "Date: ";
+			strResp += strHTTPDate;
+			strResp += "\r\n";
+			
+			strResp +="\r\n";
+			
+			strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+			strResp += "<erisemail>"
+				"<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+				"</erisemail>";
+            m_session->HttpSend(strResp.c_str(), strResp.length());
+            
+            return;
+        }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
 		strcut(strauth.c_str(), ":", NULL, password);		 

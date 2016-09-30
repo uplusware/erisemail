@@ -1,8 +1,19 @@
 #!/bin/bash
 
+# kFreeBSD do not accept scripts as interpreters, using #!/bin/sh and sourcing.
+### BEGIN INIT INFO
+# Provides:          uplusware
+# Required-Start:    $remote_fs $syslog
+# Required-Stop:     $remote_fs $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: erisemaild control script
+# Description:       This file is copied from /etc/init.d/skeleton
+### END INIT INFO
+# Author: uplusware.org <uplusware@gmail.com>
 #
-# eRisemail control script
-#
+DESC="erisemaild control script"
+DAEMON=/usr/bin/erisemaild
 
 test -x /usr/bin/erisemaild || exit 0
 

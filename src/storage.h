@@ -152,11 +152,11 @@ typedef struct
 class MailStorage
 {
 public:
-	MailStorage(const char* encoding, const char* private_path, unsigned global_uid);
+	MailStorage(const char* encoding, const char* private_path);
 	virtual ~MailStorage();
 
 	//system
-	int Connect(const char * host, const char* username, const char* password, const char* database, unsigned short port = 0);
+	int Connect(const char * host, const char* username, const char* password, const char* database, unsigned short port, const char* sock_file);
 	void Close();
 	int Ping();
 	
@@ -318,10 +318,10 @@ protected:
 	string m_password;
 	string m_database;
 	unsigned short m_port;
+    string m_sock_file;
     
     string m_encoding;
     string m_private_path;
-    unsigned m_global_uid;
     
     pthread_mutex_t m_thread_pool_mutex;
     

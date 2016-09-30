@@ -6,7 +6,7 @@
 #include <fcntl.h>
 #include "letter.h"
 
-MailLetter::MailLetter(memcached_st * memcached, const char* uid, unsigned long long maxsize)
+MailLetter::MailLetter(const char* private_path, const char*  encoding, memcached_st * memcached, const char* uid, unsigned long long maxsize)
 {
 	m_maxsize = maxsize;
 	
@@ -26,12 +26,22 @@ MailLetter::MailLetter(memcached_st * memcached, const char* uid, unsigned long 
 	m_emlmapfd = -1;
 	
 	m_uid = uid;
-	m_memcached = memcached;
-	m_letterSummary = new LetterSummary(m_memcached);
+	m_memcached = NULL;//memcached;
+    m_private_path = private_path;
+    m_encoding = encoding;
+    
+    //printf("%s %d %s %s\n", __FILE__, __LINE__, m_private_path.c_str(), m_encoding.c_str());
+    
+	m_letterSummary = new LetterSummary(m_encoding.c_str(), m_memcached);
 }
 
-MailLetter::MailLetter(memcached_st * memcached, const char* emlfile)
+MailLetter::MailLetter(const char* private_path, const char*  encoding, memcached_st * memcached, const char* emlfile)
 {	
+    m_private_path = private_path;
+    m_encoding = encoding;
+    
+    //printf("%s %d %s %s\n", __FILE__, __LINE__, m_private_path.c_str(), m_encoding.c_str());
+    
 	m_att = laOut;
 	
 	m_tmpfile = "";
@@ -48,9 +58,9 @@ MailLetter::MailLetter(memcached_st * memcached, const char* emlfile)
 	m_size = 0;
 
 	m_emlfile = emlfile;
-	m_memcached = memcached;
+	m_memcached = NULL;//memcached;
 	
-	m_tmpfile = CMailBase::m_private_path.c_str();
+	m_tmpfile = m_private_path.c_str();
 	m_tmpfile += "/eml/";
 	m_tmpfile += m_emlfile;
 	
@@ -104,7 +114,7 @@ MailLetter::MailLetter(memcached_st * memcached, const char* emlfile)
 		
 	if(access(strSummaryPath.c_str(), F_OK) != 0)
 	{
-		m_letterSummary = new LetterSummary(m_memcached);
+		m_letterSummary = new LetterSummary(m_encoding.c_str(), m_memcached);
 		
 		int nParsed = 0;
 		while(1)
@@ -128,7 +138,7 @@ MailLetter::MailLetter(memcached_st * memcached, const char* emlfile)
 
 	m_ifilestream = NULL;
 	
-	m_letterSummary =  new LetterSummary(strSummaryPath.c_str(), m_memcached);
+	m_letterSummary =  new LetterSummary(m_encoding.c_str(), strSummaryPath.c_str(), m_memcached);
 }
 
 MailLetter::~MailLetter()
@@ -196,8 +206,7 @@ int MailLetter::Write(const char* buf, unsigned int len)
 
 		m_emlfile = emlfile;
 		
-		CMailBase::m_global_uid++;
-		m_tmpfile = CMailBase::m_private_path;
+		m_tmpfile = m_private_path;
 		m_tmpfile +="/eml/";
 		m_tmpfile += m_emlfile;
 		
@@ -355,16 +364,18 @@ void MailLetter::get_attach_summary(MimeSummary* part, unsigned long& count, uns
 ////////////////////////////////////////////////////////////////////////////////////
 // LetterSummary
 
-LetterSummary::LetterSummary(memcached_st * memcached) : BlockSummary(0, NULL)
+LetterSummary::LetterSummary(const char* encoding, memcached_st * memcached) : BlockSummary(0, NULL)
 {
-	m_memcached = memcached;
+	m_memcached = NULL;//memcached;
 	m_xml = NULL;
 	m_isheader = TRUE;
 	m_strfield = "";
 	m_xmlpath = "";
 	m_xml = new TiXmlDocument();
-
-	string strXMLInit = "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?><letter></letter>";
+    
+    m_encoding = encoding;
+    
+	string strXMLInit = "<?xml version='1.0' encoding='" + m_encoding + "'?><letter></letter>";
 
 	m_xml->Parse(strXMLInit.c_str());
 	
@@ -376,9 +387,13 @@ LetterSummary::LetterSummary(memcached_st * memcached) : BlockSummary(0, NULL)
 	m_pParentElement = m_xml->RootElement();
 }
 
-LetterSummary::LetterSummary(const char* szpath, memcached_st * memcached) 
+LetterSummary::LetterSummary(const char* encoding, const char* szpath, memcached_st * memcached) 
 {
-	m_memcached = memcached;
+    m_encoding = encoding;
+    
+    //printf("%s %d %s\n", __FILE__, __LINE__, m_encoding.c_str());
+    
+	m_memcached = NULL;//memcached;
 	m_isheader = TRUE;
 	m_xmlpath = szpath;
 	m_strfield = "";

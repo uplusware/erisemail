@@ -128,7 +128,6 @@ typedef long long longlong;
 #pragma comment(lib, "ws2_32")
 #endif
 
-#ifdef HAVE_DLOPEN
 
 #if !defined(HAVE_GETHOSTBYADDR_R) || !defined(HAVE_SOLARIS_STYLE_GETHOST)
 static pthread_mutex_t LOCK_hostname;
@@ -237,6 +236,3 @@ char * post_notify(UDF_INIT *initid __attribute__((unused)),
   }
   return result;
 }
-
-
-#endif /* HAVE_DLOPEN */

@@ -540,12 +540,12 @@ public:
 
 	static string	m_ca_password;
 	
-	static volatile unsigned int	m_global_uid;
-	
 	static string	m_db_host;
+    static unsigned short	m_db_port;
 	static string	m_db_name;
 	static string	m_db_username;
 	static string	m_db_password;
+    static string	m_db_sock_file;
 	static unsigned int m_db_max_conn;
 	static unsigned int 	m_relaytasknum;
 	

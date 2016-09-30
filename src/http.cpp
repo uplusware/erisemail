@@ -56,8 +56,6 @@ CHttp::CHttp(int sockfd, SSL * ssl, SSL_CTX * ssl_ctx, const char* clientip,
 
 		m_lsockfd = new linesock(m_sockfd);
 	}
-	
-	m_global_uid++;
 
 	m_content_type = application_x_www_form_urlencoded;
 

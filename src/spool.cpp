@@ -43,8 +43,7 @@ static BOOL ReturnMail(MailStorage* mailStg, memcached_st * memcached, int mid, 
 	string strRcptTo = mail_from;
 
 	char szUid[1024];
-	sprintf(szUid, "%08x_%08x_%016lx_%08x", time(NULL), getpid(), pthread_self(), CMailBase::m_global_uid);
-	CMailBase::m_global_uid++;
+	sprintf(szUid, "%08x_%08x_%016lx_%08x", time(NULL), getpid(), pthread_self(), random());
 
 	string strtmp = "";
 
@@ -84,7 +83,7 @@ static BOOL ReturnMail(MailStorage* mailStg, memcached_st * memcached, int mid, 
 		strMailTo = strRcptTo.c_str();		
 	}
 	
-	MailLetter newLetter(memcached, szUid, usermaxsize);
+	MailLetter newLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), memcached, szUid, usermaxsize);
 	
 	//printf("newLetter.m_emlmapfd: %d\n", newLetter.m_emlmapfd);
 	
@@ -104,8 +103,7 @@ static BOOL ReturnMail(MailStorage* mailStg, memcached_st * memcached, int mid, 
 
 	char sztmp[1024];
 
-	sprintf(sztmp, "Message-ID: <%08x_%08x_%016lx_%08x@%s>\r\n", time(NULL), getpid(), pthread_self(), CMailBase::m_global_uid, CMailBase::m_email_domain.c_str());
-	CMailBase::m_global_uid++;
+	sprintf(sztmp, "Message-ID: <%08x_%08x_%016lx_%08x@%s>\r\n", time(NULL), getpid(), pthread_self(), random(), CMailBase::m_email_domain.c_str());
 	
 	strtmp += sztmp;
 	
@@ -160,7 +158,7 @@ static BOOL ReturnMail(MailStorage* mailStg, memcached_st * memcached, int mid, 
 
 	char codebuf[73];
 	
-	MailLetter oldLetter(memcached, emlfile.c_str());
+	MailLetter oldLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), memcached, emlfile.c_str());
 	if(oldLetter.GetSize() > 0)
 	{
 		int llen;
@@ -370,7 +368,7 @@ static BOOL SendMail(MailStorage* mailStg, memcached_st * memcached,
 	string emlfile;
 	mailStg->GetMailIndex(mid, emlfile);
 	
-	MailLetter Letter(memcached, emlfile.c_str());
+	MailLetter Letter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), memcached, emlfile.c_str());
 	if(Letter.GetSize() > 0)
 	{
 		int llen;
@@ -629,7 +627,7 @@ int Spool::Run(int fd)
 		}
 	
 		m_storageEngine = new StorageEngine(CMailBase::m_db_host.c_str(), CMailBase::m_db_username.c_str(), CMailBase::m_db_password.c_str(), 
-			CMailBase::m_db_name.c_str(), CMailBase::m_db_max_conn);
+			CMailBase::m_db_name.c_str(), CMailBase::m_db_max_conn, CMailBase::m_db_port, CMailBase::m_db_sock_file.c_str(), CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str());
 		if(!m_storageEngine)
 		{	
 			retVal = -1;
@@ -714,7 +712,8 @@ int Spool::Run(int fd)
 					break;
 				}
 			}
-            		clock_gettime(CLOCK_REALTIME, &ts2);
+            clock_gettime(CLOCK_REALTIME, &ts2);
+            ts2.tv_sec += 5;
 			if(sem_timedwait(postmail_sid, &ts2) == 0)
 			{
 				MailStorage* mailStg = NULL;

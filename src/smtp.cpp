@@ -1047,8 +1047,7 @@ void CMailSmtp::On_Data_Handler(char* text)
 		unsigned int mstatus = MSG_ATTR_RECENT;
 
 		srand(time(NULL));
-		sprintf(uid, "%08x_%08x_%016lx_%08x", time(NULL), getpid(), pthread_self(), CMailBase::m_global_uid);
-		CMailBase::m_global_uid++;
+		sprintf(uid, "%08x_%08x_%016lx_%08x", time(NULL), getpid(), pthread_self(), random());
 		
 		if(CMailBase::Is_Local_Domain(rcptto_domain.c_str()))
 		{
@@ -1065,7 +1064,7 @@ void CMailSmtp::On_Data_Handler(char* text)
 					usermaxsize = 5000*1024;
 				}
 						
-				m_letter_obj_vector[x]->letter = new MailLetter(m_memcached, uid, usermaxsize /*mailStg, m_mailfrom.c_str(),
+				m_letter_obj_vector[x]->letter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, uid, usermaxsize /*mailStg, m_mailfrom.c_str(),
 					m_letter_obj_vector[x].rcpt_to->c_str(), mtLocal, uid, DirID, mstatus, (unsigned int)time(NULL), usermaxsize*/);
 
 				m_letter_obj_vector[x]->letter_info.mail_from = m_mailfrom.c_str();
@@ -1090,7 +1089,7 @@ void CMailSmtp::On_Data_Handler(char* text)
 				}
 
 				
-				m_letter_obj_vector[x]->letter = new MailLetter(m_memcached, uid, usermaxsize /*mailStg, m_mailfrom.c_str(), 
+				m_letter_obj_vector[x]->letter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, uid, usermaxsize /*mailStg, m_mailfrom.c_str(), 
 					m_letter_obj_vector[x].rcpt_to->c_str(), mtLocal, uid, DirID, mstatus, (unsigned int)time(NULL), usermaxsize*/);
 
 				m_letter_obj_vector[x]->letter_info.mail_from = m_mailfrom.c_str();
@@ -1117,7 +1116,7 @@ void CMailSmtp::On_Data_Handler(char* text)
 					usermaxsize = 5000*1024;
 				}
 				
-				m_letter_obj_vector[x]->letter = new MailLetter(m_memcached, uid, usermaxsize /*mailStg, 
+				m_letter_obj_vector[x]->letter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, uid, usermaxsize /*mailStg, 
 				m_mailfrom.c_str(), m_letter_obj_vector[x].rcpt_to->c_str(), mtExtern, uid, -1, mstatus, time(NULL), usermaxsize*/);
 
 				m_letter_obj_vector[x]->letter_info.mail_from = m_mailfrom.c_str();
@@ -1137,7 +1136,7 @@ void CMailSmtp::On_Data_Handler(char* text)
 				{
 					usermaxsize = 5000*1024;
 				}
-				m_letter_obj_vector[x]->letter = new MailLetter(m_memcached, uid, usermaxsize /*mailStg, 
+				m_letter_obj_vector[x]->letter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, uid, usermaxsize /*mailStg, 
 				m_mailfrom.c_str(), m_letter_obj_vector[x].rcpt_to->c_str(), mtExtern, uid, -1, mstatus, time(NULL), usermaxsize*/);
 
 				m_letter_obj_vector[x]->letter_info.mail_from = m_mailfrom.c_str();

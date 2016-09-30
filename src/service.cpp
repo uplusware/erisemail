@@ -79,6 +79,7 @@ static void* begin_thread_pool_handler(void* arg)
 {
 	s_thread_pool_size++;
 	struct timespec ts;
+    srandom(time(NULL));
 	while(s_thread_pool_exit)
 	{
 		
@@ -304,7 +305,8 @@ int Service::Run(int fd, const char* hostip, unsigned short nPort)
 	}
 	
 	m_storageEngine = new StorageEngine(CMailBase::m_db_host.c_str(), 
-        CMailBase::m_db_username.c_str(), CMailBase::m_db_password.c_str(), CMailBase::m_db_name.c_str(), CMailBase::m_db_max_conn);
+        CMailBase::m_db_username.c_str(), CMailBase::m_db_password.c_str(), CMailBase::m_db_name.c_str(), CMailBase::m_db_max_conn,
+         CMailBase::m_db_port, CMailBase::m_db_sock_file.c_str(), CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str());
 
 	if(!m_storageEngine)
 	{
@@ -494,8 +496,6 @@ int Service::Run(int fd, const char* hostip, unsigned short nPort)
 				int clt_sockfd;
 				if(FD_ISSET(m_sockfd, &accept_mask))
 				{
-					
-					CMailBase::m_global_uid++;
 					clt_sockfd = accept(m_sockfd, (sockaddr*)&clt_addr, &clt_size);
 
 					if(clt_sockfd < 0)

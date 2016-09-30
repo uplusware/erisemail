@@ -19,7 +19,8 @@ typedef struct
 class StorageEngine
 {
 public:
-	StorageEngine(const char * host, const char* username, const char* password, const char* database, int maxConn);
+	StorageEngine(const char * host, const char* username, const char* password, const char* database, int maxConn,
+        unsigned short port, const char* sock_file, const char* private_path, const char* encoding);
 	virtual ~StorageEngine();
 
 	MailStorage* WaitEngine(int &index);
@@ -34,6 +35,10 @@ private:
 	string m_password;
 	string m_database;
 	int m_maxConn;
+    unsigned short m_port;
+    string m_sock_file;
+    string m_private_path;
+    string m_encoding;
 	unsigned long m_next;
 	stStorageEngine* m_engine;
 	

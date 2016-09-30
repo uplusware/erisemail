@@ -47,7 +47,7 @@ static void daemon_init()
 	umask(0);
 	close(STDIN_FILENO);
 	close(STDOUT_FILENO);
-//	close(STDERR_FILENO);
+	close(STDERR_FILENO);
 	signal(SIGCHLD,SIG_IGN);
 }
 
@@ -453,9 +453,9 @@ int Run()
 		{
 			retVal = -1;
 			break;
-		}
-        
+		}     
 		//Watch Dog
+        
 		int watchdog_pids;
 		pipe(pfd);
 		watchdog_pids = fork();
@@ -494,6 +494,7 @@ int Run()
 			retVal = -1;
 			break;
 		}
+
 	}while(0);
 	
 	CMailBase::UnLoadConfig();

@@ -209,8 +209,8 @@ private:
 class LetterSummary : public BlockSummary
 {
 public:
-	LetterSummary(memcached_st * memcached);
-	LetterSummary(const char* szpath, memcached_st * memcached);
+	LetterSummary(const char* encoding, memcached_st * memcached);
+	LetterSummary(const char* encoding, const char* szpath, memcached_st * memcached);
 	virtual ~LetterSummary();
 
 	void Parse(const char* buf);
@@ -237,6 +237,7 @@ private:
 	string m_strfield;
 
 	BOOL m_isheader;
+    string m_encoding;
 	memcached_st * m_memcached;
 };
 
@@ -293,11 +294,14 @@ protected:
 
 	int m_emlmapfd;
 	
+    string m_private_path;
+    string m_encoding;
+    
 	memcached_st * m_memcached;
 	
 public:
-	MailLetter(memcached_st * memcached, const char* emlfile);
-	MailLetter(memcached_st * memcached, const char* uid, unsigned long long maxsize);
+	MailLetter(const char* private_path, const char* encoding, memcached_st * memcached, const char* emlfile);
+	MailLetter(const char* private_path, const char* encoding, memcached_st * memcached, const char* uid, unsigned long long maxsize);
 	
 	virtual ~MailLetter();
 	

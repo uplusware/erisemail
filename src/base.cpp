@@ -60,14 +60,16 @@ string CMailBase::m_ca_key_client = "/var/cert/client-key.pem";
 string CMailBase::m_ca_password = "";
 
 string CMailBase::m_db_host = "localhost";
+unsigned short  CMailBase::m_db_port = 0;
 string CMailBase::m_db_name = "erisemail_db";
-string CMailBase::m_db_username = "";
+string CMailBase::m_db_username = "root";
 string CMailBase::m_db_password = "";
+string CMailBase::m_db_sock_file = "/var/run/mysqld/mysqld.sock";
+
 unsigned int CMailBase::m_db_max_conn = MAX_STORAGE_CONN;
 
 unsigned int CMailBase::m_relaytasknum = 3;
 
-volatile unsigned int CMailBase::m_global_uid = 0;
 BOOL   CMailBase::m_enablesmtphostnamecheck = FALSE;
 unsigned int CMailBase::m_connect_num = 0;
 unsigned int CMailBase::m_max_conn = MAX_STORAGE_CONN;
@@ -110,7 +112,7 @@ void CMailBase::SetConfigFile(const char* config_file, const char* permit_list_f
 
 BOOL CMailBase::LoadConfig()
 {	
-    srand(time(NULL));
+    srand(time(NULL)/3600);
     for(int x = 0; x < 8; x++)
     {
         int ind = rand()%(sizeof(CHAR_TBL) - 1);
@@ -118,7 +120,6 @@ BOOL CMailBase::LoadConfig()
         m_des_key[x] = CHAR_TBL[ind];
     }
     m_des_key[8] = '\0';
-    
 	m_domain_list.clear();	
 	m_permit_list.clear();
 	m_reject_list.clear();
@@ -388,6 +389,14 @@ BOOL CMailBase::LoadConfig()
 				strtrim(m_db_host);
 				//printf("%s\n", m_db_host.c_str());
 			}
+            else if(strncasecmp(strline.c_str(), "DBPort", strlen("DBPort")) == 0)
+			{
+				string dbport;
+				strcut(strline.c_str(), "=", NULL, dbport );
+				strtrim(dbport);
+				m_db_port = atoi(dbport.c_str());
+				//printf("%d\n", m_db_port);
+			}
 			else if(strncasecmp(strline.c_str(), "DBName", strlen("DBName")) == 0)
 			{
 				strcut(strline.c_str(), "=", NULL, m_db_name );
@@ -412,6 +421,12 @@ BOOL CMailBase::LoadConfig()
 				
 				//printf("%s\n", m_db_password.c_str());
 				
+			}
+            else if(strncasecmp(strline.c_str(), "DBSockFile", strlen("DBSockFile")) == 0)
+			{
+				strcut(strline.c_str(), "=", NULL, m_db_sock_file );
+				strtrim(m_db_sock_file);
+				//printf("%s\n", m_db_sock_file.c_str());
 			}
 			else if(strncasecmp(strline.c_str(), "DBMaxConn", strlen("DBMaxConn")) == 0)
 			{

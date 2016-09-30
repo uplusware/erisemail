@@ -9,54 +9,41 @@
 
 #define CODE_KEY "qazWSX#$%123"
 
-static const char *server_args[] = {
-	"this_program", /* this string is not used */
-	"--datadir=.",
-	"--key_buffer_size=32M"
-};
-
-static const char *server_groups[] = {
-	"embedded",
-	"server",
-	"this_program_SERVER",
-	(char *)NULL
-	};
-
 void MailStorage::SqlSafetyString(string& strInOut)
 {
 	char * szOut = new char[strInOut.length()* 2 + 1];
+    memset(szOut, 0, strInOut.length()* 2 + 1);
 	mysql_escape_string(szOut, strInOut.c_str(), strInOut.length());
 	strInOut = szOut;
 	delete szOut;
 }
 
-MailStorage::MailStorage(const char* encoding, const char* private_path, unsigned global_uid)
+MailStorage::MailStorage(const char* encoding, const char* private_path)
 {
     m_userpwd_cache.clear();
     m_userpwd_cache_update_time = 0;
     CMailBase::m_userpwd_cache_updated = TRUE;
     m_encoding = encoding;
     m_private_path = private_path;
-    m_global_uid = global_uid;
+    
+    //printf("%s %d %s %s\n", __FILE__, __LINE__, m_private_path.c_str(), m_encoding.c_str());
     
 	m_bOpened = FALSE;
-	if(mysql_library_init(sizeof(server_args)/sizeof(char *), (char**)server_args, (char**)server_groups))
-	{
-		exit(1);
-	}
     pthread_mutex_init(&m_thread_pool_mutex, NULL);
     
+    mysql_thread_init();
+            
     m_hMySQL = NULL;
 }
 
 MailStorage::~MailStorage()
 {
 	Close();
-	mysql_library_end();
+    mysql_thread_end();
     pthread_mutex_destroy(&m_thread_pool_mutex);
 }
 
-int MailStorage::Connect(const char * host, const char* username, const char* password, const char* database, unsigned short port)
+int MailStorage::Connect(const char * host, const char* username, const char* password, const char* database, unsigned short port, const char* sock_file)
 {
 	if(m_hMySQL && Ping() == 0)
 	{
@@ -64,29 +51,32 @@ int MailStorage::Connect(const char * host, const char* username, const char* pa
 	}
 	else
 	{
-		mysql_thread_init();
-        
+        pthread_mutex_lock(&m_thread_pool_mutex);
+		
         m_hMySQL = mysql_init(NULL);
-
-		if(mysql_real_connect(m_hMySQL, host, username, password, database, port, NULL, 0) != NULL)
+        
+        if(mysql_real_connect(m_hMySQL, host, username, password, database, port, sock_file, 0) != NULL)
 		{
+            pthread_mutex_unlock(&m_thread_pool_mutex);
 			m_host = host;
 			m_username = username;
 			m_password = password;
 			m_port = port;
+            m_sock_file = sock_file;
 			if(database != NULL)
 				m_database = database;
 			
-			mysql_set_character_set(m_hMySQL, m_encoding.c_str());
+			//mysql_set_character_set(m_hMySQL, m_encoding.c_str());
 			m_bOpened = TRUE;
 			return 0;
 		}
 		else
 		{
+            pthread_mutex_unlock(&m_thread_pool_mutex);
 			m_bOpened = FALSE;
-            m_hMySQL = NULL;
-			fprintf(stderr, "mysql_real_connect: %s\n", mysql_error(m_hMySQL));
-			return -1;	
+            fprintf(stderr, "mysql_real_connect: %s\n", mysql_error(m_hMySQL));
+			
+            return -1;	
 		}
 	}
 }
@@ -96,14 +86,13 @@ void MailStorage::Close()
     if(m_hMySQL)
         mysql_close(m_hMySQL);
     m_hMySQL = NULL;
-	mysql_thread_end();
 	m_bOpened = FALSE;
 	m_bOpened = FALSE;
 }
 
 int MailStorage::Ping()
 {
-	if(m_bOpened)
+	if(m_bOpened && m_hMySQL)
 	{
 	    int rc = mysql_ping(m_hMySQL);
 		return rc;
@@ -119,7 +108,7 @@ void MailStorage::KeepLive()
 	if(Ping() != 0)
 	{
 		Close();
-		Connect(m_host.c_str(), m_username.c_str(), m_password.c_str(), m_database.c_str());
+		Connect(m_host.c_str(), m_username.c_str(), m_password.c_str(), m_database.c_str(), m_port, m_sock_file.c_str());
 	}
 }
 
@@ -137,7 +126,7 @@ void MailStorage::LeaveThread()
 int MailStorage::Install(const char* database)
 {
 	char sqlcmd[1024];
-        //Transaction begin
+    //Transaction begin
 	mysql_autocommit(m_hMySQL, 0);
 	if(strcasecmp(m_encoding.c_str(),"GB2312") == 0)
 	{
@@ -1123,8 +1112,7 @@ int MailStorage::LoadMailFromFile(const char* mfrom, const char* mto, unsigned i
 	
 	char sqlfilepath[1024];
 	sprintf(sqlfilepath, "/tmp/erisemail/%s_%08x_%08x_%016lx_%08x.sql", 
-		muniqid, time(NULL), getpid(), pthread_self(), m_global_uid);
-	m_global_uid++;
+		muniqid, time(NULL), getpid(), pthread_self(), random());
 
 	ofstream * sqlfile = new ofstream(sqlfilepath, ios_base::binary|ios::out|ios::trunc);
 	chmod(sqlfilepath, 0666);
@@ -1201,8 +1189,7 @@ int MailStorage::UpdateMailFromFile(const char* mfrom, const char* mto, unsigned
 	
 	char sqlfilepath[1024];
 	sprintf(sqlfilepath, "/tmp/erisemail/%s_%08x_%08x_%016lx_%08x.sql", 
-		muniqid, time(NULL), getpid(), pthread_self(), m_global_uid);
-	m_global_uid++;
+		muniqid, time(NULL), getpid(), pthread_self(), random());
 
 	ofstream * sqlfile = new ofstream(sqlfilepath, ios_base::binary|ios::out|ios::trunc);
 	chmod(sqlfilepath, 0666);
@@ -1604,9 +1591,21 @@ int MailStorage::LimitListMailByDir(const char* username, vector<Mail_Info>& lis
 		pthread_mutex_unlock(&m_thread_pool_mutex);
 		if(qResult)
 		{
+            unsigned int num_fields;
+            unsigned int i;
+            num_fields = mysql_num_fields(qResult);
 			while((row = mysql_fetch_row(qResult)))
 			{
-				Mail_Info mi;
+                /*unsigned long *lengths;
+                lengths = mysql_fetch_lengths(qResult);
+                for(i = 0; i < num_fields; i++)
+                {
+                    printf("[%.*s] ", (int) lengths[i],
+                           row[i] ? row[i] : "NULL");
+                }
+                printf("\n");*/
+                
+                Mail_Info mi;
 				
 				string tmpfile = m_private_path.c_str();
 				tmpfile += "/eml/";
@@ -1622,11 +1621,10 @@ int MailStorage::LimitListMailByDir(const char* username, vector<Mail_Info>& lis
 
 					close(mfd);
 				}
-				
 				strcpy(mi.uniqid, row[1]);
 				mi.mid = atoi(row[2]);
 				mi.mtime = atoi(row[3]);
-				mi.mstatus= atoi(row[4]);
+				mi.mstatus= atoi(row[4] == NULL ? 0 : row[4]);
 				mi.mailfrom = row[5];
 				mi.rcptto = row[6];
 				mi.mtype = (MailType)atoi(row[7]);
@@ -2176,8 +2174,7 @@ int MailStorage::GetUserSize(const char* uname, unsigned long long& size)
 int MailStorage::DumpMailToFile(int mid, string& dumpfile)
 {
 	char sqlcmd[1024];
-	sprintf(sqlcmd, "/tmp/erisemail/%08x_%08x_%08x_%016lx_%08x.dat",  time(NULL), getpid(), pthread_self(), m_global_uid, mid);
-	m_global_uid++;
+	sprintf(sqlcmd, "/tmp/erisemail/%08x_%08x_%08x_%016lx_%08x.dat",  time(NULL), getpid(), pthread_self(), random(), mid);
 	dumpfile = sqlcmd;
 	sprintf(sqlcmd, "select mbody into DUMPFILE '%s' from mailtbl where mid='%d' and mstatus&%d<>%d", dumpfile.c_str(), mid, MSG_ATTR_DELETED, MSG_ATTR_DELETED);
 	if( mysql_thread_real_query(m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
@@ -2226,9 +2223,7 @@ int MailStorage::GetMailBody(int mid, char* body)
 }
 
 int MailStorage::GetMailIndex(int mid, string& path)
-{
-	KeepLive();
-	
+{	
 	char sqlcmd[1024];
 	sprintf(sqlcmd, "select mbody from mailtbl where mid='%d' and mstatus&%d<>%d;", mid, MSG_ATTR_DELETED, MSG_ATTR_DELETED);
 	pthread_mutex_lock(&m_thread_pool_mutex);
