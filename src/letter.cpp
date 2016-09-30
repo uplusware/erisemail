@@ -26,7 +26,7 @@ MailLetter::MailLetter(const char* private_path, const char*  encoding, memcache
 	m_emlmapfd = -1;
 	
 	m_uid = uid;
-	m_memcached = NULL;//memcached;
+	m_memcached = memcached;
     m_private_path = private_path;
     m_encoding = encoding;
     
@@ -58,7 +58,7 @@ MailLetter::MailLetter(const char* private_path, const char*  encoding, memcache
 	m_size = 0;
 
 	m_emlfile = emlfile;
-	m_memcached = NULL;//memcached;
+	m_memcached = memcached;
 	
 	m_tmpfile = m_private_path.c_str();
 	m_tmpfile += "/eml/";
@@ -366,7 +366,7 @@ void MailLetter::get_attach_summary(MimeSummary* part, unsigned long& count, uns
 
 LetterSummary::LetterSummary(const char* encoding, memcached_st * memcached) : BlockSummary(0, NULL)
 {
-	m_memcached = NULL;//memcached;
+	m_memcached = memcached;
 	m_xml = NULL;
 	m_isheader = TRUE;
 	m_strfield = "";
@@ -393,7 +393,7 @@ LetterSummary::LetterSummary(const char* encoding, const char* szpath, memcached
     
     //printf("%s %d %s\n", __FILE__, __LINE__, m_encoding.c_str());
     
-	m_memcached = NULL;//memcached;
+	m_memcached = memcached;
 	m_isheader = TRUE;
 	m_xmlpath = szpath;
 	m_strfield = "";
@@ -566,14 +566,14 @@ void LetterSummary::loadXML()
 		m_xml->LoadFile(m_xmlpath.c_str());
 		if(m_memcached)
         {
-            TiXmlPrinter xml_printer;
+            /*TiXmlPrinter xml_printer;
             m_xml->Accept( &xml_printer );
             
             memc_rc = memcached_set(m_memcached, m_xmlpath.c_str(), m_xmlpath.length(), xml_printer.CStr(), xml_printer.Size(), (time_t)0, (uint32_t)0);
             if(memc_rc == MEMCACHED_SUCCESS)
             {
                 //printf("set: %s %d\n", m_xmlpath.c_str(), xml_printer.Size());
-            }
+            }*/
         }
   
 	}
