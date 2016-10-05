@@ -4,7 +4,11 @@
 #include <sys/stat.h> 	   /* For mode constants */
 #include <semaphore.h>
 #include <fcntl.h>
+#include "util/md5.h"
 #include "letter.h"
+
+#define MEMCACHED_EML 0x00000001
+#define MEMCACHED_XML 0x00000002
 
 MailLetter::MailLetter(const char* private_path, const char*  encoding, memcached_st * memcached, const char* uid, unsigned long long maxsize)
 {
@@ -26,7 +30,7 @@ MailLetter::MailLetter(const char* private_path, const char*  encoding, memcache
 	m_emlmapfd = -1;
 	
 	m_uid = uid;
-	m_memcached = NULL;//memcached;
+	m_memcached = memcached;
     m_private_path = private_path;
     m_encoding = encoding;
     
@@ -58,25 +62,34 @@ MailLetter::MailLetter(const char* private_path, const char*  encoding, memcache
 	m_size = 0;
 
 	m_emlfile = emlfile;
-	m_memcached = NULL;//memcached;
+	m_memcached = memcached;
 	
 	m_tmpfile = m_private_path.c_str();
 	m_tmpfile += "/eml/";
 	m_tmpfile += m_emlfile;
 	
+    MD5_CTX context;
+    context.MD5Update ((unsigned char*)m_tmpfile.c_str(), m_tmpfile.length());
+    unsigned char digest[16];
+    context.MD5Final (digest);
+    char szMD5dst[33];
+    memset(szMD5dst, 0, 33);
+    sprintf(szMD5dst,
+        "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
+        digest[0], digest[1], digest[2], digest[3], digest[4], digest[5], digest[6], digest[7],
+        digest[8], digest[9], digest[10], digest[11], digest[12], digest[13], digest[14], digest[15]);
+        
     memcached_return memc_rc;
     size_t memc_value_length;
-    uint32_t memc_flags;
+    uint32_t memc_flags = MEMCACHED_EML;
     
     char* mail_text = NULL;
     if(m_memcached)
-        mail_text = memcached_get(m_memcached, m_tmpfile.c_str(), m_tmpfile.length(), &memc_value_length, &memc_flags, &memc_rc);
-    if (m_memcached && mail_text && memc_rc == MEMCACHED_SUCCESS)
+        mail_text = memcached_get(m_memcached, szMD5dst, 33, &memc_value_length, &memc_flags, &memc_rc);
+    if (m_memcached && mail_text && memc_rc == MEMCACHED_SUCCESS && (memc_flags&MEMCACHED_EML) == MEMCACHED_EML)
     {
-        
         m_body = mail_text;
         m_size = memc_value_length;
-        //printf("get: %s %d\n", m_tmpfile.c_str(), memc_value_length);
         m_body_memtype = CACHED;
     }
     else
@@ -88,18 +101,14 @@ MailLetter::MailLetter(const char* private_path, const char*  encoding, memcache
             struct stat file_stat;
             fstat(m_emlmapfd, &file_stat);
             m_size = file_stat.st_size;
-            
             m_body = (char*)mmap(NULL, m_size, PROT_READ, MAP_SHARED , m_emlmapfd, 0);
             m_body_memtype = MMAPED;
-            if(m_size < 4*1024*1024)
+            if(m_memcached && m_size < 4*1024*1024)
             {
-                if(m_memcached)
-                {                   
-                    memc_rc = memcached_set(m_memcached, m_tmpfile.c_str(), m_tmpfile.length(), m_body, m_size, (time_t)0, (uint32_t)0);
-                    if(memc_rc == MEMCACHED_SUCCESS)
-                    {
-                        //printf("set: %s %d\n", m_tmpfile.c_str(), m_size);
-                    }
+                memc_rc = memcached_set(m_memcached, szMD5dst, 32, m_body, m_size, (time_t)0, (uint32_t)memc_flags);
+                if(memc_rc == MEMCACHED_SUCCESS)
+                {
+                    //printf("set: %s %d\n", m_tmpfile.c_str(), m_size);
                 }
                 
             }
@@ -549,14 +558,26 @@ void LetterSummary::loadXML()
 	
 	memcached_return memc_rc;
 	size_t memc_value_length;
-	uint32_t memc_flags;
+	uint32_t memc_flags = MEMCACHED_XML;
 	
+    MD5_CTX context;
+    context.MD5Update ((unsigned char*)m_xmlpath.c_str(), m_xmlpath.length());
+    unsigned char digest[16];
+    context.MD5Final (digest);
+    char szMD5dst[33];
+    memset(szMD5dst, 0, 33);
+    sprintf(szMD5dst,
+        "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
+        digest[0], digest[1], digest[2], digest[3], digest[4], digest[5], digest[6], digest[7],
+        digest[8], digest[9], digest[10], digest[11], digest[12], digest[13], digest[14], digest[15]);
+    
 	char* xml_text = NULL;
     if(m_memcached)
-        xml_text = memcached_get(m_memcached, m_xmlpath.c_str(), m_xmlpath.length(), &memc_value_length, &memc_flags, &memc_rc);
-	if (m_memcached && xml_text && memc_rc == MEMCACHED_SUCCESS)
+        xml_text = memcached_get(m_memcached, szMD5dst, 32, &memc_value_length, &memc_flags, &memc_rc);
+	if (m_memcached && xml_text && memc_rc == MEMCACHED_SUCCESS && (memc_flags & MEMCACHED_XML) == MEMCACHED_XML)
 	{
-        //printf("get: %s %d\n", m_xmlpath.c_str(), memc_value_length);
+        //printf("%s\n", szMD5dst);
+        //printf("get: %s %d\n%s\n", m_xmlpath.c_str(), memc_value_length, xml_text);
 		m_xml->Parse(xml_text);
 		if(xml_text)
 		    free(xml_text);
@@ -569,7 +590,7 @@ void LetterSummary::loadXML()
             TiXmlPrinter xml_printer;
             m_xml->Accept( &xml_printer );
             
-            memc_rc = memcached_set(m_memcached, m_xmlpath.c_str(), m_xmlpath.length(), xml_printer.CStr(), xml_printer.Size(), (time_t)0, (uint32_t)0);
+            memc_rc = memcached_set(m_memcached, szMD5dst, 32, xml_printer.CStr(), xml_printer.Size(), (time_t)0, (uint32_t)memc_flags);
             if(memc_rc == MEMCACHED_SUCCESS)
             {
                 //printf("set: %s %d\n", m_xmlpath.c_str(), xml_printer.Size());

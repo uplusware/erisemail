@@ -3522,7 +3522,7 @@ public:
 			strToAddrs += ";";
 			strToAddrs += strBccAddrs;
 			
-			vSplitString(strToAddrs, toAddr, ";, ",TRUE, 0x7FFFFFFF);
+			vSplitString(strToAddrs, toAddr, ";, ",TRUE, 0x7FFFFFFFU);
 			
 			//Extend mail group
 			for(int i = 0; i < toAddr.size(); i++)
@@ -3738,7 +3738,7 @@ public:
 					eml.set_content(strContent.c_str());
 					
 					vector<string> vAtt;
-					vSplitString(strAttaches, vAtt, "*", TRUE, 0x7FFFFFFF);
+					vSplitString(strAttaches, vAtt, "*", TRUE, 0x7FFFFFFFU);
 					
 					for(int z = 0; z < vAtt.size(); z++)
 					{
@@ -3933,7 +3933,7 @@ public:
 				}
 				
 				vector<string> vfilename;
-				vSplitString(filename, vfilename, "\\/", TRUE, 0x7FFFFFFF);
+				vSplitString(filename, vfilename, "\\/", TRUE, 0x7FFFFFFFU);
 				filename = vfilename[vfilename.size() - 1];
 				
 				if( segAttach.m_byte_end >= segAttach.m_byte_beg && (segAttach.m_byte_end - segAttach.m_byte_beg) > maxsize )
@@ -4200,7 +4200,7 @@ public:
 		if(m_mailStg && m_mailStg->CheckLogin(username.c_str(), password.c_str()) == 0)
 		{
 			vector<string> vDirID;
-			vSplitString(strToDirID, vDirID, "*", TRUE, 0x7FFFFFFF);
+			vSplitString(strToDirID, vDirID, "*", TRUE, 0x7FFFFFFFU);
 			
 			unsigned int nMailID = atoi(strMailID.c_str());
 			
@@ -4362,7 +4362,7 @@ public:
 		if(m_mailStg && m_mailStg->CheckLogin(username.c_str(), password.c_str()) == 0)
 		{
 			vector<string> vDirID;
-			vSplitString(strToDirID, vDirID, "*", TRUE, 0x7FFFFFFF);
+			vSplitString(strToDirID, vDirID, "*", TRUE, 0x7FFFFFFFU);
 			
 			unsigned int nMailID = atoi(strMailID.c_str());
 			
@@ -6156,7 +6156,7 @@ public:
 			vector<string> vAtt;
 			
 			
-			vSplitString(strAttachFiles, vAtt, "*", TRUE, 0x7FFFFFFF);
+			vSplitString(strAttachFiles, vAtt, "*", TRUE, 0x7FFFFFFFU);
 			
 			for(int z = 0; z < vAtt.size(); z++)
 			{
@@ -6419,7 +6419,7 @@ public:
 			
 			vector<string> vAtt;
 			
-			vSplitString(strAttachFiles, vAtt, "*", TRUE, 0x7FFFFFFF);
+			vSplitString(strAttachFiles, vAtt, "*", TRUE, 0x7FFFFFFFU);
 			
 			for(int z = 0; z < vAtt.size(); z++)
 			{

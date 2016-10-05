@@ -23,7 +23,7 @@ void Webmail::Response()
     }
     else
     {
-        vSplitString(strQueryPage, vPath, "/", TRUE, 0x7FFFFFFF);
+        vSplitString(strQueryPage, vPath, "/", TRUE, 0x7FFFFFFFU);
         
         int nCDUP = 0;
         int nCDIN = 0;

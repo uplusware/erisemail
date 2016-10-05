@@ -125,7 +125,7 @@ public:
 		
 		vector<string> vecDest;
 		string strhostname = hostname;
-		vSplitString(strhostname, vecDest, ".", TRUE, 0x7FFFFFFF);
+		vSplitString(strhostname, vecDest, ".", TRUE, 0x7FFFFFFFU);
 		int vLen = vecDest.size();
 		int qseek = 0;
 		for(int i = 0;  i < vLen; i++)

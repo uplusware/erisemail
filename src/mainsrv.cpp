@@ -455,7 +455,6 @@ int Run()
 			break;
 		}     
 		//Watch Dog
-        
 		int watchdog_pids;
 		pipe(pfd);
 		watchdog_pids = fork();
@@ -494,7 +493,6 @@ int Run()
 			retVal = -1;
 			break;
 		}
-
 	}while(0);
 	
 	CMailBase::UnLoadConfig();

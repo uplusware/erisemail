@@ -1,5 +1,6 @@
 #include "stgengine.h"
 #include "base.h"
+
 StorageEngine::StorageEngine(const char * host, const char* username, const char* password, const char* database, int maxConn,
     unsigned short port, const char* sock_file, const char* private_path, const char* encoding)
 {
@@ -13,9 +14,7 @@ StorageEngine::StorageEngine(const char * host, const char* username, const char
     m_private_path = private_path;
     m_encoding = encoding;
     
-    //printf("%s %d %s %s\n", __FILE__, __LINE__, m_private_path.c_str(), m_encoding.c_str());
-    
-	m_realConn = 0;
+    m_realConn = 0;
 	m_next = 0;
 	m_engine = new stStorageEngine[m_maxConn];
 	sem_init(&m_engineSem, 0, m_maxConn);
@@ -29,8 +28,6 @@ StorageEngine::StorageEngine(const char * host, const char* username, const char
         m_engine[i].owner = 0;
 	}
 	pthread_mutex_init(&m_engineMutex, NULL);
-    
-    //printf("%s %d %s %s\n", __FILE__, __LINE__, m_private_path.c_str(), m_encoding.c_str());
 }
 
 StorageEngine::~StorageEngine()
@@ -52,7 +49,7 @@ StorageEngine::~StorageEngine()
 	sem_close(&m_engineSem);
 }
 
-MailStorage* StorageEngine::WaitEngine(int &index)
+MailStorage* StorageEngine::Wait(int &index)
 {
     MailStorage* freeOne = NULL;
     sem_wait(&m_engineSem);
@@ -62,13 +59,7 @@ MailStorage* StorageEngine::WaitEngine(int &index)
         if(m_engine[i].inUse == FALSE)
         {
             index = i;
-            if(m_next < index)
-            {
-                m_next = index;
-                //printf("V: %d\n", m_next);
-            }
             m_engine[index].inUse = TRUE;
-            
             break;
         }
     }
@@ -90,9 +81,8 @@ MailStorage* StorageEngine::WaitEngine(int &index)
             else
             {
                m_engine[index].opened = FALSE;
-               fprintf(stderr, "the mysql connection is not avaliable. Will try to connect again %d\n", t);
                freeOne = NULL;
-               usleep(10);
+               usleep(1000);
             }
         }
         else
@@ -104,11 +94,10 @@ MailStorage* StorageEngine::WaitEngine(int &index)
 	return freeOne;
 }
 
-void StorageEngine::PostEngine(int index)
+void StorageEngine::Post(int index)
 {
     pthread_mutex_lock(&m_engineMutex);
     m_engine[index].inUse = FALSE;
-    //printf("P: %d\n", index);
     pthread_mutex_unlock(&m_engineMutex);
     
     sem_post(&m_engineSem);

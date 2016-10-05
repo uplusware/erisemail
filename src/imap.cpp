@@ -928,8 +928,8 @@ void CMailImap::On_List(char* text)
 				
 				vector<string> vecDest1;
 				vector<string> vecDest2;
-				vSplitString(strReference, vecDest1, "/", TRUE, 0x7FFFFFFF);
-				vSplitString(strReference, vecDest2, "/", TRUE, 0x7FFFFFFF);
+				vSplitString(strReference, vecDest1, "/", TRUE, 0x7FFFFFFFU);
+				vSplitString(strReference, vecDest2, "/", TRUE, 0x7FFFFFFFU);
 				int vLen1, vLen2;
 				vLen1 = vecDest1.size();
 				vLen2 = vecDest1.size();
@@ -1018,8 +1018,8 @@ void CMailImap::On_Listsub(char* text)
 				}
 				vector<string> vecDest1;
 				vector<string> vecDest2;
-				vSplitString(strReference, vecDest1, "/", TRUE, 0x7FFFFFFF);
-				vSplitString(strReference, vecDest2, "/", TRUE, 0x7FFFFFFF);
+				vSplitString(strReference, vecDest1, "/", TRUE, 0x7FFFFFFFU);
+				vSplitString(strReference, vecDest2, "/", TRUE, 0x7FFFFFFFU);
 				int vLen1, vLen2;
 				vLen1 = vecDest1.size();
 				vLen2 = vecDest1.size();
@@ -1937,7 +1937,7 @@ void CMailImap::Fetch(const char* szArg, BOOL isUID)
 			nBegin = atoi(vecSequenceRange[0].c_str());
 			if(vecSequenceRange[1] == "*")
 			{
-				nEnd = 0x7FFFFFFF;
+				nEnd = 0x7FFFFFFFU;
 			}
 			else
 			{
@@ -3317,7 +3317,7 @@ void CMailImap::Store(const char* szArg, BOOL isUID)
 			nBegin = atoi(vecSequenceRange[0].c_str());
 			if(vecSequenceRange[1] == "*")
 			{
-				nEnd = 0x7FFFFFFF;
+				nEnd = 0x7FFFFFFFU;
 			}
 			else
 			{
@@ -3790,7 +3790,7 @@ int CMailImap::Copy(const char* szArg, BOOL isUID)
 			nBegin = atoi(vecSequenceRange[0].c_str());
 			if(vecSequenceRange[1] == "*")
 			{
-				nEnd = 0x7FFFFFFF;
+				nEnd = 0x7FFFFFFFU;
 			}
 			else
 			{

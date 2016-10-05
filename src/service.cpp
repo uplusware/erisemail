@@ -295,9 +295,11 @@ int Service::Run(int fd, const char* hostip, unsigned short nPort)
     CUplusTrace uTrace(LOGNAME, LCKNAME);
     memcached_server_st * memcached_servers = NULL;
 	memcached_return rc;
-	m_memcached = memcached_create(NULL);
+	m_memcached = NULL;
 	for (map<string, int>::iterator iter = CMailBase::m_memcached_list.begin( ); iter != CMailBase::m_memcached_list.end( ); ++iter)
 	{
+        if(!m_memcached)
+            m_memcached = memcached_create(NULL);
 		memcached_servers = memcached_server_list_append(memcached_servers, (*iter).first.c_str(), (*iter).second, &rc);
 		rc = memcached_server_push(m_memcached, memcached_servers);
 		

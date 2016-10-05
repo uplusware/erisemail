@@ -23,8 +23,8 @@ public:
         unsigned short port, const char* sock_file, const char* private_path, const char* encoding);
 	virtual ~StorageEngine();
 
-	MailStorage* WaitEngine(int &index);
-	void PostEngine(int index);
+	MailStorage* Wait(int &index);
+	void Post(int index);
 
 	
 	string m_host;
@@ -53,7 +53,7 @@ public:
 	StorageEngineInstance(StorageEngine* engine, MailStorage** storage)
 	{
 		m_engine = engine;
-		m_storage = m_engine->WaitEngine(m_engineIndex);
+		m_storage = m_engine->Wait(m_engineIndex);
 		*storage = m_storage;
         m_isReleased = FALSE;
 	}
@@ -67,7 +67,7 @@ public:
 	{
         if(!m_isReleased)
         {
-            m_engine->PostEngine(m_engineIndex);
+            m_engine->Post(m_engineIndex);
             m_isReleased = TRUE;
         }
 	}

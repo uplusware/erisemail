@@ -308,7 +308,7 @@ public:
 	int SetMailSize(unsigned int mid, unsigned int msize);
 	
 protected:
-	MYSQL* m_hMySQL;
+	MYSQL m_hMySQL;
 
 	BOOL m_bOpened;
 	void SqlSafetyString(string& strInOut);
@@ -323,18 +323,8 @@ protected:
     string m_encoding;
     string m_private_path;
     
-    pthread_mutex_t m_thread_pool_mutex;
-    
     map<string, string> m_userpwd_cache;
     int m_userpwd_cache_update_time;
-private:
-    int mysql_thread_real_query(MYSQL *mysql, const char *stmt_str, unsigned long length)
-    {
-        pthread_mutex_lock(&m_thread_pool_mutex);
-        int ret = mysql_real_query(mysql, stmt_str, length);
-        pthread_mutex_unlock(&m_thread_pool_mutex);
-        return ret;
-    }
 };
 
 class mysql_query_lock
