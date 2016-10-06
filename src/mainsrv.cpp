@@ -57,8 +57,6 @@ int Run()
 {
 	CUplusTrace uTrace(LOGNAME, LCKNAME);
 	uTrace.Write(Trace_Msg, "%s", "Service starts");
-	
-	/* CMailBase::LoadConfig(); */
 
 	int retVal = 0;
 	int smtp_pid = -1, pop3_pid = -1, imap_pid = -1, smtps_pid = -1, pop3s_pid = -1, imaps_pid = -1, http_pid = -1, https_pid = -1;
