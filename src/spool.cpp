@@ -629,7 +629,7 @@ int Spool::Run(int fd)
 		}
 	
 		m_storageEngine = new StorageEngine(CMailBase::m_db_host.c_str(), CMailBase::m_db_username.c_str(), CMailBase::m_db_password.c_str(), 
-			CMailBase::m_db_name.c_str(), CMailBase::m_db_max_conn, CMailBase::m_db_port, CMailBase::m_db_sock_file.c_str(), CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str());
+			CMailBase::m_db_name.c_str(), CMailBase::m_db_max_conn, CMailBase::m_db_port, CMailBase::m_db_sock_file.c_str(), CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached);
 		if(!m_storageEngine)
 		{	
 			retVal = -1;

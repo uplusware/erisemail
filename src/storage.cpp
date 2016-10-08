@@ -18,11 +18,11 @@ void MailStorage::SqlSafetyString(string& strInOut)
 	delete szOut;
 }
 
-MailStorage::MailStorage(const char* encoding, const char* private_path)
+MailStorage::MailStorage(const char* encoding, const char* private_path, memcached_st * memcached)
 {
     m_userpwd_cache.clear();
     m_userpwd_cache_update_time = 0;
-    CMailBase::m_userpwd_cache_updated = TRUE;
+    m_userpwd_cache_updated = TRUE;
     m_encoding = encoding;
     m_private_path = private_path;
     
@@ -31,6 +31,8 @@ MailStorage::MailStorage(const char* encoding, const char* private_path)
     mysql_thread_init();
     
     mysql_init(&m_hMySQL);
+    
+    m_memcached = memcached;
 }
 
 MailStorage::~MailStorage()
@@ -38,6 +40,8 @@ MailStorage::~MailStorage()
 	Close();
     mysql_thread_end();
 }
+
+BOOL MailStorage::m_userpwd_cache_updated = TRUE;
 
 int MailStorage::Connect(const char * host, const char* username, const char* password, const char* database, unsigned short port, const char* sock_file)
 {
@@ -324,11 +328,12 @@ int MailStorage::CheckLogin(const char* username, const char* password)
 {
     if(strcmp(username, "") == 0 || strcmp(password, "") == 0)
         return -1;
+    
 	char sqlcmd[1024];
 	string strSafetyUsername = username;
 	SqlSafetyString(strSafetyUsername);
     
-    if(m_userpwd_cache.size() == 0 || time(NULL) - m_userpwd_cache_update_time > 300 || CMailBase::m_userpwd_cache_updated == TRUE)
+    if(m_userpwd_cache.size() == 0 || time(NULL) - m_userpwd_cache_update_time > 300 || m_userpwd_cache_updated == TRUE)
     {
         m_userpwd_cache.clear();
         sprintf(sqlcmd, "select uname, DECODE(upasswd,'%s') from usertbl where ustatus = %d and utype = %d", CODE_KEY, usActive, utMember);
@@ -350,7 +355,7 @@ int MailStorage::CheckLogin(const char* username, const char* password)
                 mysql_free_result(qResult);
                 
                 m_userpwd_cache_update_time = time(NULL);
-                CMailBase::m_userpwd_cache_updated = FALSE;
+                m_userpwd_cache_updated = FALSE;
                 return 0;
             }
             else
@@ -903,7 +908,7 @@ int MailStorage::AddID(const char* username, const char* password, const char* a
 			if(mysql_commit(&m_hMySQL) == 0)
 			{
 				m_userpwd_cache_update_time = 0;
-				CMailBase::m_userpwd_cache_updated = TRUE;
+				m_userpwd_cache_updated = TRUE;
 				mysql_autocommit(&m_hMySQL, 1);
 				return 0;
 			}
@@ -1082,7 +1087,7 @@ int MailStorage::DelID(const char* username)
 			return -1;
 		}
 		m_userpwd_cache_update_time = 0;
-		CMailBase::m_userpwd_cache_updated = TRUE;
+		m_userpwd_cache_updated = TRUE;
 		return 0;
 	}
 	else
@@ -2058,7 +2063,7 @@ int MailStorage::Passwd(const char* uname, const char* password)
 		if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 		{
 			m_userpwd_cache_update_time = 0;
-			CMailBase::m_userpwd_cache_updated = TRUE;
+			m_userpwd_cache_updated = TRUE;
 			return 0;
 		}
 		else

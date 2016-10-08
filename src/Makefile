@@ -28,23 +28,23 @@ ifdef SOLARIS
 MDEF = _SOLARIS_OS_
 INCDIR = -I/usr/mysql/5.0/include/mysql/
 LDDIRS = -L/usr/mysql/5.0/lib/mysql/
-LDLIST_STG = -lstdc++ -lrt -lmysqlclient
+LDLIST_STG = -lstdc++ -lrt -lmysqlclient -lmemcached
 LDLIST_JKS = -lstdc++
-LDLIST_SVR = -lstdc++ -lrt -lssl -ldl -lsocket -lnsl -lcrypto -lpthread
-LDLIST_UTL = -lstdc++ -lssl -lcrypto -lnsl
+LDLIST_SVR = -lstdc++ -lrt -lssl -ldl -lsocket -lnsl -lcrypto -lpthread -lmemcached
+LDLIST_UTL = -lstdc++ -lssl -lcrypto -lnsl -lpthread
 else ifdef CYGWIN
 MDEF = _CYGWIN_
 INCDIR = -I/usr/include/mysql/ 
 LDDIRS = 
-LDLIST_STG = -lstdc++ -lrt -lmysqlclient -lpthread
+LDLIST_STG = -lstdc++ -lrt -lmysqlclient -lmemcached
 LDLIST_JKS = -lstdc++
-LDLIST_SVR = -lstdc++ -lrt -ldl -lssl -lcrypto -liconv -lpthread
-LDLIST_UTL = -lstdc++ -lssl -lcrypto
+LDLIST_SVR = -lstdc++ -lrt -ldl -lssl -lcrypto -liconv -lpthread -lmemcached
+LDLIST_UTL = -lstdc++ -lssl -lcrypto -lpthread
 else
 MDEF = _LINUX_OS_
 INCDIR = -I/usr/local/include/mariadb/
 LDDIRS = -L/usr/local/lib/mariadb/ 
-LDLIST_STG = -lstdc++ -lrt -lmariadb -lpthread
+LDLIST_STG = -lstdc++ -lrt -lmariadb -lmemcached
 LDLIST_JKS = -lstdc++
 LDLIST_SVR = -lstdc++ -lrt -ldl -lssl -lcrypto -lpthread -lmemcached
 LDLIST_UTL = -lstdc++ -lssl -lcrypto -lpthread

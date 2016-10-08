@@ -2,7 +2,7 @@
 #include "base.h"
 
 StorageEngine::StorageEngine(const char * host, const char* username, const char* password, const char* database, int maxConn,
-    unsigned short port, const char* sock_file, const char* private_path, const char* encoding)
+    unsigned short port, const char* sock_file, const char* private_path, const char* encoding, memcached_st * memcached)
 {
     m_host = host;
 	m_username = username;
@@ -13,14 +13,14 @@ StorageEngine::StorageEngine(const char * host, const char* username, const char
     m_sock_file = sock_file;
     m_private_path = private_path;
     m_encoding = encoding;
-    
+    m_memcached = memcached;
     m_realConn = 0;
 	m_next = 0;
 	m_engine = new stStorageEngine[m_maxConn];
 	sem_init(&m_engineSem, 0, m_maxConn);
 	for(int i = 0; i < m_maxConn; i++)
 	{
-		m_engine[i].storage = new MailStorage(m_encoding.c_str(), m_private_path.c_str());
+		m_engine[i].storage = new MailStorage(m_encoding.c_str(), m_private_path.c_str(), m_memcached);
         m_engine[i].inUse = FALSE;
         m_engine[i].cTime = time(NULL);
         m_engine[i].lTime = m_engine[i].cTime;
@@ -28,6 +28,7 @@ StorageEngine::StorageEngine(const char * host, const char* username, const char
         m_engine[i].owner = 0;
 	}
 	pthread_mutex_init(&m_engineMutex, NULL);
+    
 }
 
 StorageEngine::~StorageEngine()

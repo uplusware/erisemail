@@ -29,7 +29,7 @@ int run(int argc, char* argv[])
 	int retVal = 0;
 	CMailBase::LoadConfig();
 	MailStorage* mailStg;
-	mailStg = new MailStorage(CMailBase::m_encoding.c_str(), CMailBase::m_private_path.c_str());
+	mailStg = new MailStorage(CMailBase::m_encoding.c_str(), CMailBase::m_private_path.c_str(), NULL);
 	do
 	{
 		if(argc == 10)

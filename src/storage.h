@@ -6,6 +6,7 @@
 #include <vector>
 #include <map>
 #include <string>
+#include <libmemcached/memcached.h>
 #include "util/general.h"
 using namespace std; 
 
@@ -152,7 +153,7 @@ typedef struct
 class MailStorage
 {
 public:
-	MailStorage(const char* encoding, const char* private_path);
+	MailStorage(const char* encoding, const char* private_path, memcached_st * memcached);
 	virtual ~MailStorage();
 
 	//system
@@ -309,7 +310,8 @@ public:
 	
 protected:
 	MYSQL m_hMySQL;
-
+    memcached_st * m_memcached;
+    
 	BOOL m_bOpened;
 	void SqlSafetyString(string& strInOut);
 
@@ -325,6 +327,7 @@ protected:
     
     map<string, string> m_userpwd_cache;
     int m_userpwd_cache_update_time;
+    static BOOL m_userpwd_cache_updated;
 };
 
 class mysql_query_lock

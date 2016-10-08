@@ -20,7 +20,7 @@ class StorageEngine
 {
 public:
 	StorageEngine(const char * host, const char* username, const char* password, const char* database, int maxConn,
-        unsigned short port, const char* sock_file, const char* private_path, const char* encoding);
+        unsigned short port, const char* sock_file, const char* private_path, const char* encoding, memcached_st * memcached);
 	virtual ~StorageEngine();
 
 	MailStorage* Wait(int &index);
@@ -44,7 +44,7 @@ private:
 	
 	sem_t m_engineSem;
 	pthread_mutex_t m_engineMutex;
-	
+	memcached_st * m_memcached;
 };
 
 class StorageEngineInstance
