@@ -703,7 +703,7 @@ static void handle_signal(int sid)
 }
 
 int main(int argc, char* argv[])
-{	
+{	    
 	if(getgid() != 0)
 	{
 		printf("You need root privileges to run this program\n");

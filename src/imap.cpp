@@ -9,6 +9,9 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <time.h>
+#ifdef _WITH_GSSAPI_
+    #include <gss.h>
+#endif /* _WITH_GSSAPI_ */
 #include "util/base64.h"
 #include "util/md5.h"
 #include "letter.h"
@@ -119,11 +122,16 @@ void CMailImap::On_Capability(char* text)
 	char cmd[1024];
 	string strTag;
 	strcut(text, NULL, " ", strTag);
-	
-	sprintf(cmd, "* CAPABILITY IMAP4rev1 STARTTLS AUTH=CRAM-MD5 AUTH=DIGEST-MD5\r\n");
+#ifdef _WITH_GSSAPI_	
+	sprintf(cmd, "* CAPABILITY IMAP4rev1 STARTTLS AUTH=CRAM-MD5 AUTH=DIGEST-MD5 AUTH=GSSAPI \r\n");
+#else
+    sprintf(cmd, "* CAPABILITY IMAP4rev1 STARTTLS AUTH=CRAM-MD5 AUTH=DIGEST-MD5\r\n");
+#endif /* _WITH_GSSAPI_ */    
 	ImapSend(cmd, strlen(cmd));
+    printf("%s", cmd);
 	sprintf(cmd, "%s OK CAPABILITY completed\r\n", strTag.c_str());
 	ImapSend(cmd, strlen(cmd));
+    printf("%s", cmd);
 }
 
 void CMailImap::On_Noop(char* text)
@@ -500,20 +508,213 @@ BOOL CMailImap::On_Authenticate(char* text)
 		}
 		
 	}
-	/*else if(strcasecmp(strAuthType.c_str(),"KERBEROS_V4") == 0)
+#ifdef _WITH_GSSAPI_    
+	else if(strcasecmp(strAuthType.c_str(),"GSSAPI") == 0)
 	{
-		m_authType = atKERBEROS_V4;
+		m_authType = atGSSAPI;
 		
-		srand(time(NULL));
-		m_challenge = rand();
-		unsigned int ltmp = htonl(m_challenge);
+        ImapSend("+\r\n", strlen("+\r\n"));
+        
+        OM_uint32 maj_stat, min_stat;
+        
+        gss_name_t server_name = GSS_C_NO_NAME;
+        gss_cred_id_t server_creds;
+        gss_buffer_desc buf_desc;
+        string str_buf_desc = "imap@";
+        str_buf_desc += CMailBase::m_localhostname;
+        buf_desc.value = (char *) str_buf_desc.c_str();
+        buf_desc.length = str_buf_desc.length();
+  
+        maj_stat = gss_import_name (&min_stat, &buf_desc,
+			      GSS_C_NT_HOSTBASED_SERVICE, &server_name);
+        if (GSS_ERROR (maj_stat))
+        {
+            sprintf(cmd,"%s NO User Logged Failed\r\n", strTag.c_str());
+			ImapSend(cmd, strlen(cmd));
+            return FALSE;
+        }
+        
+        gss_OID_set oid_set;
+        maj_stat = gss_create_empty_oid_set(&min_stat, &oid_set);
+        if (GSS_ERROR (maj_stat))
+        {
+            sprintf(cmd,"%s NO User Logged Failed\r\n", strTag.c_str());
+			ImapSend(cmd, strlen(cmd));
+            return FALSE;
+        }
+        
+        maj_stat = gss_add_oid_set_member (&min_stat, GSS_KRB5, &oid_set);
+        if (GSS_ERROR (maj_stat))
+        {
+            maj_stat = gss_release_oid_set(&min_stat, &oid_set);
+            sprintf(cmd,"%s NO User Logged Failed\r\n", strTag.c_str());
+			ImapSend(cmd, strlen(cmd));
+            return FALSE;
+        }
+        maj_stat = gss_acquire_cred (&min_stat, server_name, 0,
+			       oid_set, GSS_C_ACCEPT,
+			       &server_creds, NULL, NULL);
+        if (GSS_ERROR (maj_stat))
+        {
+            maj_stat = gss_release_oid_set(&min_stat, &oid_set);
+            sprintf(cmd,"%s NO User Logged Failed\r\n", strTag.c_str());
+			ImapSend(cmd, strlen(cmd));
+            return FALSE;
+        }
+        maj_stat = gss_release_oid_set(&min_stat, &oid_set);
+        
+        if (GSS_ERROR (maj_stat))
+        {
+            sprintf(cmd,"%s NO User Logged Failed\r\n", strTag.c_str());
+			ImapSend(cmd, strlen(cmd));
+            return FALSE;
+        }
+        gss_ctx_id_t context_hdl = GSS_C_NO_CONTEXT;
+        gss_name_t client_name = GSS_C_NO_NAME;
+        gss_OID mech_type;
+        gss_buffer_desc input_token = GSS_C_EMPTY_BUFFER;
+        gss_buffer_desc output_token = GSS_C_EMPTY_BUFFER;
+        OM_uint32 ret_flags;
+        OM_uint32 time_rec;
+        gss_cred_id_t delegated_cred_handle;
+        do {
+            
+            char input_token_b64[4096];
+            memset(input_token_b64, 0, 4096);
+            if(ProtRecv(input_token_b64, 4095) <= 0)
+                return FALSE;
+            
+            int len_encode = BASE64_DECODE_OUTPUT_MAX_LEN(strlen(input_token_b64));
+            char* tmp_decode = (char*)malloc(len_encode);
+            memset(tmp_decode, 0, len_encode);
+            
+            int outlen_decode;
+            CBase64::Decode((char*)&input_token_b64, strlen(input_token_b64), tmp_decode, &outlen_decode);
+            input_token.length = outlen_decode;
+            input_token.value = tmp_decode;
+            maj_stat = gss_accept_sec_context(&min_stat,
+                                            &context_hdl,
+                                            server_creds,
+                                            &input_token,
+                                            GSS_C_NO_CHANNEL_BINDINGS,
+                                            &client_name,
+                                            &mech_type,
+                                            &output_token,
+                                            &ret_flags,
+                                            &time_rec,
+                                            &delegated_cred_handle);
+            free(tmp_decode);
+            
+            if (GSS_ERROR(maj_stat))
+            {
+                sprintf(cmd,"%s NO User Logged Failed\r\n", strTag.c_str());
+                ImapSend(cmd, strlen(cmd));
+                return FALSE;
+            }
+            
+            if(!gss_oid_equal(mech_type, GSS_KRB5))
+            {
+                sprintf(cmd,"%s NO User Logged Failed\r\n", strTag.c_str());
+                ImapSend(cmd, strlen(cmd));
+                return FALSE;
+            }
+                  
+            if (output_token.length != 0)
+            {
+                int len_decode = BASE64_ENCODE_OUTPUT_MAX_LEN(output_token.length);
+                char* tmp_encode = (char*)malloc(len_decode + 2);
+                memset(tmp_encode, 0, len_decode);
+                tmp_encode[0] = '+';
+                tmp_encode[1] = ' ';
+                int outlen_encode;
+                CBase64::Encode((char*)output_token.value, output_token.length, tmp_encode + 2, &outlen_encode);
+        
+                ImapSend(tmp_encode, outlen_encode + 2);
+                gss_release_buffer(&min_stat, &output_token);
+                free(tmp_encode);
+            }
+            if (GSS_ERROR(maj_stat))
+            {
+                if (context_hdl != GSS_C_NO_CONTEXT)
+                    gss_delete_sec_context(&min_stat, &context_hdl, GSS_C_NO_BUFFER);
+                sprintf(cmd,"%s NO User Logged Failed\r\n", strTag.c_str());
+                ImapSend(cmd, strlen(cmd));
+                return FALSE;
+            };
+            
+            if(maj_stat != GSS_S_COMPLETE)
+            {
+                if (context_hdl != GSS_C_NO_CONTEXT)
+                    gss_delete_sec_context(&min_stat, &context_hdl, GSS_C_NO_BUFFER);
+            }
+        } while (maj_stat & GSS_S_CONTINUE_NEEDED);
+        
+        char empty_reply[33];
+        memset(empty_reply, 0, 33);
+        if(ProtRecv(empty_reply, 32) <= 0)
+            return FALSE;
+        
+        OM_uint32 sec_data = 0;
+        gss_buffer_desc input_message_buffer1, output_message_buffer1;
+        input_message_buffer1.length = 4;
+        input_message_buffer1.value = &sec_data;
+        int conf_state;
+        maj_stat = gss_wrap (&min_stat, context_hdl, 0, 0, &input_message_buffer1, &conf_state, &output_message_buffer1);
+        if (GSS_ERROR(maj_stat))
+        {
+            sprintf(cmd,"%s NO User Logged Failed\r\n", strTag.c_str());
+            ImapSend(cmd, strlen(cmd));
+            return FALSE;
+        }
+        
+        int len_decode = BASE64_ENCODE_OUTPUT_MAX_LEN(output_message_buffer1.length);
+        char* tmp_encode = (char*)malloc(len_decode + 2);
+        memset(tmp_encode, 0, len_decode);
+        tmp_encode[0] = '+';
+        tmp_encode[1] = ' ';
+        int outlen_encode;
+        CBase64::Encode((char*)output_message_buffer1.value, output_message_buffer1.length, tmp_encode + 2, &outlen_encode);
 
-		char szTmp[33];
-		int nTmp = 32;
-		CBase64::Encode((char*)&ltmp, sizeof(unsigned int), szTmp, &nTmp);
-		szTmp[nTmp] = '\0';
-		ImapSend(szTmp, nTmp);
-	}*/
+        ImapSend(tmp_encode, outlen_encode + 2);
+        gss_release_buffer(&min_stat, &output_message_buffer1);
+        free(tmp_encode);
+        
+        char input_token_b64[4096];
+        memset(input_token_b64, 0, 4096);
+        if(ProtRecv(input_token_b64, 4095) <= 0)
+            return FALSE;
+        
+        int len_encode = BASE64_DECODE_OUTPUT_MAX_LEN(strlen(input_token_b64));
+        char* tmp_decode = (char*)malloc(len_encode);
+        memset(tmp_decode, 0, len_encode);
+        
+        
+        gss_buffer_desc input_message_buffer2, output_message_buffer2;
+        gss_qop_t qop_state;
+        int outlen_decode;
+        CBase64::Decode((char*)&input_token_b64, strlen(input_token_b64), tmp_decode, &outlen_decode);
+        input_message_buffer2.length = outlen_decode;
+        input_message_buffer2.value = tmp_decode;
+        
+        maj_stat = gss_unwrap (&min_stat, context_hdl, &input_message_buffer2, &output_message_buffer2, &conf_state, &qop_state);
+        
+        free(tmp_decode);
+        if (GSS_ERROR(maj_stat))
+        {
+            sprintf(cmd,"%s NO User Logged Failed\r\n", strTag.c_str());
+            ImapSend(cmd, strlen(cmd));
+            return FALSE;
+        }
+        
+        if (context_hdl != GSS_C_NO_CONTEXT)
+            gss_delete_sec_context(&min_stat, &context_hdl, GSS_C_NO_BUFFER);
+        
+        sprintf(cmd,"%s OK GSSAPI authentication successful\r\n", strTag.c_str());
+        ImapSend(cmd, strlen(cmd));
+        m_status = m_status|STATUS_AUTHED;
+        return TRUE;
+	}
+#endif /* _WITH_GSSAPI_ */    
 	else
 	{
 		push_reject_list(m_isSSL ? stIMAPS : stIMAP, m_clientip.c_str());
@@ -3991,7 +4192,7 @@ void CMailImap::ParseCommand(const char* text, vector<string>& vDst)
 
 BOOL CMailImap::Parse(char* text)
 {
-	//printf("%s", text);
+	/* printf("%s", text); */
 	string strNotag;
 	strcut(text, " ", " ", strNotag);
 	

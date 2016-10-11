@@ -15,6 +15,7 @@ typedef enum
 {	
 	atLOGIN = 1,
 	atKERBEROS_V4,
+    atGSSAPI,
 	atDIGEST_MD5,
 	atCRAM_MD5
 } Imap_Auth_Type;

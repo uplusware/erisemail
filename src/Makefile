@@ -24,32 +24,23 @@ EXEUTL = eriseutil
 OBJUTL = maintools.o base.o util/DES.o stgengine.o
 OBJUDF = postudf.o
 
-ifdef SOLARIS
-MDEF = _SOLARIS_OS_
-INCDIR = -I/usr/mysql/5.0/include/mysql/
-LDDIRS = -L/usr/mysql/5.0/lib/mysql/
-LDLIST_STG = -lstdc++ -lrt -lmysqlclient -lmemcached
-LDLIST_JKS = -lstdc++
-LDLIST_SVR = -lstdc++ -lrt -lssl -ldl -lsocket -lnsl -lcrypto -lpthread -lmemcached
-LDLIST_UTL = -lstdc++ -lssl -lcrypto -lnsl -lpthread
-else ifdef CYGWIN
-MDEF = _CYGWIN_
-INCDIR = -I/usr/include/mysql/ 
-LDDIRS = 
-LDLIST_STG = -lstdc++ -lrt -lmysqlclient -lmemcached
-LDLIST_JKS = -lstdc++
-LDLIST_SVR = -lstdc++ -lrt -ldl -lssl -lcrypto -liconv -lpthread -lmemcached
-LDLIST_UTL = -lstdc++ -lssl -lcrypto -lpthread
-else
 MDEF = _LINUX_OS_
-INCDIR = -I/usr/local/include/mariadb/
-LDDIRS = -L/usr/local/lib/mariadb/ 
+
+ifdef GSSAPI
+    GSS_DEF = _WITH_GSSAPI_
+    INCDIR = -I/usr/local/include/mariadb/ `pkg-config gss --cflags`
+    LDDIRS = -L/usr/local/lib/mariadb/ `pkg-config gss --libs-only-L`
+    LDLIST_SVR = -lstdc++ -lrt -ldl -lssl -lcrypto -lpthread -lmemcached -lgss
+else
+    GSS_DEF = _WITHOUT_GSSAPI_
+    INCDIR = -I/usr/local/include/mariadb/
+    LDDIRS = -L/usr/local/lib/mariadb/
+    LDLIST_SVR = -lstdc++ -lrt -ldl -lssl -lcrypto -lpthread -lmemcached
+endif
 LDLIST_STG = -lstdc++ -lrt -lmariadb -lmemcached
 LDLIST_JKS = -lstdc++
-LDLIST_SVR = -lstdc++ -lrt -ldl -lssl -lcrypto -lpthread -lmemcached
 LDLIST_UTL = -lstdc++ -lssl -lcrypto -lpthread
 LDLIST_UDF = -lstdc++ -lrt
-endif
 
 FLAGS = -O2 -fPIC -w
 
@@ -77,7 +68,7 @@ $(SQLUDF): $(OBJUDF)
 	$(CC) -shared -W -fPIC -o $@ $(OBJUDF) $(LDLIST_UDF)
 	
 %.o : %.cpp
-	$(CC) -D$(MDEF) $(INCDIR) $(FLAGS) -c $< -o $@
+	$(CC) -D$(MDEF) -D$(GSS_DEF) $(INCDIR) $(FLAGS) -c $< -o $@
 
 clean:
 	-rm -f $(LIBSTG) $(LIBJKS) $(EXESVR) $(EXEUTL) $(SQLUDF) $(OBJSVR) $(OBJJKS) $(OBJSTG) $(OBJUDF) *.elf *.gdb *.o *.a *.so

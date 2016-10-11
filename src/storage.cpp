@@ -328,7 +328,7 @@ int MailStorage::CheckLogin(const char* username, const char* password)
 {
     if(strcmp(username, "") == 0 || strcmp(password, "") == 0)
         return -1;
-    
+        
 	char sqlcmd[1024];
 	string strSafetyUsername = username;
 	SqlSafetyString(strSafetyUsername);
