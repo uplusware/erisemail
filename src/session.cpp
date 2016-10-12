@@ -72,6 +72,8 @@ void Session::Process()
 	}
 
 	char szmsg[4096];
+    string str_line = "";
+    std::size_t new_line;
 	int result;
 	while(1)
 	{
@@ -85,8 +87,14 @@ void Session::Process()
 		    else
 		    {
 			    szmsg[result] = '\0';
-			    if(!pProtocol->Parse(szmsg))
-				    break;
+                str_line += szmsg;
+                new_line = str_line.find('\n');
+                if(new_line != std::string::npos)
+                {
+                    if(!pProtocol->Parse((char*)str_line.c_str()))
+                        break;
+                    str_line = "";
+                }
 		    }
         }
         catch(string* e)

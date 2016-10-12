@@ -578,18 +578,23 @@ BOOL CMailImap::On_Authenticate(char* text)
         OM_uint32 time_rec;
         gss_cred_id_t delegated_cred_handle;
         do {
+            string str_line = "";
+            char recv_buf[4096];
+            while(str_line.find("\n") == std::string::npos)
+            {
+                int result = ProtRecv(recv_buf, 4095);
+                if(result <= 0)
+                    return FALSE;
+                recv_buf[result] = '\0';
+                str_line += recv_buf;
+            }
             
-            char input_token_b64[4096];
-            memset(input_token_b64, 0, 4096);
-            if(ProtRecv(input_token_b64, 4095) <= 0)
-                return FALSE;
-            
-            int len_encode = BASE64_DECODE_OUTPUT_MAX_LEN(strlen(input_token_b64));
+            int len_encode = BASE64_DECODE_OUTPUT_MAX_LEN(str_line.length());
             char* tmp_decode = (char*)malloc(len_encode);
             memset(tmp_decode, 0, len_encode);
             
             int outlen_decode;
-            CBase64::Decode((char*)&input_token_b64, strlen(input_token_b64), tmp_decode, &outlen_decode);
+            CBase64::Decode((char*)str_line.c_str(), str_line.length(), tmp_decode, &outlen_decode);
             input_token.length = outlen_decode;
             input_token.value = tmp_decode;
             maj_stat = gss_accept_sec_context(&min_stat,
@@ -649,10 +654,16 @@ BOOL CMailImap::On_Authenticate(char* text)
             }
         } while (maj_stat & GSS_S_CONTINUE_NEEDED);
         
-        char empty_reply[33];
-        memset(empty_reply, 0, 33);
-        if(ProtRecv(empty_reply, 32) <= 0)
-            return FALSE;
+        string str_line = "";
+        char recv_buf[4096];
+        while(str_line.find("\n") == std::string::npos)
+        {
+            int result = ProtRecv(recv_buf, 4095);
+            if(result <= 0)
+                return FALSE;
+            recv_buf[result] = '\0';
+            str_line += recv_buf;
+        }
         
         OM_uint32 sec_data = 0;
         gss_buffer_desc input_message_buffer1, output_message_buffer1;
@@ -679,12 +690,17 @@ BOOL CMailImap::On_Authenticate(char* text)
         gss_release_buffer(&min_stat, &output_message_buffer1);
         free(tmp_encode);
         
-        char input_token_b64[4096];
-        memset(input_token_b64, 0, 4096);
-        if(ProtRecv(input_token_b64, 4095) <= 0)
-            return FALSE;
+        str_line = "";
+        while(str_line.find("\n") == std::string::npos)
+        {
+            int result = ProtRecv(recv_buf, 4095);
+            if(result <= 0)
+                return FALSE;
+            recv_buf[result] = '\0';
+            str_line += recv_buf;
+        }
         
-        int len_encode = BASE64_DECODE_OUTPUT_MAX_LEN(strlen(input_token_b64));
+        int len_encode = BASE64_DECODE_OUTPUT_MAX_LEN(str_line.length());
         char* tmp_decode = (char*)malloc(len_encode);
         memset(tmp_decode, 0, len_encode);
         
@@ -692,7 +708,7 @@ BOOL CMailImap::On_Authenticate(char* text)
         gss_buffer_desc input_message_buffer2, output_message_buffer2;
         gss_qop_t qop_state;
         int outlen_decode;
-        CBase64::Decode((char*)&input_token_b64, strlen(input_token_b64), tmp_decode, &outlen_decode);
+        CBase64::Decode((char*)str_line.c_str(), str_line.length(), tmp_decode, &outlen_decode);
         input_message_buffer2.length = outlen_decode;
         input_message_buffer2.value = tmp_decode;
         

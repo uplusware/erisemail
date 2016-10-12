@@ -37,12 +37,12 @@ typedef struct
 
 typedef enum
 {
-	AUTH_LOGIN = 1,
-	AUTH_PLAIN,
-	AUTH_CRAM_MD5,
-	AUTH_DIGEST_MD5,
-	AUTH_NTLM,
-	AUTH_GSSAPI
+	SMTP_AUTH_LOGIN = 1,
+	SMTP_AUTH_PLAIN,
+	SMTP_AUTH_CRAM_MD5,
+	SMTP_AUTH_DIGEST_MD5,
+	SMTP_AUTH_NTLM,
+	SMTP_AUTH_GSSAPI
 }Smtp_Auth_Type;
 
 class CMailSmtp : public CMailBase

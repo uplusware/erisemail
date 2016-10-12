@@ -9,6 +9,9 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+#ifdef _WITH_GSSAPI_ 
+    #include <gss.h>
+#endif /* _WITH_GSSAPI_ */
 #include "spool.h"
 #include "util/md5.h"
 #include "service.h"
@@ -221,25 +224,17 @@ BOOL CMailSmtp::Parse(char* text)
 	BOOL result = TRUE;
 	if((m_status&STATUS_AUTH_STEP1) == STATUS_AUTH_STEP1)
 	{
-	
 		result = On_Supose_Username_Handler(text);
-
-		
 	}
 	else if( (m_status&STATUS_AUTH_STEP2) == STATUS_AUTH_STEP2)
 	{
-	
 		result = On_Supose_Password_Handler(text);
-		
 	}
 	else if( (m_status&STATUS_SUPOSE_DATAING) == STATUS_SUPOSE_DATAING)
 	{
 		if(strcmp(text, ".\r\n") == 0)
 		{
-	
-			On_Finish_Data_Handler();
-
-			
+			On_Finish_Data_Handler();	
 		}
 		else
 		{
@@ -320,9 +315,7 @@ BOOL CMailSmtp::Parse(char* text)
 			{
 				if((m_status & STATUS_MAILED) == STATUS_MAILED)
 				{
-					result = On_Rcpt_Handler(text);
-
-					
+					result = On_Rcpt_Handler(text);	
 				}
 				else
 					On_Command_Bad_Sequence_Handler();
@@ -349,10 +342,7 @@ BOOL CMailSmtp::Parse(char* text)
 			}
 			else if(strncasecmp(text,"VRFY", 4) == 0)
 			{
-					
 				On_Vrfy_Handler(text);
-
-				
 			}
 			else if(strncasecmp(text,"STARTTLS", 4) == 0)
 			{
@@ -438,7 +428,7 @@ void CMailSmtp::On_Auth_Handler(char* text)
 	char cmd[256];
 	if(strncasecmp(&text[5],"LOGIN",5) == 0)
 	{
-		m_authType = AUTH_LOGIN;
+		m_authType = SMTP_AUTH_LOGIN;
 		m_status = m_status|STATUS_AUTH_STEP1;
 
 		char cmd[256];
@@ -448,7 +438,7 @@ void CMailSmtp::On_Auth_Handler(char* text)
 	}
 	else if(strncasecmp(&text[5],"PLAIN",5) == 0)
 	{
-		m_authType = AUTH_PLAIN;
+		m_authType = SMTP_AUTH_PLAIN;
 		string strEnoded;
 		strcut(&text[11], NULL, "\r\n",strEnoded);		
 		int outlen = BASE64_DECODE_OUTPUT_MAX_LEN(strEnoded.length());//strEnoded.length()*4+1;
@@ -513,7 +503,7 @@ void CMailSmtp::On_Auth_Handler(char* text)
 	}
 	else if(strncasecmp(&text[5],"DIGEST-MD5", 10) == 0)
 	{
-		m_authType = AUTH_DIGEST_MD5;
+		m_authType = SMTP_AUTH_DIGEST_MD5;
 		
 		string strChallenge;
 		char cmd[512];
@@ -543,7 +533,7 @@ void CMailSmtp::On_Auth_Handler(char* text)
 	}
 	else if(strncasecmp(&text[5],"CRAM-MD5", 8) == 0)
 	{
-		m_authType = AUTH_CRAM_MD5;
+		m_authType = SMTP_AUTH_CRAM_MD5;
 		
 		char cmd[512];
 		srand(time(NULL));
@@ -560,9 +550,230 @@ void CMailSmtp::On_Auth_Handler(char* text)
 		SmtpSend(cmd,strlen(cmd));
 		m_status = m_status|STATUS_AUTH_STEP2;
 	}
+#ifdef _WITH_GSSAPI_ 
+    else if(strncasecmp(&text[5],"GSSAPI", 6) == 0)
+    {
+        m_authType = SMTP_AUTH_GSSAPI;
+        SmtpSend("334\r\n", strlen("334\r\n"));
+        
+        OM_uint32 maj_stat, min_stat;
+        
+        gss_name_t server_name = GSS_C_NO_NAME;
+        gss_cred_id_t server_creds;
+        gss_buffer_desc buf_desc;
+        string str_buf_desc = "smtp@";
+        str_buf_desc += CMailBase::m_localhostname;
+        buf_desc.value = (char *) str_buf_desc.c_str();
+        buf_desc.length = str_buf_desc.length();
+  
+        maj_stat = gss_import_name (&min_stat, &buf_desc,
+			      GSS_C_NT_HOSTBASED_SERVICE, &server_name);
+        if (GSS_ERROR (maj_stat))
+        {
+            sprintf(cmd,"535 NO User Logged Failed\r\n");
+			SmtpSend(cmd, strlen(cmd));
+            return;
+        }
+        
+        gss_OID_set oid_set;
+        maj_stat = gss_create_empty_oid_set(&min_stat, &oid_set);
+        if (GSS_ERROR (maj_stat))
+        {
+            sprintf(cmd,"535 NO User Logged Failed\r\n");
+			SmtpSend(cmd, strlen(cmd));
+            return;
+        }
+        
+        maj_stat = gss_add_oid_set_member (&min_stat, GSS_KRB5, &oid_set);
+        if (GSS_ERROR (maj_stat))
+        {
+            maj_stat = gss_release_oid_set(&min_stat, &oid_set);
+            sprintf(cmd,"535 NO User Logged Failed\r\n");
+			SmtpSend(cmd, strlen(cmd));
+            return ;
+        }
+        maj_stat = gss_acquire_cred (&min_stat, server_name, 0,
+			       oid_set, GSS_C_ACCEPT,
+			       &server_creds, NULL, NULL);
+        if (GSS_ERROR (maj_stat))
+        {
+            maj_stat = gss_release_oid_set(&min_stat, &oid_set);
+            sprintf(cmd,"535 NO User Logged Failed\r\n");
+			SmtpSend(cmd, strlen(cmd));
+            return;
+        }
+        maj_stat = gss_release_oid_set(&min_stat, &oid_set);
+        
+        if (GSS_ERROR (maj_stat))
+        {
+            sprintf(cmd,"535 NO User Logged Failed\r\n");
+			SmtpSend(cmd, strlen(cmd));
+            return;
+        }
+        gss_ctx_id_t context_hdl = GSS_C_NO_CONTEXT;
+        gss_name_t client_name = GSS_C_NO_NAME;
+        gss_OID mech_type;
+        gss_buffer_desc input_token = GSS_C_EMPTY_BUFFER;
+        gss_buffer_desc output_token = GSS_C_EMPTY_BUFFER;
+        OM_uint32 ret_flags;
+        OM_uint32 time_rec;
+        gss_cred_id_t delegated_cred_handle;
+        do {
+            string str_line = "";
+            char recv_buf[4096];
+            while(str_line.find("\n") == std::string::npos)
+            {
+                int result = ProtRecv(recv_buf, 4095);
+                if(result <= 0)
+                    return;
+                recv_buf[result] = '\0';
+                str_line += recv_buf;
+            }
+            
+            int len_encode = BASE64_DECODE_OUTPUT_MAX_LEN(str_line.length());
+            char* tmp_decode = (char*)malloc(len_encode);
+            memset(tmp_decode, 0, len_encode);
+            
+            int outlen_decode;
+            CBase64::Decode((char*)str_line.c_str(), str_line.length(), tmp_decode, &outlen_decode);
+            input_token.length = outlen_decode;
+            input_token.value = tmp_decode;
+            maj_stat = gss_accept_sec_context(&min_stat,
+                                            &context_hdl,
+                                            server_creds,
+                                            &input_token,
+                                            GSS_C_NO_CHANNEL_BINDINGS,
+                                            &client_name,
+                                            &mech_type,
+                                            &output_token,
+                                            &ret_flags,
+                                            &time_rec,
+                                            &delegated_cred_handle);
+            free(tmp_decode);
+            
+            if (GSS_ERROR(maj_stat))
+            {
+                sprintf(cmd,"535 NO User Logged Failed\r\n");
+                SmtpSend(cmd, strlen(cmd));
+                return;
+            }
+            
+            if(!gss_oid_equal(mech_type, GSS_KRB5))
+            {
+                sprintf(cmd,"535 NO User Logged Failed\r\n");
+                SmtpSend(cmd, strlen(cmd));
+                return;
+            }
+                  
+            if (output_token.length != 0)
+            {
+                int len_decode = BASE64_ENCODE_OUTPUT_MAX_LEN(output_token.length);
+                char* tmp_encode = (char*)malloc(len_decode + 2);
+                memset(tmp_encode, 0, len_decode);
+                tmp_encode[0] = '334';
+                tmp_encode[1] = ' ';
+                int outlen_encode;
+                CBase64::Encode((char*)output_token.value, output_token.length, tmp_encode + 2, &outlen_encode);
+        
+                SmtpSend(tmp_encode, outlen_encode + 2);
+                gss_release_buffer(&min_stat, &output_token);
+                free(tmp_encode);
+            }
+            if (GSS_ERROR(maj_stat))
+            {
+                if (context_hdl != GSS_C_NO_CONTEXT)
+                    gss_delete_sec_context(&min_stat, &context_hdl, GSS_C_NO_BUFFER);
+                sprintf(cmd,"535 NO User Logged Failed\r\n");
+                SmtpSend(cmd, strlen(cmd));
+                return;
+            };
+            
+            if(maj_stat != GSS_S_COMPLETE)
+            {
+                if (context_hdl != GSS_C_NO_CONTEXT)
+                    gss_delete_sec_context(&min_stat, &context_hdl, GSS_C_NO_BUFFER);
+            }
+        } while (maj_stat & GSS_S_CONTINUE_NEEDED);
+        
+        /* empty data, only status code*/
+        string str_line = "";
+        char recv_buf[4096];
+        while(str_line.find("\n") == std::string::npos)
+        {
+            int result = ProtRecv(recv_buf, 4095);
+            if(result <= 0)
+                return;
+            recv_buf[result] = '\0';
+            str_line += recv_buf;
+        }
+        
+        OM_uint32 sec_data = 0;
+        gss_buffer_desc input_message_buffer1, output_message_buffer1;
+        input_message_buffer1.length = 4;
+        input_message_buffer1.value = &sec_data;
+        int conf_state;
+        maj_stat = gss_wrap (&min_stat, context_hdl, 0, 0, &input_message_buffer1, &conf_state, &output_message_buffer1);
+        if (GSS_ERROR(maj_stat))
+        {
+            sprintf(cmd,"535 NO User Logged Failed\r\n");
+            SmtpSend(cmd, strlen(cmd));
+            return;
+        }
+        
+        int len_decode = BASE64_ENCODE_OUTPUT_MAX_LEN(output_message_buffer1.length);
+        char* tmp_encode = (char*)malloc(len_decode + 2);
+        memset(tmp_encode, 0, len_decode);
+        tmp_encode[0] = '334';
+        tmp_encode[1] = ' ';
+        int outlen_encode;
+        CBase64::Encode((char*)output_message_buffer1.value, output_message_buffer1.length, tmp_encode + 2, &outlen_encode);
+
+        SmtpSend(tmp_encode, outlen_encode + 2);
+        gss_release_buffer(&min_stat, &output_message_buffer1);
+        free(tmp_encode);
+        
+        str_line = "";
+        while(str_line.find("\n") == std::string::npos)
+        {
+            int result = ProtRecv(recv_buf, 4095);
+            if(result <= 0)
+                return;
+            recv_buf[result] = '\0';
+            str_line += recv_buf;
+        }
+        
+        int len_encode = BASE64_DECODE_OUTPUT_MAX_LEN(str_line.length());
+        char* tmp_decode = (char*)malloc(len_encode);
+        memset(tmp_decode, 0, len_encode);
+        
+        gss_buffer_desc input_message_buffer2, output_message_buffer2;
+        gss_qop_t qop_state;
+        int outlen_decode;
+        CBase64::Decode((char*)str_line.c_str(), str_line.length(), tmp_decode, &outlen_decode);
+        input_message_buffer2.length = outlen_decode;
+        input_message_buffer2.value = tmp_decode;
+        
+        maj_stat = gss_unwrap (&min_stat, context_hdl, &input_message_buffer2, &output_message_buffer2, &conf_state, &qop_state);
+        
+        free(tmp_decode);
+        if (GSS_ERROR(maj_stat))
+        {
+            sprintf(cmd,"535 NO User Logged Failed\r\n");
+            SmtpSend(cmd, strlen(cmd));
+            return;
+        }
+        
+        if (context_hdl != GSS_C_NO_CONTEXT)
+            gss_delete_sec_context(&min_stat, &context_hdl, GSS_C_NO_BUFFER);
+        
+        sprintf(cmd,"235 OK GSSAPI authentication successful\r\n");
+        SmtpSend(cmd, strlen(cmd));
+        
+        m_status = m_status|STATUS_AUTHED;
+    }
+#endif /* _WITH_GSSAPI_ */
 	else
-	{
-		
+	{	
 		sprintf(cmd, "504 Unrecognized Authentication type\r\n");
 		SmtpSend(cmd,strlen(cmd));
 	}
@@ -571,7 +782,7 @@ void CMailSmtp::On_Auth_Handler(char* text)
 
 BOOL CMailSmtp::On_Supose_Username_Handler(char* text)
 {
-	if(m_authType == AUTH_LOGIN)
+	if(m_authType == SMTP_AUTH_LOGIN)
 	{
 		string username;
 		strcut(text, NULL, "\r\n", username);
@@ -591,7 +802,7 @@ BOOL CMailSmtp::On_Supose_Username_Handler(char* text)
 		m_status = m_status|STATUS_AUTH_STEP2;
 		
 	}
-	else if(m_authType == AUTH_DIGEST_MD5)
+	else if(m_authType == SMTP_AUTH_DIGEST_MD5)
 	{
 		string strEncoded;
 		strcut(text, NULL, "\r\n",strEncoded);
@@ -769,11 +980,10 @@ BOOL CMailSmtp::On_Supose_Username_Handler(char* text)
 
 BOOL CMailSmtp::On_Supose_Password_Handler(char* text)
 {
-	if(m_authType == AUTH_LOGIN)
+	if(m_authType == SMTP_AUTH_LOGIN)
 	{
 		string password;
 		strcut(text, NULL, "\r\n",password);
-		//printf("password:%s\n", password.c_str());
 		
 		int outlen = BASE64_DECODE_OUTPUT_MAX_LEN(password.length());//password.length()*4+1;
 		char* tmp = (char*)malloc(outlen);
@@ -782,11 +992,12 @@ BOOL CMailSmtp::On_Supose_Password_Handler(char* text)
 		m_password = tmp;
 		free(tmp);
 	}
-	else if(m_authType == AUTH_DIGEST_MD5)
+/*	else if(m_authType == SMTP_AUTH_DIGEST_MD5)
 	{
 		
 	}
-	else if(m_authType == AUTH_CRAM_MD5)
+*/    
+	else if(m_authType == SMTP_AUTH_CRAM_MD5)
 	{
 		string strEncoded;
 		strcut(text, NULL, "\r\n",strEncoded);
@@ -814,7 +1025,7 @@ BOOL CMailSmtp::On_Supose_Checking_Handler()
 		return FALSE;
 	}
 	char cmd[256];
-	if(m_authType == AUTH_LOGIN)
+	if(m_authType == SMTP_AUTH_LOGIN)
 	{
 		if(mailStg->CheckLogin(m_username.c_str(),m_password.c_str()) == 0)
 		{
@@ -831,7 +1042,7 @@ BOOL CMailSmtp::On_Supose_Checking_Handler()
 			return FALSE;
 		}
 	}
-	else if(m_authType == AUTH_CRAM_MD5)
+	else if(m_authType == SMTP_AUTH_CRAM_MD5)
 	{
 		string strpwd;
 		if(mailStg->GetPassword(m_username.c_str(), strpwd) == 0)
@@ -868,7 +1079,7 @@ BOOL CMailSmtp::On_Supose_Checking_Handler()
 			return FALSE;
 		}
 	}
-	else if(m_authType == AUTH_DIGEST_MD5)
+	else if(m_authType == SMTP_AUTH_DIGEST_MD5)
 	{
 		if(m_strToken == m_strTokenVerify)
 		{
@@ -1335,35 +1546,25 @@ void CMailSmtp::On_Vrfy_Handler(char* text)
 	SmtpSend(cmd,strlen(cmd));
 }
 
-
-
 void CMailSmtp::On_Expn_Handler(char* text)
 {
 	On_Unimplemented_Command_Handler();
 }
-
-
 
 void CMailSmtp::On_Send_Handler(char* text)
 {
 	On_Unimplemented_Command_Handler();
 }
 
-
-
 void CMailSmtp::On_Soml_Handler(char* text)
 {
 	On_Unimplemented_Command_Handler();
 }
 
-
-
 void CMailSmtp::On_Saml_Handler(char* text)
 {
 	On_Unimplemented_Command_Handler();
 }
-
-
 
 BOOL CMailSmtp::On_Helo_Handler(char* text)
 {
@@ -1383,29 +1584,30 @@ BOOL CMailSmtp::On_Helo_Handler(char* text)
 	
 }
 
-
-
 void CMailSmtp::On_Ehlo_Handler(char* text)
 {
 	m_status = m_status|STATUS_HELOED;
 	
 	char cmd[256];
+#ifdef _WITH_GSSAPI_
 	if(m_enablesmtptls)
+		sprintf(cmd,"250-%s\r\n250-STARTTLS\r\n250-PIPELINING\r\n250-AUTH LOGIN PLAIN CRAM-MD5 DIGEST-MD5 GSSAPI\r\n250-8BITMIME\r\n250 OK\r\n", m_email_domain.c_str());
+	else
+		sprintf(cmd,"250-%s\r\n250-PIPELINING\r\n250-AUTH LOGIN PLAIN CRAM-MD5 DIGEST-MD5 GSSAPI\r\n250-8BITMIME\r\n250 OK\r\n", m_email_domain.c_str());
+#else
+    if(m_enablesmtptls)
 		sprintf(cmd,"250-%s\r\n250-STARTTLS\r\n250-PIPELINING\r\n250-AUTH LOGIN PLAIN CRAM-MD5 DIGEST-MD5\r\n250-8BITMIME\r\n250 OK\r\n", m_email_domain.c_str());
 	else
 		sprintf(cmd,"250-%s\r\n250-PIPELINING\r\n250-AUTH LOGIN PLAIN CRAM-MD5 DIGEST-MD5\r\n250-8BITMIME\r\n250 OK\r\n", m_email_domain.c_str());
+#endif /* _WITH_GSSAPI_ */
 
 	SmtpSend(cmd,strlen(cmd));
 }
-
-
 
 void CMailSmtp::On_Quit_Handler(char* text)
 {
 	On_Service_Close_Handler();
 }
-
-
 
 void CMailSmtp::On_Rset_Handler(char* text)
 {
@@ -1435,21 +1637,15 @@ void CMailSmtp::On_Help_Handler(char* text)
 	SmtpSend(reply,strlen(reply));
 }
 
-
-
 void CMailSmtp::On_Noop_Handler(char* text)
 {
 	On_Request_Okay_Handler();
 }
 
-
-
 void CMailSmtp::On_Turn_Handler(char* text)
 {
 	On_Unimplemented_Command_Handler();
 }
-
-
 
 void CMailSmtp::On_Unrecognized_Command_Handler()
 {

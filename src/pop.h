@@ -7,6 +7,16 @@
 #include <string>
 using namespace std;
 
+typedef enum
+{
+	POP_AUTH_USER = 1,
+	POP_AUTH_PLAIN,
+	POP_AUTH_CRAM_MD5,
+	POP_AUTH_DIGEST_MD5,
+	POP_AUTH_NTLM,
+	POP_AUTH_GSSAPI
+}Pop3_Auth_Type;
+
 class CMailPop  : public CMailBase
 {
 public:
@@ -34,6 +44,7 @@ public:
 	void On_Capa_Handler(char* text);
 	void On_Top_Handler(char* text);
 	void On_STLS_Handler();
+    void On_Auth_Handler(char* text);
 	int PopSend(const char* buf, int len);
 	
 	
@@ -58,9 +69,12 @@ protected:
 	string m_password;
 	string m_strDigest;
 	string m_strToken;
-
+    string m_strTokenVerify;
 	StorageEngine* m_storageEngine;
 	memcached_st * m_memcached;
+    
+    Pop3_Auth_Type m_authType;
+
 };
 #endif /* _POP_H_ */
 
