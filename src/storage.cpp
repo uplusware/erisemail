@@ -33,6 +33,7 @@ MailStorage::MailStorage(const char* encoding, const char* private_path, memcach
     mysql_init(&m_hMySQL);
     
     m_memcached = memcached;
+    srandom(time(NULL));
 }
 
 MailStorage::~MailStorage()

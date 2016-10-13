@@ -83,7 +83,7 @@ int CMailPop::ProtRecv(char* buf, int len)
 void CMailPop::On_Service_Ready_Handler()
 {
 	char cmd[1024];
-	srand(time(NULL));
+	srandom(time(NULL));
 	sprintf(cmd,"<%lu%lu%lu.%lu@%s>", time(NULL), getpid(), pthread_self(), random(), m_localhostname.c_str());
 	
 	m_strDigest = cmd;
@@ -124,7 +124,7 @@ void CMailPop::On_Capa_Handler(char* text)
 	sprintf(cmd,"STLS\r\n");
 	PopSend(cmd,strlen(cmd));
 #ifdef _WITH_GSSAPI_     
-    sprintf(cmd,"SASL PLAIN CRAM-MD5 DIGEST-MD5 GSSAPI KERBEROS_V4\r\n");
+    sprintf(cmd,"SASL PLAIN CRAM-MD5 DIGEST-MD5 GSSAPI\r\n");
 #else
     sprintf(cmd,"SASL PLAIN CRAM-MD5 DIGEST-MD5\r\n");
 #endif /* _WITH_GSSAPI_ */    
@@ -148,9 +148,11 @@ void CMailPop::On_Apop_Handler(char* text)
 	strcut(text, " ", "\r\n", strArg);
 	strcut(strArg.c_str(), NULL, " ", m_username);
 	strcut(strArg.c_str(), " ", NULL, m_strToken);
-
+    
+    strtrim(m_username);
+    strtrim(m_strToken);
+    
 	string strpwd;
-	
 	if(mailStg->GetPassword(m_username.c_str(), strpwd) == 0)
 	{
 		string strMD5src = m_strDigest;
@@ -257,10 +259,11 @@ void CMailPop::On_Not_Valid_State_Handler()
 
 BOOL CMailPop::On_Supose_Username_Handler(char* text)
 {
+    strcut(text, " ", "\r\n", m_username);
+    strtrim(m_username);
+        
     if(m_authType == POP_AUTH_USER)
     {
-        strcut(text, " ", "\r\n", m_username);
-        
         m_status = m_status&(~STATUS_AUTH_STEP1);
         
         char cmd[256];
@@ -281,23 +284,24 @@ BOOL CMailPop::On_Supose_Username_Handler(char* text)
 
 		string strRight;
 		strcut(tmp, "username=\"", "\"", m_username);
-
+        strtrim(m_username);
 		strcut(tmp, "realm=\"", "\"", strRealm);
-
+        strtrim(strRealm);
 		strcut(tmp, "response=", "\n", strRight);
 		strcut(strRight.c_str(), NULL, ",", m_strToken);
-		
+		strtrim(m_strToken);
 		strcut(tmp, "nonce=\"", "\"", strNonce);
-		
+		strtrim(strNonce);
 		strcut(tmp, "cnonce=\"", "\"", strCNonce);
-
+        strtrim(strCNonce);
 		strcut(tmp, "digest-uri=\"", "\"", strDigestUri);
-
+        strtrim(strDigestUri);
 		strcut(tmp, "qop=", "\n", strRight);
 		strcut(strRight.c_str(), NULL, ",", strQop);
-
+        strtrim(strQop);
 		strcut(tmp, "nc=", "\n", strRight);
 		strcut(strRight.c_str(), NULL, ",", strNc);
+        strtrim(strNc);
 		free(tmp);
 
 		string strpwd;
@@ -445,23 +449,25 @@ BOOL CMailPop::On_Supose_Username_Handler(char* text)
 
 BOOL CMailPop::On_Supose_Password_Handler(char* text)
 {
+    strcut(text, " ", "\r\n", m_password);
+    strtrim(m_password);
+    
     if(m_authType == POP_AUTH_USER)
 	{
-        strcut(text, " ", "\r\n", m_password);
-        
         m_status = m_status&(~STATUS_AUTH_STEP2);
-
         return On_Supose_Checking_Handler();
     }
+/*    
     else if(m_authType == POP_AUTH_DIGEST_MD5)
 	{
 		
 	}
+*/
 	else if(m_authType == POP_AUTH_CRAM_MD5)
 	{
 		string strEncoded;
 		strcut(text, NULL, "\r\n",strEncoded);
-		
+		strtrim(strEncoded);
 		int outlen = BASE64_DECODE_OUTPUT_MAX_LEN(strEncoded.length());//strEncoded.length()*4+1;
 		char* tmp = (char*)malloc(outlen);
 		memset(tmp, 0, outlen);
@@ -598,7 +604,7 @@ void CMailPop::On_List_Handler(char* text)
 		char cmd[256];
 		string strIndex;
 		strcut(text, " ", "\r\n", strIndex);
-
+        strtrim(strIndex);
 		if(strcmp(strIndex.c_str(),"") == 0)
 		{
 			sprintf(cmd,"+OK %u message<s> [%u byte(s)]\r\n",m_lettersCount,m_lettersTotalSize);
@@ -662,7 +668,7 @@ void CMailPop::On_Uidl_Handler(char* text)
 		char cmd[256];
 		string strIndex;
 		strcut(text, " ", "\r\n", strIndex);
-
+        strtrim(strIndex);
 		if(strcmp(strIndex.c_str(),"") == 0)
 		{
 			sprintf(cmd, "+OK\r\n");
@@ -718,6 +724,7 @@ void CMailPop::On_Delete_Handler(char* text)
 		
 		string strIndex;
 		strcut(text, " ", "\r\n", strIndex);
+        strtrim(strIndex);
 		int index = atoi(strIndex.c_str());
 		if((m_lettersCount < (unsigned int)index)||(index <= 0))
 		{
@@ -758,6 +765,7 @@ void CMailPop::On_Retr_Handler(char* text)
 		char cmd[256];
 		string strIndex;
 		strcut(text, " ", "\r\n", strIndex);
+        strtrim(strIndex);
 		int index = atoi(strIndex.c_str());
 		if((m_lettersCount < (unsigned int)index)||(index <=0))
 		{
@@ -838,7 +846,7 @@ void CMailPop::On_Top_Handler(char* text)
 		string strIndex, strLineNum;
 		strcut(strtmp.c_str(), NULL, " ", strIndex);
 		strcut(strtmp.c_str(), " ", NULL, strLineNum);
-		
+		strtrim(strIndex);
 		int index = atoi(strIndex.c_str());
 		int lineNum = atoi(strLineNum.c_str());
 		
@@ -956,7 +964,7 @@ void CMailPop::On_Auth_Handler(char* text)
 	{
 		m_authType = POP_AUTH_PLAIN;
 		string strEnoded;
-		strcut(&text[11], NULL, "\r\n",strEnoded);		
+		strcut(&text[11], NULL, "\r\n",strEnoded);	
 		int outlen = BASE64_DECODE_OUTPUT_MAX_LEN(strEnoded.length());//strEnoded.length()*4+1;
 		char* tmp1 = (char*)malloc(outlen);
 		memset(tmp1, 0, outlen);
@@ -1024,15 +1032,15 @@ void CMailPop::On_Auth_Handler(char* text)
 		string strChallenge;
 		char cmd[512];
 		char nonce[15];
-		srand(time(NULL));
+		
 		sprintf(nonce, "%c%c%c%08x%c%c%c",
-			CHAR_TBL[rand()%(sizeof(CHAR_TBL)-1)],
-			CHAR_TBL[rand()%(sizeof(CHAR_TBL)-1)],
-			CHAR_TBL[rand()%(sizeof(CHAR_TBL)-1)],
+			CHAR_TBL[random()%(sizeof(CHAR_TBL)-1)],
+			CHAR_TBL[random()%(sizeof(CHAR_TBL)-1)],
+			CHAR_TBL[random()%(sizeof(CHAR_TBL)-1)],
 			(unsigned int)time(NULL),
-			CHAR_TBL[rand()%(sizeof(CHAR_TBL)-1)],
-			CHAR_TBL[rand()%(sizeof(CHAR_TBL)-1)],
-			CHAR_TBL[rand()%(sizeof(CHAR_TBL)-1)]);
+			CHAR_TBL[random()%(sizeof(CHAR_TBL)-1)],
+			CHAR_TBL[random()%(sizeof(CHAR_TBL)-1)],
+			CHAR_TBL[random()%(sizeof(CHAR_TBL)-1)]);
 		sprintf(cmd, "realm=\"%s\",nonce=\"%s\",qop=\"auth\",charset=utf-8,algorithm=md5-sess\n", m_localhostname.c_str(), nonce);
 		int outlen  = BASE64_ENCODE_OUTPUT_MAX_LEN(strlen(cmd));//strlen(cmd) *4 + 1;
 		char* szEncoded = (char*)malloc(outlen);
@@ -1052,8 +1060,8 @@ void CMailPop::On_Auth_Handler(char* text)
 		m_authType = POP_AUTH_CRAM_MD5;
 		
 		char cmd[512];
-		srand(time(NULL));
-		sprintf(cmd,"<%u%u.%u@%s>", rand()%10000, getpid(), (unsigned int)time(NULL), m_localhostname.c_str());
+		
+		sprintf(cmd,"<%u%u.%u@%s>", random()%10000, getpid(), (unsigned int)time(NULL), m_localhostname.c_str());
 		m_strDigest = cmd;
 		int outlen  = BASE64_ENCODE_OUTPUT_MAX_LEN(strlen(cmd));//strlen(cmd) *4 + 1;
 		char* szEncoded = (char*)malloc(outlen);

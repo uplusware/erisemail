@@ -112,10 +112,10 @@ void CMailBase::SetConfigFile(const char* config_file, const char* permit_list_f
 
 BOOL CMailBase::LoadConfig()
 {	
-    srand(time(NULL)/3600);
+    srandom(time(NULL)/3600);
     for(int x = 0; x < 8; x++)
     {
-        int ind = rand()%(sizeof(CHAR_TBL) - 1);
+        int ind = random()%(sizeof(CHAR_TBL) - 1);
         
         m_des_key[x] = CHAR_TBL[ind];
     }

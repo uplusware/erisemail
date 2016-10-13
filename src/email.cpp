@@ -38,14 +38,15 @@ email::email(const char* domain, const char* username, const char* alias)
 	
 	int nboundary = 0;
 	char szboundary[128];
-	srand(time(NULL));
-	sprintf(szboundary, "----=_NextPart_%03d_%04X_%08X.%08X", nboundary, rand()%0xFFFF,  time(NULL), this);
+	
+	sprintf(szboundary, "----=_NextPart_%03d_%04X_%08X.%08X", nboundary, random()%0xFFFF,  time(NULL), this);
 	m_boundary = szboundary;
 	
 }
 
 email::email(const char* buf, int len)
 {
+    srandom(time(NULL));
 	fbufseg seg;
 	seg.m_byte_beg = 0;
 	seg.m_byte_end = 0;

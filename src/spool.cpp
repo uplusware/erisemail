@@ -35,8 +35,8 @@ static BOOL ReturnMail(MailStorage* mailStg, memcached_st * memcached, int mid, 
 {	
 	int nBoundary = 0;
 	char szBoundary[64];
-	srand(time(NULL));
-	sprintf(szBoundary, "%03d_%04X_%08X.%08X", nBoundary, rand()%0xFFFF, time(NULL));
+	srandom(time(NULL));
+	sprintf(szBoundary, "%03d_%04X_%08X.%08X", nBoundary, random()%0xFFFF, time(NULL));
 	char szMailFrom[64];
 	sprintf(szMailFrom, "postmaster@%s", CMailBase::m_email_domain.c_str());
 

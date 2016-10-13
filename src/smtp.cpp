@@ -440,7 +440,8 @@ void CMailSmtp::On_Auth_Handler(char* text)
 	{
 		m_authType = SMTP_AUTH_PLAIN;
 		string strEnoded;
-		strcut(&text[11], NULL, "\r\n",strEnoded);		
+		strcut(&text[11], NULL, "\r\n",strEnoded);
+        strtrim(strEnoded);		
 		int outlen = BASE64_DECODE_OUTPUT_MAX_LEN(strEnoded.length());//strEnoded.length()*4+1;
 		char* tmp1 = (char*)malloc(outlen);
 		memset(tmp1, 0, outlen);
@@ -508,15 +509,15 @@ void CMailSmtp::On_Auth_Handler(char* text)
 		string strChallenge;
 		char cmd[512];
 		char nonce[15];
-		srand(time(NULL));
+		
 		sprintf(nonce, "%c%c%c%08x%c%c%c",
-			CHAR_TBL[rand()%(sizeof(CHAR_TBL)-1)],
-			CHAR_TBL[rand()%(sizeof(CHAR_TBL)-1)],
-			CHAR_TBL[rand()%(sizeof(CHAR_TBL)-1)],
+			CHAR_TBL[random()%(sizeof(CHAR_TBL)-1)],
+			CHAR_TBL[random()%(sizeof(CHAR_TBL)-1)],
+			CHAR_TBL[random()%(sizeof(CHAR_TBL)-1)],
 			(unsigned int)time(NULL),
-			CHAR_TBL[rand()%(sizeof(CHAR_TBL)-1)],
-			CHAR_TBL[rand()%(sizeof(CHAR_TBL)-1)],
-			CHAR_TBL[rand()%(sizeof(CHAR_TBL)-1)]);
+			CHAR_TBL[random()%(sizeof(CHAR_TBL)-1)],
+			CHAR_TBL[random()%(sizeof(CHAR_TBL)-1)],
+			CHAR_TBL[random()%(sizeof(CHAR_TBL)-1)]);
 		sprintf(cmd, "realm=\"%s\",nonce=\"%s\",qop=\"auth\",charset=utf-8,algorithm=md5-sess\n", m_localhostname.c_str(), nonce);
 		int outlen  = BASE64_ENCODE_OUTPUT_MAX_LEN(strlen(cmd));//strlen(cmd) *4 + 1;
 		char* szEncoded = (char*)malloc(outlen);
@@ -536,8 +537,8 @@ void CMailSmtp::On_Auth_Handler(char* text)
 		m_authType = SMTP_AUTH_CRAM_MD5;
 		
 		char cmd[512];
-		srand(time(NULL));
-		sprintf(cmd,"<%u%u.%u@%s>", rand()%10000, getpid(), (unsigned int)time(NULL), m_localhostname.c_str());
+		
+		sprintf(cmd,"<%u%u.%u@%s>", random()%10000, getpid(), (unsigned int)time(NULL), m_localhostname.c_str());
 		m_strDigest = cmd;
 		int outlen  = BASE64_ENCODE_OUTPUT_MAX_LEN(strlen(cmd));//strlen(cmd) *4 + 1;
 		char* szEncoded = (char*)malloc(outlen);
@@ -786,7 +787,7 @@ BOOL CMailSmtp::On_Supose_Username_Handler(char* text)
 	{
 		string username;
 		strcut(text, NULL, "\r\n", username);
-
+        strtrim(username);
 		int outlen = BASE64_DECODE_OUTPUT_MAX_LEN(username.length());//username.length()*4+1;
 		char* tmp = (char*)malloc(outlen);
 		memset(tmp,0,outlen);
@@ -806,7 +807,7 @@ BOOL CMailSmtp::On_Supose_Username_Handler(char* text)
 	{
 		string strEncoded;
 		strcut(text, NULL, "\r\n",strEncoded);
-		
+		strtrim(strEncoded);
 		int outlen = BASE64_DECODE_OUTPUT_MAX_LEN(strEncoded.length());//strEncoded.length()*4+1;
 		char* tmp = (char*)malloc(outlen);
 		memset(tmp, 0, outlen);
@@ -816,23 +817,24 @@ BOOL CMailSmtp::On_Supose_Username_Handler(char* text)
 
 		string strRight;
 		strcut(tmp, "username=\"", "\"", m_username);
-
+        strtrim(m_username);
 		strcut(tmp, "realm=\"", "\"", strRealm);
-
+        strtrim(strRealm);
 		strcut(tmp, "response=", "\n", strRight);
 		strcut(strRight.c_str(), NULL, ",", m_strToken);
-		
+		strtrim(m_strToken);
 		strcut(tmp, "nonce=\"", "\"", strNonce);
-		
+		strtrim(strNonce);
 		strcut(tmp, "cnonce=\"", "\"", strCNonce);
-
+        strtrim(strCNonce);
 		strcut(tmp, "digest-uri=\"", "\"", strDigestUri);
-
+        strtrim(strDigestUri);
 		strcut(tmp, "qop=", "\n", strRight);
 		strcut(strRight.c_str(), NULL, ",", strQop);
-
+        strtrim(strQop);
 		strcut(tmp, "nc=", "\n", strRight);
 		strcut(strRight.c_str(), NULL, ",", strNc);
+        strtrim(strNc);
 		free(tmp);
 
 		string strpwd;
@@ -983,8 +985,8 @@ BOOL CMailSmtp::On_Supose_Password_Handler(char* text)
 	if(m_authType == SMTP_AUTH_LOGIN)
 	{
 		string password;
-		strcut(text, NULL, "\r\n",password);
-		
+		strcut(text, NULL, "\r\n", password);
+		strtrim(password);
 		int outlen = BASE64_DECODE_OUTPUT_MAX_LEN(password.length());//password.length()*4+1;
 		char* tmp = (char*)malloc(outlen);
 		memset(tmp, 0, outlen);
@@ -1001,13 +1003,15 @@ BOOL CMailSmtp::On_Supose_Password_Handler(char* text)
 	{
 		string strEncoded;
 		strcut(text, NULL, "\r\n",strEncoded);
-		
+		strtrim(strEncoded);
 		int outlen = BASE64_DECODE_OUTPUT_MAX_LEN(strEncoded.length());//strEncoded.length()*4+1;
 		char* tmp = (char*)malloc(outlen);
 		memset(tmp, 0, outlen);
 		CBase64::Decode((char*)strEncoded.c_str(), strEncoded.length(), tmp, &outlen);
 		strcut(tmp, NULL, " ", m_username);
 		strcut(tmp, " ", NULL, m_strToken);
+        strtrim(m_username);
+        strtrim(m_strToken);
 		free(tmp);
 	}
 	m_status = m_status&(~STATUS_AUTH_STEP2);
@@ -1257,7 +1261,6 @@ void CMailSmtp::On_Data_Handler(char* text)
 		strcut(m_letter_obj_vector[x]->letter_info.mail_to.c_str(),"@", NULL, rcptto_domain);
 		unsigned int mstatus = MSG_ATTR_RECENT;
 
-		srand(time(NULL));
 		sprintf(uid, "%08x_%08x_%016lx_%08x", time(NULL), getpid(), pthread_self(), random());
 		
 		if(CMailBase::Is_Local_Domain(rcptto_domain.c_str()))
@@ -1570,7 +1573,7 @@ BOOL CMailSmtp::On_Helo_Handler(char* text)
 {
 	string client;
 	strcut(text, " ", "\r\n", client);
-
+    strtrim(client);
 	m_status = m_status|STATUS_HELOED;
 
 	if(Check_Helo_Domain((char*)client.c_str()))
@@ -1712,6 +1715,7 @@ void CMailSmtp::On_Transaction_Failed_Handler()
 
 void CMailSmtp::On_Service_Ready_Handler()
 {
+    srandom(time(NULL));
 	char reply[256];
 	sprintf(reply,"220 %s SMTP service is ready by eRisemail-%s powered by Uplusware\r\n",m_localhostname.c_str(), m_sw_version.c_str());
 	SmtpSend(reply,strlen(reply));

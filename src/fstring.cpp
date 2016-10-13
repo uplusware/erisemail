@@ -40,12 +40,12 @@ fpool::fpool(const char* srcfile)
 
 fpool::fpool(const char* buf, int len)
 {
+    srandom(time(NULL));
 	m_srcfile = "";
 	m_length = len;
 	if(len > MAX_MEMORY_THRESHOLD)
 	{
 		char srcfile[1024];
-		srand(time(NULL));
 		sprintf(srcfile, "%08x_%08x_%016lx_%08x.fpl", time(NULL), getpid(), pthread_self(), random());
 		m_srcfile = srcfile;
 		ofstream* srcfd =  new ofstream(m_srcfile.c_str(), ios_base::binary|ios::out|ios::trunc);

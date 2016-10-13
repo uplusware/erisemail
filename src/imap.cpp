@@ -111,6 +111,7 @@ void CMailImap::On_Unknown(char* text)
 
 void CMailImap::On_Service_Ready()
 {
+    srandom(time(NULL));
 	char cmd[1024];
 	sprintf(cmd, "* OK %s IMAP4rev1 Server is ready by eRisemail-%s powered by Uplusware\r\n", m_localhostname.c_str(), m_sw_version.c_str());
 	ImapSend(cmd, strlen(cmd));
@@ -232,15 +233,14 @@ BOOL CMailImap::On_Authenticate(char* text)
 		string strChallenge;
 		char cmd[512];
 		char nonce[15];
-		srand(time(NULL));
 		sprintf(nonce, "%c%c%c%08x%c%c%c",
-			CHAR_TBL[rand()%(sizeof(CHAR_TBL)-1)],
-			CHAR_TBL[rand()%(sizeof(CHAR_TBL)-1)],
-			CHAR_TBL[rand()%(sizeof(CHAR_TBL)-1)],
+			CHAR_TBL[random()%(sizeof(CHAR_TBL)-1)],
+			CHAR_TBL[random()%(sizeof(CHAR_TBL)-1)],
+			CHAR_TBL[random()%(sizeof(CHAR_TBL)-1)],
 			(unsigned int)time(NULL),
-			CHAR_TBL[rand()%(sizeof(CHAR_TBL)-1)],
-			CHAR_TBL[rand()%(sizeof(CHAR_TBL)-1)],
-			CHAR_TBL[rand()%(sizeof(CHAR_TBL)-1)]);
+			CHAR_TBL[random()%(sizeof(CHAR_TBL)-1)],
+			CHAR_TBL[random()%(sizeof(CHAR_TBL)-1)],
+			CHAR_TBL[random()%(sizeof(CHAR_TBL)-1)]);
 		sprintf(cmd, "realm=\"%s\",nonce=\"%s\",qop=\"auth\",charset=utf-8,algorithm=md5-sess\n", m_localhostname.c_str(), nonce);
 		int outlen  = BASE64_ENCODE_OUTPUT_MAX_LEN(strlen(cmd));
 		char* szEncoded = (char*)malloc(outlen);
@@ -261,7 +261,7 @@ BOOL CMailImap::On_Authenticate(char* text)
 		string strEncoded;
 		string strToken;
 		strcut(szText, NULL, "\r\n",strEncoded);
-		
+		strtrim(strEncoded);
 		outlen = BASE64_DECODE_OUTPUT_MAX_LEN(strEncoded.length());
 		char* tmp = (char*)malloc(outlen);
 		memset(tmp, 0, outlen);
@@ -271,23 +271,24 @@ BOOL CMailImap::On_Authenticate(char* text)
 		
 		string strRight;
 		strcut(tmp, "username=\"", "\"", m_username);
-		
+		strtrim(m_username);
 		strcut(tmp, "realm=\"", "\"", strRealm);
 		
 		strcut(tmp, "response=", "\n", strRight);
 		strcut(strRight.c_str(), NULL, ",", strToken);
-		
+		strtrim(strToken);
 		strcut(tmp, "nonce=\"", "\"", strNonce);
-		
+		strtrim(strNonce);
 		strcut(tmp, "cnonce=\"", "\"", strCNonce);
-		
+		strtrim(strCNonce);
 		strcut(tmp, "digest-uri=\"", "\"", strDigestUri);
-		
+		strtrim(strDigestUri);
 		strcut(tmp, "qop=", "\n", strRight);
 		strcut(strRight.c_str(), NULL, ",", strQop);
-		
+		strtrim(strQop);
 		strcut(tmp, "nc=", "\n", strRight);
 		strcut(strRight.c_str(), NULL, ",", strNc);
+        strtrim(strNc);
 		free(tmp);
 		
 		string strpwd;
@@ -443,8 +444,8 @@ BOOL CMailImap::On_Authenticate(char* text)
 		m_authType = atCRAM_MD5;
 		
 		char cmd[512];
-		srand(time(NULL));
-		sprintf(cmd,"<%u%u.%u@%s>", (unsigned int)(rand()%10000), (unsigned int)getpid(), (unsigned int)time(NULL), m_localhostname.c_str());
+		
+		sprintf(cmd,"<%u%u.%u@%s>", (unsigned int)(random()%10000), (unsigned int)getpid(), (unsigned int)time(NULL), m_localhostname.c_str());
 		string strDigest = cmd;
 		int outlen  = BASE64_ENCODE_OUTPUT_MAX_LEN(strlen(cmd)); //strlen(cmd) *4 + 1;
 		char* szEncoded = (char*)malloc(outlen);
@@ -463,6 +464,7 @@ BOOL CMailImap::On_Authenticate(char* text)
 		
 		string strEncoded;
 		strcut(szText, NULL, "\r\n",strEncoded);
+        strtrim(strEncoded);
 		string strToken;
 		outlen = BASE64_DECODE_OUTPUT_MAX_LEN(strEncoded.length());//strEncoded.length()*4+1;
 		char* tmp = (char*)malloc(outlen);
@@ -471,7 +473,8 @@ BOOL CMailImap::On_Authenticate(char* text)
 		strcut(tmp, NULL, " ", m_username);
 		strcut(tmp, " ", NULL, strToken);
 		free(tmp);
-		
+		strtrim(m_username);
+        strtrim(strToken);
 		string strpwd;
 		if(mailStg->GetPassword(m_username.c_str(), strpwd) == 0)
 		{
@@ -2136,6 +2139,9 @@ void CMailImap::Fetch(const char* szArg, BOOL isUID)
 	unsigned int nBegin, nEnd;
 	strcut(szArg, NULL, " ", strSequence);
 	strcut(szArg, " ", "\r\n", strMsgItem);
+    
+    strtrim(strSequence);
+    strtrim(strMsgItem);
 	vector<string> vecSequenceSet;
 	vSplitString(strSequence, vecSequenceSet, ",");
 	int zLen = vecSequenceSet.size();
@@ -3516,6 +3522,8 @@ void CMailImap::Store(const char* szArg, BOOL isUID)
 	unsigned int nBegin, nEnd;
 	strcut(szArg, NULL, " ", strSequence);
 	strcut(szArg, " ", "\r\n", strMsgItem);
+    strtrim(strSequence);
+    strtrim(strMsgItem);
 	vector<string> vecSequenceSet;
 	vSplitString(strSequence, vecSequenceSet, ",");
 	int zLen = vecSequenceSet.size();
@@ -3989,6 +3997,8 @@ int CMailImap::Copy(const char* szArg, BOOL isUID)
 	unsigned int nBegin, nEnd;
 	strcut(szArg, NULL, " ", strSequence);
 	strcut(szArg, " ", "\r\n", strMsgItem);
+    strtrim(strSequence);
+    strtrim(strMsgItem);
 	vector<string> vecSequenceSet;
 	vSplitString(strSequence, vecSequenceSet, ",");
 	int zLen = vecSequenceSet.size();
