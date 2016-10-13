@@ -1094,7 +1094,7 @@ void CMailPop::On_Auth_Handler(char* text)
 			      GSS_C_NT_HOSTBASED_SERVICE, &server_name);
         if (GSS_ERROR (maj_stat))
         {
-            sprintf(cmd,"-ERR NO User Logged Failed\r\n");
+            sprintf(cmd,"-ERR User Logged Failed\r\n");
 			PopSend(cmd, strlen(cmd));
             return;
         }
@@ -1103,7 +1103,7 @@ void CMailPop::On_Auth_Handler(char* text)
         maj_stat = gss_create_empty_oid_set(&min_stat, &oid_set);
         if (GSS_ERROR (maj_stat))
         {
-            sprintf(cmd,"-ERR NO User Logged Failed\r\n");
+            sprintf(cmd,"-ERR User Logged Failed\r\n");
 			PopSend(cmd, strlen(cmd));
             return;
         }
@@ -1112,7 +1112,7 @@ void CMailPop::On_Auth_Handler(char* text)
         if (GSS_ERROR (maj_stat))
         {
             maj_stat = gss_release_oid_set(&min_stat, &oid_set);
-            sprintf(cmd,"-ERR NO User Logged Failed\r\n");
+            sprintf(cmd,"-ERR User Logged Failed\r\n");
 			PopSend(cmd, strlen(cmd));
             return ;
         }
@@ -1122,7 +1122,7 @@ void CMailPop::On_Auth_Handler(char* text)
         if (GSS_ERROR (maj_stat))
         {
             maj_stat = gss_release_oid_set(&min_stat, &oid_set);
-            sprintf(cmd,"-ERR NO User Logged Failed\r\n");
+            sprintf(cmd,"-ERR User Logged Failed\r\n");
 			PopSend(cmd, strlen(cmd));
             return;
         }
@@ -1130,7 +1130,7 @@ void CMailPop::On_Auth_Handler(char* text)
         
         if (GSS_ERROR (maj_stat))
         {
-            sprintf(cmd,"-ERR NO User Logged Failed\r\n");
+            sprintf(cmd,"-ERR User Logged Failed\r\n");
 			PopSend(cmd, strlen(cmd));
             return;
         }
@@ -1184,7 +1184,9 @@ void CMailPop::On_Auth_Handler(char* text)
             
             if(!gss_oid_equal(mech_type, GSS_KRB5))
             {
-                sprintf(cmd,"-ERR NO User Logged Failed\r\n");
+                if (context_hdl != GSS_C_NO_CONTEXT)
+                    gss_delete_sec_context(&min_stat, &context_hdl, GSS_C_NO_BUFFER);
+                sprintf(cmd,"-ERR User Logged Failed\r\n");
                 PopSend(cmd, strlen(cmd));
                 return;
             }
@@ -1207,7 +1209,7 @@ void CMailPop::On_Auth_Handler(char* text)
             {
                 if (context_hdl != GSS_C_NO_CONTEXT)
                     gss_delete_sec_context(&min_stat, &context_hdl, GSS_C_NO_BUFFER);
-                sprintf(cmd,"-ERR NO User Logged Failed\r\n");
+                sprintf(cmd,"-ERR User Logged Failed\r\n");
                 PopSend(cmd, strlen(cmd));
                 return;
             };
@@ -1231,15 +1233,21 @@ void CMailPop::On_Auth_Handler(char* text)
             str_line += recv_buf;
         }
         
-        OM_uint32 sec_data = 0;
-        gss_buffer_desc input_message_buffer1, output_message_buffer1;
+        char sec_data[4];
+        sec_data[0] = 1; //No security layer
+        sec_data[1] = 0;
+        sec_data[2] = 0;
+        sec_data[3] = 0;
+        gss_buffer_desc input_message_buffer1 = GSS_C_EMPTY_BUFFER, output_message_buffer1 = GSS_C_EMPTY_BUFFER;
         input_message_buffer1.length = 4;
-        input_message_buffer1.value = &sec_data;
+        input_message_buffer1.value = sec_data;
         int conf_state;
         maj_stat = gss_wrap (&min_stat, context_hdl, 0, 0, &input_message_buffer1, &conf_state, &output_message_buffer1);
         if (GSS_ERROR(maj_stat))
         {
-            sprintf(cmd,"-ERR NO User Logged Failed\r\n");
+            if (context_hdl != GSS_C_NO_CONTEXT)
+                gss_delete_sec_context(&min_stat, &context_hdl, GSS_C_NO_BUFFER);
+            sprintf(cmd,"-ERR User Logged Failed\r\n");
             PopSend(cmd, strlen(cmd));
             return;
         }
@@ -1270,7 +1278,7 @@ void CMailPop::On_Auth_Handler(char* text)
         char* tmp_decode = (char*)malloc(len_encode);
         memset(tmp_decode, 0, len_encode);
         
-        gss_buffer_desc input_message_buffer2, output_message_buffer2;
+        gss_buffer_desc input_message_buffer2 = GSS_C_EMPTY_BUFFER, output_message_buffer2 = GSS_C_EMPTY_BUFFER;
         gss_qop_t qop_state;
         int outlen_decode;
         CBase64::Decode((char*)str_line.c_str(), str_line.length(), tmp_decode, &outlen_decode);
@@ -1278,14 +1286,45 @@ void CMailPop::On_Auth_Handler(char* text)
         input_message_buffer2.value = tmp_decode;
         
         maj_stat = gss_unwrap (&min_stat, context_hdl, &input_message_buffer2, &output_message_buffer2, &conf_state, &qop_state);
-        
-        free(tmp_decode);
         if (GSS_ERROR(maj_stat))
         {
-            sprintf(cmd,"-ERR NO User Logged Failed\r\n");
+            if (context_hdl != GSS_C_NO_CONTEXT)
+                gss_delete_sec_context(&min_stat, &context_hdl, GSS_C_NO_BUFFER);
+            sprintf(cmd,"-ERR User Logged Failed\r\n");
             PopSend(cmd, strlen(cmd));
             return;
         }
+        memcpy(sec_data, output_message_buffer2.value, 4);
+        OM_uint32 max_limit_size = sec_data[1] << 16;
+        max_limit_size += sec_data[2] << 8;
+        max_limit_size += sec_data[3];
+        
+        char* ptr_tmp = (char*)output_message_buffer2.value;
+        for(int x = 4; x < output_message_buffer2.length; x++)
+        {
+            m_username.push_back(ptr_tmp[x]);
+        }
+        m_username.push_back('\0');
+        free(tmp_decode);
+        gss_release_buffer(&min_stat, &output_message_buffer2);
+        
+        gss_buffer_desc client_name_buff = GSS_C_EMPTY_BUFFER;
+        maj_stat = gss_export_name (&min_stat, client_name, &client_name_buff);
+        
+        if(GSS_C_NO_NAME != client_name)
+            gss_release_name(&min_stat, &client_name);
+        
+        if(strncmp((char*)client_name_buff.value, str_buf_desc.c_str(), client_name_buff.length) != 0)
+        {
+            gss_release_buffer(&min_stat, &client_name_buff);
+            if (context_hdl != GSS_C_NO_CONTEXT)
+                gss_delete_sec_context(&min_stat, &context_hdl, GSS_C_NO_BUFFER);
+        
+            sprintf(cmd,"-ERR User Logged Failed\r\n");
+            PopSend(cmd, strlen(cmd));
+            return;
+        }
+        gss_release_buffer(&min_stat, &client_name_buff);
         
         if (context_hdl != GSS_C_NO_CONTEXT)
             gss_delete_sec_context(&min_stat, &context_hdl, GSS_C_NO_BUFFER);
