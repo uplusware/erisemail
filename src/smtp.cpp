@@ -11,6 +11,79 @@
 #include <netdb.h>
 #ifdef _WITH_GSSAPI_ 
     #include <gss.h>
+    #ifndef __attribute__
+    /* This feature is available in gcc versions 2.5 and later.  */
+    # if __GNUC__ < 2 || (__GNUC__ == 2 && __GNUC_MINOR__ < 5)
+    #  define __attribute__(Spec)	/* empty */
+    # endif
+    #endif
+
+    static void fail (const char *format, ...)
+      __attribute__ ((format (printf, 1, 2)));
+    static void success (const char *format, ...)
+      __attribute__ ((format (printf, 1, 2)));
+
+    static int debug = 0;
+    static int error_count = 0;
+    static int break_on_error = 0;
+
+    static void
+    fail (const char *format, ...)
+    {
+      va_list arg_ptr;
+
+      va_start (arg_ptr, format);
+      vfprintf (stderr, format, arg_ptr);
+      va_end (arg_ptr);
+      error_count++;
+      if (break_on_error)
+        exit (EXIT_FAILURE);
+    }
+
+    static void
+    success (const char *format, ...)
+    {
+      va_list arg_ptr;
+
+      va_start (arg_ptr, format);
+      if (debug)
+        vfprintf (stdout, format, arg_ptr);
+      va_end (arg_ptr);
+    }
+
+    static void
+    display_status_1 (const char *m, OM_uint32 code, int type)
+    {
+      OM_uint32 maj_stat, min_stat;
+      gss_buffer_desc msg;
+      OM_uint32 msg_ctx;
+
+      msg_ctx = 0;
+      do
+        {
+          maj_stat = gss_display_status (&min_stat, code,
+                         type, GSS_C_NO_OID, &msg_ctx, &msg);
+          if (GSS_ERROR (maj_stat))
+        printf ("GSS-API display_status failed on code %d type %d\n",
+            code, type);
+          else
+        {
+          printf ("GSS-API error %s (%s): %.*s\n",
+              m, type == GSS_C_GSS_CODE ? "major" : "minor",
+              (int) msg.length, (char *) msg.value);
+
+          gss_release_buffer (&min_stat, &msg);
+        }
+        }
+      while (!GSS_ERROR (maj_stat) && msg_ctx);
+    }
+
+    static void
+    display_status (const char *msg, OM_uint32 maj_stat, OM_uint32 min_stat)
+    {
+      display_status_1 (msg, maj_stat, GSS_C_GSS_CODE);
+      display_status_1 (msg, min_stat, GSS_C_MECH_CODE);
+    }
 #endif /* _WITH_GSSAPI_ */
 #include "spool.h"
 #include "util/md5.h"
@@ -259,8 +332,6 @@ BOOL CMailSmtp::Parse(char* text)
 				if((m_status & STATUS_RCPTED) == STATUS_RCPTED)
 				{
 					On_Data_Handler(text);
-
-					
 				}
 				else
 					On_Command_Bad_Sequence_Handler();
@@ -559,11 +630,19 @@ void CMailSmtp::On_Auth_Handler(char* text)
         
         OM_uint32 maj_stat, min_stat;
         
+        gss_cred_id_t server_creds = GSS_C_NO_CREDENTIAL;
+        
         gss_name_t server_name = GSS_C_NO_NAME;
-        gss_cred_id_t server_creds;
+              
+        string lower_str, higher_str;
+        lowercase(CMailBase::m_localhostname.c_str(), lower_str);
+        highercase(CMailBase::m_localhostname.c_str(), higher_str);
         gss_buffer_desc buf_desc;
-        string str_buf_desc = "smtp@";
-        str_buf_desc += CMailBase::m_localhostname;
+        string str_buf_desc = "smtp/";
+        str_buf_desc += lower_str;
+        str_buf_desc += "@";
+        str_buf_desc += higher_str;
+        //printf("%s\n", str_buf_desc.c_str());
         buf_desc.value = (char *) str_buf_desc.c_str();
         buf_desc.length = str_buf_desc.length();
   
@@ -571,15 +650,17 @@ void CMailSmtp::On_Auth_Handler(char* text)
 			      GSS_C_NT_HOSTBASED_SERVICE, &server_name);
         if (GSS_ERROR (maj_stat))
         {
+            display_status ("gss_import_name", maj_stat, min_stat);
             sprintf(cmd,"535 User Logged Failed\r\n");
 			SmtpSend(cmd, strlen(cmd));
             return;
         }
         
-        gss_OID_set oid_set;
+        gss_OID_set oid_set = GSS_C_NULL_OID_SET;
         maj_stat = gss_create_empty_oid_set(&min_stat, &oid_set);
         if (GSS_ERROR (maj_stat))
         {
+            display_status ("gss_create_empty_oid_set", maj_stat, min_stat);
             sprintf(cmd,"535 User Logged Failed\r\n");
 			SmtpSend(cmd, strlen(cmd));
             return;
@@ -588,16 +669,19 @@ void CMailSmtp::On_Auth_Handler(char* text)
         maj_stat = gss_add_oid_set_member (&min_stat, GSS_KRB5, &oid_set);
         if (GSS_ERROR (maj_stat))
         {
+            display_status ("gss_add_oid_set_member", maj_stat, min_stat);
             maj_stat = gss_release_oid_set(&min_stat, &oid_set);
             sprintf(cmd,"535 User Logged Failed\r\n");
 			SmtpSend(cmd, strlen(cmd));
-            return ;
+            return;
         }
-        maj_stat = gss_acquire_cred (&min_stat, server_name, 0,
-			       oid_set, GSS_C_ACCEPT,
+        
+        maj_stat = gss_acquire_cred (&min_stat, server_name, GSS_C_INDEFINITE,
+			       GSS_C_NULL_OID_SET, GSS_C_ACCEPT,
 			       &server_creds, NULL, NULL);
         if (GSS_ERROR (maj_stat))
         {
+            display_status ("gss_acquire_cred", maj_stat, min_stat);
             maj_stat = gss_release_oid_set(&min_stat, &oid_set);
             sprintf(cmd,"535 User Logged Failed\r\n");
 			SmtpSend(cmd, strlen(cmd));
@@ -607,10 +691,12 @@ void CMailSmtp::On_Auth_Handler(char* text)
         
         if (GSS_ERROR (maj_stat))
         {
+            display_status ("gss_release_oid_set", maj_stat, min_stat);
             sprintf(cmd,"535 User Logged Failed\r\n");
 			SmtpSend(cmd, strlen(cmd));
             return;
         }
+        
         gss_ctx_id_t context_hdl = GSS_C_NO_CONTEXT;
         gss_name_t client_name = GSS_C_NO_NAME;
         gss_OID mech_type;
@@ -630,15 +716,17 @@ void CMailSmtp::On_Auth_Handler(char* text)
                 recv_buf[result] = '\0';
                 str_line += recv_buf;
             }
+            strtrim(str_line);
             
             int len_encode = BASE64_DECODE_OUTPUT_MAX_LEN(str_line.length());
             char* tmp_decode = (char*)malloc(len_encode);
             memset(tmp_decode, 0, len_encode);
             
-            int outlen_decode;
+            int outlen_decode = len_encode;
             CBase64::Decode((char*)str_line.c_str(), str_line.length(), tmp_decode, &outlen_decode);
             input_token.length = outlen_decode;
             input_token.value = tmp_decode;
+            
             maj_stat = gss_accept_sec_context(&min_stat,
                                             &context_hdl,
                                             server_creds,
@@ -654,6 +742,8 @@ void CMailSmtp::On_Auth_Handler(char* text)
             
             if (GSS_ERROR(maj_stat))
             {
+                display_status ("gss_accept_sec_context", maj_stat, min_stat);
+                
                 sprintf(cmd,"535 User Logged Failed\r\n");
                 SmtpSend(cmd, strlen(cmd));
                 return;
@@ -661,6 +751,7 @@ void CMailSmtp::On_Auth_Handler(char* text)
             
             if(!gss_oid_equal(mech_type, GSS_KRB5))
             {
+                printf("not GSS_KRB5\n");
                 if (context_hdl != GSS_C_NO_CONTEXT)
                     gss_delete_sec_context(&min_stat, &context_hdl, GSS_C_NO_BUFFER);
                 sprintf(cmd,"535 User Logged Failed\r\n");
@@ -670,26 +761,19 @@ void CMailSmtp::On_Auth_Handler(char* text)
                   
             if (output_token.length != 0)
             {
-                int len_decode = BASE64_ENCODE_OUTPUT_MAX_LEN(output_token.length);
+                int len_decode = BASE64_ENCODE_OUTPUT_MAX_LEN(output_token.length + 2);
                 char* tmp_encode = (char*)malloc(len_decode + 2);
                 memset(tmp_encode, 0, len_decode);
-                tmp_encode[0] = '334';
+                tmp_encode[0] = '+';
                 tmp_encode[1] = ' ';
-                int outlen_encode;
+                int outlen_encode = len_decode;
                 CBase64::Encode((char*)output_token.value, output_token.length, tmp_encode + 2, &outlen_encode);
         
                 SmtpSend(tmp_encode, outlen_encode + 2);
+                SmtpSend("\r\n", 2);
                 gss_release_buffer(&min_stat, &output_token);
                 free(tmp_encode);
             }
-            if (GSS_ERROR(maj_stat))
-            {
-                if (context_hdl != GSS_C_NO_CONTEXT)
-                    gss_delete_sec_context(&min_stat, &context_hdl, GSS_C_NO_BUFFER);
-                sprintf(cmd,"535 User Logged Failed\r\n");
-                SmtpSend(cmd, strlen(cmd));
-                return;
-            };
             
             if(maj_stat != GSS_S_COMPLETE)
             {
@@ -697,8 +781,6 @@ void CMailSmtp::On_Auth_Handler(char* text)
                     gss_delete_sec_context(&min_stat, &context_hdl, GSS_C_NO_BUFFER);
             }
         } while (maj_stat & GSS_S_CONTINUE_NEEDED);
-        
-        /* empty data, only status code*/
         string str_line = "";
         char recv_buf[4096];
         while(str_line.find("\n") == std::string::npos)
@@ -729,15 +811,18 @@ void CMailSmtp::On_Auth_Handler(char* text)
             return;
         }
         
-        int len_decode = BASE64_ENCODE_OUTPUT_MAX_LEN(output_message_buffer1.length);
+        int len_decode = BASE64_ENCODE_OUTPUT_MAX_LEN(output_message_buffer1.length + 2);
         char* tmp_encode = (char*)malloc(len_decode + 2);
         memset(tmp_encode, 0, len_decode);
-        tmp_encode[0] = '334';
-        tmp_encode[1] = ' ';
-        int outlen_encode;
+        tmp_encode[0] = '3';
+        tmp_encode[1] = '3';
+        tmp_encode[2] = '4';
+        tmp_encode[3] = ' ';
+        int outlen_encode = len_decode;
         CBase64::Encode((char*)output_message_buffer1.value, output_message_buffer1.length, tmp_encode + 2, &outlen_encode);
 
         SmtpSend(tmp_encode, outlen_encode + 2);
+        SmtpSend("\r\n", 2);
         gss_release_buffer(&min_stat, &output_message_buffer1);
         free(tmp_encode);
         
@@ -754,10 +839,10 @@ void CMailSmtp::On_Auth_Handler(char* text)
         int len_encode = BASE64_DECODE_OUTPUT_MAX_LEN(str_line.length());
         char* tmp_decode = (char*)malloc(len_encode);
         memset(tmp_decode, 0, len_encode);
-        
+
         gss_buffer_desc input_message_buffer2 = GSS_C_EMPTY_BUFFER, output_message_buffer2 = GSS_C_EMPTY_BUFFER;
         gss_qop_t qop_state;
-        int outlen_decode;
+        int outlen_decode = len_encode;
         CBase64::Decode((char*)str_line.c_str(), str_line.length(), tmp_decode, &outlen_decode);
         input_message_buffer2.length = outlen_decode;
         input_message_buffer2.value = tmp_decode;
@@ -767,6 +852,7 @@ void CMailSmtp::On_Auth_Handler(char* text)
         {
             if (context_hdl != GSS_C_NO_CONTEXT)
                 gss_delete_sec_context(&min_stat, &context_hdl, GSS_C_NO_BUFFER);
+            
             sprintf(cmd,"535 User Logged Failed\r\n");
             SmtpSend(cmd, strlen(cmd));
             return;
@@ -791,7 +877,14 @@ void CMailSmtp::On_Auth_Handler(char* text)
         if(GSS_C_NO_NAME != client_name)
             gss_release_name(&min_stat, &client_name);
         
-        if(strncmp((char*)client_name_buff.value, str_buf_desc.c_str(), client_name_buff.length) != 0)
+        /*for(int c = 0; c < client_name_buff.length; c++)
+            printf("%c\n", ((char*)client_name_buff.value)[c]);
+        printf("\n");
+        
+        string verify_name = m_username;
+        verify_name += "@";
+        verify_name += higher_str;
+        if(strncmp((char*)client_name_buff.value, verify_name.c_str(), client_name_buff.length) != 0)
         {
             gss_release_buffer(&min_stat, &client_name_buff);
             if (context_hdl != GSS_C_NO_CONTEXT)
@@ -800,9 +893,8 @@ void CMailSmtp::On_Auth_Handler(char* text)
             sprintf(cmd,"535 User Logged Failed\r\n");
             SmtpSend(cmd, strlen(cmd));
             return;
-        }
+        }*/
         gss_release_buffer(&min_stat, &client_name_buff);
-        
         
         if (context_hdl != GSS_C_NO_CONTEXT)
             gss_delete_sec_context(&min_stat, &context_hdl, GSS_C_NO_BUFFER);

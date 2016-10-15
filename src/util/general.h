@@ -1018,6 +1018,17 @@ void __inline__ lowercase(const char* szSrc, string &strDst)
 	strDst.push_back('\0');
 }
 
+void __inline__ highercase(const char* szSrc, string &strDst)
+{
+	strDst.clear();
+	int len = strlen(szSrc);
+	for(int x = 0; x < len; x++)
+	{
+		strDst.push_back(HICH(szSrc[x]));
+	}
+	strDst.push_back('\0');
+}
+
 void __inline__ get_extend_name(const char* filename, string & extname)
 {
 	vector<string> vTmp;
