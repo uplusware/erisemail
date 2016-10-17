@@ -9,82 +9,6 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <time.h>
-#ifdef _WITH_GSSAPI_
-    #include <gss.h>
-    #ifndef __attribute__
-    /* This feature is available in gcc versions 2.5 and later.  */
-    # if __GNUC__ < 2 || (__GNUC__ == 2 && __GNUC_MINOR__ < 5)
-    #  define __attribute__(Spec)	/* empty */
-    # endif
-    #endif
-
-    static void fail (const char *format, ...)
-      __attribute__ ((format (printf, 1, 2)));
-    static void success (const char *format, ...)
-      __attribute__ ((format (printf, 1, 2)));
-
-    static int debug = 0;
-    static int error_count = 0;
-    static int break_on_error = 0;
-
-    static void
-    fail (const char *format, ...)
-    {
-      va_list arg_ptr;
-
-      va_start (arg_ptr, format);
-      vfprintf (stderr, format, arg_ptr);
-      va_end (arg_ptr);
-      error_count++;
-      if (break_on_error)
-        exit (EXIT_FAILURE);
-    }
-
-    static void
-    success (const char *format, ...)
-    {
-      va_list arg_ptr;
-
-      va_start (arg_ptr, format);
-      if (debug)
-        vfprintf (stdout, format, arg_ptr);
-      va_end (arg_ptr);
-    }
-
-    static void
-    display_status_1 (const char *m, OM_uint32 code, int type)
-    {
-      OM_uint32 maj_stat, min_stat;
-      gss_buffer_desc msg;
-      OM_uint32 msg_ctx;
-
-      msg_ctx = 0;
-      do
-        {
-          maj_stat = gss_display_status (&min_stat, code,
-                         type, GSS_C_NO_OID, &msg_ctx, &msg);
-          if (GSS_ERROR (maj_stat))
-        fprintf (stderr, "GSS-API display_status failed on code %d type %d\n",
-            code, type);
-          else
-        {
-          fprintf (stderr, "GSS-API error %s (%s): %.*s\n",
-              m, type == GSS_C_GSS_CODE ? "major" : "minor",
-              (int) msg.length, (char *) msg.value);
-
-          gss_release_buffer (&min_stat, &msg);
-        }
-        }
-      while (!GSS_ERROR (maj_stat) && msg_ctx);
-    }
-
-    static void
-    display_status (const char *msg, OM_uint32 maj_stat, OM_uint32 min_stat)
-    {
-      display_status_1 (msg, maj_stat, GSS_C_GSS_CODE);
-      display_status_1 (msg, min_stat, GSS_C_MECH_CODE);
-    }
-#endif /* _WITH_GSSAPI_ */
 #include "util/base64.h"
 #include "util/md5.h"
 #include "letter.h"
@@ -102,7 +26,6 @@ CMailImap::CMailImap(int sockfd, SSL * ssl, SSL_CTX * ssl_ctx, const char* clien
 	m_sockfd = sockfd;
     m_ssl = ssl;
 
-    //printf("%p\n", m_ssl);
     m_ssl_ctx = ssl_ctx;
 
     m_bSTARTTLS = FALSE;
@@ -202,10 +125,8 @@ void CMailImap::On_Capability(char* text)
     sprintf(cmd, "* CAPABILITY IMAP4rev1 STARTTLS AUTH=CRAM-MD5 AUTH=DIGEST-MD5\r\n");
 #endif /* _WITH_GSSAPI_ */    
 	ImapSend(cmd, strlen(cmd));
-    printf("%s", cmd);
-	sprintf(cmd, "%s OK CAPABILITY completed\r\n", strTag.c_str());
+    sprintf(cmd, "%s OK CAPABILITY completed\r\n", strTag.c_str());
 	ImapSend(cmd, strlen(cmd));
-    printf("%s", cmd);
 }
 
 void CMailImap::On_Noop(char* text)
@@ -597,15 +518,17 @@ BOOL CMailImap::On_Authenticate(char* text)
         
         gss_name_t server_name = GSS_C_NO_NAME;
               
-        string lower_str, higher_str;
+        string lower_str = "", higher_str = "";
+        
         lowercase(CMailBase::m_localhostname.c_str(), lower_str);
-        highercase(CMailBase::m_localhostname.c_str(), higher_str);
+        highercase(CMailBase::m_email_domain.c_str(), higher_str);
+        
         gss_buffer_desc buf_desc;
         string str_buf_desc = "imap/";
-        str_buf_desc += lower_str;
+        str_buf_desc += lower_str.c_str();
         str_buf_desc += "@";
-        str_buf_desc += higher_str;
-        //printf("%s\n", str_buf_desc.c_str());
+        str_buf_desc += higher_str.c_str();
+        
         buf_desc.value = (char *) str_buf_desc.c_str();
         buf_desc.length = str_buf_desc.length();
   
@@ -839,29 +762,24 @@ BOOL CMailImap::On_Authenticate(char* text)
         if(GSS_C_NO_NAME != client_name)
             gss_release_name(&min_stat, &client_name);
         
-        /*for(int c = 0; c < client_name_buff.length; c++)
-            printf("%c\n", ((char*)client_name_buff.value)[c]);
-        printf("\n");
-        
-        string verify_name = m_username;
-        verify_name += "@";
-        verify_name += higher_str;
-        if(strncmp((char*)client_name_buff.value, verify_name.c_str(), client_name_buff.length) != 0)
-        {
-            gss_release_buffer(&min_stat, &client_name_buff);
-            if (context_hdl != GSS_C_NO_CONTEXT)
-                gss_delete_sec_context(&min_stat, &context_hdl, GSS_C_NO_BUFFER);
-        
-            sprintf(cmd,"%s NO User Logged Failed\r\n", strTag.c_str());
-            ImapSend(cmd, strlen(cmd));
-            return FALSE;
-        }
-        */
         gss_release_buffer(&min_stat, &client_name_buff);
         
         if (context_hdl != GSS_C_NO_CONTEXT)
             gss_delete_sec_context(&min_stat, &context_hdl, GSS_C_NO_BUFFER);
         
+        MailStorage* mailStg;
+        StorageEngineInstance stgengine_instance(m_storageEngine, &mailStg);
+        if(!mailStg)
+        {
+            printf("%s::%s Get Storage Engine Failed!\n", __FILE__, __FUNCTION__);
+            return FALSE;
+        }
+        if(mailStg->VerifyUser(m_username.c_str()) != 0)
+        {
+            sprintf(cmd,"%s NO User Logged Failed\r\n", strTag.c_str());
+            ImapSend(cmd, strlen(cmd));
+            return FALSE;
+        }
         sprintf(cmd,"%s OK GSSAPI authentication successful\r\n", strTag.c_str());
         ImapSend(cmd, strlen(cmd));
         m_status = m_status|STATUS_AUTHED;

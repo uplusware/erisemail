@@ -326,6 +326,7 @@ protected:
     string m_private_path;
     
     map<string, string> m_userpwd_cache;
+    pthread_rwlock_t m_userpwd_cache_lock;
     int m_userpwd_cache_update_time;
     static BOOL m_userpwd_cache_updated;
 };

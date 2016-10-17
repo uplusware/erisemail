@@ -169,7 +169,7 @@ BOOL CMailBase::LoadConfig()
 			{
 				strcut(strline.c_str(), "=", NULL, m_email_domain );
 				strtrim(m_email_domain);
-				//printf("%s\n", m_email_domain.c_str());
+				// printf("%s\n", m_email_domain.c_str());
 
 				//add to admit list
 				m_domain_list.push_back(m_email_domain);

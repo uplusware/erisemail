@@ -31,6 +31,83 @@
 #include <pthread.h>
 #include <libmemcached/memcached.h>
 
+#ifdef _WITH_GSSAPI_ 
+    #include <gss.h>
+    #ifndef __attribute__
+    /* This feature is available in gcc versions 2.5 and later.  */
+    # if __GNUC__ < 2 || (__GNUC__ == 2 && __GNUC_MINOR__ < 5)
+    #  define __attribute__(Spec)	/* empty */
+    # endif
+    #endif
+
+    static void fail (const char *format, ...)
+      __attribute__ ((format (printf, 1, 2)));
+    static void success (const char *format, ...)
+      __attribute__ ((format (printf, 1, 2)));
+
+    static int debug = 0;
+    static int error_count = 0;
+    static int break_on_error = 0;
+
+    static void
+    fail (const char *format, ...)
+    {
+      va_list arg_ptr;
+
+      va_start (arg_ptr, format);
+      vfprintf (stderr, format, arg_ptr);
+      va_end (arg_ptr);
+      error_count++;
+      if (break_on_error)
+        exit (EXIT_FAILURE);
+    }
+
+    static void
+    success (const char *format, ...)
+    {
+      va_list arg_ptr;
+
+      va_start (arg_ptr, format);
+      if (debug)
+        vfprintf (stdout, format, arg_ptr);
+      va_end (arg_ptr);
+    }
+
+    static void
+    display_status_1 (const char *m, OM_uint32 code, int type)
+    {
+      OM_uint32 maj_stat, min_stat;
+      gss_buffer_desc msg;
+      OM_uint32 msg_ctx;
+
+      msg_ctx = 0;
+      do
+        {
+          maj_stat = gss_display_status (&min_stat, code,
+                         type, GSS_C_NO_OID, &msg_ctx, &msg);
+          if (GSS_ERROR (maj_stat))
+        printf ("GSS-API display_status failed on code %d type %d\n",
+            code, type);
+          else
+        {
+          printf ("GSS-API error %s (%s): %.*s\n",
+              m, type == GSS_C_GSS_CODE ? "major" : "minor",
+              (int) msg.length, (char *) msg.value);
+
+          gss_release_buffer (&min_stat, &msg);
+        }
+        }
+      while (!GSS_ERROR (maj_stat) && msg_ctx);
+    }
+
+    static void
+    display_status (const char *msg, OM_uint32 maj_stat, OM_uint32 min_stat)
+    {
+      display_status_1 (msg, maj_stat, GSS_C_GSS_CODE);
+      display_status_1 (msg, min_stat, GSS_C_MECH_CODE);
+    }
+#endif /* _WITH_GSSAPI_ */
+
 #include "util/general.h"
 #include "storage.h"
 #include "util/base64.h"

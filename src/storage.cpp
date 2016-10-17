@@ -20,6 +20,7 @@ void MailStorage::SqlSafetyString(string& strInOut)
 
 MailStorage::MailStorage(const char* encoding, const char* private_path, memcached_st * memcached)
 {
+    pthread_rwlock_init(&m_userpwd_cache_lock, NULL);
     m_userpwd_cache.clear();
     m_userpwd_cache_update_time = 0;
     m_userpwd_cache_updated = TRUE;
@@ -40,6 +41,7 @@ MailStorage::~MailStorage()
 {
 	Close();
     mysql_thread_end();
+    pthread_rwlock_destroy(&m_userpwd_cache_lock);
 }
 
 BOOL MailStorage::m_userpwd_cache_updated = TRUE;
@@ -334,8 +336,11 @@ int MailStorage::CheckLogin(const char* username, const char* password)
 	string strSafetyUsername = username;
 	SqlSafetyString(strSafetyUsername);
     
+    pthread_rwlock_rdlock(&m_userpwd_cache_lock);
     if(m_userpwd_cache.size() == 0 || time(NULL) - m_userpwd_cache_update_time > 300 || m_userpwd_cache_updated == TRUE)
     {
+        pthread_rwlock_unlock(&m_userpwd_cache_lock); //release read
+        pthread_rwlock_wrlock(&m_userpwd_cache_lock); //acquire write
         m_userpwd_cache.clear();
         sprintf(sqlcmd, "select uname, DECODE(upasswd,'%s') from usertbl where ustatus = %d and utype = %d", CODE_KEY, usActive, utMember);
         
@@ -357,17 +362,19 @@ int MailStorage::CheckLogin(const char* username, const char* password)
                 
                 m_userpwd_cache_update_time = time(NULL);
                 m_userpwd_cache_updated = FALSE;
+                pthread_rwlock_unlock(&m_userpwd_cache_lock);
                 return 0;
             }
             else
             {
+                pthread_rwlock_unlock(&m_userpwd_cache_lock);
                 return -1;
             }
         }
         else
         {
-            
             printf("%s\n", mysql_error(&m_hMySQL));
+            pthread_rwlock_unlock(&m_userpwd_cache_lock);
             return -1;
         }
 	}
@@ -375,10 +382,14 @@ int MailStorage::CheckLogin(const char* username, const char* password)
 	map<string, string>::iterator it = m_userpwd_cache.find(username);
 	if(it != m_userpwd_cache.end() && it->second == password)
     {
+        pthread_rwlock_unlock(&m_userpwd_cache_lock);
         return 0;
     }
     else
+    {
+        pthread_rwlock_unlock(&m_userpwd_cache_lock);
         return -1;
+    }
 }
 
 int MailStorage::GetPassword(const char* username, string& password)
