@@ -28,8 +28,8 @@ MDEF = _LINUX_OS_
 
 ifdef GSSAPI
     GSS_DEF = _WITH_GSSAPI_
-    INCDIR = -I/usr/local/include/mariadb/ `pkg-config gss --cflags`
-    LDDIRS = -L/usr/local/lib/mariadb/ `pkg-config gss --libs-only-L`
+    INCDIR = -I/usr/local/include/mariadb/
+    LDDIRS = -L/usr/local/lib/mariadb/
     LDLIST_SVR = -lstdc++ -lrt -ldl -lssl -lcrypto -lpthread -lmemcached -lgss
 else
     GSS_DEF = _WITHOUT_GSSAPI_

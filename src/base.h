@@ -33,6 +33,10 @@
 
 #ifdef _WITH_GSSAPI_ 
     #include <gss.h>
+    #define GSS_SEC_LAYER_NONE          0x1
+    #define GSS_SEC_LAYER_INTEGRITY     0x2
+    #define GSS_SEC_LAYER_PRIVACY       0x4
+
     #ifndef __attribute__
     /* This feature is available in gcc versions 2.5 and later.  */
     # if __GNUC__ < 2 || (__GNUC__ == 2 && __GNUC_MINOR__ < 5)

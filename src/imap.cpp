@@ -507,7 +507,7 @@ BOOL CMailImap::On_Authenticate(char* text)
 	}
 #ifdef _WITH_GSSAPI_    
 	else if(strcasecmp(strAuthType.c_str(),"GSSAPI") == 0)
-	{
+	{        
 		m_authType = atGSSAPI;
 		
         ImapSend("+ \r\n", strlen("+ \r\n"));
@@ -517,21 +517,15 @@ BOOL CMailImap::On_Authenticate(char* text)
         gss_cred_id_t server_creds = GSS_C_NO_CREDENTIAL;
         
         gss_name_t server_name = GSS_C_NO_NAME;
-              
-        string lower_str = "", higher_str = "";
-        
-        lowercase(CMailBase::m_localhostname.c_str(), lower_str);
-        highercase(CMailBase::m_email_domain.c_str(), higher_str);
         
         gss_buffer_desc buf_desc;
-        string str_buf_desc = "imap/";
-        str_buf_desc += lower_str.c_str();
-        str_buf_desc += "@";
-        str_buf_desc += higher_str.c_str();
+        string str_buf_desc = "imap@";
+        str_buf_desc += m_localhostname.c_str();
         
         buf_desc.value = (char *) str_buf_desc.c_str();
-        buf_desc.length = str_buf_desc.length();
-  
+        buf_desc.length = str_buf_desc.length() + 1;
+        
+        printf("%s %d\n", (char*)buf_desc.value, buf_desc.length);
         maj_stat = gss_import_name (&min_stat, &buf_desc,
 			      GSS_C_NT_HOSTBASED_SERVICE, &server_name);
         if (GSS_ERROR (maj_stat))
@@ -542,7 +536,8 @@ BOOL CMailImap::On_Authenticate(char* text)
             return FALSE;
         }
         
-        gss_OID_set oid_set = GSS_C_NULL_OID_SET;
+        gss_OID_set oid_set = GSS_C_NO_OID_SET;
+        /*
         maj_stat = gss_create_empty_oid_set(&min_stat, &oid_set);
         if (GSS_ERROR (maj_stat))
         {
@@ -561,9 +556,9 @@ BOOL CMailImap::On_Authenticate(char* text)
 			ImapSend(cmd, strlen(cmd));
             return FALSE;
         }
-        
-        maj_stat = gss_acquire_cred (&min_stat, server_name, GSS_C_INDEFINITE,
-			       GSS_C_NULL_OID_SET, GSS_C_ACCEPT,
+        */
+        maj_stat = gss_acquire_cred (&min_stat, server_name, 0,
+			       oid_set, GSS_C_ACCEPT,
 			       &server_creds, NULL, NULL);
         if (GSS_ERROR (maj_stat))
         {
@@ -680,7 +675,7 @@ BOOL CMailImap::On_Authenticate(char* text)
         }
         
         char sec_data[4];
-        sec_data[0] = 1; //No security layer
+        sec_data[0] = GSS_SEC_LAYER_NONE; //No security layer
         sec_data[1] = 0;
         sec_data[2] = 0;
         sec_data[3] = 0;

@@ -1083,19 +1083,12 @@ void CMailPop::On_Auth_Handler(char* text)
         
         gss_name_t server_name = GSS_C_NO_NAME;
               
-        string lower_str = "", higher_str = "";
-        
-        lowercase(CMailBase::m_localhostname.c_str(), lower_str);
-        highercase(CMailBase::m_email_domain.c_str(), higher_str);
-        
         gss_buffer_desc buf_desc;
-        string str_buf_desc = "pop/";
-        str_buf_desc += lower_str.c_str();
-        str_buf_desc += "@";
-        str_buf_desc += higher_str.c_str();
+        string str_buf_desc = "pop@";
+        str_buf_desc += CMailBase::m_localhostname.c_str();
         
         buf_desc.value = (char *) str_buf_desc.c_str();
-        buf_desc.length = str_buf_desc.length();
+        buf_desc.length = str_buf_desc.length() + 1;
   
         maj_stat = gss_import_name (&min_stat, &buf_desc,
 			      GSS_C_NT_HOSTBASED_SERVICE, &server_name);
@@ -1107,7 +1100,8 @@ void CMailPop::On_Auth_Handler(char* text)
             return;
         }
         
-        gss_OID_set oid_set = GSS_C_NULL_OID_SET;
+        gss_OID_set oid_set = GSS_C_NO_OID_SET;
+        /*
         maj_stat = gss_create_empty_oid_set(&min_stat, &oid_set);
         if (GSS_ERROR (maj_stat))
         {
@@ -1126,7 +1120,7 @@ void CMailPop::On_Auth_Handler(char* text)
 			PopSend(cmd, strlen(cmd));
             return;
         }
-        
+        */
         maj_stat = gss_acquire_cred (&min_stat, server_name, GSS_C_INDEFINITE,
 			       GSS_C_NULL_OID_SET, GSS_C_ACCEPT,
 			       &server_creds, NULL, NULL);
@@ -1244,7 +1238,7 @@ void CMailPop::On_Auth_Handler(char* text)
         }
         
         char sec_data[4];
-        sec_data[0] = 1; //No security layer
+        sec_data[0] = GSS_SEC_LAYER_NONE; //No security layer
         sec_data[1] = 0;
         sec_data[2] = 0;
         sec_data[3] = 0;
