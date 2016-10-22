@@ -618,9 +618,10 @@ public:
 	static string	m_ca_key_server;
 	static string	m_ca_crt_client;
 	static string	m_ca_key_client;
-
 	static string	m_ca_password;
 	
+    static string   m_krb5_ktname;
+    
 	static string	m_db_host;
     static unsigned short	m_db_port;
 	static string	m_db_name;

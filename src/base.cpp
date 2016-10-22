@@ -59,6 +59,8 @@ string CMailBase::m_ca_key_client = "/var/cert/client-key.pem";
 
 string CMailBase::m_ca_password = "";
 
+string   CMailBase::m_krb5_ktname = "/etc/krb5.keytab";
+
 string CMailBase::m_db_host = "localhost";
 unsigned short  CMailBase::m_db_port = 0;
 string CMailBase::m_db_name = "erisemail_db";
@@ -383,6 +385,15 @@ BOOL CMailBase::LoadConfig()
 
 				Security::Decrypt(strEncoded.c_str(), strEncoded.length(), m_ca_password);
 			}
+#ifdef _WITH_GSSAPI_              
+            else if(strncasecmp(strline.c_str(), "KRB5_KTNAME", strlen("KRB5_KTNAME")) == 0)
+			{
+				strcut(strline.c_str(), "=", NULL, m_krb5_ktname);
+				strtrim(m_krb5_ktname);
+              
+				setenv("KRB5_KTNAME", m_krb5_ktname.c_str(), 1);
+			}
+#endif /* _WITH_GSSAPI_ */            
 			else if(strncasecmp(strline.c_str(), "DBHost", strlen("DBHost")) == 0)
 			{
 				strcut(strline.c_str(), "=", NULL, m_db_host );
