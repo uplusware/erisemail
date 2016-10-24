@@ -59,7 +59,7 @@ string CMailBase::m_ca_key_client = "/var/cert/client-key.pem";
 
 string CMailBase::m_ca_password = "";
 
-string   CMailBase::m_krb5_ktname = "/etc/krb5.keytab";
+string   CMailBase::m_krb5_ktname = "/etc/erisemail/krb5.keytab";
 
 string CMailBase::m_db_host = "localhost";
 unsigned short  CMailBase::m_db_port = 0;

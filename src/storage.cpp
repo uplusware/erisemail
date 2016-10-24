@@ -9,6 +9,13 @@
 
 #define CODE_KEY "qazWSX#$%123"
 
+static void show_error(MYSQL *mysql)
+{
+    fprintf(stderr, "MySQL error(%d) [%s] \"%s\"\n", mysql_errno(mysql), mysql_sqlstate(mysql), mysql_error(mysql));
+}
+
+BOOL MailStorage::m_userpwd_cache_updated = TRUE;
+
 void MailStorage::SqlSafetyString(string& strInOut)
 {
 	char * szOut = new char[strInOut.length()* 2 + 1];
@@ -28,9 +35,6 @@ MailStorage::MailStorage(const char* encoding, const char* private_path, memcach
     m_private_path = private_path;
     
     m_bOpened = FALSE;
-    
-    mysql_thread_init();
-    
     mysql_init(&m_hMySQL);
     
     m_memcached = memcached;
@@ -40,17 +44,21 @@ MailStorage::MailStorage(const char* encoding, const char* private_path, memcach
 MailStorage::~MailStorage()
 {
 	Close();
-    mysql_thread_end();
     pthread_rwlock_destroy(&m_userpwd_cache_lock);
 }
 
-BOOL MailStorage::m_userpwd_cache_updated = TRUE;
-
 int MailStorage::Connect(const char * host, const char* username, const char* password, const char* database, unsigned short port, const char* sock_file)
 {
+    unsigned int timeout_val = 20;
+    mysql_options(&m_hMySQL, MYSQL_OPT_CONNECT_TIMEOUT, (const void*)&timeout_val);
+    mysql_options(&m_hMySQL, MYSQL_OPT_READ_TIMEOUT, (const void*)&timeout_val);
+    mysql_options(&m_hMySQL, MYSQL_OPT_WRITE_TIMEOUT, (const void*)&timeout_val);
+     
     if(mysql_real_connect(&m_hMySQL, host, username, password, database, port, sock_file, 0) != NULL)
     {
-        
+        char arg_value = 1;
+        mysql_options(&m_hMySQL, MYSQL_OPT_RECONNECT, &arg_value);
+                
         m_host = host;
         m_username = username;
         m_password = password;
@@ -64,10 +72,7 @@ int MailStorage::Connect(const char * host, const char* username, const char* pa
     }
     else
     {
-        mysql_close(&m_hMySQL);
-        m_bOpened = FALSE;
-        fprintf(stderr, "mysql_real_connect: %s\n", mysql_error(&m_hMySQL));
-        
+        show_error(&m_hMySQL);
         return -1;	
     }
 }
@@ -75,7 +80,11 @@ int MailStorage::Connect(const char * host, const char* username, const char* pa
 void MailStorage::Close()
 {
     mysql_close(&m_hMySQL);
-    m_bOpened = FALSE;
+    
+    if(m_bOpened)
+    {
+        m_bOpened = FALSE;
+    }
 }
 
 int MailStorage::Ping()
@@ -87,8 +96,6 @@ int MailStorage::Ping()
 	}
 	else
 	{
-        if(m_bOpened)
-            Close();
 		return -1;
 	}
 }
@@ -132,7 +139,7 @@ int MailStorage::Install(const char* database)
 	}
 	else
 	{
-		printf("%s\n",mysql_error(&m_hMySQL));
+		show_error(&m_hMySQL);
 		return -1;
 	}
 	mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd));
@@ -238,9 +245,9 @@ int MailStorage::Install(const char* database)
 	{
 		mysql_autocommit(&m_hMySQL, 1);
 	}
-        else
+    else
 	{
-		printf("%s\n",mysql_error(&m_hMySQL));
+		show_error(&m_hMySQL);
 		mysql_rollback(&m_hMySQL);
 		mysql_autocommit(&m_hMySQL, 1);
 		return -1;
@@ -281,7 +288,7 @@ int MailStorage::SetMailSize(unsigned int mid, unsigned int msize)
 	sprintf(sqlcmd,"update mailtbl set msize=%d where mid=%d", msize, mid);
 	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) != 0)
 	{
-		printf("%s\n",mysql_error(&m_hMySQL));
+		show_error(&m_hMySQL);
 		return -1;
 	}
 	return 0;
@@ -321,8 +328,7 @@ int MailStorage::CheckAdmin(const char* username, const char* password)
 	}
 	else
 	{
-	    
-		printf("%s", mysql_error(&m_hMySQL));
+		show_error(&m_hMySQL);
 		return -1;
 	}
 }
@@ -373,7 +379,7 @@ int MailStorage::CheckLogin(const char* username, const char* password)
         }
         else
         {
-            printf("%s\n", mysql_error(&m_hMySQL));
+            show_error(&m_hMySQL);
             pthread_rwlock_unlock(&m_userpwd_cache_lock);
             return -1;
         }
@@ -436,7 +442,7 @@ int MailStorage::GetPassword(const char* username, string& password)
 	else
 	{
 	    
-		printf("%s\n", mysql_error(&m_hMySQL));
+		show_error(&m_hMySQL);
 		return -1;
 	}
 }
@@ -543,7 +549,7 @@ int MailStorage::AddLevel(const char* lname, const char* ldescription, unsigned 
 	}
 	else
 	{
-	    printf("%s\n",mysql_error(&m_hMySQL));
+	    show_error(&m_hMySQL);
 		return -1;
 	}
 }
@@ -573,7 +579,7 @@ int MailStorage::UpdateLevel(unsigned int lid, const char* lname, const char* ld
 	}
 	else
 	{
-		printf("%s: %s\n", sqlcmd, mysql_error(&m_hMySQL));
+		show_error(&m_hMySQL);
 		return -1;
 	}
 }
@@ -587,14 +593,14 @@ int MailStorage::DelLevel(unsigned int lid)
 	sprintf(sqlcmd, "update usertbl set ulevel=%d where ulevel=%d", defaultLid, lid);
 	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) != 0)
 	{	
-		printf("%s: %s\n", sqlcmd, mysql_error(&m_hMySQL));
+		show_error(&m_hMySQL);
 		return -1;
 	}
 	
 	sprintf(sqlcmd, "delete from leveltbl where lid=%d and ldefault <> %d", lid, ldTrue);
 	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) != 0)
 	{
-		printf("%s: %s\n", sqlcmd, mysql_error(&m_hMySQL));
+		show_error(&m_hMySQL);
 		return -1;
 	}
 	return 0;
@@ -669,7 +675,7 @@ int MailStorage::GetDefaultLevel(int& lid)
 			}
 			else
 			{
-				printf("%s: %s\n", sqlcmd, mysql_error(&m_hMySQL));
+				show_error(&m_hMySQL);
 				mysql_free_result(qResult);
 				return -1;
 			}
@@ -679,7 +685,7 @@ int MailStorage::GetDefaultLevel(int& lid)
 		}
 		else
 		{
-			printf("%s: %s\n", sqlcmd, mysql_error(&m_hMySQL));
+			show_error(&m_hMySQL);
 			return -1;
 		}
 	}
@@ -784,7 +790,7 @@ int MailStorage::ListLevel(vector<Level_Info>& litbl)
 	else
 	{
 	    
-		printf("%s: %s\n", sqlcmd, mysql_error(&m_hMySQL));
+		show_error(&m_hMySQL);
 		return -1;
 	}
 		
@@ -842,7 +848,7 @@ int MailStorage::GetLevel(int lid, Level_Info& linfo)
 	else
 	{
 	    
-		printf("%s: %s\n", sqlcmd, mysql_error(&m_hMySQL));
+		show_error(&m_hMySQL);
 		return -1;
 	}
 		
@@ -1002,7 +1008,7 @@ int MailStorage::DelAllMailOfDir(int mdirid)
 	else
 	{
 	    
-		printf("%s: %s\n", sqlcmd, mysql_error(&m_hMySQL));
+		show_error(&m_hMySQL);
 		return -1;
 	}
 }
@@ -1031,7 +1037,7 @@ int MailStorage::DelAllMailOfID(const char* username)
 		}
 		else
 		{
-			printf("%s: %s\n", sqlcmd, mysql_error(&m_hMySQL));
+			show_error(&m_hMySQL);
 			return -1;
 		}
 		return 0;
@@ -1059,7 +1065,7 @@ int MailStorage::DelID(const char* username)
 			sprintf(sqlcmd, "delete from grouptbl where groupname='%s'", strSafetyUsername.c_str());
 			if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) != 0)
 			{
-				printf("%s: %s\n", sqlcmd, mysql_error(&m_hMySQL));
+				show_error(&m_hMySQL);
 				return -1;
 			}	
 		}
@@ -1068,7 +1074,7 @@ int MailStorage::DelID(const char* username)
 			sprintf(sqlcmd, "delete from grouptbl where membername='%s'", strSafetyUsername.c_str());
 			if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) != 0)
 			{
-				printf("%s: %s\n", sqlcmd, mysql_error(&m_hMySQL));
+				show_error(&m_hMySQL);
 				return -1;
 			}
 			
@@ -1076,7 +1082,7 @@ int MailStorage::DelID(const char* username)
 			if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) != 0)
 			{
 				
-				printf("%s: %s\n", sqlcmd, mysql_error(&m_hMySQL));
+				show_error(&m_hMySQL);
 				return -1;
 			}
 
@@ -1095,7 +1101,7 @@ int MailStorage::DelID(const char* username)
 		sprintf(sqlcmd, "delete from usertbl where uname='%s'", strSafetyUsername.c_str());
 		if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) != 0)
 		{
-			printf("%s: %s\n", sqlcmd, mysql_error(&m_hMySQL));
+			show_error(&m_hMySQL);
 			return -1;
 		}
 		m_userpwd_cache_update_time = 0;
@@ -1178,7 +1184,7 @@ int MailStorage::LoadMailFromFile(const char* mfrom, const char* mto, unsigned i
 	else
 	{
 		unlink(sqlfilepath);
-		printf("%s: %s\n", sqlcmd, mysql_error(&m_hMySQL));
+		show_error(&m_hMySQL);
 		return -1;
 	}
 }
@@ -1254,7 +1260,7 @@ int MailStorage::UpdateMailFromFile(const char* mfrom, const char* mto, unsigned
 	else
 	{
 		unlink(sqlfilepath);
-		printf("%s: %s\n", sqlcmd, mysql_error(&m_hMySQL));
+		show_error(&m_hMySQL);
 		return -1;
 	}
 }
@@ -1285,7 +1291,7 @@ int MailStorage::InsertMail(const char* mfrom, const char* mto, unsigned int mti
 		else
 		{
 			free(sqlcmd);
-			printf("%s: %s\n", sqlcmd, mysql_error(&m_hMySQL));
+			show_error(&m_hMySQL);
 			return -1;
 		}
 	}
@@ -1338,7 +1344,7 @@ int MailStorage::InsertMailIndex(const char* mfrom, const char* mto, unsigned in
 		else
 		{
 			free(sqlcmd);
-			printf("%s: %s\n", sqlcmd, mysql_error(&m_hMySQL));
+			show_error(&m_hMySQL);
 			return -1;
 		}
 	}
@@ -1371,7 +1377,7 @@ int MailStorage::UpdateMail(const char* mfrom, const char* mto, unsigned int mti
 		else
 		{
 			free(sqlcmd);
-			printf("%s: %s\n", sqlcmd, mysql_error(&m_hMySQL));
+			show_error(&m_hMySQL);
 			return -1;
 		}
 	}
@@ -1417,7 +1423,7 @@ int MailStorage::UpdateMailIndex(const char* mfrom, const char* mto, unsigned in
 		else
 		{
 			free(sqlcmd);
-			printf("%s: %s\n", sqlcmd, mysql_error(&m_hMySQL));
+			show_error(&m_hMySQL);
 			return -1;
 		}
 	}
@@ -1440,7 +1446,7 @@ int MailStorage::ChangeMailDir(int mdirid, int mailid)
 		}
 		else
 		{
-			//printf("%s: %s\n", sqlcmd, mysql_error(&m_hMySQL));
+			//show_error(&m_hMySQL);
 			return -1;
 		}
 	}
@@ -1644,7 +1650,7 @@ int MailStorage::LimitListMailByDir(const char* username, vector<Mail_Info>& lis
 		}
 		else
 		{
-			printf("%s: %s\n", sqlcmd, mysql_error(&m_hMySQL));
+			show_error(&m_hMySQL);
 			return -1;
 		}
 	}
@@ -1708,7 +1714,7 @@ int MailStorage::LimitListUnauditedMailByDir(const char* username, vector<Mail_I
 		}
 		else
 		{
-			printf("%s: %s\n", sqlcmd, mysql_error(&m_hMySQL));
+			show_error(&m_hMySQL);
 			return -1;
 		}
 	}
@@ -2258,7 +2264,7 @@ int MailStorage::GetMailIndex(int mid, string& path)
 	else
 	{
 	    
-		printf("%s\n",mysql_error(&m_hMySQL));	
+		show_error(&m_hMySQL);	
 		return -1;
 	}
 }
@@ -2513,13 +2519,13 @@ int MailStorage::DelMail(const char* username, int mid)
 		}
 		else
 		{
-			printf("%s\n",mysql_error(&m_hMySQL));
+			show_error(&m_hMySQL);
 			return -1;
 		}
 	}
 	else
 	{
-		printf("%s\n",mysql_error(&m_hMySQL));
+		show_error(&m_hMySQL);
 		return -1;
 	}
 }
@@ -2997,14 +3003,14 @@ int MailStorage::GetDirID(const char* username, const char* dirref, vector<int>&
 			    }
 			    else
 			    {
-				    printf("%s: %s\n", sqlcmd, mysql_error(&m_hMySQL));
+				    show_error(&m_hMySQL);
 				    return -1;
 			    }
 		    }
 		    else
 		    {
 		        
-			    printf("%s: %s\n", sqlcmd, mysql_error(&m_hMySQL));
+			    show_error(&m_hMySQL);
 			    return -1;
 		    }
 		}
@@ -3056,7 +3062,7 @@ int MailStorage::GetDirID(const char* username, const char* dirref, int& dirid)
 				if(row == NULL)
 				{
 					mysql_free_result(qResult);
-					printf("%s: %s\n", sqlcmd, mysql_error(&m_hMySQL));
+					show_error(&m_hMySQL);
 					return -1;
 				}
 				else
@@ -3067,14 +3073,14 @@ int MailStorage::GetDirID(const char* username, const char* dirref, int& dirid)
 			}
 			else
 			{
-				printf("%s: %s\n", sqlcmd, mysql_error(&m_hMySQL));
+				show_error(&m_hMySQL);
 				return -1;
 			}
 		}
 		else
 		{
 		    
-			printf("%s: %s\n", sqlcmd, mysql_error(&m_hMySQL));
+			show_error(&m_hMySQL);
 			return -1;
 		}
 	}
@@ -4109,7 +4115,7 @@ int MailStorage::GetAllDirOfID(const char* username, vector<int>& didtbl)
 		}
 		else
 		{
-			printf("%s: %s\n", sqlcmd, mysql_error(&m_hMySQL));
+			show_error(&m_hMySQL);
 			return -1;
 		}
 		return 0;

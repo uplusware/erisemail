@@ -13,12 +13,14 @@ Session::Session(int sockfd, SSL *ssl, SSL_CTX * ssl_ctx,
 	m_cache = ch;
 
 	m_storageEngine = storage_engine;
-	m_memcached = memcached;
+	m_memcached = memcached_clone(NULL, memcached);
 }
 
 Session::~Session()
 {
-
+    if(m_memcached)
+        memcached_free(m_memcached);
+    m_memcached = NULL;
 }
 
 void Session::Process()

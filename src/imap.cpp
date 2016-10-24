@@ -525,7 +525,6 @@ BOOL CMailImap::On_Authenticate(char* text)
         buf_desc.value = (char *) str_buf_desc.c_str();
         buf_desc.length = str_buf_desc.length() + 1;
         
-        printf("%s %d\n", (char*)buf_desc.value, buf_desc.length);
         maj_stat = gss_import_name (&min_stat, &buf_desc,
 			      GSS_C_NT_HOSTBASED_SERVICE, &server_name);
         if (GSS_ERROR (maj_stat))
@@ -4265,7 +4264,7 @@ void CMailImap::ParseCommand(const char* text, vector<string>& vDst)
 
 BOOL CMailImap::Parse(char* text)
 {
-	/* printf("%s", text); */
+	//printf("%s", text);
 	string strNotag;
 	strcut(text, " ", " ", strNotag);
 	
