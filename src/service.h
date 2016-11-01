@@ -22,8 +22,8 @@
 static char LOGNAME[256] = "/var/log/erisemail/SERVICE.log";
 static char LCKNAME[256] = "/.ERISEMAIL_SYS.LOG";
 
-static const char* SVR_NAME_TBL[] = {NULL, "SMTP",	"POP3",	"IMAP",	"WebMail",	"SMTPS", 		"POP3S", 		"IMAPS", 		"WebMailS",		"RELAY", NULL};
-static const char* SVR_DESP_TBL[] = {NULL, "SMTP",	"POP3",	"IMAP",	"WebMail",	"SMTP on SSL",	"POP3 on SSL",	"IMAP on SSL",	"WebMail on SSL",	"Relay", NULL};
+static const char* SVR_NAME_TBL[] = {NULL, "SMTP",	"POP3",	"IMAP",	"HTTP", "MTA", NULL};
+static const char* SVR_DESP_TBL[] = {NULL, "SMTP",	"POP3",	"IMAP",	"HTTP", "MTA", NULL};
 
 void push_reject_list(Service_Type st, const char* ip);
 
@@ -32,7 +32,7 @@ class Service
 public:
 	Service(Service_Type st);
 	virtual ~Service();
-	int Run(int fd, const char* hostip, unsigned short nPort);
+	int Run(int fd, const char* hostip, unsigned short port, unsigned short ssl_port);
 	void Stop();
 	void ReloadConfig();
 	void ReloadList();
@@ -40,11 +40,14 @@ public:
 	memory_cache* m_cache;
 	
 protected:
+    int Accept(int& clt_sockfd, BOOL is_ssl, struct sockaddr_storage& clt_addr, socklen_t clt_size);
+    
 	mqd_t m_service_qid;
 	
 	sem_t* m_service_sid;
 	string m_service_name;
 	int m_sockfd;
+    int m_sockfd_ssl;
 	Service_Type m_st;
 	list<pid_t> m_child_list;
 

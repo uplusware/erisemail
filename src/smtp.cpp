@@ -490,7 +490,7 @@ void CMailSmtp::On_Auth_Handler(char* text)
 		}
 		else
 		{
-			push_reject_list(m_isSSL ? stSMTPS : stSMTP, m_clientip.c_str());
+			push_reject_list(stSMTP, m_clientip.c_str());
 			sprintf(cmd, "535 Error: authentication failed\r\n");
 		}
 		
@@ -1088,7 +1088,7 @@ BOOL CMailSmtp::On_Supose_Checking_Handler()
 		}
 		else
 		{
-			push_reject_list(m_isSSL ? stSMTPS : stSMTP, m_clientip.c_str());
+			push_reject_list(stSMTP, m_clientip.c_str());
 			sprintf(cmd,"535 Authentication Failed.\r\n");
 			SmtpSend(cmd,strlen(cmd));
 			return FALSE;
@@ -1117,7 +1117,7 @@ BOOL CMailSmtp::On_Supose_Checking_Handler()
 			}
 			else
 			{
-				push_reject_list(m_isSSL ? stSMTPS : stSMTP, m_clientip.c_str());
+				push_reject_list(stSMTP, m_clientip.c_str());
 				sprintf(cmd,"535 Authentication Failed.\r\n");
 				SmtpSend(cmd,strlen(cmd));
 				return FALSE;
@@ -1125,7 +1125,7 @@ BOOL CMailSmtp::On_Supose_Checking_Handler()
 		}
 		else
 		{
-			push_reject_list(m_isSSL ? stSMTPS : stSMTP, m_clientip.c_str());
+			push_reject_list(stSMTP, m_clientip.c_str());
 			sprintf(cmd,"535 Authentication Failed.\r\n");
 			SmtpSend(cmd,strlen(cmd));
 			return FALSE;
@@ -1142,7 +1142,7 @@ BOOL CMailSmtp::On_Supose_Checking_Handler()
 		}
 		else
 		{
-			push_reject_list(m_isSSL ? stSMTPS : stSMTP, m_clientip.c_str());
+			push_reject_list(stSMTP, m_clientip.c_str());
 			char cmd[128];
 			sprintf(cmd,"535 Authentication Failed.\r\n");
 			SmtpSend(cmd,strlen(cmd));
@@ -1151,7 +1151,7 @@ BOOL CMailSmtp::On_Supose_Checking_Handler()
 	}
 	else
 	{
-		push_reject_list(m_isSSL ? stSMTPS : stSMTP, m_clientip.c_str());
+		push_reject_list(stSMTP, m_clientip.c_str());
 		return FALSE;
 	}
 	
@@ -1205,7 +1205,7 @@ BOOL CMailSmtp::On_Rcpt_Handler(char* text)
 	{
 		if((mailStg->VerifyUser(user_or_group.c_str()) != 0)&&(mailStg->VerifyGroup(user_or_group.c_str()) != 0))
 		{
-			push_reject_list(m_isSSL ? stSMTPS : stSMTP, m_clientip.c_str());
+			push_reject_list(stSMTP, m_clientip.c_str());
 			
 			char cmd[256];
 			sprintf(cmd,"553 sorry, that domain is not in my deliver domain list\r\n");
@@ -1256,7 +1256,7 @@ BOOL CMailSmtp::On_Rcpt_Handler(char* text)
 		{
 			if(!m_enablerelay)
 			{
-				push_reject_list(m_isSSL ? stSMTPS : stSMTP, m_clientip.c_str());
+				push_reject_list(stSMTP, m_clientip.c_str());
 				
 				char cmd[256];
 		        sprintf(cmd,"553 sorry, that domain is not in my deliver domain list\r\n");

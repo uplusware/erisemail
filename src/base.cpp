@@ -480,10 +480,10 @@ BOOL CMailBase::LoadConfig()
 				
 				m_memcached_list.insert(make_pair<string, int>(memc_addr.c_str(), memc_port));
 			}
-			else
+			/* else
 			{
 				printf("%s\n", strline.c_str());
-			}
+			} */
 			strline = "";
 		}
 		

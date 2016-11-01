@@ -59,7 +59,7 @@ int Run()
 	uTrace.Write(Trace_Msg, "%s", "Service starts");
 
 	int retVal = 0;
-	int smtp_pid = -1, pop3_pid = -1, imap_pid = -1, smtps_pid = -1, pop3s_pid = -1, imaps_pid = -1, http_pid = -1, https_pid = -1;
+	int smtp_pid = -1, pop3_pid = -1, imap_pid = -1, http_pid = -1;
 
 	do
 	{
@@ -79,7 +79,9 @@ int Run()
 			close(pfd[0]);
 			daemon_init();
 			Service smtp_svr(stSMTP);
-			smtp_svr.Run(pfd[1], CMailBase::m_hostip.c_str(), (unsigned short)CMailBase::m_smtpport);
+			smtp_svr.Run(pfd[1], CMailBase::m_hostip.c_str(),
+                (unsigned short)CMailBase::m_smtpport,
+                CMailBase::m_enablesmtps ? (unsigned short)CMailBase::m_smtpsport : 0);
 
 			exit(0);
 			
@@ -106,7 +108,7 @@ int Run()
 			break;
 		}
 		
-		if(CMailBase::m_enablepop3)
+		if(CMailBase::m_enablepop3 || CMailBase::m_enablepop3s)
 		{
                 pipe(pfd);
                 pop3_pid = fork();
@@ -123,7 +125,9 @@ int Run()
                     close(pfd[0]);
                     daemon_init();
                     Service pop3_svr(stPOP3);
-                    pop3_svr.Run(pfd[1], CMailBase::m_hostip.c_str(), (unsigned short)CMailBase::m_pop3port);
+                    pop3_svr.Run(pfd[1], CMailBase::m_hostip.c_str(),
+                        CMailBase::m_enablepop3 ? (unsigned short)CMailBase::m_pop3port : 0,
+                        CMailBase::m_enablepop3s ? (unsigned short)CMailBase::m_pop3sport : 0);
                     exit(0);
                 }
                 else if(pop3_pid > 0)
@@ -149,7 +153,7 @@ int Run()
 			}
 		}
 
-		if(CMailBase::m_enableimap)
+		if(CMailBase::m_enableimap || CMailBase::m_enableimaps)
 		{
 			pipe(pfd);
 			imap_pid = fork();
@@ -166,7 +170,9 @@ int Run()
 				close(pfd[0]);
 				daemon_init();
 				Service imap_svr(stIMAP);
-				imap_svr.Run(pfd[1], CMailBase::m_hostip.c_str(), (unsigned short)CMailBase::m_imapport);
+				imap_svr.Run(pfd[1], CMailBase::m_hostip.c_str(),
+                    CMailBase::m_enableimap ? (unsigned short)CMailBase::m_imapport : 0,
+                    CMailBase::m_enableimaps ? (unsigned short)CMailBase::m_imapsport : 0);
 				exit(0);
 			}
 			else if(imap_pid > 0)
@@ -192,7 +198,7 @@ int Run()
 			}
 		}
 
-		if(CMailBase::m_enablehttp)
+		if(CMailBase::m_enablehttp || CMailBase::m_enablehttps)
 		{
 			pipe(pfd);
 			http_pid = fork();
@@ -209,7 +215,9 @@ int Run()
 				close(pfd[0]);
 				daemon_init();
 				Service http_svr(stHTTP);
-				http_svr.Run(pfd[1], CMailBase::m_hostip.c_str(), (unsigned short)CMailBase::m_httpport);
+				http_svr.Run(pfd[1], CMailBase::m_hostip.c_str(),
+                    CMailBase::m_enablehttp ? (unsigned short)CMailBase::m_httpport : 0,
+                    CMailBase::m_enablehttps ? (unsigned short)CMailBase::m_httpsport : 0);
 				exit(0);
 			}
 			else if(http_pid > 0)
@@ -218,11 +226,11 @@ int Run()
 				close(pfd[1]);
 				read(pfd[0], &result, sizeof(unsigned int));
 				if(result == 0)
-					printf("Start WebMail Service OK \t\t[%u]\n", http_pid);
+					printf("Start HTTP Service OK \t\t[%u]\n", http_pid);
 				else
 				{
-					uTrace.Write(Trace_Error, "%s", "Start WebMail Service Failed.");
-					printf("Start WebMail Service Failed. \t\t[Error]\n");
+					uTrace.Write(Trace_Error, "%s", "Start HTTP Service Failed.");
+					printf("Start HTTP Service Failed. \t\t[Error]\n");
 				}
 				close(pfd[0]);
 			}
@@ -230,184 +238,6 @@ int Run()
 			{
 				close(pfd[0]);
 				close(pfd[1]);
-				retVal = -1;
-				break;
-			}
-		}
-		
-		//SSL Service
-		if(CMailBase::m_enablesmtps)
-		{
-			pipe(pfd);
-			smtps_pid = fork();
-			if(smtps_pid == 0)
-			{
-				char szFlag[128];
-				sprintf(szFlag, "/tmp/erisemail/%s.pid", SVR_NAME_TBL[stSMTPS]);
-				if(check_single_on(szFlag))    
-				{   
-					printf("%s is aready runing.\n", SVR_DESP_TBL[stSMTPS]);   
-					exit(-1);  
-				}
-				
-				close(pfd[0]);
-				daemon_init();
-				Service smtps_svr(stSMTPS);
-				smtps_svr.Run(pfd[1], CMailBase::m_hostip.c_str(), (unsigned short)CMailBase::m_smtpsport);
-				exit(0);
-				
-			}
-			else if(smtps_pid > 0)
-			{
-				unsigned int result;
-				close(pfd[1]);
-				read(pfd[0], &result, sizeof(unsigned int));
-				if(result == 0)
-					printf("Start SMTP on SSL Service OK \t\t[%u]\n", smtps_pid);
-				else
-				{
-					uTrace.Write(Trace_Error, "%s", "Start SMTP on SSL Service Failed.");
-					printf("Start SMTP on SSL Service Failed. \t\t[Error]\n");
-				}
-				close(pfd[0]);
-			}
-			else
-			{
-				close(pfd[0]);
-				close(pfd[1]);
-				retVal = -1;
-				break;
-			}
-		}
-
-		if(CMailBase::m_enablepop3s)
-		{
-			pipe(pfd);
-			pop3s_pid = fork();
-			if(pop3s_pid == 0)
-			{
-				char szFlag[128];
-				sprintf(szFlag, "/tmp/erisemail/%s.pid", SVR_NAME_TBL[stPOP3S]);
-				if(check_single_on(szFlag))    
-				{   
-					printf("%s is aready runing.\n", SVR_DESP_TBL[stPOP3S]);   
-					exit(-1);  
-				}
-				
-				close(pfd[0]);
-				daemon_init();
-				Service pop3s_svr(stPOP3S);
-				pop3s_svr.Run(pfd[1], CMailBase::m_hostip.c_str(), (unsigned short)CMailBase::m_pop3sport);
-				exit(0);
-			}
-			else if(pop3s_pid > 0)
-			{
-				unsigned int result;
-				close(pfd[1]);
-				read(pfd[0], &result, sizeof(unsigned int));
-				if(result == 0)
-					printf("Start POP3 on SSL Service OK \t\t[%u]\n", pop3s_pid);
-				else
-				{
-					uTrace.Write(Trace_Error, "%s", "Start POP3 on SSL Service Failed.");
-					printf("Start POP3 on SSL Service Failed. \t\t[Error]\n");
-				}
-				close(pfd[0]);
-			}
-			else
-			{
-				close(pfd[0]);
-				close(pfd[1]);
-				retVal = -1;
-				break;
-			}
-		}
-
-		if(CMailBase::m_enableimaps)
-		{
-			pipe(pfd);
-			imaps_pid = fork();
-			if(imaps_pid == 0)
-			{
-				char szFlag[128];
-				sprintf(szFlag, "/tmp/erisemail/%s.pid", SVR_NAME_TBL[stIMAPS]);
-				if(check_single_on(szFlag) )   
-				{   
-					printf("%s is aready runing.\n", SVR_DESP_TBL[stIMAPS]);   
-					exit(-1);  
-				}
-				
-				close(pfd[0]);
-				
-				daemon_init();
-				Service imaps_svr(stIMAPS);
-				imaps_svr.Run(pfd[1], CMailBase::m_hostip.c_str(), (unsigned short)CMailBase::m_imapsport);
-				exit(0);
-			}
-			else if(imaps_pid > 0)
-			{
-				unsigned int result;
-				close(pfd[1]);
-				read(pfd[0], &result, sizeof(unsigned int));
-				if(result == 0)
-					printf("Start IMAP on SSL Service OK \t\t[%u]\n", imaps_pid);
-				else
-				{
-					uTrace.Write(Trace_Error, "%s", "Start IMAP on SSL Service Failed.");
-					printf("Start IMAP on SSL Service Failed. \t\t[Error]\n");
-				}
-				close(pfd[0]);
-			}
-			else
-			{
-				close(pfd[0]);
-				close(pfd[1]);
-
-				retVal = -1;
-				break;
-			}
-		}
-
-		if(CMailBase::m_enablehttps)
-		{
-			pipe(pfd);
-			https_pid = fork();
-			if(https_pid == 0)
-			{
-				char szFlag[128];
-				sprintf(szFlag, "/tmp/erisemail/%s.pid", SVR_NAME_TBL[stHTTPS]);
-				if(check_single_on(szFlag))    
-				{   
-					printf("%s is aready runing.\n", SVR_DESP_TBL[stHTTPS]);   
-					exit(-1);  
-				}
-				
-				close(pfd[0]);
-				
-				daemon_init();
-				Service https_svr(stHTTPS);
-				https_svr.Run(pfd[1], CMailBase::m_hostip.c_str(), (unsigned short)CMailBase::m_httpsport);
-				exit(0);
-			}
-			else if(https_pid > 0)
-			{
-				unsigned int result;
-				close(pfd[1]);
-				read(pfd[0], &result, sizeof(unsigned int));
-				if(result == 0)
-					printf("Start WebMail on SSL Service OK \t[%u]\n", https_pid);
-				else
-				{
-					uTrace.Write(Trace_Error, "%s", "Start WebMail on SSL Service Failed.");
-					printf("Start WebMail on SSL Service Failed. \t[Error]\n");
-				}
-				close(pfd[0]);
-			}
-			else
-			{
-				close(pfd[0]);
-				close(pfd[1]);
-
 				retVal = -1;
 				break;
 			}
@@ -439,11 +269,11 @@ int Run()
 			close(pfd[1]);
 			read(pfd[0], &result, sizeof(unsigned int));
 			if(result == 0)
-				printf("Start Relay Service OK \t\t\t[%u]\n", spool_pids);
+				printf("Start MTA Service OK \t\t\t[%u]\n", spool_pids);
 			else
 			{
-				uTrace.Write(Trace_Error, "%s", "Start Relay Service Failed.");
-				printf("Start Relay Service Failed \t\t\t[Error]\n");
+				uTrace.Write(Trace_Error, "%s", "Start MTA Service Failed.");
+				printf("Start MTA Service Failed \t\t\t[Error]\n");
 			}
 			close(pfd[0]);
 		}
@@ -478,11 +308,11 @@ int Run()
 			close(pfd[1]);
 			read(pfd[0], &result, sizeof(unsigned int));
 			if(result == 0)
-				printf("Start Watch Dog OK \t\t\t[%u]\n", watchdog_pids);
+				printf("Start Service Monitor OK \t\t[%u]\n", watchdog_pids);
 			else
 			{
-				uTrace.Write(Trace_Error, "%s", "Start Watch Dog Service Failed.");
-				printf("Start Watch Dog Service Failed \t\t\t[Error]\n");
+				uTrace.Write(Trace_Error, "%s", "Start Service Monitor Failed.");
+				printf("Start Service Monitor Failed \t\t\t[Error]\n");
 			}
 			close(pfd[0]);
 		}
@@ -516,18 +346,6 @@ static int Stop()
 
 	Service http_svr(stHTTP);
 	http_svr.Stop();	
-
-	Service smtps_svr(stSMTPS);
-	smtps_svr.Stop();
-		
-	Service pop3s_svr(stPOP3S);
-	pop3s_svr.Stop();
-
-	Service imaps_svr(stIMAPS);
-	imaps_svr.Stop();
-
-	Service https_svr(stHTTPS);
-	https_svr.Stop();
 	
 	Spool spool_svr;
 	spool_svr.Stop();
@@ -553,18 +371,6 @@ static int Reload()
 
 	Service http_svr(stHTTP);
 	http_svr.ReloadConfig();
-	
-	Service smtps_svr(stSMTPS);
-	smtps_svr.ReloadConfig();
-
-	Service pop3s_svr(stPOP3S);
-	pop3s_svr.ReloadConfig();
-
-	Service imaps_svr(stIMAPS);
-	imaps_svr.ReloadConfig();
-
-	Service https_svr(stHTTPS);
-	https_svr.ReloadConfig();
 	
 	Spool spool_svr;
 	spool_svr.ReloadConfig();
@@ -633,46 +439,6 @@ static int processcmd(const char* cmd, const char* conf, const char* permit, con
 			printf("%s stopped.\n", SVR_DESP_TBL[stHTTP]);   
 		}
 
-
-		sprintf(szFlag, "/tmp/erisemail/%s.pid", SVR_NAME_TBL[stSMTPS]);
-		if(check_single_on(szFlag))    
-		{   
-			printf("%s is runing.\n", SVR_DESP_TBL[stSMTPS]);   
-		}
-		else
-		{
-			printf("%s stopped.\n", SVR_DESP_TBL[stSMTPS]);   
-		}
-
-
-		sprintf(szFlag, "/tmp/erisemail/%s.pid", SVR_NAME_TBL[stPOP3S]);
-		if(check_single_on(szFlag) )   
-		{   
-			printf("%s is runing.\n", SVR_DESP_TBL[stPOP3S]);   
-		}
-		else
-		{
-			printf("%s stopped.\n", SVR_DESP_TBL[stPOP3S]);   
-		}
-
-		sprintf(szFlag, "/tmp/erisemail/%s.pid", SVR_NAME_TBL[stIMAPS]);
-		if(check_single_on(szFlag))    
-		{   
-			printf("%s is runing.\n", SVR_DESP_TBL[stIMAPS]);   
-		}
-		else
-		{
-			printf("%s stopped.\n", SVR_DESP_TBL[stIMAPS]);   
-		}
-		sprintf(szFlag, "/tmp/erisemail/%s.pid", SVR_NAME_TBL[stHTTPS]);
-		if(check_single_on(szFlag))    
-		{   
-			printf("%s is runing.\n", SVR_DESP_TBL[stHTTPS]);   
-		}
-		else
-		{
-			printf("%s stopped.\n", SVR_DESP_TBL[stHTTPS]);   
-		}
 		sprintf(szFlag, "/tmp/erisemail/%s.pid", SVR_NAME_TBL[stSPOOL]);
 		if(check_single_on(szFlag) )   
 		{   

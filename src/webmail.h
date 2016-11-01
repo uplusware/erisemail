@@ -7737,18 +7737,6 @@ public:
 				Service http_svr(stHTTP);
 				http_svr.ReloadList();
 				
-				Service smtps_svr(stSMTPS);
-				smtps_svr.ReloadList();
-				
-				Service pop3s_svr(stPOP3S);
-				pop3s_svr.ReloadList();
-				
-				Service imaps_svr(stIMAPS);
-				imaps_svr.ReloadList();
-				
-				Service https_svr(stHTTPS);
-				https_svr.ReloadList();
-				
 			}
 			else if(strConfigName == "GLOBAL_PERMIT_LIST")
 			{
@@ -7797,18 +7785,6 @@ public:
 				
 				Service http_svr(stHTTP);
 				http_svr.ReloadList();
-				
-				Service smtps_svr(stSMTPS);
-				smtps_svr.ReloadList();
-				
-				Service pop3s_svr(stPOP3S);
-				pop3s_svr.ReloadList();
-				
-				Service imaps_svr(stIMAPS);
-				imaps_svr.ReloadList();
-				
-				Service https_svr(stHTTPS);
-				https_svr.ReloadList();
 			}
 			else if(strConfigName == "DOMAIN_PERMIT_LIST")
 			{
@@ -7858,18 +7834,6 @@ public:
 				
 				Service http_svr(stHTTP);
 				http_svr.ReloadList();
-				
-				Service smtps_svr(stSMTPS);
-				smtps_svr.ReloadList();
-				
-				Service pop3s_svr(stPOP3S);
-				pop3s_svr.ReloadList();
-				
-				Service imaps_svr(stIMAPS);
-				imaps_svr.ReloadList();
-				
-				Service https_svr(stHTTPS);
-				https_svr.ReloadList();
 			}
 			else if(strConfigName == "WEBADMIN_PERMIT_LIST")
 			{
@@ -7919,18 +7883,6 @@ public:
 				
 				Service http_svr(stHTTP);
 				http_svr.ReloadList();
-				
-				Service smtps_svr(stSMTPS);
-				smtps_svr.ReloadList();
-				
-				Service pop3s_svr(stPOP3S);
-				pop3s_svr.ReloadList();
-				
-				Service imaps_svr(stIMAPS);
-				imaps_svr.ReloadList();
-				
-				Service https_svr(stHTTPS);
-				https_svr.ReloadList();
 			}
 			else
 			{

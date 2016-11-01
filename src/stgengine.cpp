@@ -64,9 +64,33 @@ MailStorage* StorageEngine::Wait(int &index)
             break;
         }
     }
+    
+    if(m_engine[index].storage && m_engine[index].storage->Ping() != 0)
+    {
+        m_engine[index].storage->Close();
+        
+        if(m_engine[index].storage->Connect(m_host.c_str(),
+            m_username.c_str(), m_password.c_str(), 
+            m_database.c_str(), m_port, m_sock_file.c_str()) == 0)
+        {
+            freeOne = m_engine[index].storage;
+            m_engine[index].opened = TRUE;
+        }
+        else
+        {
+           m_engine[index].opened = FALSE;
+           freeOne = NULL;
+           sleep(1);
+        }
+    }
+    else
+    {
+        freeOne = m_engine[index].storage;
+    }
+        
     pthread_mutex_unlock(&m_engineMutex);
     
-    for(int t = 0; t < 20; t++)
+    /* for(int t = 0; t < 20; t++)
     {
         if(m_engine[index].storage && m_engine[index].storage->Ping() != 0)
         {
@@ -92,7 +116,7 @@ MailStorage* StorageEngine::Wait(int &index)
             freeOne = m_engine[index].storage;
             break;
         }
-    }
+    } */
 	return freeOne;
 }
 

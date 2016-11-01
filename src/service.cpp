@@ -22,6 +22,7 @@ typedef struct _session_arg_
 	int sockfd;
 	string client_ip;
 	Service_Type svr_type;
+    BOOL is_ssl;
     SSL * ssl;
     SSL_CTX * ssl_ctx;
 	memory_cache* cache;
@@ -39,7 +40,7 @@ static volatile unsigned int s_thread_pool_size = 0;
 static void session_handler(Session_Arg* session_arg)
 {
 	Session* pSession = NULL;
-	pSession = new Session(session_arg->sockfd, session_arg->ssl, session_arg->ssl_ctx, session_arg->client_ip.c_str(), session_arg->svr_type,
+	pSession = new Session(session_arg->sockfd, session_arg->ssl, session_arg->ssl_ctx, session_arg->client_ip.c_str(), session_arg->svr_type, session_arg->is_ssl,
         session_arg->storage_engine, session_arg->cache, session_arg->memcached);
 	if(pSession != NULL)
 	{
@@ -179,13 +180,14 @@ void push_reject_list(Service_Type st, const char* ip)
 Service::Service(Service_Type st)
 {
 	m_sockfd = -1;
+    m_sockfd_ssl = -1;
 	m_st = st;
 	m_service_name = SVR_NAME_TBL[m_st];
 
 	m_cache = NULL;
 	m_memcached = NULL;
 	
-	if((m_st == stHTTP) || (m_st == stHTTPS))
+	if(m_st == stHTTP)
 	{
 		m_cache = new memory_cache();
 		m_cache->load(CMailBase::m_html_path.c_str());
@@ -290,7 +292,117 @@ void Service::ReloadList()
 		sem_close(m_service_sid);
 }
 
-int Service::Run(int fd, const char* hostip, unsigned short nPort)
+int Service::Accept(int& clt_sockfd, BOOL is_ssl, struct sockaddr_storage& clt_addr, socklen_t clt_size)
+{
+    struct sockaddr_in * v4_addr;
+    struct sockaddr_in6 * v6_addr;
+        
+    char szclientip[INET6_ADDRSTRLEN];
+    if (clt_addr.ss_family == AF_INET)
+    {
+        v4_addr = (struct sockaddr_in*)&clt_addr;
+        if(inet_ntop(AF_INET, (void*)&v4_addr->sin_addr, szclientip, INET6_ADDRSTRLEN) == NULL)
+        {    
+            close(clt_sockfd);
+            return 0;
+        }
+        
+    }
+    else if(clt_addr.ss_family == AF_INET6)
+    {
+        v6_addr = (struct sockaddr_in6*)&clt_addr;
+        if(inet_ntop(AF_INET6, (void*)&v6_addr->sin6_addr, szclientip, INET6_ADDRSTRLEN) == NULL)
+        {    
+            close(clt_sockfd);
+            return 0;
+        }
+        
+    }
+    
+    string client_ip = szclientip;
+    
+    int access_result;
+    if(CMailBase::m_permit_list.size() > 0)
+    {
+        access_result = FALSE;
+        for(int x = 0; x < CMailBase::m_permit_list.size(); x++)
+        {
+            if(strlike(CMailBase::m_permit_list[x].c_str(), client_ip.c_str()) == TRUE)
+            {
+                access_result = TRUE;
+                break;
+            }
+        }
+        
+        for(int x = 0; x < CMailBase::m_reject_list.size(); x++)
+        {
+            if( (strlike(CMailBase::m_reject_list[x].ip.c_str(), (char*)client_ip.c_str()) == TRUE) 
+               && (time(NULL) < CMailBase::m_reject_list[x].expire) )
+            {
+                access_result = FALSE;
+                break;
+            }
+        }
+    }
+    else
+    {
+        access_result = TRUE;
+        for(int x = 0; x < CMailBase::m_reject_list.size(); x++)
+        {
+            if( (strlike(CMailBase::m_reject_list[x].ip.c_str(), (char*)client_ip.c_str()) == TRUE)
+                && (time(NULL) < CMailBase::m_reject_list[x].expire) )
+            {
+                access_result = FALSE;
+                break;
+            }
+        }
+    }
+    
+    if(access_result == FALSE)
+    {
+        close(clt_sockfd);
+    }
+    else
+    {					
+        Session_Arg* session_arg = new Session_Arg;
+        session_arg->sockfd = clt_sockfd;
+        
+        session_arg->client_ip = client_ip;
+        session_arg->svr_type = m_st;
+        session_arg->is_ssl = is_ssl;
+        session_arg->cache = m_cache;
+        session_arg->memcached = m_memcached;
+        session_arg->storage_engine = m_storageEngine;
+        SSL* ssl = NULL;
+        SSL_CTX* ssl_ctx = NULL;
+        if(is_ssl)
+        {
+            if(!create_ssl(clt_sockfd, 
+                CMailBase::m_ca_crt_root.c_str(),
+                CMailBase::m_ca_crt_server.c_str(),
+                CMailBase::m_ca_password.c_str(),
+                CMailBase::m_ca_key_server.c_str(),
+                CMailBase::m_enableclientcacheck,
+                &ssl, &ssl_ctx))
+                {
+                    return 0;
+                }
+        }
+        session_arg->ssl = ssl;
+        session_arg->ssl_ctx = ssl_ctx;
+        
+        pthread_mutex_lock(&s_thread_pool_mutex);
+        s_thread_pool_arg_queue.push(session_arg);
+        pthread_mutex_unlock(&s_thread_pool_mutex);
+
+        sem_post(&s_thread_pool_sem);
+
+    }
+    
+    return 0;
+}
+
+int Service::Run(int fd, const char* hostip, unsigned short port, unsigned short ssl_port)
 {
     CUplusTrace uTrace(LOGNAME, LCKNAME);
     memcached_server_st * memcached_servers = NULL;
@@ -356,72 +468,148 @@ int Service::Run(int fd, const char* hostip, unsigned short nPort)
 	clear_queue(m_service_qid);
 	
 	BOOL svr_exit = FALSE;
-	int qBufLen = attr.mq_msgsize;
-	char* qBufPtr = (char*)malloc(qBufLen);
+	int queue_buf_len = attr.mq_msgsize;
+	char* queue_buf_ptr = (char*)malloc(queue_buf_len);
 
 	ThreadPool thd_pool(CMailBase::m_max_conn, init_thread_pool_handler, begin_thread_pool_handler, NULL, exit_thread_pool_handler);
 	
 	while(!svr_exit)
 	{
-		int nFlag;
+		int nFlag = 0;
 		
-		struct addrinfo hints;
-        struct addrinfo *server_addr, *rp;
-        
-        memset(&hints, 0, sizeof(struct addrinfo));
-        hints.ai_family = AF_UNSPEC;    /* Allow IPv4 or IPv6 */
-        hints.ai_socktype = SOCK_STREAM; /* Datagram socket */
-        hints.ai_flags = AI_PASSIVE;    /* For wildcard IP address */
-        hints.ai_protocol = 0;          /* Any protocol */
-        hints.ai_canonname = NULL;
-        hints.ai_addr = NULL;
-        hints.ai_next = NULL;
-        
-        char szPort[32];
-        sprintf(szPort, "%u", nPort);
-                
-        int s = getaddrinfo((hostip && hostip[0] != '\0') ? hostip : NULL, szPort, &hints, &server_addr);
-        if (s != 0)
+		if(port > 0)
         {
-           fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(s));
-           break;
+            struct addrinfo hints;
+            struct addrinfo *server_addr, *rp;
+            
+            memset(&hints, 0, sizeof(struct addrinfo));
+            hints.ai_family = AF_UNSPEC;    /* Allow IPv4 or IPv6 */
+            hints.ai_socktype = SOCK_STREAM; /* Datagram socket */
+            hints.ai_flags = AI_PASSIVE;    /* For wildcard IP address */
+            hints.ai_protocol = 0;          /* Any protocol */
+            hints.ai_canonname = NULL;
+            hints.ai_addr = NULL;
+            hints.ai_next = NULL;
+            
+            char szPort[32];
+            sprintf(szPort, "%u", port);
+
+            int s = getaddrinfo((hostip && hostip[0] != '\0') ? hostip : NULL, szPort, &hints, &server_addr);
+            if (s != 0)
+            {
+               fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(s));
+               break;
+            }
+            
+            for (rp = server_addr; rp != NULL; rp = rp->ai_next)
+            {
+               m_sockfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
+               if (m_sockfd == -1)
+                   continue;
+               
+               nFlag = 1;
+               setsockopt(m_sockfd, SOL_SOCKET, SO_REUSEADDR, (char*)&nFlag, sizeof(nFlag));
+            
+               if (bind(m_sockfd, rp->ai_addr, rp->ai_addrlen) == 0)
+                   break;                  /* Success */
+               
+               perror("bind");
+               close(m_sockfd);
+               m_sockfd = -1;
+            }
+            
+            if (rp == NULL)
+            {               /* No address succeeded */
+                  fprintf(stderr, "Could not bind\n");
+                  break;
+            }
+
+            freeaddrinfo(server_addr);           /* No longer needed */
+            
+            nFlag = fcntl(m_sockfd, F_GETFL, 0);
+            fcntl(m_sockfd, F_SETFL, nFlag|O_NONBLOCK);
+            
+            if(listen(m_sockfd, 128) == -1)
+            {
+                uTrace.Write(Trace_Error, "Service LISTEN error.");
+                result = 1;
+                write(fd, &result, sizeof(unsigned int));
+                close(fd);
+                break;
+            }
         }
-        
-        for (rp = server_addr; rp != NULL; rp = rp->ai_next)
+        //SSL
+        if(ssl_port > 0)
         {
-           m_sockfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
-           if (m_sockfd == -1)
-               continue;
-           
-           nFlag = 1;
-		   setsockopt(m_sockfd, SOL_SOCKET, SO_REUSEADDR, (char*)&nFlag, sizeof(nFlag));
-		
-           if (bind(m_sockfd, rp->ai_addr, rp->ai_addrlen) == 0)
-               break;                  /* Success */
+            struct addrinfo hints2;
+            struct addrinfo *server_addr2, *rp2;
+            
+            memset(&hints2, 0, sizeof(struct addrinfo));
+            hints2.ai_family = AF_UNSPEC;    /* Allow IPv4 or IPv6 */
+            hints2.ai_socktype = SOCK_STREAM; /* Datagram socket */
+            hints2.ai_flags = AI_PASSIVE;    /* For wildcard IP address */
+            hints2.ai_protocol = 0;          /* Any protocol */
+            hints2.ai_canonname = NULL;
+            hints2.ai_addr = NULL;
+            hints2.ai_next = NULL;
+            
+            char szPort2[32];
+            sprintf(szPort2, "%u", ssl_port);
 
-           close(m_sockfd);
+            int s = getaddrinfo((hostip && hostip[0] != '\0') ? hostip : NULL, szPort2, &hints2, &server_addr2);
+            if (s != 0)
+            {
+               fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(s));
+               break;
+            }
+            
+            for (rp2 = server_addr2; rp2 != NULL; rp2 = rp2->ai_next)
+            {
+               m_sockfd_ssl = socket(rp2->ai_family, rp2->ai_socktype, rp2->ai_protocol);
+               if (m_sockfd_ssl == -1)
+                   continue;
+               
+               nFlag = 1;
+               setsockopt(m_sockfd_ssl, SOL_SOCKET, SO_REUSEADDR, (char*)&nFlag, sizeof(nFlag));
+            
+               if (bind(m_sockfd_ssl, rp2->ai_addr, rp2->ai_addrlen) == 0)
+                   break;                  /* Success */
+               
+               perror("bind");
+               close(m_sockfd_ssl);
+               m_sockfd_ssl = -1;
+            }
+            
+            if (rp2 == NULL)
+            {     /* No address succeeded */
+                  fprintf(stderr, "Could not bind security socket\n");
+                  break;
+            }
+
+            freeaddrinfo(server_addr2);           /* No longer needed */
+            
+            nFlag = fcntl(m_sockfd_ssl, F_GETFL, 0);
+            fcntl(m_sockfd_ssl, F_SETFL, nFlag|O_NONBLOCK);
+            
+            if(listen(m_sockfd_ssl, 128) == -1)
+            {
+                uTrace.Write(Trace_Error, "Security Service LISTEN error.");
+                result = 1;
+                write(fd, &result, sizeof(unsigned int));
+                close(fd);
+                break;
+            }
         }
         
-        if (rp == NULL)
-        {               /* No address succeeded */
-              fprintf(stderr, "Could not bind\n");
-              break;
+        if(m_sockfd == -1 && m_sockfd_ssl == -1)
+        {
+            uTrace.Write(Trace_Error, "Both Service LISTEN error.");
+            result = 1;
+            write(fd, &result, sizeof(unsigned int));
+            close(fd);
+            break;
         }
-
-        freeaddrinfo(server_addr);           /* No longer needed */
-           	
-		nFlag = fcntl(m_sockfd, F_GETFL, 0);
-		fcntl(m_sockfd, F_SETFL, nFlag|O_NONBLOCK);
-		
-		if(listen(m_sockfd, 128) == -1)
-		{
-			uTrace.Write(Trace_Error, "Service LISTEN error.");
-			result = 1;
-			write(fd, &result, sizeof(unsigned int));
-			close(fd);
-			break;
-		}
-
+        BOOL accept_ssl_first = FALSE;
 		result = 0;
 		write(fd, &result, sizeof(unsigned int));
 		close(fd);
@@ -430,13 +618,14 @@ int Service::Run(int fd, const char* hostip, unsigned short nPort)
 		struct timespec ts;
 		stQueueMsg* pQMsg;
 		int rc;
+        	
 		while(1)
 		{		
 			clock_gettime(CLOCK_REALTIME, &ts);
-			rc = mq_timedreceive(m_service_qid, qBufPtr, qBufLen, 0, &ts);
+			rc = mq_timedreceive(m_service_qid, queue_buf_ptr, queue_buf_len, 0, &ts);
 			if( rc != -1)
 			{
-				pQMsg = (stQueueMsg*)qBufPtr;
+				pQMsg = (stQueueMsg*)queue_buf_ptr;
 				if(pQMsg->cmd == MSG_EXIT)
 				{
 					svr_exit = TRUE;
@@ -478,154 +667,77 @@ int Service::Run(int fd, const char* hostip, unsigned short nPort)
 				}
 				
 			}
+            
+            FD_ZERO(&accept_mask);
+            if(m_sockfd > 0)
+                FD_SET(m_sockfd, &accept_mask);
 
-			FD_ZERO(&accept_mask);
-			FD_SET(m_sockfd, &accept_mask);
-			
-			accept_timeout.tv_sec = 1;
+            //SSL
+            if(m_sockfd_ssl > 0)
+                FD_SET(m_sockfd_ssl, &accept_mask);
+            
+            accept_timeout.tv_sec = 1;
 			accept_timeout.tv_usec = 0;
-			rc = select(m_sockfd + 1, &accept_mask, NULL, NULL, &accept_timeout);
-			if(rc == 0)
+            int max_fd = m_sockfd > m_sockfd_ssl ? m_sockfd : m_sockfd_ssl;
+            
+			rc = select(max_fd + 1, &accept_mask, NULL, NULL, &accept_timeout);
+			if(rc == -1)
 			{	
-				continue;
+				sleep(5);
+				break;
 			}
-			else if(rc == 1)
+			else if(rc == 0)
 			{
-				struct sockaddr_storage clt_addr;
-				struct sockaddr_in * v4_addr;
-				struct sockaddr_in6 * v6_addr;
-				socklen_t clt_size = sizeof(struct sockaddr_storage);
-				int clt_sockfd;
-				if(FD_ISSET(m_sockfd, &accept_mask))
-				{
-					clt_sockfd = accept(m_sockfd, (sockaddr*)&clt_addr, &clt_size);
-
-					if(clt_sockfd < 0)
-					{
-						continue;
-					}
-					
-					char szclientip[INET6_ADDRSTRLEN];
-					if (clt_addr.ss_family == AF_INET)
-					{
-					    v4_addr = (struct sockaddr_in*)&clt_addr;
-                        if(inet_ntop(AF_INET, (void*)&v4_addr->sin_addr, szclientip, INET6_ADDRSTRLEN) == NULL)
-				        {    
-                            close(clt_sockfd);
-                            continue;
-                        }
-                        
-                    }
-                    else if(clt_addr.ss_family == AF_INET6)
-                    {
-                        v6_addr = (struct sockaddr_in6*)&clt_addr;
-                        if(inet_ntop(AF_INET6, (void*)&v6_addr->sin6_addr, szclientip, INET6_ADDRSTRLEN) == NULL)
-				        {    
-                            close(clt_sockfd);
-                            continue;
-                        }
-                        
-                    }
-					
-                    string client_ip = szclientip;
-                    
-                    int access_result;
-					if(CMailBase::m_permit_list.size() > 0)
-					{
-						access_result = FALSE;
-						for(int x = 0; x < CMailBase::m_permit_list.size(); x++)
-						{
-							if(strlike(CMailBase::m_permit_list[x].c_str(), client_ip.c_str()) == TRUE)
-							{
-								access_result = TRUE;
-								break;
-							}
-						}
-						
-						for(int x = 0; x < CMailBase::m_reject_list.size(); x++)
-						{
-							if( (strlike(CMailBase::m_reject_list[x].ip.c_str(), (char*)client_ip.c_str()) == TRUE) 
-                               && (time(NULL) < CMailBase::m_reject_list[x].expire) )
-							{
-								access_result = FALSE;
-								break;
-							}
-						}
-					}
-					else
-					{
-						access_result = TRUE;
-						for(int x = 0; x < CMailBase::m_reject_list.size(); x++)
-						{
-							if( (strlike(CMailBase::m_reject_list[x].ip.c_str(), (char*)client_ip.c_str()) == TRUE)
-                                && (time(NULL) < CMailBase::m_reject_list[x].expire) )
-							{
-								access_result = FALSE;
-								break;
-							}
-						}
-					}
-					
-					if(access_result == FALSE)
-					{
-						//printf("reject: %s\n", client_ip.c_str());
-						close(clt_sockfd);
-					}
-					else
-					{					
-						Session_Arg* session_arg = new Session_Arg;
-						session_arg->sockfd = clt_sockfd;
-						
-						session_arg->client_ip = client_ip;
-						session_arg->svr_type = m_st;
-						session_arg->cache = m_cache;
-						session_arg->memcached = m_memcached;
-						session_arg->storage_engine = m_storageEngine;
-                        SSL* ssl = NULL;
-                        SSL_CTX* ssl_ctx = NULL;
-                        if(m_st == stSMTPS || m_st == stPOP3S
-                            || m_st == stIMAPS || m_st == stHTTPS)
-                        {
-                            if(!create_ssl(clt_sockfd, 
-                                CMailBase::m_ca_crt_root.c_str(),
-                                CMailBase::m_ca_crt_server.c_str(),
-                                CMailBase::m_ca_password.c_str(),
-                                CMailBase::m_ca_key_server.c_str(),
-                                CMailBase::m_enableclientcacheck,
-                                &ssl, &ssl_ctx))
-                                {
-                                    continue;
-                                }
-                        }
-                        session_arg->ssl = ssl;
-                        session_arg->ssl_ctx = ssl_ctx;
-                        
-						pthread_mutex_lock(&s_thread_pool_mutex);
-						s_thread_pool_arg_queue.push(session_arg);
-						pthread_mutex_unlock(&s_thread_pool_mutex);
-
-						sem_post(&s_thread_pool_sem);
-		
-					}
-				}
-				else
-				{
-					continue;
-				}
-				
+                continue;
 			}
 			else
 			{
-				break;
+                BOOL is_ssl;
+                struct sockaddr_storage clt_addr;
+                struct sockaddr_storage clt_addr_ssl;
+				socklen_t clt_size = sizeof(struct sockaddr_storage);
+                socklen_t clt_size_ssl = sizeof(struct sockaddr_storage);
+				int clt_sockfd = -1;
+                int clt_sockfd_ssl = -1;
+                if(m_sockfd > 0 && FD_ISSET(m_sockfd, &accept_mask))
+                {
+                    FD_CLR(m_sockfd, &accept_mask);
+                    clt_sockfd = accept(m_sockfd, (sockaddr*)&clt_addr, &clt_size);
+                    if(clt_sockfd > 0)
+                    {
+                        is_ssl = FALSE;
+                        if(Accept(clt_sockfd, is_ssl, clt_addr, clt_size) < 0)
+                            break;
+                    }
+                }
+                
+                if(m_sockfd_ssl > 0 &&FD_ISSET(m_sockfd_ssl, &accept_mask))
+                {
+                    FD_CLR(m_sockfd_ssl, &accept_mask);
+                    clt_sockfd_ssl = accept(m_sockfd_ssl, (sockaddr*)&clt_addr_ssl, &clt_size_ssl);
+
+                    if(clt_sockfd_ssl > 0)
+                    {
+                        is_ssl = TRUE;
+                        if(Accept(clt_sockfd_ssl, is_ssl, clt_addr_ssl, clt_size_ssl) < 0)
+                            break;
+                    }
+                }
 			}
 		}
-		if(m_sockfd)
+		if(m_sockfd > 0)
 		{
-			m_sockfd = -1;
 			close(m_sockfd);
+            m_sockfd = -1;
 		}
+        
+        if(m_sockfd_ssl > 0)
+		{
+			close(m_sockfd_ssl);
+            m_sockfd_ssl = -1;
+		}        
 	}
-	free(qBufPtr);
+	free(queue_buf_ptr);
 	if(m_service_qid != (mqd_t)-1)
 		mq_close(m_service_qid);
 	if(m_service_sid != SEM_FAILED)
@@ -730,8 +842,8 @@ int WatchDog::Run(int fd)
 	clear_queue(m_watchdog_qid);
 
 	BOOL svr_exit = FALSE;
-	int qBufLen = attr.mq_msgsize;
-	char* qBufPtr = (char*)malloc(qBufLen);
+	int queue_buf_len = attr.mq_msgsize;
+	char* queue_buf_ptr = (char*)malloc(queue_buf_len);
     
 	while(!svr_exit)
 	{
@@ -742,10 +854,10 @@ int WatchDog::Run(int fd)
 		{		
 			clock_gettime(CLOCK_REALTIME, &ts);
 			ts.tv_sec += 5;
-			rc = mq_timedreceive(m_watchdog_qid, qBufPtr, qBufLen, 0, &ts);
+			rc = mq_timedreceive(m_watchdog_qid, queue_buf_ptr, queue_buf_len, 0, &ts);
 			if( rc != -1)
 			{
-				pQMsg = (stQueueMsg*)qBufPtr;
+				pQMsg = (stQueueMsg*)queue_buf_ptr;
 				if(pQMsg->cmd == MSG_EXIT)
 				{
 					svr_exit = TRUE;
@@ -786,7 +898,9 @@ int WatchDog::Run(int fd)
                         printf("%s is aready runing.\n", SVR_DESP_TBL[stSMTP]);   
                         exit(-1);
                     }
-                    smtp_svr.Run(pfd[1], CMailBase::m_hostip.c_str(), (unsigned short)CMailBase::m_smtpport);
+                    smtp_svr.Run(pfd[1], CMailBase::m_hostip.c_str(),
+                        (unsigned short)CMailBase::m_smtpport,
+                        CMailBase::m_enablesmtps ? (unsigned short)CMailBase::m_smtpsport : 0);
                     exit(0);
                 }
                 else if(smtp_pid > 0)
@@ -805,7 +919,7 @@ int WatchDog::Run(int fd)
             }
             
             sprintf(szFlag, "/tmp/erisemail/%s.pid", SVR_NAME_TBL[stPOP3]);
-            if(!try_single_on(szFlag)  && CMailBase::m_enablepop3)   
+            if(!try_single_on(szFlag)  && (CMailBase::m_enablepop3 || CMailBase::m_enablepop3s))   
             {
                 printf("%s stopped.\n", SVR_DESP_TBL[stPOP3]);   
                 pipe(pfd);
@@ -820,7 +934,9 @@ int WatchDog::Run(int fd)
                     }
 
                     Service pop3_svr(stPOP3);
-                    pop3_svr.Run(pfd[1], CMailBase::m_hostip.c_str(), (unsigned short)CMailBase::m_pop3port);
+                    pop3_svr.Run(pfd[1], CMailBase::m_hostip.c_str(), 
+                        CMailBase::m_enablepop3 ? (unsigned short)CMailBase::m_pop3port : 0,
+                        CMailBase::m_enablepop3s ? (unsigned short)CMailBase::m_pop3sport : 0);
                     exit(0);
                 }
                 else if(pop3_pid > 0)
@@ -839,7 +955,7 @@ int WatchDog::Run(int fd)
             }
 
             sprintf(szFlag, "/tmp/erisemail/%s.pid", SVR_NAME_TBL[stIMAP]);
-            if(!try_single_on(szFlag)  && CMailBase::m_enableimap)    
+            if(!try_single_on(szFlag)  && (CMailBase::m_enableimap || CMailBase::m_enableimaps))    
             {
                 printf("%s stopped.\n", SVR_DESP_TBL[stIMAP]);   
                 pipe(pfd);
@@ -853,7 +969,9 @@ int WatchDog::Run(int fd)
                         exit(-1);
                     }
                     Service imap_svr(stIMAP);
-                    imap_svr.Run(pfd[1], CMailBase::m_hostip.c_str(), (unsigned short)CMailBase::m_imapport);
+                    imap_svr.Run(pfd[1], CMailBase::m_hostip.c_str(),
+                        CMailBase::m_enableimap ? (unsigned short)CMailBase::m_imapport : 0,
+                        CMailBase::m_enableimaps ? (unsigned short)CMailBase::m_imapsport : 0);
                     exit(0);
                 }
                 else if(imap_pid > 0)
@@ -871,7 +989,7 @@ int WatchDog::Run(int fd)
                 } 
             }
             sprintf(szFlag, "/tmp/erisemail/%s.pid", SVR_NAME_TBL[stHTTP]);
-            if(!try_single_on(szFlag)  && CMailBase::m_enablehttp)    
+            if(!try_single_on(szFlag)  && (CMailBase::m_enablehttp || CMailBase::m_enablehttps))    
             {
                 printf("%s stopped.\n", SVR_DESP_TBL[stHTTP]);   
                 pipe(pfd);
@@ -885,7 +1003,9 @@ int WatchDog::Run(int fd)
                         exit(-1);
                     }
                     Service http_svr(stHTTP);
-                    http_svr.Run(pfd[1], CMailBase::m_hostip.c_str(), (unsigned short)CMailBase::m_httpport);
+                    http_svr.Run(pfd[1], CMailBase::m_hostip.c_str(), 
+                        CMailBase::m_enablehttp ? (unsigned short)CMailBase::m_httpport : 0,
+                        CMailBase::m_enablehttps ? (unsigned short)CMailBase::m_httpsport : 0);
                     exit(0);
                 }
                 else if(http_pid > 0)
@@ -898,138 +1018,6 @@ int WatchDog::Run(int fd)
                     else
                     {
                         printf("Start HTTP Service Failed. \t\t\t[Error]\n");
-                    }
-                    close(pfd[0]);
-                } 
-            }
-
-            sprintf(szFlag, "/tmp/erisemail/%s.pid", SVR_NAME_TBL[stSMTPS]);
-            if(!try_single_on(szFlag) && CMailBase::m_enablesmtps)    
-            {
-                printf("%s stopped.\n", SVR_DESP_TBL[stSMTPS]);   
-                pipe(pfd);
-                int smtps_pid = fork();
-                if(smtps_pid == 0)
-                {
-                    close(pfd[0]);
-                    if(check_single_on(szFlag)) 
-                    {
-                        printf("%s is aready runing.\n", SVR_DESP_TBL[stSMTP]);   
-                        exit(-1);
-                    }
-                    Service smtps_svr(stSMTPS);
-                    smtps_svr.Run(pfd[1], CMailBase::m_hostip.c_str(), (unsigned short)CMailBase::m_smtpsport);
-                    exit(0);
-                    
-                }
-                else if(smtps_pid > 0)
-                {
-                    unsigned int result;
-                    close(pfd[1]);
-                    read(pfd[0], &result, sizeof(unsigned int));
-                    if(result == 0)
-                        printf("Start SMTP on SSL Service OK \t\t[%u]\n", smtps_pid);
-                    else
-                    {
-                        printf("Start SMTP on SSL Service Failed. \t\t[Error]\n");
-                    }
-                    close(pfd[0]);
-                } 
-            }
-            
-            sprintf(szFlag, "/tmp/erisemail/%s.pid", SVR_NAME_TBL[stPOP3S]);
-            if(!try_single_on(szFlag)  && CMailBase::m_enablepop3s )   
-            {
-                printf("%s stopped.\n", SVR_DESP_TBL[stPOP3S]);   
-                pipe(pfd);
-                int pop3s_pid = fork();
-                if(pop3s_pid == 0)
-                {
-                    close(pfd[0]);
-                    if(check_single_on(szFlag)) 
-                    {
-                        printf("%s is aready runing.\n", SVR_DESP_TBL[stSMTP]);   
-                        exit(-1);
-                    }
-                    Service pop3s_svr(stPOP3S);
-                    pop3s_svr.Run(pfd[1], CMailBase::m_hostip.c_str(), (unsigned short)CMailBase::m_pop3sport);
-                    exit(0);
-                }
-                else if(pop3s_pid > 0)
-                {
-                    unsigned int result;
-                    close(pfd[1]);
-                    read(pfd[0], &result, sizeof(unsigned int));
-                    if(result == 0)
-                        printf("Start POP3 on SSL Service OK \t\t[%u]\n", pop3s_pid);
-                    else
-                    {
-                        printf("Start POP3 on SSL Service Failed. \t\t[Error]\n");
-                    }
-                    close(pfd[0]);
-                } 
-            }
-
-            sprintf(szFlag, "/tmp/erisemail/%s.pid", SVR_NAME_TBL[stIMAPS]);
-            if(!try_single_on(szFlag)  && CMailBase::m_enableimaps)    
-            {
-                printf("%s stopped.\n", SVR_DESP_TBL[stIMAPS]);   
-                pipe(pfd);
-                int imaps_pid = fork();
-                if(imaps_pid == 0)
-                {
-                    close(pfd[0]);
-                    if(check_single_on(szFlag)) 
-                    {
-                        printf("%s is aready runing.\n", SVR_DESP_TBL[stSMTP]);   
-                        exit(-1);
-                    }
-                    Service imaps_svr(stIMAPS);
-                    imaps_svr.Run(pfd[1], CMailBase::m_hostip.c_str(), (unsigned short)CMailBase::m_imapsport);
-                    exit(0);
-                }
-                else if(imaps_pid > 0)
-                {
-                    unsigned int result;
-                    close(pfd[1]);
-                    read(pfd[0], &result, sizeof(unsigned int));
-                    if(result == 0)
-                        printf("Start IMAP on SSL Service OK \t\t[%u]\n", imaps_pid);
-                    else
-                    {
-                        printf("Start IMAP on SSL Service Failed. \t\t[Error]\n");
-                    }
-                    close(pfd[0]);
-                } 
-            }
-            sprintf(szFlag, "/tmp/erisemail/%s.pid", SVR_NAME_TBL[stHTTPS]);
-            if(!try_single_on(szFlag)  && CMailBase::m_enablehttps)    
-            {
-                printf("%s stopped.\n", SVR_DESP_TBL[stHTTPS]);   
-                pipe(pfd);
-                int https_pid = fork();
-                if(https_pid == 0)
-                {
-                    close(pfd[0]);
-                    if(check_single_on(szFlag)) 
-                    {
-                        printf("%s is aready runing.\n", SVR_DESP_TBL[stSMTP]);   
-                        exit(-1);
-                    }
-                    Service https_svr(stHTTPS);
-                    https_svr.Run(pfd[1], CMailBase::m_hostip.c_str(), (unsigned short)CMailBase::m_httpsport);
-                    exit(0);
-                }
-                else if(https_pid > 0)
-                {
-                    unsigned int result;
-                    close(pfd[1]);
-                    read(pfd[0], &result, sizeof(unsigned int));
-                    if(result == 0)
-                        printf("Start HTTP on SSL Service OK \t\t[%u]\n", https_pid);
-                    else
-                    {
-                        printf("Start HTTP on SSL Service Failed. \t\t[Error]\n");
                     }
                     close(pfd[0]);
                 } 
@@ -1070,7 +1058,7 @@ int WatchDog::Run(int fd)
             }
 		}
 	}
-	free(qBufPtr);
+	free(queue_buf_ptr);
 	if(m_watchdog_qid != (mqd_t)-1)
 		mq_close(m_watchdog_qid);
 	if(m_watchdog_sid != SEM_FAILED)

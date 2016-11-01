@@ -426,7 +426,7 @@ BOOL CMailImap::On_Authenticate(char* text)
 		}
 		else
 		{
-			push_reject_list(m_isSSL ? stIMAPS : stIMAP, m_clientip.c_str());
+			push_reject_list(stIMAP, m_clientip.c_str());
 			
 			sprintf(cmd,"%s NO User Logged Failed\r\n", strTag.c_str());
 			ImapSend(cmd, strlen(cmd));
@@ -490,7 +490,7 @@ BOOL CMailImap::On_Authenticate(char* text)
 			}
 			else
 			{
-				push_reject_list(m_isSSL ? stIMAPS : stIMAP, m_clientip.c_str());
+				push_reject_list(stIMAP, m_clientip.c_str());
 				sprintf(cmd,"%s NO User Logged Failed\r\n", strTag.c_str());
 				ImapSend(cmd, strlen(cmd));
 				return FALSE;
@@ -498,7 +498,7 @@ BOOL CMailImap::On_Authenticate(char* text)
 		}
 		else
 		{
-			push_reject_list(m_isSSL ? stIMAPS : stIMAP, m_clientip.c_str());
+			push_reject_list(stIMAP, m_clientip.c_str());
 			sprintf(cmd,"%s NO User Logged Failed\r\n", strTag.c_str());
 			ImapSend(cmd, strlen(cmd));
 			return FALSE;
@@ -782,7 +782,7 @@ BOOL CMailImap::On_Authenticate(char* text)
 #endif /* _WITH_GSSAPI_ */    
 	else
 	{
-		push_reject_list(m_isSSL ? stIMAPS : stIMAP, m_clientip.c_str());
+		push_reject_list(stIMAP, m_clientip.c_str());
 		sprintf(cmd, "%s NO authenticate Failed: unsupported authentication mechanism, credentials rejects\r\n", strTag.c_str());
 		ImapSend(cmd, strlen(cmd));
 		return FALSE;
@@ -819,7 +819,7 @@ BOOL CMailImap::On_Login(char* text)
 	}
 	else
 	{
-		push_reject_list(m_isSSL ? stIMAPS : stIMAP, m_clientip.c_str());
+		push_reject_list(stIMAP, m_clientip.c_str());
 		
 		sprintf(cmd, "%s NO LOGIN Failed\r\n", strTag.c_str());
 		retValue = false;
@@ -4264,7 +4264,7 @@ void CMailImap::ParseCommand(const char* text, vector<string>& vDst)
 
 BOOL CMailImap::Parse(char* text)
 {
-	//printf("%s", text);
+	/* printf("%s", text); */
 	string strNotag;
 	strcut(text, " ", " ", strNotag);
 	

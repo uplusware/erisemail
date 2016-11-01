@@ -19,10 +19,6 @@ typedef enum
 	stPOP3,
 	stIMAP,
 	stHTTP,
-	stSMTPS,
-	stPOP3S,
-	stIMAPS,
-	stHTTPS,
 	stSPOOL
 } Service_Type;
 
@@ -32,12 +28,13 @@ protected:
 	int m_sockfd;
 	string m_clientip;
 	Service_Type m_st;
+    BOOL m_is_ssl;
     SSL * m_ssl;
     SSL_CTX * m_ssl_ctx;
 	StorageEngine* m_storageEngine;
 	memcached_st * m_memcached;
 public:
-	Session(int sockfd, SSL *ssl, SSL_CTX * ssl_ctx, const char* clientip, Service_Type st, 
+	Session(int sockfd, SSL *ssl, SSL_CTX * ssl_ctx, const char* clientip, Service_Type st, BOOL is_ssl,
         StorageEngine* storage_engine, memory_cache* ch, memcached_st * memcached);
 	virtual ~Session();
 	
