@@ -1,7 +1,7 @@
 CC = gcc
 
 LIBSTG = liberisestorage.so
-OBJSTG = storage.o
+OBJSTG = storage.o util/trace.o
 
 LIBJKS = liberiseantijunk.so
 OBJJKS = antijunk.o

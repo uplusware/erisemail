@@ -22,10 +22,6 @@ StorageEngine::StorageEngine(const char * host, const char* username, const char
 	{
 		m_engine[i].storage = new MailStorage(m_encoding.c_str(), m_private_path.c_str(), m_memcached);
         m_engine[i].inUse = FALSE;
-        m_engine[i].cTime = time(NULL);
-        m_engine[i].lTime = m_engine[i].cTime;
-        m_engine[i].usedCount = 0;
-        m_engine[i].owner = getpid();
 	}
 	pthread_mutex_init(&m_engineMutex, NULL);
     
@@ -66,31 +62,29 @@ MailStorage* StorageEngine::Wait(int &index)
     }
     pthread_mutex_unlock(&m_engineMutex);
     
-    for(int t = 0; t < 20; t++)
+    unsigned int connect_timeout = 0;
+    while(!freeOne && connect_timeout < 1000 * 1000 * 20) //20 seconds
     {
         if(m_engine[index].storage && m_engine[index].storage->Ping() != 0)
         {
             m_engine[index].storage->Close();
             
             if(m_engine[index].storage->Connect(m_host.c_str(),
-                m_username.c_str(), m_password.c_str(), 
+                m_username.c_str(), m_password.c_str(),  
                 m_database.c_str(), m_port, m_sock_file.c_str()) == 0)
             {
                 freeOne = m_engine[index].storage;
-                m_engine[index].opened = TRUE;
-                break;
             }
             else
             {
-               m_engine[index].opened = FALSE;
                freeOne = NULL;
-               sleep(1);
+               usleep(1000);
+               connect_timeout += 1000;
             }
         }
         else
         {
             freeOne = m_engine[index].storage;
-            break;
         }
     }
 	return freeOne;

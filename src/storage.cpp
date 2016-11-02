@@ -4,6 +4,7 @@
 #include "util/general.h"
 #include "base.h"
 #include "util/md5.h"
+#include "util/trace.h"
 #include <time.h>
 #include "letter.h"
 
@@ -11,7 +12,8 @@
 
 static void show_error(MYSQL *mysql)
 {
-    fprintf(stderr, "MySQL error(%d) [%s] \"%s\"\n", mysql_errno(mysql), mysql_sqlstate(mysql), mysql_error(mysql));
+    CUplusTrace uTrace(LOGNAME, LCKNAME);
+    uTrace.Write(Trace_Error, "MySQL error(%d) [%s] \"%s\"\n", mysql_errno(mysql), mysql_sqlstate(mysql), mysql_error(mysql));
 }
 
 BOOL MailStorage::m_userpwd_cache_updated = TRUE;

@@ -46,8 +46,8 @@ static void daemon_init()
 	chdir("/");
 	umask(0);
 	close(STDIN_FILENO);
-	//close(STDOUT_FILENO);
-	//close(STDERR_FILENO);
+	close(STDOUT_FILENO);
+	close(STDERR_FILENO);
 	signal(SIGCHLD,SIG_IGN);
 }
 

@@ -19,9 +19,6 @@
 
 #include "cache.h"
 
-static char LOGNAME[256] = "/var/log/erisemail/SERVICE.log";
-static char LCKNAME[256] = "/.ERISEMAIL_SYS.LOG";
-
 static const char* SVR_NAME_TBL[] = {NULL, "SMTP",	"POP3",	"IMAP",	"HTTP", "MTA", NULL};
 static const char* SVR_DESP_TBL[] = {NULL, "SMTP",	"POP3",	"IMAP",	"HTTP", "MTA", NULL};
 
