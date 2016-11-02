@@ -231,7 +231,7 @@ void Service::Stop()
 	if(m_memcached)
 	  memcached_free(m_memcached);
 	m_memcached = NULL;
-	printf("Stop %s OK\n", SVR_DESP_TBL[m_st]);
+	printf("Stop %s Service OK\n", SVR_DESP_TBL[m_st]);
 }
 
 void Service::ReloadConfig()
@@ -793,7 +793,7 @@ void WatchDog::Stop()
 	if(m_watchdog_sid != SEM_FAILED)
 		sem_close(m_watchdog_sid);
 
-	printf("Stop Watch Dog OK\n");
+	printf("Stop Service Monitor OK\n");
 }
 
 int WatchDog::Run(int fd)
@@ -1048,10 +1048,10 @@ int WatchDog::Run(int fd)
                     close(pfd[1]);
                     read(pfd[0], &result, sizeof(unsigned int));
                     if(result == 0)
-                        printf("Start Relay Service OK \t\t\t[%u]\n", spool_pids);
+                        printf("Start MTA Service OK \t\t\t[%u]\n", spool_pids);
                     else
                     {
-                        printf("Start Relay Service Failed \t\t\t[Error]\n");
+                        printf("Start MTA Service Failed \t\t\t[Error]\n");
                     }
                     close(pfd[0]);
                 } 

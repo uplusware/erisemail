@@ -46,8 +46,8 @@ static void daemon_init()
 	chdir("/");
 	umask(0);
 	close(STDIN_FILENO);
-	close(STDOUT_FILENO);
-	close(STDERR_FILENO);
+	//close(STDOUT_FILENO);
+	//close(STDERR_FILENO);
 	signal(SIGCHLD,SIG_IGN);
 }
 
@@ -226,11 +226,11 @@ int Run()
 				close(pfd[1]);
 				read(pfd[0], &result, sizeof(unsigned int));
 				if(result == 0)
-					printf("Start HTTP Service OK \t\t[%u]\n", http_pid);
+					printf("Start HTTP Service OK \t\t\t[%u]\n", http_pid);
 				else
 				{
 					uTrace.Write(Trace_Error, "%s", "Start HTTP Service Failed.");
-					printf("Start HTTP Service Failed. \t\t[Error]\n");
+					printf("Start HTTP Service Failed. \t\t\t[Error]\n");
 				}
 				close(pfd[0]);
 			}

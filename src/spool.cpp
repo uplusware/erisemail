@@ -578,7 +578,7 @@ void Spool::ReloadConfig()
 	if(m_spool_sid != SEM_FAILED)
 		sem_close(m_spool_sid);
 
-	printf("Reload Relay Service OK\n");
+	printf("Reload MTA Service OK\n");
 }
 
 void Spool::Stop()
@@ -608,7 +608,7 @@ void Spool::Stop()
 	if(m_memcached)
 	  memcached_free(m_memcached);
 	m_memcached = NULL;
-	printf("Stop Relay Service OK\n");
+	printf("Stop MTA Service OK\n");
 }
 
 int Spool::Run(int fd)

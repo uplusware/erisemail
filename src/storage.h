@@ -161,6 +161,12 @@ public:
 	void Close();
 	int Ping();
 	
+	void KeepLive();
+	
+	void EntryThread();
+
+	void LeaveThread();
+	
 	int Install(const char* database);
 	int Uninstall(const char* database);
 	

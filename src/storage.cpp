@@ -47,8 +47,7 @@ MailStorage::~MailStorage()
     pthread_rwlock_destroy(&m_userpwd_cache_lock);
 }
 
-int MailStorage::Connect(const char * host, const char* username, const char* password,
-    const char* database, unsigned short port, const char* sock_file)
+int MailStorage::Connect(const char * host, const char* username, const char* password, const char* database, unsigned short port, const char* sock_file)
 {
     unsigned int timeout_val = 20;
     mysql_options(&m_hMySQL, MYSQL_OPT_CONNECT_TIMEOUT, (const void*)&timeout_val);
@@ -100,6 +99,26 @@ int MailStorage::Ping()
 		return -1;
 	}
 }
+
+void MailStorage::KeepLive()
+{
+	if(Ping() != 0)
+	{
+		Close();
+		Connect(m_host.c_str(), m_username.c_str(), m_password.c_str(), m_database.c_str(), m_port, m_sock_file.c_str());
+	}
+}
+
+void MailStorage::EntryThread()
+{
+	mysql_thread_init();
+}
+
+void MailStorage::LeaveThread()
+{
+	mysql_thread_end();
+}
+
 
 int MailStorage::Install(const char* database)
 {
