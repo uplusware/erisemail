@@ -1,3 +1,7 @@
+/*
+	Copyright (c) openheap, uplusware
+	uplusware@gmail.com
+*/
 #ifndef _HTTP_H_
 #define _HTTP_H_
 

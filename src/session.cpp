@@ -1,3 +1,7 @@
+/*
+	Copyright (c) openheap, uplusware
+	uplusware@gmail.com
+*/
 #include "session.h"
 
 Session::Session(int sockfd, SSL *ssl, SSL_CTX * ssl_ctx, const char* clientip, Service_Type st, BOOL is_ssl,

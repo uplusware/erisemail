@@ -1,9 +1,18 @@
+/*
+	Copyright (c) openheap, uplusware
+	uplusware@gmail.com
+*/
 #include "cli.h"
 #include <errno.h>
 
-#define WELCOME_MSG	"**********************************************************\r\n*     Welcome to Use E-RiseMail Server On Linux/Unix       *\r\n*              Powered by Brian Sheng                    *\r\n**********************************************************\r\n"
+#define WELCOME_MSG	"**********************************************************\r\n"    \
+                    "*     Welcome to Use eRisemail Server On Linux/Unix      *\r\n"    \
+                    "*              Powered by uplusware                      *\r\n"    \
+                    "**********************************************************\r\n"
 
-#define BYE_MSG "\r\n------------------------- Bye ----------------------------\r\n"
+#define BYE_MSG     "\r\n"  \
+                    "------------------------- Bye ----------------------------\r\n"
+
 CLI::CLI()
 {
 

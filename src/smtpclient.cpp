@@ -1,3 +1,7 @@
+/*
+	Copyright (c) openheap, uplusware
+	uplusware@gmail.com
+*/
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -479,7 +483,6 @@ BOOL SmtpClient::RecvReply(char* reply_code, string &strmsg)
 		}
 		else
 		{
-			//printf(str);
 			strmsg += str;
 			if(str[3] == ' ')
 			{

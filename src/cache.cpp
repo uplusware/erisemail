@@ -1,3 +1,7 @@
+/*
+	Copyright (c) openheap, uplusware
+	uplusware@gmail.com
+*/
 #include "cache.h"
 #include "tinyxml/tinyxml.h"
 
@@ -295,7 +299,6 @@ void memory_cache::unload()
 	map<string, filedata>::iterator iter;
 	for(iter = m_htdoc.begin(); iter != m_htdoc.end(); iter++)
 	{
-		//printf("Unload html %s\n", iter->first.c_str());
 		free(iter->second.pbuf);
 	}
 	m_htdoc.clear();

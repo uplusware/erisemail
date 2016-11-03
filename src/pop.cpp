@@ -1,3 +1,7 @@
+/*
+	Copyright (c) openheap, uplusware
+	uplusware@gmail.com
+*/
 #include "util/general.h"
 #include "pop.h"
 #include <sys/types.h>          /* See NOTES */

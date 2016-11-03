@@ -1,3 +1,7 @@
+/*
+	Copyright (c) openheap, uplusware
+	uplusware@gmail.com
+*/
 #ifndef _SMTP_H_
 #define _SMTP_H_
 #include <libmemcached/memcached.h>

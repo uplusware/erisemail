@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<title>e-risemail server readme</title>
+<title>eRisemail server readme</title>
 <style type="text/css">
 <!--
 body {
@@ -59,7 +59,7 @@ td {
 <body>
 <h1 class="STYLE3"> eRisemail Server v1.6.08 安装使用手册</h1>
 <hr>
-<h2 class="STYLE3">关于 e-risemail server</h2>
+<h2 class="STYLE3">关于 eRisemail server</h2>
 <ul class="STYLE3">
   <li>支持Linux/Solaris的免费的邮件服务器</li>
   <li>完全自主开发，非第三方系统集成，所以安装配置过程简单，但功能强大 </li>
@@ -266,9 +266,17 @@ td {
         [password]</font>&quot;)</td>
     </tr>
     <tr> 
+      <td align="right"><strong>KRB5_KTNAME</strong></td>
+      <td>Kerberos 5 KeyTab 文件路径</td>
+    </tr>
+    <tr> 
       <td align="right"><strong>DBHost</strong></td>
       <td>MySQL Server机器名或者IP</td>
     </tr>
+    <tr> 
+      <td align="right"><strong>DBPort</strong></td>
+      <td>MySQL Server 服务端口号. 0表示使用Unix Socket连接数据库</td>
+    </tr>    
     <tr> 
       <td height="23" align="right"><strong>DBName</strong></td>
       <td>将要为邮件系统创建的新数据库名字</td>
@@ -281,6 +289,10 @@ td {
       <td height="42" align="right"><strong>DBPassword</strong></td>
       <td>MySQL Server用户名的密码(为了安全请用以下命令加密&quot;<font color="#0000FF">eriseutil 
         --encode [password]</font>&quot;)</td>
+    </tr>
+    <tr> 
+      <td height="42" align="right"><strong>DBSockFile</strong></td>
+      <td>MySQL Unix Socket 文件路径. 空表示使用TCP/IP连接数据库</td>
     </tr>
     <tr> 
       <td align="right"><strong>DBMaxConn</strong></td>

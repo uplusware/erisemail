@@ -1,3 +1,7 @@
+/*
+	Copyright (c) openheap, uplusware
+	uplusware@gmail.com
+*/
 #ifndef _LETTER_H_
 #define _LETTER_H_
 

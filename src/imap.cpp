@@ -1,3 +1,7 @@
+/*
+	Copyright (c) openheap, uplusware
+	uplusware@gmail.com
+*/
 #include "imap.h"
 #include <stdio.h>
 #include <stdlib.h>

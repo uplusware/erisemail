@@ -1,3 +1,8 @@
+/*
+	Copyright (c) openheap, uplusware
+	uplusware@gmail.com
+*/
+
 #ifndef _STORAGE_H_
 #define _STORAGE_H_
 

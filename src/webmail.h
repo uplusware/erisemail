@@ -1,5 +1,10 @@
-#ifndef _HTDOC_H_
-#define _HTDOC_H_
+/*
+	Copyright (c) openheap, uplusware
+	uplusware@gmail.com
+*/
+
+#ifndef _WEBMAIL_H_
+#define _WEBMAIL_H_
 
 #include <mqueue.h>
 #include <semaphore.h>
@@ -20,21 +25,56 @@
 #include "service.h"
 #include "stgengine.h"
 
-#define RSP_200_OK_CACHE			"HTTP/1.1 200 OK\r\nServer: eRisemail Web Server (Unix)\r\n"
-#define RSP_200_OK_NO_CACHE			"HTTP/1.1 200 OK\r\nServer: eRisemail Web Server (Unix)\r\nPragma: no-cache\r\nCache-Control: no-cache, must-revalidate\r\nExpires: 0\r\n"
-#define RSP_200_OK_XML				"HTTP/1.1 200 OK\r\nServer: eRisemail Web Server (Unix)\r\nPragma: no-cache\r\nCache-Control: no-cache, must-revalidate\r\nExpires: 0\r\nContent-Type: text/xml\r\n"
-#define RSP_200_OK_JSON				"HTTP/1.1 200 OK\r\nServer: eRisemail Web Server (Unix)\r\nPragma: no-cache\r\nCache-Control: no-cache, must-revalidate\r\nExpires: 0\r\nContent-Type: text/json\r\n"
+#define RSP_200_OK_CACHE			"HTTP/1.1 200 OK\r\n"   \
+                                    "Server: eRisemail Web Server (Unix)\r\n"
+                                    
+#define RSP_200_OK_NO_CACHE			"HTTP/1.1 200 OK\r\n"   \
+                                    "Server: eRisemail Web Server (Unix)\r\n"   \
+                                    "Pragma: no-cache\r\n"   \
+                                    "Cache-Control: no-cache, must-revalidate\r\n"   \
+                                    "Expires: 0\r\n"
+                                    
+#define RSP_200_OK_XML				"HTTP/1.1 200 OK\r\n"   \
+                                    "Server: eRisemail Web Server (Unix)\r\n"   \
+                                    "Pragma: no-cache\r\n"   \
+                                    "Cache-Control: no-cache, must-revalidate\r\n"   \
+                                    "Expires: 0\r\n"   \
+                                    "Content-Type: text/xml\r\n"
+                                    
+#define RSP_200_OK_JSON				"HTTP/1.1 200 OK\r\n"   \
+                                    "Server: eRisemail Web Server (Unix)\r\n"   \
+                                    "Pragma: no-cache\r\n"   \
+                                    "Cache-Control: no-cache, must-revalidate\r\n"   \
+                                    "Expires: 0\r\n"   \
+                                    "Content-Type: text/json\r\n"
 
 
-#define RSP_200_OK_CACHE_PLAIN		"HTTP/1.1 200 OK\r\nServer: eRisemail Web Server (Unix)\r\nContent-Type: text/plain\r\n"
-#define RSP_200_OK_NO_CACHE_PLAIN	"HTTP/1.1 200 OK\r\nServer: eRisemail Web Server (Unix)\r\nPragma: no-cache\r\nCache-Control: no-cache, must-revalidate\r\nExpires: 0\r\nContent-Type: text/plain\r\n"
+#define RSP_200_OK_CACHE_PLAIN		"HTTP/1.1 200 OK\r\n"   \
+                                    "Server: eRisemail Web Server (Unix)\r\n"   \
+                                    "Content-Type: text/plain\r\n"
+                                    
+#define RSP_200_OK_NO_CACHE_PLAIN	"HTTP/1.1 200 OK\r\n"   \
+                                    "Server: eRisemail Web Server (Unix)\r\n"   \
+                                    "Pragma: no-cache\r\n"   \
+                                    "Cache-Control: no-cache, must-revalidate\r\n"   \
+                                    "Expires: 0\r\n"   \
+                                    "Content-Type: text/plain\r\n"
 
-#define RSP_301_MOVED_NO_CACHE		"HTTP/1.1 301 Moved Permanently\r\nServer: eRisemail Web Server (Unix)\r\n"
+#define RSP_301_MOVED_NO_CACHE		"HTTP/1.1 301 Moved Permanently\r\n"   \
+                                    "Server: eRisemail Web Server (Unix)\r\n"
 
 //Non html body
-#define RSP_404_NOT_FOUND			"HTTP/1.1 404 Not Found\r\nServer: eRisemail Web Server (Unix)\r\n\r\n"
-#define RSP_500_SYS_ERR				"HTTP/1.1 500 Server Error\rServer: eRisemail Web Server (Unix)\r\n\n\r\n"
-#define RSP_501_SYS_ERR				"HTTP/1.1 501 Not Implemented\rServer: eRisemail Web Server (Unix)\r\n\n\r\n"
+#define RSP_404_NOT_FOUND			"HTTP/1.1 404 Not Found\r\n"   \
+                                    "Server: eRisemail Web Server (Unix)\r\n"   \
+                                    "\r\n"
+                                    
+#define RSP_500_SYS_ERR				"HTTP/1.1 500 Server Error\r\n"   \
+                                    "Server: eRisemail Web Server (Unix)\r\n"   \
+                                    "\r\n"
+                                    
+#define RSP_501_SYS_ERR				"HTTP/1.1 501 Not Implemented\r\n"   \
+                                    "Server: eRisemail Web Server (Unix)\r\n"   \
+                                    "\r\n"
 
 
 typedef struct
@@ -8552,5 +8592,5 @@ public:
 	void Response();
 };
 
-#endif /* _HTDOC_H_ */
+#endif /* _WEBMAIL_H_ */
 

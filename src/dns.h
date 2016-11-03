@@ -1,3 +1,7 @@
+/*
+	Copyright (c) openheap, uplusware
+	uplusware@gmail.com
+*/
 #ifndef _DNS_H_
 #define _DNS_H_
 
@@ -237,7 +241,6 @@ public:
 
 		//Jump over the Quesion field
 		int c = ntohs(pAckHeader->nQuestion);
-		//printf("c: %d\n", c);
 		int aseek = 0;
 		while(c)
 		{
@@ -245,8 +248,6 @@ public:
 			unsigned int hostnamelen = gethostname(dnsbufptr, sizeof(Dns_Header) + aseek, hostname);
 			c--;
 			aseek += hostnamelen;
-			//printf("%s\n", hostname.c_str());
-			
 		}
 
 		int j;
@@ -256,7 +257,6 @@ public:
 		
 		for(j = 0; j < ntohs(pAckHeader->nResource); j++)
 		{
-			//printf("\n\n");
 			c = 1;
 			while(c)
 			{
@@ -264,8 +264,6 @@ public:
 				unsigned int hostnamelen = gethostname(dnsbufptr, sizeof(Dns_Header) + sizeof(Question_Tailer) + aseek, hostname);
 				c--;
 				aseek += hostnamelen;
-				//printf("hostnamelen: %d\n", hostnamelen);
-				//printf("%s\n", hostname.c_str());
 			}
 
 			unsigned short reply_type = dnsbufptr[sizeof(Dns_Header) + sizeof(Question_Tailer) + aseek];
@@ -273,8 +271,6 @@ public:
 			reply_type <<= 8;
 			reply_type |= dnsbufptr[sizeof(Dns_Header) + sizeof(Question_Tailer) + aseek];
 			aseek++;
-
-			//printf("replytype: %d\n", reply_type);
 			
 			unsigned short reply_class = dnsbufptr[sizeof(Dns_Header) + sizeof(Question_Tailer) + aseek];
 			aseek++;
@@ -296,16 +292,12 @@ public:
 
 			replay_ttl |= dnsbufptr[sizeof(Dns_Header) + sizeof(Question_Tailer) + aseek];
 			aseek++;
-			
-			//printf("replay_ttl: %d\n", replay_ttl);
-
-
+            
 			unsigned short reply_resource_len = dnsbufptr[sizeof(Dns_Header) + sizeof(Question_Tailer) + aseek];
 			aseek++;
 			reply_resource_len <<= 8;
 			reply_resource_len |= dnsbufptr[sizeof(Dns_Header) + sizeof(Question_Tailer) + aseek];
 			aseek++;
-			//printf("reply_resource_len: %d\n", reply_resource_len);
 
 			if(reply_type == 0x000F)
 			{
@@ -314,7 +306,6 @@ public:
 				reply_resource_preference <<= 8;
 				reply_resource_preference |= dnsbufptr[sizeof(Dns_Header) + sizeof(Question_Tailer) + aseek];
 				aseek++;
-				//printf("reply_resource_preference: %d\n", reply_resource_preference);
 
 				string hostname;
 				unsigned int hostnamelen = gethostname(dnsbufptr, sizeof(Dns_Header) + sizeof(Question_Tailer) + aseek, hostname);
@@ -324,8 +315,6 @@ public:
 				list.level = reply_resource_preference;
 				mxlist.push_back(list);
 				aseek += hostnamelen;
-				//printf("hostnamelen: %d\n", hostnamelen);
-				//printf("%s\n\n\n", hostname.c_str());
 			}
 			else
 			{
@@ -336,7 +325,6 @@ public:
 		//printf("nAuthenResource: %d\n", ntohs(pAckHeader->nAuthenResource));
 		for(j = 0; j < ntohs(pAckHeader->nAuthenResource); j++)
 		{
-			//printf("\n\n");
 			c = 1;
 			while(c)
 			{
@@ -344,8 +332,6 @@ public:
 				unsigned int hostnamelen = gethostname(dnsbufptr, sizeof(Dns_Header) + sizeof(Question_Tailer) + aseek, hostname);
 				c--;
 				aseek += hostnamelen;
-				//printf("hostnamelen: %d\n", hostnamelen);
-				//printf("%s\n", hostname.c_str());
 			}
 
 			unsigned short reply_type = dnsbufptr[sizeof(Dns_Header) + sizeof(Question_Tailer) + aseek];
@@ -353,8 +339,6 @@ public:
 			reply_type <<= 8;
 			reply_type |= dnsbufptr[sizeof(Dns_Header) + sizeof(Question_Tailer) + aseek];
 			aseek++;
-
-			//printf("replytype: %d\n", reply_type);
 			
 			unsigned short reply_class = dnsbufptr[sizeof(Dns_Header) + sizeof(Question_Tailer) + aseek];
 			aseek++;
@@ -377,14 +361,11 @@ public:
 			replay_ttl |= dnsbufptr[sizeof(Dns_Header) + sizeof(Question_Tailer) + aseek];
 			aseek++;
 			
-			//printf("replay_ttl: %d\n", replay_ttl);
-
 			unsigned short reply_resource_len = dnsbufptr[sizeof(Dns_Header) + sizeof(Question_Tailer) + aseek];
 			aseek++;
 			reply_resource_len <<= 8;
 			reply_resource_len |= dnsbufptr[sizeof(Dns_Header) + sizeof(Question_Tailer) + aseek];
 			aseek++;
-			//printf("reply_resource_len: %d\n", reply_resource_len);
 
 			if(reply_type == 0x000F)
 			{
@@ -393,7 +374,6 @@ public:
 				reply_resource_preference <<= 8;
 				reply_resource_preference |= dnsbufptr[sizeof(Dns_Header) + sizeof(Question_Tailer) + aseek];
 				aseek++;
-				//printf("reply_resource_preference: %d\n", reply_resource_preference);
 
 				string hostname;
 				unsigned int hostnamelen = gethostname(dnsbufptr, sizeof(Dns_Header) + sizeof(Question_Tailer) + aseek, hostname);
@@ -403,7 +383,6 @@ public:
 				list.level = reply_resource_preference;
 				mxlist.push_back(list);
 				aseek += hostnamelen;
-				//printf("hostnamelen: %d\n", hostnamelen);
 			}
 			else
 			{
@@ -412,10 +391,8 @@ public:
 			
 		}
 		
-		//printf("nExternResource: %d\n", ntohs(pAckHeader->nExternResource));
 		for(j = 0; j < ntohs(pAckHeader->nExternResource); j++)
 		{
-			//printf("j: %d aseek: %d\n", j, aseek);
 			c = 1;
 			while(c)
 			{
@@ -423,8 +400,6 @@ public:
 				unsigned int hostnamelen = gethostname(dnsbufptr, sizeof(Dns_Header) + sizeof(Question_Tailer) + aseek, hostname);
 				c--;
 				aseek += hostnamelen;
-				//printf("hostnamelen: %d\n", hostnamelen);
-				//printf("%s\n", hostname.c_str());
 			}
 
 			unsigned short reply_type = dnsbufptr[sizeof(Dns_Header) + sizeof(Question_Tailer) + aseek];
@@ -432,8 +407,6 @@ public:
 			reply_type <<= 8;
 			reply_type |= dnsbufptr[sizeof(Dns_Header) + sizeof(Question_Tailer) + aseek];
 			aseek++;
-
-			//printf("replytype: %d\n", reply_type);
 			
 			unsigned short reply_class = dnsbufptr[sizeof(Dns_Header) + sizeof(Question_Tailer) + aseek];
 			aseek++;
@@ -456,16 +429,12 @@ public:
 			replay_ttl |= dnsbufptr[sizeof(Dns_Header) + sizeof(Question_Tailer) + aseek];
 			aseek++;
 			
-			//printf("replay_ttl: %u\n", replay_ttl);
-
-
 			unsigned short reply_resource_len = dnsbufptr[sizeof(Dns_Header) + sizeof(Question_Tailer) + aseek];
 			aseek++;
 			reply_resource_len <<= 8;
 			reply_resource_len |= dnsbufptr[sizeof(Dns_Header) + sizeof(Question_Tailer) + aseek];
 			aseek++;
-			//printf("reply_resource_len: %d\n", reply_resource_len);
-
+			
 			if(reply_type == 0x000F)
 			{
 				unsigned short reply_resource_preference = dnsbufptr[sizeof(Dns_Header) + sizeof(Question_Tailer) + aseek];
@@ -473,7 +442,6 @@ public:
 				reply_resource_preference <<= 8;
 				reply_resource_preference |= dnsbufptr[sizeof(Dns_Header) + sizeof(Question_Tailer) + aseek];
 				aseek++;
-				//printf("reply_resource_preference: %d\n", reply_resource_preference);
 
 				string hostname;
 				unsigned int hostnamelen = gethostname(dnsbufptr, sizeof(Dns_Header) + sizeof(Question_Tailer) + aseek, hostname);
@@ -483,8 +451,6 @@ public:
 				list.level = reply_resource_preference;
 				mxlist.push_back(list);
 				aseek += hostnamelen;
-				//printf("hostnamelen: %d\n", hostnamelen);
-				//printf("%s\n\n\n", hostname.c_str());
 			}
 			else
 			{

@@ -1,3 +1,8 @@
+/*
+	Copyright (c) openheap, uplusware
+	uplusware@gmail.com
+*/
+
 #ifndef _SESSION_H_
 #define _SESSION_H_
 #include <sys/types.h>
@@ -19,7 +24,7 @@ typedef enum
 	stPOP3,
 	stIMAP,
 	stHTTP,
-	stSPOOL
+	stMTA
 } Service_Type;
 
 class Session

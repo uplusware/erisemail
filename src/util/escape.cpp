@@ -1,3 +1,8 @@
+/*
+	Copyright (c) openheap, uplusware
+	uplusware@gmail.com
+*/
+
 #include "escape.h"
 
 bool lendian()

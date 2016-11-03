@@ -1,5 +1,10 @@
+/*
+	Copyright (c) openheap, uplusware
+	uplusware@gmail.com
+*/
 #ifndef _ERISE_GENERAL_H_
 #define _ERISE_GENERAL_H_
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <string.h>

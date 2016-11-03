@@ -1,3 +1,8 @@
+/*
+	Copyright (c) openheap, uplusware
+	uplusware@gmail.com
+*/
+
 #ifndef _STORAGE_ENGINE_H_
 #define _STORAGE_ENGINE_H_
 
@@ -7,12 +12,7 @@
 typedef struct
 {
 	MailStorage* storage;
-	BOOL opened;
 	BOOL inUse;
-	unsigned long cTime; //Cteate Time
-	unsigned long lTime; //Last using Time
-	unsigned long usedCount;
-	pthread_t owner;
 }stStorageEngine;
 
 

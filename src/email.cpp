@@ -1,3 +1,7 @@
+/*
+	Copyright (c) openheap, uplusware
+	uplusware@gmail.com
+*/
 #include "util/general.h"
 #include "email.h"
 #include "util/base64.h"

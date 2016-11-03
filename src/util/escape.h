@@ -1,3 +1,8 @@
+/*
+	Copyright (c) openheap, uplusware
+	uplusware@gmail.com
+*/
+
 #ifndef _ESCAPE_H_
 #define _ESCAPE_H_
 

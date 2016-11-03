@@ -1,3 +1,7 @@
+/*
+	Copyright (c) openheap, uplusware
+	uplusware@gmail.com
+*/
 #ifndef _SMTP_CLIENT_H
 #define _SMTP_CLIENT_H
 

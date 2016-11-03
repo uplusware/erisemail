@@ -1,3 +1,7 @@
+/*
+	Copyright (c) openheap, uplusware
+	uplusware@gmail.com
+*/
 #ifndef _CLI_H_
 #define _CLI_H_
 #include <stdlib.h>

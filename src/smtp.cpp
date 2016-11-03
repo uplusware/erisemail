@@ -1,3 +1,7 @@
+/*
+	Copyright (c) openheap, uplusware
+	uplusware@gmail.com
+*/
 #include "smtp.h"
 #include "dns.h"
 #include <stdlib.h>
@@ -9,7 +13,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
-#include "spool.h"
+#include "mta.h"
 #include "util/md5.h"
 #include "service.h"
 

@@ -1,3 +1,8 @@
+/*
+	Copyright (c) openheap, uplusware
+	uplusware@gmail.com
+*/
+
 #include "service.h"
 #include "session.h"
 #include <errno.h>
@@ -13,7 +18,7 @@
 #include <queue>
 #include "util/trace.h"
 #include "letter.h"
-#include "spool.h"
+#include "mta.h"
 
 extern int Run();
 
@@ -1023,14 +1028,14 @@ int WatchDog::Run(int fd)
                 } 
             }
             
-            sprintf(szFlag, "/tmp/erisemail/%s.pid", SVR_NAME_TBL[stSPOOL]);
+            sprintf(szFlag, "/tmp/erisemail/%s.pid", SVR_NAME_TBL[stMTA]);
             if(!try_single_on(szFlag))   
             {
-                printf("%s stopped.\n", SVR_DESP_TBL[stSPOOL]);   
-                int spool_pids;
+                printf("%s stopped.\n", SVR_DESP_TBL[stMTA]);   
+                int mta_pids;
                 pipe(pfd);
-                spool_pids = fork();
-                if(spool_pids == 0)
+                mta_pids = fork();
+                if(mta_pids == 0)
                 {
                     close(pfd[0]);
                     if(check_single_on(szFlag)) 
@@ -1038,17 +1043,17 @@ int WatchDog::Run(int fd)
                         printf("%s is aready runing.\n", SVR_DESP_TBL[stSMTP]);   
                         exit(-1);
                     }
-                    Spool spool;
-                    spool.Run(pfd[1]);
+                    MTA mta;
+                    mta.Run(pfd[1]);
                     exit(0);
                 }
-                else if(spool_pids > 0)
+                else if(mta_pids > 0)
                 {
                     unsigned int result;
                     close(pfd[1]);
                     read(pfd[0], &result, sizeof(unsigned int));
                     if(result == 0)
-                        printf("Start MTA Service OK \t\t\t[%u]\n", spool_pids);
+                        printf("Start MTA Service OK \t\t\t[%u]\n", mta_pids);
                     else
                     {
                         printf("Start MTA Service Failed \t\t\t[Error]\n");

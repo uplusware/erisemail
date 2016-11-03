@@ -9,7 +9,7 @@ SQLUDF = postudf.so
 
 EXESVR = erisemaild
 OBJSVR = mainsrv.o service.o session.o base.o smtp.o pop.o imap.o calendar.o\
-	letter.o smtpclient.o mime.o spool.o fstring.o http.o email.o webmail.o cache.o stgengine.o pool.o\
+	letter.o smtpclient.o mime.o mta.o fstring.o http.o email.o webmail.o cache.o stgengine.o pool.o\
 	util/md5.o	\
 	util/DES.o	\
 	util/escape.o	\

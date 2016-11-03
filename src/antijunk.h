@@ -1,3 +1,7 @@
+/*
+	Copyright (c) openheap, uplusware
+	uplusware@gmail.com
+*/
 #ifndef _ANTIJUNK_H_
 #define _ANTIJUNK_H_
 

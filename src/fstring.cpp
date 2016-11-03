@@ -1,3 +1,7 @@
+/*
+	Copyright (c) openheap, uplusware
+	uplusware@gmail.com
+*/
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/mman.h>

@@ -1,10 +1,14 @@
+/*
+	Copyright (c) openheap, uplusware
+	uplusware@gmail.com
+*/
 #ifndef _ENCRYPT_H_
 #define _ENCRYPT_H_
 
 #include "base64.h"
 #include "DES.h"
 
-#define COOKIE_DES_KEY "THJ$%gty"
+#define DEF_COOKIE_DES_KEY "THJ$%gty"
 
 class Security
 {
@@ -19,7 +23,7 @@ public:
         
         DES des;
 		des.Init(1);
-		des.SetKey(key == NULL ? COOKIE_DES_KEY : key);
+		des.SetKey(key == NULL ? DEF_COOKIE_DES_KEY : key);
 		for(int x = 0; x < ntmp1/8; x++)
 			des.Encode(ptmp1 + x*8);
 		des.Done();
@@ -58,7 +62,7 @@ public:
 		{
             DES des;
 			des.Init(1);
-			des.SetKey(key == NULL ? COOKIE_DES_KEY : key);
+			des.SetKey(key == NULL ? DEF_COOKIE_DES_KEY : key);
 			for(int x = 0; x < ntmp1/8; x++)
 				des.Decode(ptmp1 + x*8);
 			des.Done();

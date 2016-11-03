@@ -1,10 +1,13 @@
+/*
+	Copyright (c) openheap, uplusware
+	uplusware@gmail.com
+*/
 #include <stdio.h>
 #include "antijunk.h"
 
 void* mfilter_init()
 {
-	//printf("mfilter_init\n");
-	
+    //TODO:
 	MailFilter * filter = new MailFilter;
 	if(filter)
 	{
@@ -26,11 +29,12 @@ void* mfilter_init()
 
 void mfilter_emaildomain(void* filter, const char* domain, unsigned int len)
 {
-	//printf("mfilter_emaildomain: %s\n", domain);
+	//TODO:
 }
 
 void mfilter_clientip(void* filter, const char* ip, unsigned int len)
 {
+    //TODO:
 	MailFilter * tfilter = (MailFilter *)filter;
 
 	if(tfilter->semLog != SEM_FAILED && tfilter->fLog)
@@ -40,32 +44,31 @@ void mfilter_clientip(void* filter, const char* ip, unsigned int len)
 		tm * ltm;
 		time_t tt = time(NULL);
 		ltm = localtime(&tt);
-		fprintf(tfilter->fLog, "[%04d-%02d-%02d %02d:%02d:%02d]: %s\r\n", 1900 + ltm->tm_year, ltm->tm_mon + 1, ltm->tm_mday, ltm->tm_hour, ltm->tm_min, ltm->tm_sec, ip);
+		fprintf(tfilter->fLog, "[%04d-%02d-%02d %02d:%02d:%02d]: %s\r\n", 1900 + ltm->tm_year, ltm->tm_mon + 1, ltm->tm_mday,
+            ltm->tm_hour, ltm->tm_min, ltm->tm_sec, ip);
 		fflush(tfilter->fLog);
 		sem_post(tfilter->semLog);
-
-		//printf("[%04d-%02d-%02d %02d:%02d:%02d]: %s\r\n", 1900 + ltm->tm_year, ltm->tm_mon + 1, ltm->tm_mday, ltm->tm_hour, ltm->tm_min, ltm->tm_sec, ip);
 	}
 }
 
 void mfilter_clientdomain(void * filter, const char* domain, unsigned int len)
 {
-	//printf("mfilter_clientdomain: %s\n", domain);
+	//TODO:
 }
 
 void mfilter_mailfrom(void * filter, const char* from, unsigned int len)
 {
-	//printf("mfilter_mailfrom: %s\n", from);
+	//TODO:
 }
 
 void mfilter_rcptto(void * filter, const char* to, unsigned int len)
 {
-	//printf("mfilter_rcptto: %s\n", to);
+	//TODO:
 }
 
 void mfilter_data(void * filter, const char* from, unsigned int len)
 {
-	//printf("mfilter_data: %d\n", len);
+	//TODO:
 }
 
 void mfilter_result(void * filter, int* isjunk)
@@ -75,6 +78,7 @@ void mfilter_result(void * filter, int* isjunk)
 
 void mfilter_exit(void * filter)
 {
+    //TODO:
 	MailFilter * tfilter = (MailFilter *)filter;
 	if(tfilter->fLog)
 		fclose(tfilter->fLog);
@@ -83,6 +87,5 @@ void mfilter_exit(void * filter)
 		sem_close(tfilter->semLog);
 		
 	delete filter;
-	//printf("mfilter_exit\n");
 }
 

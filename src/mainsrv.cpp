@@ -1,3 +1,7 @@
+/*
+	Copyright (c) openheap, uplusware
+	uplusware@gmail.com
+*/
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/types.h>
@@ -26,7 +30,7 @@
 #include <iterator>
 #include <streambuf>
 #include <semaphore.h>
-#include "spool.h"
+#include "mta.h"
 #include "util/qp.h"
 #include "base.h"
 #include "fstring.h"
@@ -244,32 +248,32 @@ int Run()
 		}
 		
 		//Relay service
-		int spool_pids;
+		int mta_pids;
 		pipe(pfd);
-		spool_pids = fork();
-		if(spool_pids == 0)
+		mta_pids = fork();
+		if(mta_pids == 0)
 		{
 			char szFlag[128];
-			sprintf(szFlag, "/tmp/erisemail/%s.pid", SVR_NAME_TBL[stSPOOL]);
+			sprintf(szFlag, "/tmp/erisemail/%s.pid", SVR_NAME_TBL[stMTA]);
 			if(check_single_on(szFlag) )   
 			{   
-				printf("%s is aready runing.\n", SVR_DESP_TBL[stSPOOL]);   
+				printf("%s is aready runing.\n", SVR_DESP_TBL[stMTA]);   
 				exit(-1);  
 			}
 			
 			close(pfd[0]);	
 			daemon_init();
-			Spool spool;
-			spool.Run(pfd[1]);
+			MTA mta;
+			mta.Run(pfd[1]);
 			exit(0);
 		}
-		else if(spool_pids > 0)
+		else if(mta_pids > 0)
 		{
 			unsigned int result;
 			close(pfd[1]);
 			read(pfd[0], &result, sizeof(unsigned int));
 			if(result == 0)
-				printf("Start MTA Service OK \t\t\t[%u]\n", spool_pids);
+				printf("Start MTA Service OK \t\t\t[%u]\n", mta_pids);
 			else
 			{
 				uTrace.Write(Trace_Error, "%s", "Start MTA Service Failed.");
@@ -347,8 +351,8 @@ static int Stop()
 	Service http_svr(stHTTP);
 	http_svr.Stop();	
 	
-	Spool spool_svr;
-	spool_svr.Stop();
+	MTA mta_svr;
+	mta_svr.Stop();
 }
 
 static void Version()
@@ -372,8 +376,8 @@ static int Reload()
 	Service http_svr(stHTTP);
 	http_svr.ReloadConfig();
 	
-	Spool spool_svr;
-	spool_svr.ReloadConfig();
+	MTA mta_svr;
+	mta_svr.ReloadConfig();
 }
 
 static int processcmd(const char* cmd, const char* conf, const char* permit, const char* reject, const char* domain, const char* webadmin)
@@ -439,14 +443,14 @@ static int processcmd(const char* cmd, const char* conf, const char* permit, con
 			printf("%s stopped.\n", SVR_DESP_TBL[stHTTP]);   
 		}
 
-		sprintf(szFlag, "/tmp/erisemail/%s.pid", SVR_NAME_TBL[stSPOOL]);
+		sprintf(szFlag, "/tmp/erisemail/%s.pid", SVR_NAME_TBL[stMTA]);
 		if(check_single_on(szFlag) )   
 		{   
-			printf("%s is runing.\n", SVR_DESP_TBL[stSPOOL]);   
+			printf("%s is runing.\n", SVR_DESP_TBL[stMTA]);   
 		}
 		else
 		{
-			printf("%s stopped.\n", SVR_DESP_TBL[stSPOOL]);   
+			printf("%s stopped.\n", SVR_DESP_TBL[stMTA]);   
 		}
 		
 	}

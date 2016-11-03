@@ -1,3 +1,8 @@
+/*
+	Copyright (c) openheap, uplusware
+	uplusware@gmail.com
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "storage.h"

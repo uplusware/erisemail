@@ -1,3 +1,8 @@
+/*
+	Copyright (c) openheap, uplusware
+	uplusware@gmail.com
+*/
+
 #ifndef _MAILSYS_H_
 #define _MAILSYS_H_
 
@@ -152,7 +157,7 @@ typedef struct
 	unsigned char cmd;
 	union
 	{
-		char spool_uid[256];
+		char mta_uid[256];
 		char reject_ip[256];
 	} data;
 }stQueueMsg;
@@ -913,22 +918,19 @@ BOOL inline create_ssl(int sockfd,
     return TRUE;
 
 clean_ssl1:
-    //printf("clean ssl1\n");
-	if(*pp_ssl && bSSLAccepted)
+    if(*pp_ssl && bSSLAccepted)
     {
 		SSL_shutdown(*pp_ssl);
         bSSLAccepted = FALSE;
     }
 clean_ssl2:
-    //printf("clean ssl2\n");
-	if(*pp_ssl)
+    if(*pp_ssl)
     {
 		SSL_free(*pp_ssl);
         *pp_ssl = NULL;
     }
 clean_ssl3:
-    //printf("clean ssl3\n");
-	if(*pp_ssl_ctx)
+    if(*pp_ssl_ctx)
     {
 		SSL_CTX_free(*pp_ssl_ctx);
         *pp_ssl_ctx = NULL;
@@ -942,12 +944,10 @@ BOOL inline close_ssl(SSL* p_ssl, SSL_CTX* p_ssl_ctx)
     {
 		SSL_shutdown(p_ssl);
         SSL_free(p_ssl);
-        //printf("free ssl\n");
     }
 	if(p_ssl_ctx)
     {
 		SSL_CTX_free(p_ssl_ctx);
-        //printf("free ssl ctx\n");
     }
 }
 #endif /* _MAILSYS_H_ */
