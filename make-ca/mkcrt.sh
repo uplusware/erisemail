@@ -1,4 +1,8 @@
 #!/bin/bash
+#
+#	Copyright (c) openheap, uplusware
+#	uplusware@gmail.com
+#
 _PASSWORD_=123456
 _COUNTRY_="CN"
 _ST_="BJ"

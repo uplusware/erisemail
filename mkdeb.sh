@@ -1,5 +1,8 @@
 #!/bin/bash
-
+#
+#	Copyright (c) openheap, uplusware
+#	uplusware@gmail.com
+#
 if [ $# = 3 ]
 then
 	echo $2

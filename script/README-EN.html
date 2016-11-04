@@ -2,70 +2,15 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<title>eRisemail server readme</title>
-<style type="text/css">
-<!--
-body {
-	font-family: "Times New Roman", "Times", "serif";
-	font-size: 16px;
-}
-a:link {
-	font-style: normal;
-	color: #FF0000;
-	text-decoration: underline;
-}
-a:hover {
-	color: #0000FF;
-	font-style: normal;
-	font-weight: bold;
-}
-a:visited {
-	color: #FF0000;
-}
-a:active {
-	color: #0000FF;
-}
-table {
-	font-size: 16px;
-	border: none;
-}
-h1 {
-	font-size: 36px;
-}
-h2 {
-	font-size: 24px;
-}
-h3 {
-	font-size: 18px;
-}
-td {
-	border: 1px solid #999999;
-}
-.STYLE2 {
-	color: #FF0000;
-	font-weight: bold;
-}
-.STYLE3 {
-	color: #0000FF;
-	font-weight: bold;
-}
-.STYLE4 {font-family: "Book Antiqua"}
-.STYLE5 {
-	color: #0000FF;
-	font-style: italic;
-	font-weight: bold;
-}
-.STYLE7 {color: #FF0000}
-.STYLE8 {color: #0000FF}
--->
-</style>
+<title>eRisemail Server 1.6.08 Manual</title>
+
 </head>
 
 <body>
-<h1 class="STYLE4">eRisemail Server v1.6.08 Manual</h1>
+<h1>eRisemail Server v1.6.08 Manual</h1>
 <hr>
-<h2 class="STYLE4">About eRisemail server</h2>
-<ul class="STYLE4">
+<h2>About eRisemail server</h2>
+<ul>
   <li>Free e-mail server which supports Linux</li>
   <li>Independently develop, not integrate with any third party systems. Easy installation and configuration, but powerful function. </li>
   <li>Support GB2312, UTF-8 and UCS2 Format </li>
@@ -80,16 +25,16 @@ td {
   <li>Storage is based on MariaDB. So it's easy to maintain and backup mail data via scripts. </li>
   <li class="STYLE3">The best selection for small and medium-sized E-mail application. </li>
   <li>Recommend <em>to</em> install the sytem at <strong><em>Ubutun or CentOS</em></strong></li>
-  <li>The lastest version can be get at <a href="http://uplusware.com" target="_blank">uplusware.com</a></li>
+  <li>The lastest version can be get at <a href="http://uplusware.org" target="_blank">http://uplusware.org</a></li>
   <li>Any question please mail to <a href="mailto:uplusware@gmail.com">uplusware@gmail.com</a>  </li>
 </ul>
-<h2 class="STYLE4">New Installation</h2>
-<blockquote class="STYLE4"> 
+<h2>New Installation</h2>
+<blockquote> 
   <h3>Step 1:</h3>
   <ul>
-    <li>Prepare the of <em>MySQL Client Library</em> and <em>MySQL Server</em>.</li>
+    <li>Prepare the of <em>MySQL/MariaDB Client Library</em> and <em>MySQL/MariaDB Server</em>.</li>
     <li>Recommend to change the value of <font color="#0000FF">max_connections</font> 
-      in <font color="#0000FF">/etc/mysql/my.cnf </font>according your requirement.)
+      in <font color="#0000FF">/etc/MySQL/MariaDB/my.cnf </font>according your requirement.)
 	</li>
     <li>Copy the program to local system.
       <ul>
@@ -126,8 +71,8 @@ td {
     <li> If you want to delete the installation files, please backup the <strong><em>uninstall.sh</em></strong></li>
   </ul>
 </blockquote>
-<h2 class="STYLE4">Uninstallation</h2>
-<ul class="STYLE4">
+<h2>Uninstallation</h2>
+<ul>
   <li>if you want to delete the database of erisemail, please run<em><font color="#0000FF"><strong> 
     ./eriseutil --uninstall</strong></font></em>.  </li>
   <li>Remove the program from system. Same as installation, two ways are provided.
@@ -137,12 +82,12 @@ td {
     </ul>
   </li>
 </ul>
-<h2 class="STYLE4">Introducation of erisemail.conf<a name="erisemail_conf" id="erisemail_conf"></a></h2>
-<blockquote class="STYLE4"> 
+<h2>Introducation of erisemail.conf<a name="erisemail_conf" id="erisemail_conf"></a></h2>
+<blockquote> 
   <table width="1000" border="1" cellpadding="2" cellspacing="2">
     <tr> 
       <td align="right"><strong>Encoding</strong></td>
-      <td><p>The encoding way of storage in MySQL(just only support GB2312, UTF-8 and UCS2)，and the default value is UTF-8.</p>
+      <td><p>The encoding way of storage in MySQL/MariaDB(just only support GB2312, UTF-8 and UCS2)，and the default value is UTF-8.</p>
       <p><span class="STYLE2">Please don't change this key's value after installing database of eRisemail</span> （after running <strong><font color="#0000FF"><em>sudo eriseutil --install</em></font></strong>）</p>
       <p>If need change this key's value, please convert the HTML files to corresponding format via tools and modify the charset in all HTML files' content before installing the eRisemail database.</p>
       <p>&lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html; charset=<span class="STYLE7"><strong>[GB2312|UTF-8|UCS2]</strong></span>&quot; /&gt;</p></td>
@@ -286,11 +231,11 @@ td {
     </tr>
     <tr> 
       <td align="right"><strong>DBHost</strong></td>
-      <td>the MySQL database server's hostname or ip</td>
+      <td>the MySQL/MariaDB database server's hostname or ip</td>
     </tr>
     <tr> 
       <td align="right"><strong>DBPort</strong></td>
-      <td>MySQL Server Port. 0 means to use Unix Socket for connection.</td>
+      <td>MySQL/MariaDB Server Port. 0 means to use Unix Socket for connection.</td>
     </tr>     
     <tr> 
       <td align="right"><strong>DBName</strong></td>
@@ -298,7 +243,7 @@ td {
     </tr>
     <tr> 
       <td align="right"><strong>DBUser</strong></td>
-      <td>the user of MySQL Server</td>
+      <td>the user of MySQL/MariaDB Server</td>
     </tr>
     <tr> 
       <td align="right"><strong>DBPassword</strong></td>
@@ -307,11 +252,11 @@ td {
     </tr>
     <tr> 
       <td height="42" align="right"><strong>DBSockFile</strong></td>
-      <td>MySQL Unix Socket File Path. Empty means to use TCP/IP for connection.</td>
+      <td>MySQL/MariaDB Unix Socket File Path. Empty means to use TCP/IP for connection.</td>
     </tr>
     <tr> 
       <td align="right"><strong>DBMaxConn</strong></td>
-      <td>The Maximum limited number of connection with MySQL for every service</td>
+      <td>The Maximum limited number of connection with MySQL/MariaDB for every service</td>
     </tr>
     <tr> 
       <td align="right"><strong>MEMCACHEDList</strong></td>
@@ -319,8 +264,8 @@ td {
     </tr>
   </table>
 </blockquote>
-<h2 class="STYLE4">Introducation of erisemail's tools</h2>
-<blockquote class="STYLE4"> 
+<h2>Introducation of erisemail's tools</h2>
+<blockquote> 
   <table width="1000" border="1" cellspacing="2" cellpadding="2">
     <tr> 
       <td width="24%" align="right"><strong>eriseadduser</strong></td>
@@ -395,47 +340,47 @@ td {
     </tr>
   </table>
 </blockquote>
-<h2 class="STYLE4">Introducation web components</h2>
-<blockquote class="STYLE4"> 
+<h2>Introducation web components</h2>
+<blockquote> 
   <ul>
     <li> Siance v1.3, the system has an embedded web server, and it both supports HTTP and HTTPS. So user no need 
       install and configuate any other web server</li>
     <li>Web management UI's Url: http://IP:port/admin</li>
   </ul>
 </blockquote>
-<h2 class="STYLE4">Introducation of <em> /var/log/erisemail/MTA-*.log</em></h2>
-<ul class="STYLE4">
+<h2>Introducation of <em> /var/log/erisemail/MTA-*.log</em></h2>
+<ul>
   <li>MTA access list named by date of each day</li>
   <li>User can refer the information of the log file to find out the IP which 
     should be appended in <strong><em>/etc/erisemail/reject.list</em></strong></li>
 </ul>
-<h2 class="STYLE4">Introducation of <em><strong> <em>/etc/erisemail/</em></strong>domain.list</em></h2>
-<ul class="STYLE4">
+<h2>Introducation of <em><strong> <em>/etc/erisemail/</em></strong>domain.list</em></h2>
+<ul>
   <li>Local domains list</li>
   <li>Support multiple domains, share account id, non-independed</li>
 </ul>
-<h2 class="STYLE4">Introducation of <em><strong> <em>/etc/erisemail/</em></strong>permit.list</em></h2>
-<ul class="STYLE4">
+<h2>Introducation of <em><strong> <em>/etc/erisemail/</em></strong>permit.list</em></h2>
+<ul>
   <li>User can add the permited IP(s) to the file. And can be used * to match 
     any substring.</li>
 </ul>
-<h2 class="STYLE4">Introducation of <em><strong> <em>/etc/erisemail/</em></strong>reject.list</em></h2>
-<blockquote class="STYLE4"> 
+<h2>Introducation of <em><strong> <em>/etc/erisemail/</em></strong>reject.list</em></h2>
+<blockquote> 
   <ul>
     <li>User can add the rejected IP(s) to the file. And can be used * to match 
       any substring. </li>
   </ul>
 </blockquote>
-<h2 class="STYLE4">Introducation of <em><strong> <em>/etc/erisemail/</em></strong>webadmin.list</em></h2>
-<blockquote class="STYLE4"> 
+<h2>Introducation of <em><strong> <em>/etc/erisemail/</em></strong>webadmin.list</em></h2>
+<blockquote> 
   <ul>
     <li>The list of IPs which can access the management web UI. And can be used 
       * to match any substring. </li>
   </ul>
 </blockquote>
 <hr>
-<span class="STYLE4"><br>
+<span><br>
 </span>
-<blockquote class="STYLE4">&nbsp;</blockquote>
+<blockquote>&nbsp;</blockquote>
 </body>
 </html>

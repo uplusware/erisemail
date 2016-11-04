@@ -2,65 +2,14 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<title>eRisemail server readme</title>
-<style type="text/css">
-<!--
-body {
-	font-family: "Times New Roman", "Times", "serif";
-	font-size: 16px;
-}
-a:link {
-	font-style: normal;
-	color: #FF0000;
-	text-decoration: underline;
-}
-a:hover {
-	color: #0000FF;
-	font-style: normal;
-	font-weight: bold;
-}
-a:visited {
-	color: #FF0000;
-}
-a:active {
-	color: #0000FF;
-}
-table {
-	font-size: 16px;
-	border: none;
-}
-h1 {
-	font-size: 36px;
-}
-h2 {
-	font-size: 24px;
-}
-h3 {
-	font-size: 18px;
-}
-td {
-	border: 1px solid #999999;
-}
-.STYLE2 {
-	color: #0000FF;
-	font-weight: bold;
-}
-.STYLE3 {font-family: "Book Antiqua"}
-.STYLE5 {	color: #0000FF;
-	font-style: italic;
-	font-weight: bold;
-}
-.STYLE7 {color: #FF0000}
-.STYLE8 {color: #0000FF}
--->
-</style>
+<title>eRisemail Server 1.6.08 安装使用手册</title>
 </head>
 
 <body>
-<h1 class="STYLE3"> eRisemail Server v1.6.08 安装使用手册</h1>
+<h1> eRisemail Server 1.6.08 安装使用手册</h1>
 <hr>
-<h2 class="STYLE3">关于 eRisemail server</h2>
-<ul class="STYLE3">
+<h2>关于 eRisemail server</h2>
+<ul>
   <li>支持Linux/Solaris的免费的邮件服务器</li>
   <li>完全自主开发，非第三方系统集成，所以安装配置过程简单，但功能强大 </li>
   <li>无需另外安装其他模块即可拥有邮件服务系统的全部功能 </li>
@@ -77,15 +26,15 @@ td {
   <li>数据存储基于MariaDB，很容易通过编写脚本程序维护备份系统数据 </li>
   <li class="STYLE2">部署中小规模邮件系统的最好选择 </li>
   <li>推荐安装OS: Ubutun或CentOS </li>
-  <li>官方发布网址 <a href="http://uplusware.com" target="_blank">uplusware.com</a></li>
-  <li>如有任何疑问请发信垂询<a href="mailto:erisesoft@gmail.com">uplusware@gmail.com</a></li>
+  <li>官方发布网址 <a href="http://uplusware.org" target="_blank">http://uplusware.org</a></li>
+  <li>如有任何疑问请发信垂询, <a href="mailto:erisesoft@gmail.com">uplusware@gmail.com</a></li>
 </ul>
-<h2 class="STYLE3">全新安装</h2>
-<blockquote class="STYLE3"> 
+<h2>全新安装</h2>
+<blockquote> 
   <h3>步骤 1:</h3>
   <ul>
-    <li>准备MySQL Server和客户端运行库.</li>
-    <li>建议根据您的需求修改<font color="#0000FF">max_connections </font>的值(<font color="#0000FF">/etc/mysql/my.cnf 
+    <li>准备MySQL/MariaDB Server和客户端运行库.</li>
+    <li>建议根据您的需求修改<font color="#0000FF">max_connections </font>的值(<font color="#0000FF">/etc/MySQL/MariaDB/my.cnf 
       </font>)</li>
     <li>安装系统程序:
       <ul>
@@ -117,8 +66,8 @@ td {
     <li> 为了以后卸载程序方便，请备份<strong><em>uninstall.sh</em></strong></li>
   </ul>
 </blockquote>
-<h2 class="STYLE3">卸载</h2>
-<ul class="STYLE3">
+<h2>卸载</h2>
+<ul>
   <li>如果您希望连数据库一起卸载请运行<em><font color="#0000FF"><strong> ./eriseutil --uninstall</strong></font></em>.（注意:以前的信件将全部丢失）</li>
   <li>删除程序：
     <ul>
@@ -126,8 +75,8 @@ td {
     </ul>
   </li>
 </ul>
-<h2 class="STYLE3">Introducation of erisemail.conf<a name="erisemail_conf"></a></h2>
-<blockquote class="STYLE3"> 
+<h2>Introducation of erisemail.conf<a name="erisemail_conf"></a></h2>
+<blockquote> 
   <table width="1000" border="1" cellspacing="2" cellpadding="2">
     <tr> 
       <td align="right"><strong>Encoding</strong></td>
@@ -271,11 +220,11 @@ td {
     </tr>
     <tr> 
       <td align="right"><strong>DBHost</strong></td>
-      <td>MySQL Server机器名或者IP</td>
+      <td>MySQL/MariaDB Server机器名或者IP</td>
     </tr>
     <tr> 
       <td align="right"><strong>DBPort</strong></td>
-      <td>MySQL Server 服务端口号. 0表示使用Unix Socket连接数据库</td>
+      <td>MySQL/MariaDB Server 服务端口号. 0表示使用Unix Socket连接数据库</td>
     </tr>    
     <tr> 
       <td height="23" align="right"><strong>DBName</strong></td>
@@ -283,20 +232,20 @@ td {
     </tr>
     <tr> 
       <td align="right"><strong>DBUser</strong></td>
-      <td>MySQL Server用户名</td>
+      <td>MySQL/MariaDB Server用户名</td>
     </tr>
     <tr> 
       <td height="42" align="right"><strong>DBPassword</strong></td>
-      <td>MySQL Server用户名的密码(为了安全请用以下命令加密&quot;<font color="#0000FF">eriseutil 
+      <td>MySQL/MariaDB Server用户名的密码(为了安全请用以下命令加密&quot;<font color="#0000FF">eriseutil 
         --encode [password]</font>&quot;)</td>
     </tr>
     <tr> 
       <td height="42" align="right"><strong>DBSockFile</strong></td>
-      <td>MySQL Unix Socket 文件路径. 空表示使用TCP/IP连接数据库</td>
+      <td>MySQL/MariaDB Unix Socket 文件路径. 空表示使用TCP/IP连接数据库</td>
     </tr>
     <tr> 
       <td align="right"><strong>DBMaxConn</strong></td>
-      <td>每个服务与MySQL最大连接限制数</td>
+      <td>每个服务与MySQL/MariaDB最大连接限制数</td>
     </tr>
     <tr> 
       <td align="right"><strong>MEMCACHEDList</strong></td>
@@ -304,8 +253,8 @@ td {
     </tr>
   </table>
 </blockquote>
-<h2 class="STYLE3">Introducation of erisemail's tools</h2>
-<blockquote class="STYLE3"> 
+<h2>Introducation of erisemail's tools</h2>
+<blockquote> 
   <table width="1000" border="1" cellspacing="2" cellpadding="2">
     <tr> 
       <td width="24%" align="right"><strong>eriseadduser</strong></td>
@@ -378,47 +327,47 @@ td {
     </tr>
   </table>
 </blockquote>
-<h2 class="STYLE3">web访问模式</h2>
-<blockquote class="STYLE3"> 
+<h2>web访问模式</h2>
+<blockquote> 
   <ul>
     <li>从v1.3版本开始，系统嵌入了一个web服务器，支持HTTP和HTTPS协议，所以无需安装其他web服务程序即可支持WebMail和WebMan系统</li>
     <li>Web管理界面的Url: http://ip:port/admin</li>
   </ul>
 </blockquote>
-<h2 class="STYLE3">MTA访问记录<em> /var/log/erisemail/MTA-*.log</em></h2>
-<blockquote class="STYLE3">
+<h2>MTA访问记录<em> /var/log/erisemail/MTA-*.log</em></h2>
+<blockquote>
   <ul>
     <li>MTA访问记录，用户可以参考此日志信息找出垃圾邮件源IP或者恶意访问IP</li>
   </ul>
 </blockquote>
-<h2 class="STYLE3">邮件允许域列表<em><strong> <em>/etc/erisemail/</em></strong>domain.list</em></h2>
-<blockquote class="STYLE3">
+<h2>邮件允许域列表<em><strong> <em>/etc/erisemail/</em></strong>domain.list</em></h2>
+<blockquote>
   <ul>
     <li>本地域列表</li>
     <li>支持多域（共享账号模式，非独立账号模式）</li>
   </ul>
 </blockquote>
-<h2 class="STYLE3">白名单 <em><strong> <em>/etc/erisemail/</em></strong>permit.list</em></h2>
-<blockquote class="STYLE3">
+<h2>白名单 <em><strong> <em>/etc/erisemail/</em></strong>permit.list</em></h2>
+<blockquote>
 <ul>
     <li>允许访问的的IP表</li>
 </ul>
 </blockquote>
-<h2 class="STYLE3">黑名单<em><strong> <em>/etc/erisemail/</em></strong>reject.list</em></h2>
-<blockquote class="STYLE3">
+<h2>黑名单<em><strong> <em>/etc/erisemail/</em></strong>reject.list</em></h2>
+<blockquote>
   <ul>
     <li>拒绝访问的IP表</li>
   </ul>
 </blockquote>
-<h2 class="STYLE3">Web管理允许IP列表<em><strong> <em>/etc/erisemail/</em></strong>webadmin.list</em></h2>
-<blockquote class="STYLE3">
+<h2>Web管理允许IP列表<em><strong> <em>/etc/erisemail/</em></strong>webadmin.list</em></h2>
+<blockquote>
   <ul>
     <li>允许访问web后台的的IP列表</li>
     <li>空为不限制</li>
   </ul>
 </blockquote>
 <hr>
-<p class="STYLE3"><br>
+<p><br>
 </p>
 </body>
 </html>

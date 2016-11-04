@@ -1,5 +1,6 @@
 /*
-	Copyright (c) erisesoft
+	Copyright (c) openheap, uplusware
+	uplusware@gmail.com
 */
 
 #ifndef _ANTIJUNK_H_
