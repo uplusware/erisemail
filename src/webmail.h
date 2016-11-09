@@ -7500,7 +7500,7 @@ public:
 			strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
 			if(strConfigName == "GLOBAL_REJECT_LIST")
 			{
-				sem_t* plock = sem_open("/.GLOBAL_REJECT_LIST.sem", O_CREAT | O_RDWR, 0644, 1);
+				sem_t* plock = sem_open("/.ERISEMAIL_GLOBAL_REJECT_LIST.sem", O_CREAT | O_RDWR, 0644, 1);
 				if(plock != SEM_FAILED)
 					sem_wait(plock);
 				
@@ -7533,7 +7533,7 @@ public:
 			}
 			else if(strConfigName == "GLOBAL_PERMIT_LIST")
 			{
-				sem_t* plock = sem_open("/.GLOBAL_PERMIT_LIST.sem", O_CREAT | O_RDWR, 0644, 1);
+				sem_t* plock = sem_open("/.ERISEMAIL_GLOBAL_PERMIT_LIST.sem", O_CREAT | O_RDWR, 0644, 1);
 				if(plock != SEM_FAILED)
 					sem_wait(plock);
 				
@@ -7742,7 +7742,7 @@ public:
 				else if(strcasecmp(CMailBase::m_encoding.c_str(), "UCS2") == 0)
 					utf8_to_ucs2_ex(strText.c_str(), strText);
 				*/
-				sem_t* plock = sem_open("/.GLOBAL_REJECT_LIST.sem", O_CREAT | O_RDWR, 0644, 1);
+				sem_t* plock = sem_open("/.ERISEMAIL_GLOBAL_REJECT_LIST.sem", O_CREAT | O_RDWR, 0644, 1);
 				if(plock != SEM_FAILED)
 					sem_wait(plock);
 				
@@ -7791,7 +7791,7 @@ public:
 				else if(strcasecmp(CMailBase::m_encoding.c_str(), "UCS2") == 0)
 					utf8_to_ucs2_ex(strText.c_str(), strText);
 				*/
-				sem_t* plock = sem_open("/.GLOBAL_PERMIT_LIST.sem", O_CREAT | O_RDWR, 0644, 1);
+				sem_t* plock = sem_open("/.ERISEMAIL_GLOBAL_PERMIT_LIST.sem", O_CREAT | O_RDWR, 0644, 1);
 				if(plock != SEM_FAILED)
 					sem_wait(plock);
 				

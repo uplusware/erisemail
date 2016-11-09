@@ -522,7 +522,7 @@ BOOL CMailBase::LoadConfig()
 		{
 			stReject sr;
 			sr.ip = strline;
-			sr.expire = 0xFFFFFFFF;
+			sr.expire = 0xFFFFFFFFU;
 			m_reject_list.push_back(sr);
 		}
 	}
@@ -566,7 +566,7 @@ BOOL CMailBase::LoadList()
 	sem_t* plock = NULL;
 	///////////////////////////////////////////////////////////////////////////////
 	// GLOBAL_REJECT_LIST
-	plock = sem_open("/.GLOBAL_REJECT_LIST.sem", O_CREAT | O_RDWR, 0644, 1);
+	plock = sem_open("/.ERISEMAIL_GLOBAL_REJECT_LIST.sem", O_CREAT | O_RDWR, 0644, 1);
 	if(plock != SEM_FAILED)
 	{
 		sem_wait(plock);
@@ -590,7 +590,7 @@ BOOL CMailBase::LoadList()
 	}
 	/////////////////////////////////////////////////////////////////////////////////
 	// GLOBAL_PERMIT_LIST
-	plock = sem_open("/.GLOBAL_PERMIT_LIST.sem", O_CREAT | O_RDWR, 0644, 1);
+	plock = sem_open("/.ERISEMAIL_GLOBAL_PERMIT_LIST.sem", O_CREAT | O_RDWR, 0644, 1);
 	if(plock != SEM_FAILED)
 	{
 		sem_wait(plock);
@@ -609,7 +609,7 @@ BOOL CMailBase::LoadList()
 			{
 				stReject sr;
 				sr.ip = strline;
-				sr.expire = 0xFFFFFFFF;
+				sr.expire = 0xFFFFFFFFU;
 				m_reject_list.push_back(sr);
 			}
 		}
