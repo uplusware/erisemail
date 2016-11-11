@@ -1559,7 +1559,7 @@ void CMailImap::On_Append(char* text)
 			status |= MSG_ATTR_RECENT;
 		}
 		char newuid[256];
-		sprintf(newuid, "%08x_%08x_%016lx_%08x", time(NULL), getpid(), pthread_self(), random());
+		sprintf(newuid, "%08x_%08x_%016lx_%08x_%s", time(NULL), getpid(), pthread_self(), random(), m_localhostname.c_str());
 
 		//printf("%s\r\n", newuid);
 		int DirID;
@@ -4088,7 +4088,7 @@ int CMailImap::Copy(const char* szArg, BOOL isUID)
 			if(((isUID ? m_maillisttbl[x].mid : x + 1) >= nBegin) && ((isUID ? m_maillisttbl[x].mid : x + 1) <= nEnd))
 			{
 				char newuid[256];
-				sprintf(newuid, "%08x_%08x_%016lx_%08x", time(NULL), getpid(), pthread_self(), random());
+				sprintf(newuid, "%08x_%08x_%016lx_%08x_%s", time(NULL), getpid(), pthread_self(), random(), m_localhostname.c_str());
 				
 				unsigned long long usermaxsize;
 				if(mailStg->GetUserSize(m_username.c_str(), usermaxsize) == -1)

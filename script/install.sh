@@ -36,6 +36,7 @@ test -x /var/erisemail/private/eml || mkdir /var/erisemail/private/eml
 test -x /var/erisemail/private/tmp || mkdir /var/erisemail/private/tmp
 test -x /var/erisemail/private/cal || mkdir /var/erisemail/private/cal
 test -x /var/erisemail/private/box || mkdir /var/erisemail/private/box
+test -x /var/erisemail/private/cache || mkdir /var/erisemail/private/cache
 
 cp -rf ${path}/html/* /var/erisemail/html/ 
 

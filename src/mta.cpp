@@ -48,7 +48,7 @@ static BOOL ReturnMail(MailStorage* mailStg, memcached_st * memcached,
 	string strRcptTo = mail_from;
 
 	char szUid[1024];
-	sprintf(szUid, "%08x_%08x_%016lx_%08x", time(NULL), getpid(), pthread_self(), random());
+	sprintf(szUid, "%08x_%08x_%016lx_%08x_%s", time(NULL), getpid(), pthread_self(), random(), CMailBase::m_localhostname.c_str());
 
 	string strtmp = "";
 
@@ -688,7 +688,7 @@ int MTA::Run(int fd)
 		stQueueMsg* pQMsg;
 		int rc;
 
-		thd_pool = new ThreadPool(CMailBase::m_relaytasknum, init_relay_handler, begin_relay_handler, NULL, exit_relay_handler);
+		thd_pool = new ThreadPool(CMailBase::m_mta_relaytasknum, init_relay_handler, begin_relay_handler, NULL, exit_relay_handler);
 
 		while(1)
 		{

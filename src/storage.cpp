@@ -1402,8 +1402,10 @@ int MailStorage::UpdateMailIndex(const char* mfrom, const char* mto, unsigned in
 	strTmp += strpath;
 	if(unlink(strTmp.c_str()) < 0)
 		return -1;
-
-	string strCache = strTmp;
+    
+    string strCache = m_private_path.c_str();
+	strCache += "/cache/";
+    strCache += strpath;
 	strCache += POSTFIX_CACHE;
 	unlink(strCache.c_str());
 	
@@ -2501,8 +2503,10 @@ int MailStorage::ShitDelMail(int mid)
 		strTmp += "/eml/";
 		strTmp += mailpath;
 		unlink(strTmp.c_str());
-
-		string strCache = strTmp;
+        
+        string strCache = m_private_path.c_str();
+		strCache += "/cache/";
+		strCache += mailpath;        
 		strCache += POSTFIX_CACHE;
 		unlink(strCache.c_str());
 	

@@ -84,7 +84,7 @@ int Run()
 			daemon_init();
 			Service smtp_svr(stSMTP);
 			smtp_svr.Run(pfd[1], CMailBase::m_hostip.c_str(),
-                (unsigned short)CMailBase::m_smtpport,
+                CMailBase::m_enablesmtp ? (unsigned short)CMailBase::m_smtpport : 0,
                 CMailBase::m_enablesmtps ? (unsigned short)CMailBase::m_smtpsport : 0);
 
 			exit(0);
@@ -247,45 +247,48 @@ int Run()
 			}
 		}
 		
-		//Relay service
-		int mta_pids;
-		pipe(pfd);
-		mta_pids = fork();
-		if(mta_pids == 0)
-		{
-			char szFlag[128];
-			sprintf(szFlag, "/tmp/erisemail/%s.pid", SVR_NAME_TBL[stMTA]);
-			if(check_single_on(szFlag) )   
-			{   
-				printf("%s is aready runing.\n", SVR_DESP_TBL[stMTA]);   
-				exit(-1);  
-			}
-			
-			close(pfd[0]);	
-			daemon_init();
-			MTA mta;
-			mta.Run(pfd[1]);
-			exit(0);
-		}
-		else if(mta_pids > 0)
-		{
-			unsigned int result;
-			close(pfd[1]);
-			read(pfd[0], &result, sizeof(unsigned int));
-			if(result == 0)
-				printf("Start MTA Service OK \t\t\t[%u]\n", mta_pids);
-			else
-			{
-				uTrace.Write(Trace_Error, "%s", "Start MTA Service Failed.");
-				printf("Start MTA Service Failed \t\t\t[Error]\n");
-			}
-			close(pfd[0]);
-		}
-		else
-		{
-			retVal = -1;
-			break;
-		}     
+        if(CMailBase::m_enablemta)
+        {
+            //Relay service
+            int mta_pids;
+            pipe(pfd);
+            mta_pids = fork();
+            if(mta_pids == 0)
+            {
+                char szFlag[128];
+                sprintf(szFlag, "/tmp/erisemail/%s.pid", SVR_NAME_TBL[stMTA]);
+                if(check_single_on(szFlag) )   
+                {   
+                    printf("%s is aready runing.\n", SVR_DESP_TBL[stMTA]);   
+                    exit(-1);  
+                }
+                
+                close(pfd[0]);	
+                daemon_init();
+                MTA mta;
+                mta.Run(pfd[1]);
+                exit(0);
+            }
+            else if(mta_pids > 0)
+            {
+                unsigned int result;
+                close(pfd[1]);
+                read(pfd[0], &result, sizeof(unsigned int));
+                if(result == 0)
+                    printf("Start MTA Service OK \t\t\t[%u]\n", mta_pids);
+                else
+                {
+                    uTrace.Write(Trace_Error, "%s", "Start MTA Service Failed.");
+                    printf("Start MTA Service Failed \t\t\t[Error]\n");
+                }
+                close(pfd[0]);
+            }
+            else
+            {
+                retVal = -1;
+                break;
+            }     
+        }
 		//Watch Dog
 		int watchdog_pids;
 		pipe(pfd);

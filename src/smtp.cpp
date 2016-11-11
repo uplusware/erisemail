@@ -1313,7 +1313,7 @@ void CMailSmtp::On_Data_Handler(char* text)
 		strcut(m_letter_obj_vector[x]->letter_info.mail_to.c_str(),"@", NULL, rcptto_domain);
 		unsigned int mstatus = MSG_ATTR_RECENT;
 
-		sprintf(uid, "%08x_%08x_%016lx_%08x", time(NULL), getpid(), pthread_self(), random());
+		sprintf(uid, "%08x_%08x_%016lx_%08x_%s", time(NULL), getpid(), pthread_self(), random(), m_localhostname.c_str());
 		
 		if(CMailBase::Is_Local_Domain(rcptto_domain.c_str()))
 		{

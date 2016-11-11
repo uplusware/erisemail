@@ -281,7 +281,8 @@ protected:
 	
 	unsigned int m_real_size;
 	
-	string m_tmpfile;
+    string m_eml_cache_full_path;
+	string m_eml_full_path;
 	string m_emlfile;
 	
 	string m_uid;
@@ -327,9 +328,9 @@ public:
 		return m_letterSummary;
 	}
 	
-	const char* GetFileName()
+	const char* GetEmlFullPath()
 	{
-		return m_tmpfile.c_str();
+		return m_eml_full_path.c_str();
 	}
 
 	const char* GetEmlName()

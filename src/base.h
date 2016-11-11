@@ -590,6 +590,7 @@ public:
 	static string	m_dns_server;
 	static map<string, int> m_memcached_list;
 	
+    static BOOL m_enablesmtp;
 	static unsigned short	m_smtpport;
 	static BOOL		m_enablesmtptls;
 	static BOOL		m_enablerelay;
@@ -634,7 +635,9 @@ public:
 	static string	m_db_password;
     static string	m_db_sock_file;
 	static unsigned int m_db_max_conn;
-	static unsigned int 	m_relaytasknum;
+    
+    static BOOL m_enablemta;
+	static unsigned int 	m_mta_relaytasknum;
 	
 	static BOOL		m_enablesmtphostnamecheck;
 	static unsigned int	m_connect_num;

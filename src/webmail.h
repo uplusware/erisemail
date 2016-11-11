@@ -3659,7 +3659,7 @@ public:
 					strcut(mailaddr.c_str(), NULL, "@", id);
 					if(m_mailStg && m_mailStg->VerifyUser(id.c_str()) == 0)
 					{
-						sprintf(newuid, "%08x_%08x_%016lx_%08x", time(NULL), getpid(), pthread_self(), random());
+						sprintf(newuid, "%08x_%08x_%016lx_%08x_%s", time(NULL), getpid(), pthread_self(), random(), CMailBase::m_localhostname.c_str());
 						int DirID;
 						m_mailStg->GetInboxID(id.c_str(), DirID);
 						unsigned int mstatus = MSG_ATTR_RECENT;
@@ -3702,7 +3702,7 @@ public:
 				}
 				else
 				{
-					sprintf(newuid, "%08x_%08x_%016lx_%08x", time(NULL), getpid(), pthread_self(), random());
+					sprintf(newuid, "%08x_%08x_%016lx_%08x_%s", time(NULL), getpid(), pthread_self(), random(), CMailBase::m_localhostname.c_str());
 					int DirID;
 					m_mailStg->GetInboxID(id.c_str(), DirID);
 					unsigned int mstatus = MSG_ATTR_RECENT;
@@ -4259,7 +4259,7 @@ public:
 				{
 					
 					char newuid[256];
-					sprintf(newuid, "%08x_%08x_%016lx_%08x", time(NULL), getpid(), pthread_self(), random());
+					sprintf(newuid, "%08x_%08x_%016lx_%08x_%s", time(NULL), getpid(), pthread_self(), random(), CMailBase::m_localhostname.c_str());
 					
 					unsigned long long usermaxsize;
 					if(m_mailStg && m_mailStg->GetUserSize(username.c_str(), usermaxsize) == -1)
@@ -4421,7 +4421,7 @@ public:
 				{
 					
 					char newuid[256];
-					sprintf(newuid, "%08x_%08x_%016lx_%08x", time(NULL), getpid(), pthread_self(), random());
+					sprintf(newuid, "%08x_%08x_%016lx_%08x_%s", time(NULL), getpid(), pthread_self(), random(), CMailBase::m_localhostname.c_str());
 					
 					unsigned long long usermaxsize;
 					if(m_mailStg && m_mailStg->GetUserSize(username.c_str(), usermaxsize) == -1)
@@ -4946,7 +4946,7 @@ public:
 					unsigned int mstatus;
 					
 					char newuid[256];
-					sprintf(newuid, "%08x_%08x_%016lx_%08x", time(NULL), getpid(), pthread_self(), random());
+					sprintf(newuid, "%08x_%08x_%016lx_%08x_%s", time(NULL), getpid(), pthread_self(), random(), CMailBase::m_localhostname.c_str());
 					
 					unsigned long long usermaxsize;
 					if(m_mailStg && m_mailStg->GetUserSize(username.c_str(), usermaxsize) == -1)
@@ -6138,7 +6138,7 @@ public:
 			*/
 			
 			char newuid[256];
-			sprintf(newuid, "%08x_%08x_%016lx_%08x", time(NULL), getpid(), pthread_self(), random());
+			sprintf(newuid, "%08x_%08x_%016lx_%08x_%s", time(NULL), getpid(), pthread_self(), random(), CMailBase::m_localhostname.c_str());
 			int DraftID;
 			if(strDraftID == "")
 				DraftID = -1;
@@ -6394,14 +6394,8 @@ public:
 
 			code_convert_ex("UTF-8", CMailBase::m_encoding.c_str(), strAttachFiles.c_str(), strAttachFiles);
 			
-			/*
-			if(strcasecmp(CMailBase::m_encoding.c_str(), "GB2312") == 0)
-				utf8_to_gb2312_ex(strAttachFiles.c_str(), strAttachFiles);
-			else if(strcasecmp(CMailBase::m_encoding.c_str(), "UCS2") == 0)
-				utf8_to_ucs2_ex(strAttachFiles.c_str(), strAttachFiles);
-			*/
 			char newuid[256];
-			sprintf(newuid, "%08x_%08x_%016lx_%08x", time(NULL), getpid(), pthread_self(), random());
+			sprintf(newuid, "%08x_%08x_%016lx_%08x_%s", time(NULL), getpid(), pthread_self(), random(), CMailBase::m_localhostname.c_str());
 			int DraftID;
 			if(strDraftID == "")
 				DraftID = -1;
@@ -8348,7 +8342,7 @@ public:
 			strResp += szTmp;
 			strResp += "</MaxConnPerProtocal>";
 			
-			sprintf(szTmp, "%d", CMailBase::m_relaytasknum);
+			sprintf(szTmp, "%d", CMailBase::m_mta_relaytasknum);
 			strResp += "<RelayTaskNum>";
 			strResp += szTmp;
 			strResp += "</RelayTaskNum>";

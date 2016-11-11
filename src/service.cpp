@@ -884,7 +884,7 @@ int WatchDog::Run(int fd)
             BOOL isRun = FALSE;
             char szFlag[128];
             sprintf(szFlag, "/tmp/erisemail/%s.pid", SVR_NAME_TBL[stSMTP]);
-            if(!try_single_on(szFlag))   
+            if(!try_single_on(szFlag)&& (CMailBase::m_enablesmtp || CMailBase::m_enablesmtps))   
             {
                 printf("%s stopped.\n", SVR_DESP_TBL[stSMTP]);
                 pipe(pfd);
@@ -904,7 +904,7 @@ int WatchDog::Run(int fd)
                         exit(-1);
                     }
                     smtp_svr.Run(pfd[1], CMailBase::m_hostip.c_str(),
-                        (unsigned short)CMailBase::m_smtpport,
+                        CMailBase::m_enablesmtp ? (unsigned short)CMailBase::m_smtpport : 0,
                         CMailBase::m_enablesmtps ? (unsigned short)CMailBase::m_smtpsport : 0);
                     exit(0);
                 }
@@ -924,7 +924,7 @@ int WatchDog::Run(int fd)
             }
             
             sprintf(szFlag, "/tmp/erisemail/%s.pid", SVR_NAME_TBL[stPOP3]);
-            if(!try_single_on(szFlag)  && (CMailBase::m_enablepop3 || CMailBase::m_enablepop3s))   
+            if(!try_single_on(szFlag) && (CMailBase::m_enablepop3 || CMailBase::m_enablepop3s))   
             {
                 printf("%s stopped.\n", SVR_DESP_TBL[stPOP3]);   
                 pipe(pfd);
@@ -1029,7 +1029,7 @@ int WatchDog::Run(int fd)
             }
             
             sprintf(szFlag, "/tmp/erisemail/%s.pid", SVR_NAME_TBL[stMTA]);
-            if(!try_single_on(szFlag))   
+            if(!try_single_on(szFlag) && CMailBase::m_enablemta)   
             {
                 printf("%s stopped.\n", SVR_DESP_TBL[stMTA]);   
                 int mta_pids;

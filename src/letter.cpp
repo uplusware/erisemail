@@ -20,8 +20,9 @@ MailLetter::MailLetter(const char* private_path, const char*  encoding, memcache
 	
 	m_att = laIn;	
 	m_LetterOk = FALSE;
-	m_tmpfile = "";
+	m_eml_full_path = "";
 	m_emlfile = "";
+    m_eml_cache_full_path = "";
 	
 	m_ofile = NULL;
 	m_body = NULL;
@@ -52,8 +53,10 @@ MailLetter::MailLetter(const char* private_path, const char*  encoding, memcache
     
 	m_att = laOut;
 	
-	m_tmpfile = "";
+	m_eml_full_path = "";
 	m_emlfile = "";
+    m_eml_cache_full_path = "";
+    
 	m_emlmapfd = -1;
 	m_LetterOk = TRUE;
 	m_ofile = NULL;
@@ -68,10 +71,15 @@ MailLetter::MailLetter(const char* private_path, const char*  encoding, memcache
 	m_emlfile = emlfile;
 	m_memcached = memcached;
 	
-	m_tmpfile = m_private_path.c_str();
-	m_tmpfile += "/eml/";
-	m_tmpfile += m_emlfile;
+	m_eml_full_path = m_private_path.c_str();
+	m_eml_full_path += "/eml/";
+	m_eml_full_path += m_emlfile;
 	
+    m_eml_cache_full_path = m_private_path.c_str();
+	m_eml_cache_full_path += "/cache/";
+	m_eml_cache_full_path += m_emlfile;
+    m_eml_cache_full_path += POSTFIX_CACHE;
+    
     memcached_return memc_rc;
     size_t memc_value_length;
     uint32_t memc_flags = 0;
@@ -80,7 +88,7 @@ MailLetter::MailLetter(const char* private_path, const char*  encoding, memcache
     if(m_memcached)
     {
         MD5_CTX context;
-        context.MD5Update ((unsigned char*)m_tmpfile.c_str(), m_tmpfile.length());
+        context.MD5Update ((unsigned char*)m_eml_full_path.c_str(), m_eml_full_path.length());
         unsigned char digest[16];
         context.MD5Final (digest);
         sprintf(szMD5dst,
@@ -102,7 +110,7 @@ MailLetter::MailLetter(const char* private_path, const char*  encoding, memcache
     }
     else
     {
-        m_emlmapfd = open(m_tmpfile.c_str(), O_RDONLY);
+        m_emlmapfd = open(m_eml_full_path.c_str(), O_RDONLY);
         
         if(m_emlmapfd > 0)
         {
@@ -116,19 +124,17 @@ MailLetter::MailLetter(const char* private_path, const char*  encoding, memcache
                 memc_rc = memcached_set(m_memcached, szMD5dst, 35, m_body, m_size, (time_t)0, (uint32_t)memc_flags);
                 /* if(memc_rc == MEMCACHED_SUCCESS)
                 {
-                    printf("set: %s %d\n", m_tmpfile.c_str(), m_size);
+                    printf("set: %s %d\n", m_eml_full_path.c_str(), m_size);
                 }*/
             }
         }
         else
         {
-            printf("Unable to open %s\r\n", m_tmpfile.c_str());
+            printf("Unable to open %s\r\n", m_eml_full_path.c_str());
         }
     }
-	string strSummaryPath = m_tmpfile;
-	strSummaryPath += POSTFIX_CACHE;
-		
-	if(access(strSummaryPath.c_str(), F_OK) != 0)
+	
+	if(access(m_eml_cache_full_path.c_str(), F_OK) != 0)
 	{
 		m_letterSummary = new LetterSummary(m_encoding.c_str(), m_memcached);
 		
@@ -146,7 +152,7 @@ MailLetter::MailLetter(const char* private_path, const char*  encoding, memcache
 			nParsed += (m_size - nParsed) > 1024 ? 1024 : (m_size - nParsed);
 		}
 		
-		m_letterSummary->setPath(strSummaryPath.c_str());
+		m_letterSummary->setPath(m_eml_cache_full_path.c_str());
 		
 		delete m_letterSummary;
 		m_letterSummary = NULL;
@@ -154,7 +160,7 @@ MailLetter::MailLetter(const char* private_path, const char*  encoding, memcache
 
 	m_ifilestream = NULL;
 	
-	m_letterSummary =  new LetterSummary(m_encoding.c_str(), strSummaryPath.c_str(), m_memcached);
+	m_letterSummary =  new LetterSummary(m_encoding.c_str(), m_eml_cache_full_path.c_str(), m_memcached);
 }
 
 MailLetter::~MailLetter()
@@ -185,7 +191,7 @@ int MailLetter::Line(string &strline)
 	{
 		if(!m_ifilestream)
 		{
-			 m_ifilestream = new ifstream(m_tmpfile.c_str(), ios_base::binary);
+			 m_ifilestream = new ifstream(m_eml_full_path.c_str(), ios_base::binary);
 		}
 		
 		void* rVal = NULL;
@@ -222,11 +228,16 @@ int MailLetter::Write(const char* buf, unsigned int len)
 
 		m_emlfile = emlfile;
 		
-		m_tmpfile = m_private_path;
-		m_tmpfile +="/eml/";
-		m_tmpfile += m_emlfile;
+		m_eml_full_path = m_private_path;
+		m_eml_full_path +="/eml/";
+		m_eml_full_path += m_emlfile;
 		
-		m_ofile = new ofstream(m_tmpfile.c_str(), ios_base::binary|ios::out|ios::trunc);			
+        m_eml_cache_full_path = m_private_path;
+		m_eml_cache_full_path += "/cache/";
+		m_eml_cache_full_path += m_emlfile;
+        m_eml_cache_full_path += POSTFIX_CACHE;
+        
+		m_ofile = new ofstream(m_eml_full_path.c_str(), ios_base::binary|ios::out|ios::trunc);			
 		if(m_ofile)
 		{		
 			if(!m_ofile->is_open())
@@ -297,9 +308,7 @@ void MailLetter::Close()
 				m_ofile->close();
 				if(m_LetterOk == TRUE)
 				{
-					string strSummaryPath = m_tmpfile;
-					strSummaryPath += POSTFIX_CACHE;
-					m_letterSummary->setPath(strSummaryPath.c_str());
+					m_letterSummary->setPath(m_eml_cache_full_path.c_str());
 				}
 			}
 		}
@@ -328,11 +337,11 @@ void MailLetter::Close()
 
 	if(m_LetterOk == FALSE && m_att == laIn) 
 	{
-		if(m_tmpfile != "")
+		if(m_eml_full_path != "")
 		{
-			unlink(m_tmpfile.c_str());
+			unlink(m_eml_full_path.c_str());
 		}
-		m_tmpfile = "";
+		m_eml_full_path = "";
 	}
 }
 

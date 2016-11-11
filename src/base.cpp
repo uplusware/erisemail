@@ -20,13 +20,14 @@ string CMailBase::m_private_path = "/var/erisemail/private";
 string CMailBase::m_html_path = "/var/erisemail/html";
 
 
-string CMailBase::m_localhostname = "mail.erisesoft.com";
+string CMailBase::m_localhostname = "mail";
 string CMailBase::m_email_domain = "erisesoft.com";
 string CMailBase::m_dns_server;
 string CMailBase::m_hostip;
 
 map<string, int> CMailBase::m_memcached_list;
 
+BOOL CMailBase::m_enablesmtp = TRUE;
 unsigned short CMailBase::m_smtpport = 110;
 BOOL CMailBase::m_enablesmtptls = FALSE;
 BOOL CMailBase::m_enablerelay = FALSE;
@@ -74,7 +75,8 @@ string CMailBase::m_db_sock_file = "/var/run/mysqld/mysqld.sock";
 
 unsigned int CMailBase::m_db_max_conn = MAX_STORAGE_CONN;
 
-unsigned int CMailBase::m_relaytasknum = 3;
+BOOL CMailBase::m_enablemta = TRUE;
+unsigned int CMailBase::m_mta_relaytasknum = 3;
 
 BOOL   CMailBase::m_enablesmtphostnamecheck = FALSE;
 unsigned int CMailBase::m_connect_num = 0;
@@ -200,6 +202,14 @@ BOOL CMailBase::LoadConfig()
 				strtrim(maxconn);
 				m_max_conn= atoi(maxconn.c_str());
 				//printf("%d\n", m_max_conn);
+			}
+            else if(strncasecmp(strline.c_str(), "EnableSMTP", strlen("EnableSMTP")) == 0)
+			{
+				string enable_smtp;
+				strcut(strline.c_str(), "=", NULL, enable_smtp );
+				strtrim(enable_smtp);
+				m_enablesmtp = (strcasecmp(enable_smtp.c_str(), "yes")) == 0 ? TRUE : FALSE;
+				//printf("%d\n", m_smtpport);
 			}
 			else if(strncasecmp(strline.c_str(), "SMTPPort", strlen("SMTPPort")) == 0)
 			{
@@ -451,12 +461,19 @@ BOOL CMailBase::LoadConfig()
 				m_db_max_conn = atoi(DBMaxConn.c_str());
 				//printf("%d\n", m_db_max_conn);
 			}
-			else if(strncasecmp(strline.c_str(), "RelayTaskNum", strlen("RelayTaskNum")) == 0)
+            else if(strncasecmp(strline.c_str(), "EnableMTA", strlen("EnableMTA")) == 0)
 			{
-				string relaytasknum;
-				strcut(strline.c_str(), "=", NULL, relaytasknum );
-				strtrim(relaytasknum);
-				m_relaytasknum = atoi(relaytasknum.c_str());
+				string enable_mta;
+				strcut(strline.c_str(), "=", NULL, enable_mta );
+				strtrim(enable_mta);
+				m_enablemta = (strcasecmp(enable_mta.c_str(), "yes")) == 0 ? TRUE : FALSE;
+			}
+			else if(strncasecmp(strline.c_str(), "MTARelayTaskNum", strlen("MTARelayTaskNum")) == 0)
+			{
+				string mta_relaytasknum;
+				strcut(strline.c_str(), "=", NULL, mta_relaytasknum );
+				strtrim(mta_relaytasknum);
+				m_mta_relaytasknum = atoi(mta_relaytasknum.c_str());
 			}
 			else if(strncasecmp(strline.c_str(), "SMTPHostNameCheck", strlen("SMTPHostNameCheck")) == 0)
 			{
