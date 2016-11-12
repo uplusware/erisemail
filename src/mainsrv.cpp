@@ -315,7 +315,9 @@ int Run()
 			close(pfd[1]);
 			read(pfd[0], &result, sizeof(unsigned int));
 			if(result == 0)
-				printf("Start Service Monitor OK \t\t[%u]\n", watchdog_pids);
+            {
+				/* printf("Start Service Monitor OK \t\t[%u]\n", watchdog_pids); */
+            }
 			else
 			{
 				uTrace.Write(Trace_Error, "%s", "Start Service Monitor Failed.");

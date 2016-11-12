@@ -798,7 +798,7 @@ void WatchDog::Stop()
 	if(m_watchdog_sid != SEM_FAILED)
 		sem_close(m_watchdog_sid);
 
-	printf("Stop Service Monitor OK\n");
+	/* printf("Stop Service Monitor OK\n"); */
 }
 
 int WatchDog::Run(int fd)

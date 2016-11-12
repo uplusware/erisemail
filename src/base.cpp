@@ -203,7 +203,7 @@ BOOL CMailBase::LoadConfig()
 				m_max_conn= atoi(maxconn.c_str());
 				//printf("%d\n", m_max_conn);
 			}
-            else if(strncasecmp(strline.c_str(), "EnableSMTP", strlen("EnableSMTP")) == 0)
+            else if(strncasecmp(strline.c_str(), "SMTPEnable", strlen("SMTPEnable")) == 0)
 			{
 				string enable_smtp;
 				strcut(strline.c_str(), "=", NULL, enable_smtp );
@@ -461,7 +461,7 @@ BOOL CMailBase::LoadConfig()
 				m_db_max_conn = atoi(DBMaxConn.c_str());
 				//printf("%d\n", m_db_max_conn);
 			}
-            else if(strncasecmp(strline.c_str(), "EnableMTA", strlen("EnableMTA")) == 0)
+            else if(strncasecmp(strline.c_str(), "MTAEnable", strlen("MTAEnable")) == 0)
 			{
 				string enable_mta;
 				strcut(strline.c_str(), "=", NULL, enable_mta );
