@@ -59,9 +59,6 @@ char PIDFILE[256] = "/tmp/erisemail/erisemaild.pid";
 
 int Run()
 {
-	CUplusTrace uTrace(LOGNAME, LCKNAME);
-	uTrace.Write(Trace_Msg, "%s", "Service starts");
-
 	int retVal = 0;
 	int smtp_pid = -1, pop3_pid = -1, imap_pid = -1, http_pid = -1;
 
@@ -99,7 +96,7 @@ int Run()
 				printf("Start SMTP Service OK \t\t\t[%u]\n", smtp_pid);
 			else
 			{
-				uTrace.Write(Trace_Msg, "%s", "Start SMTP Service Failed.");
+				
 				printf("Start SMTP Service Failed. \t\t\t[Error]\n");
 			}
 			close(pfd[0]);
@@ -143,7 +140,7 @@ int Run()
                         printf("Start POP3 Service OK \t\t\t[%u]\n", pop3_pid);
                     else
                     {
-                        uTrace.Write(Trace_Error, "%s", "Start POP3 Service Failed.");
+                        
                         printf("Start POP3 Service Failed. \t\t\t[Error]\n");
                     }
                     close(pfd[0]);
@@ -188,7 +185,7 @@ int Run()
 					printf("Start IMAP Service OK \t\t\t[%u]\n", imap_pid);
 				else
 				{
-					uTrace.Write(Trace_Error, "%s", "Start IMAP Service Failed.");
+					
 					printf("Start IMAP Service Failed. \t\t\t[Error]\n");
 				}
 				close(pfd[0]);
@@ -233,7 +230,7 @@ int Run()
 					printf("Start HTTP Service OK \t\t\t[%u]\n", http_pid);
 				else
 				{
-					uTrace.Write(Trace_Error, "%s", "Start HTTP Service Failed.");
+					
 					printf("Start HTTP Service Failed. \t\t\t[Error]\n");
 				}
 				close(pfd[0]);
@@ -278,7 +275,7 @@ int Run()
                     printf("Start MTA Service OK \t\t\t[%u]\n", mta_pids);
                 else
                 {
-                    uTrace.Write(Trace_Error, "%s", "Start MTA Service Failed.");
+                    
                     printf("Start MTA Service Failed \t\t\t[Error]\n");
                 }
                 close(pfd[0]);
@@ -320,7 +317,7 @@ int Run()
             }
 			else
 			{
-				uTrace.Write(Trace_Error, "%s", "Start Service Monitor Failed.");
+				
 				printf("Start Service Monitor Failed \t\t\t[Error]\n");
 			}
 			close(pfd[0]);

@@ -33,7 +33,7 @@ CUplusTrace::~CUplusTrace()
 
 void CUplusTrace::Write(Trace_Level level, const char* fmt, ...)
 {
-	if(m_ayslock1 != SEM_FAILED)
+	if(m_ayslock1 == SEM_FAILED)
 		return;
 	
 	char sv[64];

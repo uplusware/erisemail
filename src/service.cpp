@@ -420,7 +420,7 @@ int Service::Run(int fd, const char* hostip, unsigned short port, unsigned short
 		memcached_servers = memcached_server_list_append(memcached_servers, (*iter).first.c_str(), (*iter).second, &rc);
 		rc = memcached_server_push(m_memcached, memcached_servers);
 		
-		//printf("memcached: %s %d %d\n", (*iter).first.c_str(), (*iter).second, rc);
+		uTrace.Write(Trace_Msg, "memcached server -  %s:%d", (*iter).first.c_str(), (*iter).second);
 	}
 	
 	m_storageEngine = new StorageEngine(CMailBase::m_db_host.c_str(), 
@@ -429,7 +429,7 @@ int Service::Run(int fd, const char* hostip, unsigned short port, unsigned short
 
 	if(!m_storageEngine)
 	{
-		printf("%s::%s Create Storage Engine Error\n", __FILE__, __FUNCTION__);
+		uTrace.Write(Trace_Error, "%s::%s Create Storage Engine Error", __FILE__, __FUNCTION__);
 		return -1;
 	}
 	m_child_list.clear();
@@ -536,12 +536,13 @@ int Service::Run(int fd, const char* hostip, unsigned short port, unsigned short
             
             if(listen(m_sockfd, 128) == -1)
             {
-                uTrace.Write(Trace_Error, "Service LISTEN error.");
+                uTrace.Write(Trace_Error, "Service LISTEN error, %s:%u", hostip ? hostip : "", port);
                 result = 1;
                 write(fd, &result, sizeof(unsigned int));
                 close(fd);
                 break;
             }
+            uTrace.Write(Trace_Msg, "Service works on %s:%u", hostip ? hostip : "", port);
         }
         //SSL
         if(ssl_port > 0)
@@ -598,17 +599,17 @@ int Service::Run(int fd, const char* hostip, unsigned short port, unsigned short
             
             if(listen(m_sockfd_ssl, 128) == -1)
             {
-                uTrace.Write(Trace_Error, "Security Service LISTEN error.");
+                uTrace.Write(Trace_Error, "Service LISTEN error, %s:%u", hostip ? hostip : "", ssl_port);
                 result = 1;
                 write(fd, &result, sizeof(unsigned int));
                 close(fd);
                 break;
             }
+            uTrace.Write(Trace_Msg, "Security service works on %s:%u", hostip ? hostip : "", ssl_port);
         }
         
         if(m_sockfd == -1 && m_sockfd_ssl == -1)
         {
-            uTrace.Write(Trace_Error, "Both Service LISTEN error.");
             result = 1;
             write(fd, &result, sizeof(unsigned int));
             close(fd);
@@ -716,7 +717,7 @@ int Service::Run(int fd, const char* hostip, unsigned short port, unsigned short
                     }
                 }
                 
-                if(m_sockfd_ssl > 0 &&FD_ISSET(m_sockfd_ssl, &accept_mask))
+                if(m_sockfd_ssl > 0 && FD_ISSET(m_sockfd_ssl, &accept_mask))
                 {
                     FD_CLR(m_sockfd_ssl, &accept_mask);
                     clt_sockfd_ssl = accept(m_sockfd_ssl, (sockaddr*)&clt_addr_ssl, &clt_size_ssl);

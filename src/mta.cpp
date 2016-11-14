@@ -488,8 +488,7 @@ static void* begin_relay_handler(void* arg)
 				if(RelayMail(mailStg, reply_info->_memcached, reply_info->mail_info.mid, reply_info->mail_info.uniqid, reply_info->mail_info.mailfrom.c_str(), 
 					reply_info->mail_info.rcptto.c_str(), errormsg) == FALSE)
 				{
-					CUplusTrace uTrace(LOGNAME, LCKNAME);
-					uTrace.Write(Trace_Error, "%s", errormsg.c_str());
+					fprintf(stderr, "%s", errormsg.c_str());
 					
 					mailStg->KeepLive();
 					ReturnMail(mailStg, reply_info->_memcached, reply_info->mail_info.mid, reply_info->mail_info.uniqid, reply_info->mail_info.mailfrom.c_str(), 
