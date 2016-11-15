@@ -19,8 +19,6 @@
 #include "base.h"
 #include "storage.h"
 
-#define MTA_SERVICE	"MTA"
-
 class MTA
 {
 public:

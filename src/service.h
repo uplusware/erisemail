@@ -20,20 +20,31 @@
 #include <mqueue.h>
 #include <semaphore.h>
 #include <libmemcached/memcached.h>
-
+#include "util/trace.h"
 #include "cache.h"
 
-static const char* SVR_NAME_TBL[] = {NULL, "SMTP",	"POP3",	"IMAP",	"HTTP", "MTA", NULL};
-static const char* SVR_DESP_TBL[] = {NULL, "SMTP",	"POP3",	"IMAP",	"HTTP", "MTA", NULL};
+#define MTA_SERVICE_NAME    "MTA"
+#define MDA_SERVICE_NAME    "MDA"
 
-void push_reject_list(Service_Type st, const char* ip);
+void push_reject_list(const char* service_name, const char* ip);
+
+typedef struct
+{
+    Service_Type st;
+    string host_ip;
+    unsigned host_port;
+    BOOL is_ssl;
+    
+    int sockfd;
+    
+} service_param_t;
 
 class Service
 {
 public:
-	Service(Service_Type st);
+	Service();
 	virtual ~Service();
-	int Run(int fd, const char* hostip, unsigned short port, unsigned short ssl_port);
+	int Run(int fd, vector<service_param_t> & server_params);
 	void Stop();
 	void ReloadConfig();
 	void ReloadList();
@@ -41,31 +52,30 @@ public:
 	memory_cache* m_cache;
 	
 protected:
-    int Accept(int& clt_sockfd, BOOL is_ssl, struct sockaddr_storage& clt_addr, socklen_t clt_size);
+    int create_server_service(CUplusTrace& uTrace, const char* hostip, unsigned short hostport, int& srv_sockfd);
+    int create_client_session(CUplusTrace& uTrace, int& clt_sockfd, Service_Type st, BOOL is_ssl, struct sockaddr_storage& clt_addr, socklen_t clt_size);
     
 	mqd_t m_service_qid;
 	
 	sem_t* m_service_sid;
 	string m_service_name;
-	int m_sockfd;
-    int m_sockfd_ssl;
-	Service_Type m_st;
+    
 	list<pid_t> m_child_list;
 
 	StorageEngine* m_storageEngine;
 	memcached_st * m_memcached;
 };
 
-class WatchDog
+class Watcher
 {
 public:
-	WatchDog();
-	virtual ~WatchDog();
-	int Run(int fd);
+	Watcher();
+	virtual ~Watcher();
+	int Run(int fd, vector<service_param_t> & server_params);
 	void Stop();
 protected:
-	mqd_t m_watchdog_qid;
-	sem_t* m_watchdog_sid;
+	mqd_t m_watcher_qid;
+	sem_t* m_watcher_sid;
 };
 
 #endif /* _SERVICE_H_ */

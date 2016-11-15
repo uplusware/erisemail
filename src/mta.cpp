@@ -542,8 +542,8 @@ static void clear_posix_queue(mqd_t qid)
 /////////////////////////////////////////////////////////////////////////////////////////
 MTA::MTA()
 {
-	char sztmp[64];
-	sprintf(sztmp, "%s", MTA_SERVICE);
+	char sztmp[128];
+	sprintf(sztmp, "erisemail_%s", MTA_SERVICE_NAME);
 	m_mta_name = sztmp;
 	m_memcached = NULL;
 }
@@ -580,7 +580,7 @@ void MTA::ReloadConfig()
 	if(m_mta_sid != SEM_FAILED)
 		sem_close(m_mta_sid);
 
-	printf("Reload MTA Service OK\n");
+	printf("Reload %s Service OK\n", MTA_SERVICE_NAME);
 }
 
 void MTA::Stop()
@@ -610,7 +610,7 @@ void MTA::Stop()
 	if(m_memcached)
 	  memcached_free(m_memcached);
 	m_memcached = NULL;
-	printf("Stop MTA Service OK\n");
+	printf("Stop %s Service OK\n", MTA_SERVICE_NAME);
 }
 
 int MTA::Run(int fd)

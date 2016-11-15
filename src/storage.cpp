@@ -17,7 +17,12 @@
 
 static void show_error(MYSQL *mysql)
 {
-    fprintf(stderr, "MySQL error(%d) [%s] \"%s\"\n", mysql_errno(mysql), mysql_sqlstate(mysql), mysql_error(mysql));
+    static char MYSQLERR_LOGNAME[256] = "/var/log/erisemail/mysqlerr.log";
+    static char MYSQLERR_LCKNAME[256] = "/.ERISEMAIL_MYSQLERR.LOG";
+
+    CUplusTrace uTrace(MYSQLERR_LOGNAME, MYSQLERR_LCKNAME);
+    
+    uTrace.Write(Trace_Error, "MySQL error(%d) [%s] \"%s\"\n", mysql_errno(mysql), mysql_sqlstate(mysql), mysql_error(mysql));
 }
 
 BOOL MailStorage::m_userpwd_cache_updated = TRUE;
@@ -547,7 +552,6 @@ int MailStorage::AddLevel(const char* lname, const char* ldescription, unsigned 
 	sprintf(sqlcmd, "INSERT INTO leveltbl(lname, ldescription, lmailmaxsize, lboxmaxsize, lenableaudit, lmailsizethreshold, lattachsizethreshold, ldefault, ltime) VALUES('%s', '%s', %llu, %llu, %d, %d, %d, %d, %d)",
 		strSafetyLevelname.c_str(), strSafetyDescription.c_str(), mailmaxsize, boxmaxsize, lenableaudit, mailsizethreshold, attachsizethreshold, ldFalse, time(NULL));
 
-	//printf("%s\n", sqlcmd);
 	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		lid = mysql_insert_id(&m_hMySQL);
@@ -578,7 +582,6 @@ int MailStorage::UpdateLevel(unsigned int lid, const char* lname, const char* ld
 	sprintf(sqlcmd, "UPDATE leveltbl SET lname='%s', ldescription='%s', lmailmaxsize=%llu, lboxmaxsize=%llu, lenableaudit=%d, lmailsizethreshold=%d, lattachsizethreshold=%d WHERE lid=%d",
 		strSafetyLevelname.c_str(), strSafetyDescription.c_str(), mailmaxsize, boxmaxsize, lenableaudit, mailsizethreshold, attachsizethreshold, lid);
 
-	//printf("%s\n", sqlcmd);
 	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		return 0;
@@ -981,7 +984,6 @@ int MailStorage::UpdateID(const char* username, const char* alias, UserStatus st
 	sprintf(sqlcmd, "UPDATE usertbl SET ualias='%s', ustatus=%d, ulevel=%d WHERE uname='%s'",
 		strSafetyAlias.c_str(), status, realLevel, strSafetyUsername.c_str());
 
-	//printf("%s\n", sqlcmd);
 	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		return 0;
@@ -1340,7 +1342,6 @@ int MailStorage::InsertMailIndex(const char* mfrom, const char* mto, unsigned in
 		sprintf(sqlcmd, "INSERT INTO mailtbl(mfrom,mto,mtime,mtx,muniqid,mdirid,mstatus,mbody,msize) VALUES('%s','%s',%u,%u,'%s',%d,%u,'%s', %u)", 
 			strSafetyFrom.c_str(), strSafetyTo.c_str(), mtime, mtx, muniqid, mdirid, mstatus, strSafetyBody.c_str(), msize);
 
-		//printf("%s\n", sqlcmd);
 		if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 		{
 			mailid = mysql_insert_id(&m_hMySQL);
@@ -3466,7 +3467,6 @@ int MailStorage::SetDirStatus(const char* username, const char* dirref,unsigned 
 		return -1;
 	char sqlcmd[1024];
 	sprintf(sqlcmd, "UPDATE dirtbl SET dstatus=%d WHERE did=%d", status, dirID);
-	//printf("%s\n", sqlcmd);
 	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		return 0;
@@ -3479,7 +3479,6 @@ int MailStorage::GetMailStatus(int mid, unsigned int& status)
 {
 	char sqlcmd[1024];
 	sprintf(sqlcmd, "SELECT mstatus FROM mailtbl WHERE mid=%d", mid);
-	//printf("%s\n", sqlcmd);
 	
 	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
@@ -3516,7 +3515,6 @@ int MailStorage::GetMailUID(int mid, string uid)
 {
 	char sqlcmd[1024];
 	sprintf(sqlcmd, "SELECT muniqid FROM mailtbl WHERE mid=%d", mid);
-	//printf("%s\n", sqlcmd);
 	
 	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
@@ -3968,7 +3966,6 @@ int MailStorage::GetGlobalStorage(unsigned int& commonMailNumber, unsigned int& 
 	
 	sprintf(sqlcmd, "SELECT count(*) FROM mailtbl WHERE mstatus&%d<>%d", MSG_ATTR_DELETED, MSG_ATTR_DELETED);
 
-	//printf("%s\n", sqlcmd);
 	
 	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
@@ -4001,7 +3998,6 @@ int MailStorage::GetGlobalStorage(unsigned int& commonMailNumber, unsigned int& 
 	}
 	
 	sprintf(sqlcmd, "SELECT count(*) FROM mailtbl WHERE mstatus&%d=%d", MSG_ATTR_DELETED, MSG_ATTR_DELETED);
-	//printf("%s\n", sqlcmd);
 	
 	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
@@ -4034,7 +4030,6 @@ int MailStorage::GetGlobalStorage(unsigned int& commonMailNumber, unsigned int& 
 	}
 
 	sprintf(sqlcmd, "SELECT SUM(msize) FROM mailtbl WHERE mstatus&%d<>%d", MSG_ATTR_DELETED, MSG_ATTR_DELETED);
-	//printf("%s\n", sqlcmd);
 	
 	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
@@ -4067,7 +4062,6 @@ int MailStorage::GetGlobalStorage(unsigned int& commonMailNumber, unsigned int& 
 	}
 
 	sprintf(sqlcmd, "SELECT SUM(msize) FROM mailtbl WHERE mstatus&%d=%d", MSG_ATTR_DELETED, MSG_ATTR_DELETED);
-	//printf("%s\n", sqlcmd);
 	
 	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{

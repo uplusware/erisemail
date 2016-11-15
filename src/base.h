@@ -117,6 +117,7 @@
     }
 #endif /* _WITH_GSSAPI_ */
 
+#include "util/trace.h"
 #include "util/general.h"
 #include "storage.h"
 #include "util/base64.h"
@@ -814,6 +815,9 @@ BOOL inline create_ssl(int sockfd,
     BOOL enableclientcacheck,
     SSL** pp_ssl, SSL_CTX** pp_ssl_ctx)
 {
+    static char SSLERR_LOGNAME[256] = "/var/log/erisemail/sslerr.log";
+    static char SSLERR_LCKNAME[256] = "/.ERISEMAIL_SSLERR.LOG";
+
     int ssl_rc = -1;
     BOOL bSSLAccepted;
     X509* client_cert;
@@ -824,7 +828,8 @@ BOOL inline create_ssl(int sockfd,
 	*pp_ssl_ctx = SSL_CTX_new(meth);
 	if(!*pp_ssl_ctx)
 	{
-		printf("SSL_CTX_use_certificate_file: %s\n", ERR_error_string(ERR_get_error(),NULL));
+        CUplusTrace uTrace(SSLERR_LOGNAME, SSLERR_LCKNAME);
+		uTrace.Write(Trace_Error, "SSL_CTX_use_certificate_file: %s", ERR_error_string(ERR_get_error(),NULL));
 		goto clean_ssl3;
 	}
 
@@ -837,27 +842,31 @@ BOOL inline create_ssl(int sockfd,
 	SSL_CTX_load_verify_locations(*pp_ssl_ctx, ca_crt_root, NULL);
 	if(SSL_CTX_use_certificate_file(*pp_ssl_ctx, ca_crt_server, SSL_FILETYPE_PEM) <= 0)
 	{
-		printf("SSL_CTX_use_certificate_file: %s\n", ERR_error_string(ERR_get_error(),NULL));
+		CUplusTrace uTrace(SSLERR_LOGNAME, SSLERR_LCKNAME);
+		uTrace.Write(Trace_Error, "SSL_CTX_use_certificate_file: %s", ERR_error_string(ERR_get_error(),NULL));
 		goto clean_ssl3;
 	}
 
 	SSL_CTX_set_default_passwd_cb_userdata(*pp_ssl_ctx, (char*)ca_password);
 	if(SSL_CTX_use_PrivateKey_file(*pp_ssl_ctx, ca_key_server, SSL_FILETYPE_PEM) <= 0)
 	{
-		printf("SSL_CTX_use_certificate_file: %s\n", ERR_error_string(ERR_get_error(),NULL));
+		CUplusTrace uTrace(SSLERR_LOGNAME, SSLERR_LCKNAME);
+		uTrace.Write(Trace_Error, "SSL_CTX_use_certificate_file: %s", ERR_error_string(ERR_get_error(),NULL));
 		goto clean_ssl3;
 
 	}
 	if(!SSL_CTX_check_private_key(*pp_ssl_ctx))
 	{
-		printf("SSL_CTX_use_certificate_file: %s\n", ERR_error_string(ERR_get_error(),NULL));
+		CUplusTrace uTrace(SSLERR_LOGNAME, SSLERR_LCKNAME);
+		uTrace.Write(Trace_Error, "SSL_CTX_use_certificate_file: %s", ERR_error_string(ERR_get_error(),NULL));
 		goto clean_ssl3;
 	}
 	
 	ssl_rc = SSL_CTX_set_cipher_list(*pp_ssl_ctx, "ALL");
     if(ssl_rc == 0)
     {
-        printf("SSL_CTX_set_cipher_list: %s\n", ERR_error_string(ERR_get_error(),NULL));
+        CUplusTrace uTrace(SSLERR_LOGNAME, SSLERR_LCKNAME);
+		uTrace.Write(Trace_Error, "SSL_CTX_set_cipher_list: %s", ERR_error_string(ERR_get_error(),NULL));
         goto clean_ssl3;
     }
 	SSL_CTX_set_mode(*pp_ssl_ctx, SSL_MODE_AUTO_RETRY);
@@ -865,25 +874,29 @@ BOOL inline create_ssl(int sockfd,
 	*pp_ssl = SSL_new(*pp_ssl_ctx);
 	if(!*pp_ssl)
 	{
-		printf("SSL_new: %s\n", ERR_error_string(ERR_get_error(),NULL));
+		CUplusTrace uTrace(SSLERR_LOGNAME, SSLERR_LCKNAME);
+		uTrace.Write(Trace_Error, "SSL_new: %s", ERR_error_string(ERR_get_error(),NULL));
 		goto clean_ssl2;
 	}
 	ssl_rc = SSL_set_fd(*pp_ssl, sockfd);
     if(ssl_rc == 0)
     {
-        printf("SSL_set_fd: %s\n", ERR_error_string(ERR_get_error(),NULL));
+        CUplusTrace uTrace(SSLERR_LOGNAME, SSLERR_LCKNAME);
+		uTrace.Write(Trace_Error, "SSL_set_fd: %s", ERR_error_string(ERR_get_error(),NULL));
         goto clean_ssl2;
     }
     ssl_rc = SSL_set_cipher_list(*pp_ssl, "ALL");
     if(ssl_rc == 0)
     {
-        printf("SSL_set_cipher_list: %s\n", ERR_error_string(ERR_get_error(),NULL));
+        CUplusTrace uTrace(SSLERR_LOGNAME, SSLERR_LCKNAME);
+		uTrace.Write(Trace_Error, "SSL_set_cipher_list: %s", ERR_error_string(ERR_get_error(),NULL));
         goto clean_ssl2;
     }
     ssl_rc = SSL_accept(*pp_ssl);
 	if(ssl_rc < 0)
 	{
-        printf("SSL_accept: %s\n", ERR_error_string(ERR_get_error(),NULL));
+        CUplusTrace uTrace(SSLERR_LOGNAME, SSLERR_LCKNAME);
+		uTrace.Write(Trace_Error, "SSL_accept: %s", ERR_error_string(ERR_get_error(),NULL));
 		goto clean_ssl2;
 	}
     else if(ssl_rc = 0)
@@ -898,7 +911,8 @@ BOOL inline create_ssl(int sockfd,
         ssl_rc = SSL_get_verify_result(*pp_ssl);
         if(ssl_rc != X509_V_OK)
         {
-            fprintf(stderr, "SSL_get_verify_result: %s\n", ERR_error_string(ERR_get_error(),NULL));
+            CUplusTrace uTrace(SSLERR_LOGNAME, SSLERR_LCKNAME);
+            uTrace.Write(Trace_Error, "SSL_get_verify_result: %s", ERR_error_string(ERR_get_error(),NULL));
             goto clean_ssl1;
         }
     }
@@ -913,7 +927,8 @@ BOOL inline create_ssl(int sockfd,
 		}
 		else
 		{
-			printf("SSL_get_peer_certificate: %s\n", ERR_error_string(ERR_get_error(),NULL));
+			CUplusTrace uTrace(SSLERR_LOGNAME, SSLERR_LCKNAME);
+            uTrace.Write(Trace_Error, "SSL_get_peer_certificate: %s", ERR_error_string(ERR_get_error(),NULL));
 			goto clean_ssl1;
 		}
 	}

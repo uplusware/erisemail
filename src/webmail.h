@@ -145,7 +145,6 @@ public:
 				}
 				strResp += "\r\n\r\n";
 				
-				//printf("%s\n", strResp.c_str());
 				
 				m_session->HttpSend(strResp.c_str(), strResp.length());
 				
@@ -191,8 +190,6 @@ public:
 			}
 			strResp += "\r\n\r\n";
 			
-			//printf("%s\n", strResp.c_str());
-			
 			m_session->HttpSend(strResp.c_str(), strResp.length());
 			m_session->HttpSend(m_session->m_cache->m_htdoc[strDoc].pbuf, m_session->m_cache->m_htdoc[strDoc].flen);
 			
@@ -215,7 +212,7 @@ protected:
 		encodeURI((unsigned char *) src, dst);
 	}
 	
-	const char* XMLSaftyString(string& str)
+	const char* to_safty_xmlstring(string& str)
 	{
 		Replace(str, "&", "&amp;");
 		Replace(str, "<", "&lt;");
@@ -226,7 +223,7 @@ protected:
 		return str.c_str();
 	}
 	
-	void ToHTML(string& str)
+	void ascii_to_htmlstring(string& str)
 	{
 		Replace(str, "&", "&amp;");
 		
@@ -843,8 +840,57 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
+        for(int x = 0; x < username.length() - 1; x++)
+        {
+            if((username[x] >= 'a' && username[x] <= 'z') 
+                || (username[x] >= 'A' && username[x] <= 'Z')
+                || (username[x] >= '0' && username[x] <= '9')
+                || (username[x] == '_' || username[x] == '.'))
+            {
+                //works fine
+            }
+            else
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
 		strcut(strauth.c_str(), ":", NULL, password);
-	
+        for(int x = 0; x < password.length(); x++)
+        {
+            if(password[x] > 126 || password[x] < 32)
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
+        
 		if(m_mailStg && m_mailStg->CheckAdmin(username.c_str(), password.c_str()) == 0)
 		{
 			string strUserlist;
@@ -953,7 +999,56 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
+        for(int x = 0; x < username.length() - 1; x++)
+        {
+            if((username[x] >= 'a' && username[x] <= 'z') 
+                || (username[x] >= 'A' && username[x] <= 'Z')
+                || (username[x] >= '0' && username[x] <= '9')
+                || (username[x] == '_' || username[x] == '.'))
+            {
+                //works fine
+            }
+            else
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
 		strcut(strauth.c_str(), ":", NULL, password);
+        for(int x = 0; x < password.length(); x++)
+        {
+            if(password[x] > 126 || password[x] < 32)
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
 		
 		if(m_mailStg && m_mailStg->CheckAdmin(username.c_str(), password.c_str()) == 0)
 		{
@@ -1062,7 +1157,56 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
+        for(int x = 0; x < username.length() - 1; x++)
+        {
+            if((username[x] >= 'a' && username[x] <= 'z') 
+                || (username[x] >= 'A' && username[x] <= 'Z')
+                || (username[x] >= '0' && username[x] <= '9')
+                || (username[x] == '_' || username[x] == '.'))
+            {
+                //works fine
+            }
+            else
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
 		strcut(strauth.c_str(), ":", NULL, password);
+        for(int x = 0; x < password.length(); x++)
+        {
+            if(password[x] > 126 || password[x] < 32)
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
 
 		
 		if(m_mailStg && m_mailStg->CheckAdmin(username.c_str(), password.c_str()) == 0)
@@ -1188,7 +1332,56 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
+        for(int x = 0; x < username.length() - 1; x++)
+        {
+            if((username[x] >= 'a' && username[x] <= 'z') 
+                || (username[x] >= 'A' && username[x] <= 'Z')
+                || (username[x] >= '0' && username[x] <= '9')
+                || (username[x] == '_' || username[x] == '.'))
+            {
+                //works fine
+            }
+            else
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
 		strcut(strauth.c_str(), ":", NULL, password);
+        for(int x = 0; x < password.length(); x++)
+        {
+            if(password[x] > 126 || password[x] < 32)
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
 
 		if(m_mailStg && m_mailStg->CheckAdmin(username.c_str(), password.c_str()) == 0)
 		{
@@ -1310,7 +1503,56 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
+        for(int x = 0; x < username.length() - 1; x++)
+        {
+            if((username[x] >= 'a' && username[x] <= 'z') 
+                || (username[x] >= 'A' && username[x] <= 'Z')
+                || (username[x] >= '0' && username[x] <= '9')
+                || (username[x] == '_' || username[x] == '.'))
+            {
+                //works fine
+            }
+            else
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
 		strcut(strauth.c_str(), ":", NULL, password);
+        for(int x = 0; x < password.length(); x++)
+        {
+            if(password[x] > 126 || password[x] < 32)
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
 
 		if(m_mailStg && m_mailStg->CheckAdmin(username.c_str(), password.c_str()) == 0)
 		{
@@ -1417,7 +1659,56 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
+        for(int x = 0; x < username.length() - 1; x++)
+        {
+            if((username[x] >= 'a' && username[x] <= 'z') 
+                || (username[x] >= 'A' && username[x] <= 'Z')
+                || (username[x] >= '0' && username[x] <= '9')
+                || (username[x] == '_' || username[x] == '.'))
+            {
+                //works fine
+            }
+            else
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
 		strcut(strauth.c_str(), ":", NULL, password);
+        for(int x = 0; x < password.length(); x++)
+        {
+            if(password[x] > 126 || password[x] < 32)
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
 		
 		if(m_mailStg && m_mailStg->CheckAdmin(username.c_str(), password.c_str()) == 0)
 		{
@@ -1562,7 +1853,56 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
+        for(int x = 0; x < username.length() - 1; x++)
+        {
+            if((username[x] >= 'a' && username[x] <= 'z') 
+                || (username[x] >= 'A' && username[x] <= 'Z')
+                || (username[x] >= '0' && username[x] <= '9')
+                || (username[x] == '_' || username[x] == '.'))
+            {
+                //works fine
+            }
+            else
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
 		strcut(strauth.c_str(), ":", NULL, password);
+        for(int x = 0; x < password.length(); x++)
+        {
+            if(password[x] > 126 || password[x] < 32)
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
 		
 		
 		if(m_mailStg && m_mailStg->CheckAdmin(username.c_str(), password.c_str()) == 0)
@@ -1670,7 +2010,56 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
+        for(int x = 0; x < username.length() - 1; x++)
+        {
+            if((username[x] >= 'a' && username[x] <= 'z') 
+                || (username[x] >= 'A' && username[x] <= 'Z')
+                || (username[x] >= '0' && username[x] <= '9')
+                || (username[x] == '_' || username[x] == '.'))
+            {
+                //works fine
+            }
+            else
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
 		strcut(strauth.c_str(), ":", NULL, password);
+        for(int x = 0; x < password.length(); x++)
+        {
+            if(password[x] > 126 || password[x] < 32)
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
 
 		
 		if(m_mailStg && m_mailStg->CheckAdmin(username.c_str(), password.c_str()) == 0)
@@ -1780,7 +2169,56 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
+        for(int x = 0; x < username.length() - 1; x++)
+        {
+            if((username[x] >= 'a' && username[x] <= 'z') 
+                || (username[x] >= 'A' && username[x] <= 'Z')
+                || (username[x] >= '0' && username[x] <= '9')
+                || (username[x] == '_' || username[x] == '.'))
+            {
+                //works fine
+            }
+            else
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
 		strcut(strauth.c_str(), ":", NULL, password);
+        for(int x = 0; x < password.length(); x++)
+        {
+            if(password[x] > 126 || password[x] < 32)
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
 
 		
 		if(m_mailStg && m_mailStg->CheckAdmin(username.c_str(), password.c_str()) == 0)
@@ -1921,7 +2359,56 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
+        for(int x = 0; x < username.length() - 1; x++)
+        {
+            if((username[x] >= 'a' && username[x] <= 'z') 
+                || (username[x] >= 'A' && username[x] <= 'Z')
+                || (username[x] >= '0' && username[x] <= '9')
+                || (username[x] == '_' || username[x] == '.'))
+            {
+                //works fine
+            }
+            else
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
 		strcut(strauth.c_str(), ":", NULL, password);
+        for(int x = 0; x < password.length(); x++)
+        {
+            if(password[x] > 126 || password[x] < 32)
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
 		
 		if(m_mailStg && m_mailStg->CheckAdmin(username.c_str(), password.c_str()) == 0)
 		{	
@@ -2050,7 +2537,56 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
+        for(int x = 0; x < username.length() - 1; x++)
+        {
+            if((username[x] >= 'a' && username[x] <= 'z') 
+                || (username[x] >= 'A' && username[x] <= 'Z')
+                || (username[x] >= '0' && username[x] <= '9')
+                || (username[x] == '_' || username[x] == '.'))
+            {
+                //works fine
+            }
+            else
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
 		strcut(strauth.c_str(), ":", NULL, password);
+        for(int x = 0; x < password.length(); x++)
+        {
+            if(password[x] > 126 || password[x] < 32)
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
 		
 		if(m_mailStg && m_mailStg->CheckLogin(username.c_str(), password.c_str()) == 0)
 		{
@@ -2169,7 +2705,56 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
+        for(int x = 0; x < username.length() - 1; x++)
+        {
+            if((username[x] >= 'a' && username[x] <= 'z') 
+                || (username[x] >= 'A' && username[x] <= 'Z')
+                || (username[x] >= '0' && username[x] <= '9')
+                || (username[x] == '_' || username[x] == '.'))
+            {
+                //works fine
+            }
+            else
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
 		strcut(strauth.c_str(), ":", NULL, password);
+        for(int x = 0; x < password.length(); x++)
+        {
+            if(password[x] > 126 || password[x] < 32)
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
 		
 		if(m_mailStg && m_mailStg->CheckLogin(username.c_str(), password.c_str()) == 0)
 		{
@@ -2271,7 +2856,56 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
+        for(int x = 0; x < username.length() - 1; x++)
+        {
+            if((username[x] >= 'a' && username[x] <= 'z') 
+                || (username[x] >= 'A' && username[x] <= 'Z')
+                || (username[x] >= '0' && username[x] <= '9')
+                || (username[x] == '_' || username[x] == '.'))
+            {
+                //works fine
+            }
+            else
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
 		strcut(strauth.c_str(), ":", NULL, password);
+        for(int x = 0; x < password.length(); x++)
+        {
+            if(password[x] > 126 || password[x] < 32)
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
 		
 		if(m_mailStg && m_mailStg->CheckLogin(username.c_str(), password.c_str()) == 0)
 		{
@@ -2375,10 +3009,56 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
-		strcut(strauth.c_str(), ":", NULL, password);
+        for(int x = 0; x < username.length() - 1; x++)
+        {
+            if((username[x] >= 'a' && username[x] <= 'z') 
+                || (username[x] >= 'A' && username[x] <= 'Z')
+                || (username[x] >= '0' && username[x] <= '9')
+                || (username[x] == '_' || username[x] == '.'))
+            {
+                //works fine
+            }
+            else
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
 
-		
-		
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
+		strcut(strauth.c_str(), ":", NULL, password);
+        for(int x = 0; x < password.length(); x++)
+        {
+            if(password[x] > 126 || password[x] < 32)
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
 		
 		if(m_mailStg && m_mailStg->CheckLogin(username.c_str(), password.c_str()) == 0)
 		{
@@ -2464,7 +3144,7 @@ public:
 				utf7_modified_to_standard_ex(listtbl[x].name, strName);
 				code_convert_ex("UTF-7", CMailBase::m_encoding.c_str(), strName.c_str(), strName);
 				char szTmp[128];
-				XMLSaftyString(strName);
+				to_safty_xmlstring(strName);
 				strXML +="<dir name=\"";
 				strXML += strName;
 				strXML +="\" ";
@@ -2536,10 +3216,57 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
+        for(int x = 0; x < username.length() - 1; x++)
+        {
+            if((username[x] >= 'a' && username[x] <= 'z') 
+                || (username[x] >= 'A' && username[x] <= 'Z')
+                || (username[x] >= '0' && username[x] <= '9')
+                || (username[x] == '_' || username[x] == '.'))
+            {
+                //works fine
+            }
+            else
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
 		strcut(strauth.c_str(), ":", NULL, password);
+        for(int x = 0; x < password.length(); x++)
+        {
+            if(password[x] > 126 || password[x] < 32)
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
 		char szTmp[128];
-		
-		 
 		
 		if(m_mailStg && m_mailStg->CheckLogin(username.c_str(), password.c_str()) == 0)
 		{
@@ -2605,7 +3332,7 @@ public:
 				code_convert_ex("UTF-7", CMailBase::m_encoding.c_str(), strName.c_str(), strName);
 				
 				char szTmp[128];
-				XMLSaftyString(strName);
+				to_safty_xmlstring(strName);
 				
 				strXML +="<dir name=\"";
 				strXML += strName;
@@ -2681,7 +3408,56 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
+        for(int x = 0; x < username.length() - 1; x++)
+        {
+            if((username[x] >= 'a' && username[x] <= 'z') 
+                || (username[x] >= 'A' && username[x] <= 'Z')
+                || (username[x] >= '0' && username[x] <= '9')
+                || (username[x] == '_' || username[x] == '.'))
+            {
+                //works fine
+            }
+            else
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
 		strcut(strauth.c_str(), ":", NULL, password);
+        for(int x = 0; x < password.length(); x++)
+        {
+            if(password[x] > 126 || password[x] < 32)
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
 		
 		char szTmp[128];
 		
@@ -2769,7 +3545,56 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
+        for(int x = 0; x < username.length() - 1; x++)
+        {
+            if((username[x] >= 'a' && username[x] <= 'z') 
+                || (username[x] >= 'A' && username[x] <= 'Z')
+                || (username[x] >= '0' && username[x] <= '9')
+                || (username[x] == '_' || username[x] == '.'))
+            {
+                //works fine
+            }
+            else
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
 		strcut(strauth.c_str(), ":", NULL, password);
+        for(int x = 0; x < password.length(); x++)
+        {
+            if(password[x] > 126 || password[x] < 32)
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
 
 		if(m_mailStg && m_mailStg->CheckLogin(username.c_str(), password.c_str()) == 0)
 		{
@@ -2839,7 +3664,7 @@ public:
 						if(Letter->GetSummary()->m_header)
                         {    
                             strSubject = Letter->GetSummary()->m_header->GetDecodedSubject();
-                            XMLSaftyString(strSubject);
+                            to_safty_xmlstring(strSubject);
                             strSender = Letter->GetSummary()->m_header->GetFrom() == NULL ? "" : Letter->GetSummary()->m_header->GetFrom()->m_addrs[0].pName;
                             strFromAddr = "";
                             if(Letter->GetSummary()->m_header->GetFrom() != NULL)
@@ -2848,7 +3673,7 @@ public:
                                 strFromAddr += "@";
                                 strFromAddr += Letter->GetSummary()->m_header->GetFrom()->m_addrs[0].dName;
                             }
-                            XMLSaftyString(strSender);
+                            to_safty_xmlstring(strSender);
                         }
 						sprintf(szTmp, "%u", Letter->GetSize());
 						string strSize = szTmp;
@@ -3064,7 +3889,56 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
+        for(int x = 0; x < username.length() - 1; x++)
+        {
+            if((username[x] >= 'a' && username[x] <= 'z') 
+                || (username[x] >= 'A' && username[x] <= 'Z')
+                || (username[x] >= '0' && username[x] <= '9')
+                || (username[x] == '_' || username[x] == '.'))
+            {
+                //works fine
+            }
+            else
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
 		strcut(strauth.c_str(), ":", NULL, password);
+        for(int x = 0; x < password.length(); x++)
+        {
+            if(password[x] > 126 || password[x] < 32)
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
 
 		if(m_mailStg && m_mailStg->CheckAdmin(username.c_str(), password.c_str()) == 0)
 		{
@@ -3122,7 +3996,7 @@ public:
 						if(Letter->GetSummary()->m_header)
                         {
                             string strSubject = Letter->GetSummary()->m_header->GetDecodedSubject();
-                            XMLSaftyString(strSubject);
+                            to_safty_xmlstring(strSubject);
                             string strSender = Letter->GetSummary()->m_header->GetFrom() == NULL ? "" : Letter->GetSummary()->m_header->GetFrom()->m_addrs[0].pName;
                             strFromAddr = "";
                             if(Letter->GetSummary()->m_header->GetFrom() != NULL)
@@ -3132,7 +4006,7 @@ public:
                                 strFromAddr += Letter->GetSummary()->m_header->GetFrom()->m_addrs[0].dName;
                             }
 						}
-						XMLSaftyString(strSender);
+						to_safty_xmlstring(strSender);
 						sprintf(szTmp, "%u", Letter->GetSize());
 						string strSize = szTmp;
 						
@@ -3310,7 +4184,56 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
+        for(int x = 0; x < username.length() - 1; x++)
+        {
+            if((username[x] >= 'a' && username[x] <= 'z') 
+                || (username[x] >= 'A' && username[x] <= 'Z')
+                || (username[x] >= '0' && username[x] <= '9')
+                || (username[x] == '_' || username[x] == '.'))
+            {
+                //works fine
+            }
+            else
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
 		strcut(strauth.c_str(), ":", NULL, password);
+        for(int x = 0; x < password.length(); x++)
+        {
+            if(password[x] > 126 || password[x] < 32)
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
 
 		if(m_mailStg && m_mailStg->CheckLogin(username.c_str(), password.c_str()) == 0)
 		{
@@ -3389,37 +4312,37 @@ public:
                 if(Letter->GetSummary()->m_header)
                 {
                     string strFrom = Letter->GetSummary()->m_header->GetFrom() == NULL ? "" : Letter->GetSummary()->m_header->GetFrom()->m_strfiled;
-                    XMLSaftyString(strFrom);
+                    to_safty_xmlstring(strFrom);
                     strResp += "<from>";
                     strResp += strFrom;
                     strResp += "</from>";
                     
                     string strTo = Letter->GetSummary()->m_header->GetTo() == NULL ? "" : Letter->GetSummary()->m_header->GetTo()->m_strfiled;
-                    XMLSaftyString(strTo);
+                    to_safty_xmlstring(strTo);
                     strResp += "<to>";
                     strResp += strTo;
                     strResp += "</to>";
                     
                     string strCC = Letter->GetSummary()->m_header->GetCc() == NULL ? "" : Letter->GetSummary()->m_header->GetCc()->m_strfiled;
-                    XMLSaftyString(strCC);
+                    to_safty_xmlstring(strCC);
                     strResp += "<cc>";
                     strResp += strCC;
                     strResp += "</cc>";
                     
                     string strBCC = Letter->GetSummary()->m_header->GetBcc() == NULL ? "" : Letter->GetSummary()->m_header->GetBcc()->m_strfiled;
-                    XMLSaftyString(strBCC);
+                    to_safty_xmlstring(strBCC);
                     strResp += "<bcc>";
                     strResp += strBCC;
                     strResp += "</bcc>";
                     
                     string strDate = Letter->GetSummary()->m_header->GetDate();
-                    XMLSaftyString(strDate);
+                    to_safty_xmlstring(strDate);
                     strResp += "<date>";
                     strResp += strDate;
                     strResp += "</date>";
                     
                     string strSubject = Letter->GetSummary()->m_header->GetDecodedSubject();
-                    XMLSaftyString(strSubject);
+                    to_safty_xmlstring(strSubject);
                     strResp += "<subject>";
                     strResp += strSubject;
                     strResp += "</subject>";
@@ -3430,22 +4353,22 @@ public:
 				string strAttach = "";
 				MailInfo(Letter->GetSummary()->m_mime, strTextBody, strHTMLBody, strCalendar, strAttach, lbuf);				
 				
-				XMLSaftyString(strTextBody);
+				to_safty_xmlstring(strTextBody);
 				strResp += "<text_content>";
 				strResp += strTextBody;
 				strResp += "</text_content>";
 				
-				XMLSaftyString(strHTMLBody);
+				to_safty_xmlstring(strHTMLBody);
 				strResp += "<html_content>";
 				strResp += strHTMLBody;				
 				strResp += "</html_content>";
 
-				XMLSaftyString(strCalendar);
+				to_safty_xmlstring(strCalendar);
 				strResp += "<calendar_content>";
 				strResp += strCalendar;				
 				strResp += "</calendar_content>";
 				
-				XMLSaftyString(strAttach);
+				to_safty_xmlstring(strAttach);
 				strResp += "<attach>";
 				strResp += strAttach;
 				strResp += "</attach>";
@@ -3520,7 +4443,57 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
+        for(int x = 0; x < username.length() - 1; x++)
+        {
+            if((username[x] >= 'a' && username[x] <= 'z') 
+                || (username[x] >= 'A' && username[x] <= 'Z')
+                || (username[x] >= '0' && username[x] <= '9')
+                || (username[x] == '_' || username[x] == '.'))
+            {
+                //works fine
+            }
+            else
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
 		strcut(strauth.c_str(), ":", NULL, password);
+        for(int x = 0; x < password.length(); x++)
+        {
+            if(password[x] > 126 || password[x] < 32)
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
+        
 		BOOL isOK = TRUE;
 
 		if(m_mailStg && m_mailStg->CheckLogin(username.c_str(), password.c_str()) == 0)
@@ -3924,7 +4897,56 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
+        for(int x = 0; x < username.length() - 1; x++)
+        {
+            if((username[x] >= 'a' && username[x] <= 'z') 
+                || (username[x] >= 'A' && username[x] <= 'Z')
+                || (username[x] >= '0' && username[x] <= '9')
+                || (username[x] == '_' || username[x] == '.'))
+            {
+                //works fine
+            }
+            else
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
 		strcut(strauth.c_str(), ":", NULL, password);
+        for(int x = 0; x < password.length(); x++)
+        {
+            if(password[x] > 126 || password[x] < 32)
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
 
 		if(m_mailStg && m_mailStg->CheckLogin(username.c_str(), password.c_str()) == 0)
 		{
@@ -4155,7 +5177,56 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
+        for(int x = 0; x < username.length() - 1; x++)
+        {
+            if((username[x] >= 'a' && username[x] <= 'z') 
+                || (username[x] >= 'A' && username[x] <= 'Z')
+                || (username[x] >= '0' && username[x] <= '9')
+                || (username[x] == '_' || username[x] == '.'))
+            {
+                //works fine
+            }
+            else
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
 		strcut(strauth.c_str(), ":", NULL, password);
+        for(int x = 0; x < password.length(); x++)
+        {
+            if(password[x] > 126 || password[x] < 32)
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
 
 		if(m_mailStg && m_mailStg->CheckLogin(username.c_str(), password.c_str()) == 0)
 		{
@@ -4235,7 +5306,56 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
+        for(int x = 0; x < username.length() - 1; x++)
+        {
+            if((username[x] >= 'a' && username[x] <= 'z') 
+                || (username[x] >= 'A' && username[x] <= 'Z')
+                || (username[x] >= '0' && username[x] <= '9')
+                || (username[x] == '_' || username[x] == '.'))
+            {
+                //works fine
+            }
+            else
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
 		strcut(strauth.c_str(), ":", NULL, password);
+        for(int x = 0; x < password.length(); x++)
+        {
+            if(password[x] > 126 || password[x] < 32)
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
 
 		if(m_mailStg && m_mailStg->CheckLogin(username.c_str(), password.c_str()) == 0)
 		{
@@ -4397,7 +5517,56 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
+        for(int x = 0; x < username.length() - 1; x++)
+        {
+            if((username[x] >= 'a' && username[x] <= 'z') 
+                || (username[x] >= 'A' && username[x] <= 'Z')
+                || (username[x] >= '0' && username[x] <= '9')
+                || (username[x] == '_' || username[x] == '.'))
+            {
+                //works fine
+            }
+            else
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
 		strcut(strauth.c_str(), ":", NULL, password);
+        for(int x = 0; x < password.length(); x++)
+        {
+            if(password[x] > 126 || password[x] < 32)
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
 
 		if(m_mailStg && m_mailStg->CheckLogin(username.c_str(), password.c_str()) == 0)
 		{
@@ -4565,11 +5734,57 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
-		strcut(strauth.c_str(), ":", NULL, password);
+        for(int x = 0; x < username.length() - 1; x++)
+        {
+            if((username[x] >= 'a' && username[x] <= 'z') 
+                || (username[x] >= 'A' && username[x] <= 'Z')
+                || (username[x] >= '0' && username[x] <= '9')
+                || (username[x] == '_' || username[x] == '.'))
+            {
+                //works fine
+            }
+            else
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
 
-		
-		 
-		
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
+		strcut(strauth.c_str(), ":", NULL, password);
+        for(int x = 0; x < password.length(); x++)
+        {
+            if(password[x] > 126 || password[x] < 32)
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
+
 		if(m_mailStg && m_mailStg->CheckLogin(username.c_str(), password.c_str()) == 0)
 		{	
 			int nToDirID = -1;
@@ -4677,10 +5892,56 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
-		strcut(strauth.c_str(), ":", NULL, password);
+        for(int x = 0; x < username.length() - 1; x++)
+        {
+            if((username[x] >= 'a' && username[x] <= 'z') 
+                || (username[x] >= 'A' && username[x] <= 'Z')
+                || (username[x] >= '0' && username[x] <= '9')
+                || (username[x] == '_' || username[x] == '.'))
+            {
+                //works fine
+            }
+            else
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
 
-		
-		 
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
+		strcut(strauth.c_str(), ":", NULL, password);
+        for(int x = 0; x < password.length(); x++)
+        {
+            if(password[x] > 126 || password[x] < 32)
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
 		
 		if(m_mailStg && m_mailStg->CheckLogin(username.c_str(), password.c_str()) == 0)
 		{
@@ -4796,10 +6057,56 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
-		strcut(strauth.c_str(), ":", NULL, password);
+        for(int x = 0; x < username.length() - 1; x++)
+        {
+            if((username[x] >= 'a' && username[x] <= 'z') 
+                || (username[x] >= 'A' && username[x] <= 'Z')
+                || (username[x] >= '0' && username[x] <= '9')
+                || (username[x] == '_' || username[x] == '.'))
+            {
+                //works fine
+            }
+            else
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
 
-		
-		 
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
+		strcut(strauth.c_str(), ":", NULL, password);
+        for(int x = 0; x < password.length(); x++)
+        {
+            if(password[x] > 126 || password[x] < 32)
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        } 
 		
 		if(m_mailStg && m_mailStg->CheckAdmin(username.c_str(), password.c_str()) == 0)
 		{
@@ -4916,8 +6223,57 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
-		strcut(strauth.c_str(), ":", NULL, password);
+        for(int x = 0; x < username.length() - 1; x++)
+        {
+            if((username[x] >= 'a' && username[x] <= 'z') 
+                || (username[x] >= 'A' && username[x] <= 'Z')
+                || (username[x] >= '0' && username[x] <= '9')
+                || (username[x] == '_' || username[x] == '.'))
+            {
+                //works fine
+            }
+            else
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
 
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
+		strcut(strauth.c_str(), ":", NULL, password);
+        for(int x = 0; x < password.length(); x++)
+        {
+            if(password[x] > 126 || password[x] < 32)
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
+        
 		if(m_mailStg && m_mailStg->CheckAdmin(username.c_str(), password.c_str()) == 0)
 		{
 			string strFrom, strTo;
@@ -5124,10 +6480,56 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
-		strcut(strauth.c_str(), ":", NULL, password);
+        for(int x = 0; x < username.length() - 1; x++)
+        {
+            if((username[x] >= 'a' && username[x] <= 'z') 
+                || (username[x] >= 'A' && username[x] <= 'Z')
+                || (username[x] >= '0' && username[x] <= '9')
+                || (username[x] == '_' || username[x] == '.'))
+            {
+                //works fine
+            }
+            else
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
 
-		
-		 
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
+		strcut(strauth.c_str(), ":", NULL, password);
+        for(int x = 0; x < password.length(); x++)
+        {
+            if(password[x] > 126 || password[x] < 32)
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
 		
 		if(m_mailStg && m_mailStg->CheckLogin(username.c_str(), password.c_str()) == 0)
 		{
@@ -5234,8 +6636,57 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
+        for(int x = 0; x < username.length() - 1; x++)
+        {
+            if((username[x] >= 'a' && username[x] <= 'z') 
+                || (username[x] >= 'A' && username[x] <= 'Z')
+                || (username[x] >= '0' && username[x] <= '9')
+                || (username[x] == '_' || username[x] == '.'))
+            {
+                //works fine
+            }
+            else
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
 		strcut(strauth.c_str(), ":", NULL, password);
-		
+		for(int x = 0; x < password.length(); x++)
+        {
+            if(password[x] > 126 || password[x] < 32)
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
+        
 		if(m_mailStg && m_mailStg->CheckLogin(username.c_str(), password.c_str()) == 0)
 		{
 			unsigned int status;
@@ -5339,8 +6790,57 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
-		strcut(strauth.c_str(), ":", NULL, password);
+        for(int x = 0; x < username.length() - 1; x++)
+        {
+            if((username[x] >= 'a' && username[x] <= 'z') 
+                || (username[x] >= 'A' && username[x] <= 'Z')
+                || (username[x] >= '0' && username[x] <= '9')
+                || (username[x] == '_' || username[x] == '.'))
+            {
+                //works fine
+            }
+            else
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
 
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
+		strcut(strauth.c_str(), ":", NULL, password);
+        for(int x = 0; x < password.length(); x++)
+        {
+            if(password[x] > 126 || password[x] < 32)
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
+        
 		if(m_mailStg && m_mailStg->CheckLogin(username.c_str(), password.c_str()) == 0)
 		{
 			int nDirID;
@@ -5449,8 +6949,57 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
+        for(int x = 0; x < username.length() - 1; x++)
+        {
+            if((username[x] >= 'a' && username[x] <= 'z') 
+                || (username[x] >= 'A' && username[x] <= 'Z')
+                || (username[x] >= '0' && username[x] <= '9')
+                || (username[x] == '_' || username[x] == '.'))
+            {
+                //works fine
+            }
+            else
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
 		strcut(strauth.c_str(), ":", NULL, password);
-		
+		for(int x = 0; x < password.length(); x++)
+        {
+            if(password[x] > 126 || password[x] < 32)
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
+        
 		if(m_mailStg && m_mailStg->CheckAdmin(username.c_str(), password.c_str()) == 0)
 		{
 			strResp = RSP_200_OK_XML;
@@ -5539,8 +7088,57 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
+        for(int x = 0; x < username.length() - 1; x++)
+        {
+            if((username[x] >= 'a' && username[x] <= 'z') 
+                || (username[x] >= 'A' && username[x] <= 'Z')
+                || (username[x] >= '0' && username[x] <= '9')
+                || (username[x] == '_' || username[x] == '.'))
+            {
+                //works fine
+            }
+            else
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
 		strcut(strauth.c_str(), ":", NULL, password);
-		
+		for(int x = 0; x < password.length(); x++)
+        {
+            if(password[x] > 126 || password[x] < 32)
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
+        
 		if(m_mailStg && m_mailStg->CheckLogin(username.c_str(), password.c_str()) == 0)
 		{
 			char szTmp[128];
@@ -5735,8 +7333,57 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
+        for(int x = 0; x < username.length() - 1; x++)
+        {
+            if((username[x] >= 'a' && username[x] <= 'z') 
+                || (username[x] >= 'A' && username[x] <= 'Z')
+                || (username[x] >= '0' && username[x] <= '9')
+                || (username[x] == '_' || username[x] == '.'))
+            {
+                //works fine
+            }
+            else
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
 		strcut(strauth.c_str(), ":", NULL, password);
-		
+		for(int x = 0; x < password.length(); x++)
+        {
+            if(password[x] > 126 || password[x] < 32)
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
+        
 		if(m_mailStg && m_mailStg->CheckLogin(username.c_str(), password.c_str()) == 0)
 		{
 			if(strstr(strTmpFileName.c_str(), "..") == NULL)
@@ -5965,8 +7612,57 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
+        for(int x = 0; x < username.length() - 1; x++)
+        {
+            if((username[x] >= 'a' && username[x] <= 'z') 
+                || (username[x] >= 'A' && username[x] <= 'Z')
+                || (username[x] >= '0' && username[x] <= '9')
+                || (username[x] == '_' || username[x] == '.'))
+            {
+                //works fine
+            }
+            else
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
 		strcut(strauth.c_str(), ":", NULL, password);
-		
+		for(int x = 0; x < password.length(); x++)
+        {
+            if(password[x] > 126 || password[x] < 32)
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
+        
 		if(m_mailStg && m_mailStg->CheckLogin(username.c_str(), password.c_str()) == 0)
 		{
 			char szTmp[128];
@@ -6000,9 +7696,9 @@ public:
 				for(int x = 0; x < attlist.size(); x++)
 				{
 					string strTmpname = attlist[x].tmpname;
-					XMLSaftyString(strTmpname);
+					to_safty_xmlstring(strTmpname);
 					string strFilename = attlist[x].filename;
-					XMLSaftyString(strFilename);
+					to_safty_xmlstring(strFilename);
 					sprintf(tmpbuf, "<attach tmpname=\"%s\" filename=\"%s\" attsize=\"%u\" />", strTmpname.c_str() , strFilename.c_str(), attlist[x].size);
 					strResp += tmpbuf;
 				}
@@ -6069,8 +7765,57 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
+        for(int x = 0; x < username.length() - 1; x++)
+        {
+            if((username[x] >= 'a' && username[x] <= 'z') 
+                || (username[x] >= 'A' && username[x] <= 'Z')
+                || (username[x] >= '0' && username[x] <= '9')
+                || (username[x] == '_' || username[x] == '.'))
+            {
+                //works fine
+            }
+            else
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
 		strcut(strauth.c_str(), ":", NULL, password);
-		
+		for(int x = 0; x < password.length(); x++)
+        {
+            if(password[x] > 126 || password[x] < 32)
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
+        
 		if(m_mailStg && m_mailStg->CheckLogin(username.c_str(), password.c_str()) == 0)
 		{
 			string strDraftID;
@@ -6329,11 +8074,57 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
-		strcut(strauth.c_str(), ":", NULL, password);
+        for(int x = 0; x < username.length() - 1; x++)
+        {
+            if((username[x] >= 'a' && username[x] <= 'z') 
+                || (username[x] >= 'A' && username[x] <= 'Z')
+                || (username[x] >= '0' && username[x] <= '9')
+                || (username[x] == '_' || username[x] == '.'))
+            {
+                //works fine
+            }
+            else
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
 
-		
-		 
-		
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
+		strcut(strauth.c_str(), ":", NULL, password);
+        for(int x = 0; x < password.length(); x++)
+        {
+            if(password[x] > 126 || password[x] < 32)
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
+        
 		if(m_mailStg && m_mailStg->CheckLogin(username.c_str(), password.c_str()) == 0)
 		{
 			string strDraftID;
@@ -6776,8 +8567,57 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
+        for(int x = 0; x < username.length() - 1; x++)
+        {
+            if((username[x] >= 'a' && username[x] <= 'z') 
+                || (username[x] >= 'A' && username[x] <= 'Z')
+                || (username[x] >= '0' && username[x] <= '9')
+                || (username[x] == '_' || username[x] == '.'))
+            {
+                //works fine
+            }
+            else
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
 		strcut(strauth.c_str(), ":", NULL, password);
-		
+		for(int x = 0; x < password.length(); x++)
+        {
+            if(password[x] > 126 || password[x] < 32)
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
+        
 		char szTmp[128];
 		
 		if(m_mailStg && m_mailStg->CheckLogin(username.c_str(), strOldPwd.c_str()) == 0)
@@ -6866,8 +8706,57 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
+        for(int x = 0; x < username.length() - 1; x++)
+        {
+            if((username[x] >= 'a' && username[x] <= 'z') 
+                || (username[x] >= 'A' && username[x] <= 'Z')
+                || (username[x] >= '0' && username[x] <= '9')
+                || (username[x] == '_' || username[x] == '.'))
+            {
+                //works fine
+            }
+            else
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
 		strcut(strauth.c_str(), ":", NULL, password);
-		
+		for(int x = 0; x < password.length(); x++)
+        {
+            if(password[x] > 126 || password[x] < 32)
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
+        
 		char szTmp[128];
 		
 		if(m_mailStg && m_mailStg->CheckLogin(username.c_str(), password.c_str()) == 0)
@@ -6952,8 +8841,57 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
+        for(int x = 0; x < username.length() - 1; x++)
+        {
+            if((username[x] >= 'a' && username[x] <= 'z') 
+                || (username[x] >= 'A' && username[x] <= 'Z')
+                || (username[x] >= '0' && username[x] <= '9')
+                || (username[x] == '_' || username[x] == '.'))
+            {
+                //works fine
+            }
+            else
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
 		strcut(strauth.c_str(), ":", NULL, password);
-		
+		for(int x = 0; x < password.length(); x++)
+        {
+            if(password[x] > 126 || password[x] < 32)
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
+        
 		char szTmp[128];
 		
 		if(m_mailStg && m_mailStg->CheckLogin(username.c_str(), password.c_str()) == 0)
@@ -7090,8 +9028,56 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
+        for(int x = 0; x < username.length() - 1; x++)
+        {
+            if((username[x] >= 'a' && username[x] <= 'z') 
+                || (username[x] >= 'A' && username[x] <= 'Z')
+                || (username[x] >= '0' && username[x] <= '9')
+                || (username[x] == '_' || username[x] == '.'))
+            {
+                //works fine
+            }
+            else
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
 		strcut(strauth.c_str(), ":", NULL, password);
-		
+		for(int x = 0; x < password.length(); x++)
+        {
+            if(password[x] > 126 || password[x] < 32)
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
 		if(m_mailStg && m_mailStg->CheckLogin(username.c_str(), password.c_str()) == 0)
 		{
 			
@@ -7169,8 +9155,57 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
+        for(int x = 0; x < username.length() - 1; x++)
+        {
+            if((username[x] >= 'a' && username[x] <= 'z') 
+                || (username[x] >= 'A' && username[x] <= 'Z')
+                || (username[x] >= '0' && username[x] <= '9')
+                || (username[x] == '_' || username[x] == '.'))
+            {
+                //works fine
+            }
+            else
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
 		strcut(strauth.c_str(), ":", NULL, password);
-		
+		for(int x = 0; x < password.length(); x++)
+        {
+            if(password[x] > 126 || password[x] < 32)
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
+        
 		if(m_mailStg && m_mailStg->CheckLogin(username.c_str(), password.c_str()) == 0)
 		{
 			int nDirID = -1;
@@ -7264,8 +9299,57 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
+        for(int x = 0; x < username.length() - 1; x++)
+        {
+            if((username[x] >= 'a' && username[x] <= 'z') 
+                || (username[x] >= 'A' && username[x] <= 'Z')
+                || (username[x] >= '0' && username[x] <= '9')
+                || (username[x] == '_' || username[x] == '.'))
+            {
+                //works fine
+            }
+            else
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
 		strcut(strauth.c_str(), ":", NULL, password);
-		
+		for(int x = 0; x < password.length(); x++)
+        {
+            if(password[x] > 126 || password[x] < 32)
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
+        
 		if(m_mailStg && m_mailStg->CheckLogin(username.c_str(), password.c_str()) == 0)
 		{
 			string strNewLabel;
@@ -7364,8 +9448,57 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
+        for(int x = 0; x < username.length() - 1; x++)
+        {
+            if((username[x] >= 'a' && username[x] <= 'z') 
+                || (username[x] >= 'A' && username[x] <= 'Z')
+                || (username[x] >= '0' && username[x] <= '9')
+                || (username[x] == '_' || username[x] == '.'))
+            {
+                //works fine
+            }
+            else
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
 		strcut(strauth.c_str(), ":", NULL, password);
-		
+		for(int x = 0; x < password.length(); x++)
+        {
+            if(password[x] > 126 || password[x] < 32)
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
+        
 		if(m_mailStg && m_mailStg->CheckLogin(username.c_str(), password.c_str()) == 0)
 		{
 			string strDirId;
@@ -7475,8 +9608,57 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
-		strcut(strauth.c_str(), ":", NULL, password);
+        for(int x = 0; x < username.length() - 1; x++)
+        {
+            if((username[x] >= 'a' && username[x] <= 'z') 
+                || (username[x] >= 'A' && username[x] <= 'Z')
+                || (username[x] >= '0' && username[x] <= '9')
+                || (username[x] == '_' || username[x] == '.'))
+            {
+                //works fine
+            }
+            else
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
 
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
+		strcut(strauth.c_str(), ":", NULL, password);
+        for(int x = 0; x < password.length(); x++)
+        {
+            if(password[x] > 126 || password[x] < 32)
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
+        
 		if(m_mailStg && m_mailStg->CheckAdmin(username.c_str(), password.c_str()) == 0)
 		{
 			string strConfigName;
@@ -7511,7 +9693,7 @@ public:
 					while(getline(filein, strline))
 					{
 						strline += "\n";
-						XMLSaftyString(strline);
+						to_safty_xmlstring(strline);
 						strResp += strline;
 					}
 					strResp += "</list>";
@@ -7544,7 +9726,7 @@ public:
 					while(getline(filein, strline))
 					{
 						strline += "\n";
-						XMLSaftyString(strline);
+						to_safty_xmlstring(strline);
 						strResp += strline;
 					}
 					strResp += "</list>";
@@ -7577,7 +9759,7 @@ public:
 					while(getline(filein, strline))
 					{
 						strline += "\n";
-						XMLSaftyString(strline);
+						to_safty_xmlstring(strline);
 						strResp += strline;
 					}
 					strResp += "</list>";
@@ -7610,7 +9792,7 @@ public:
 					while(getline(filein, strline))
 					{
 						strline += "\n";
-						XMLSaftyString(strline);
+						to_safty_xmlstring(strline);
 						strResp += strline;
 					}
 					strResp += "</list>";
@@ -7706,8 +9888,57 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
+        for(int x = 0; x < username.length() - 1; x++)
+        {
+            if((username[x] >= 'a' && username[x] <= 'z') 
+                || (username[x] >= 'A' && username[x] <= 'Z')
+                || (username[x] >= '0' && username[x] <= '9')
+                || (username[x] == '_' || username[x] == '.'))
+            {
+                //works fine
+            }
+            else
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
 		strcut(strauth.c_str(), ":", NULL, password);
-		
+		for(int x = 0; x < password.length(); x++)
+        {
+            if(password[x] > 126 || password[x] < 32)
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
+        
 		if(m_mailStg && m_mailStg->CheckAdmin(username.c_str(), password.c_str()) == 0)
 		{
 			string strConfigName;
@@ -7759,17 +9990,8 @@ public:
 				if(plock != SEM_FAILED)
 					sem_close(plock);
 				
-				Service smtp_svr(stSMTP);
-				smtp_svr.ReloadList();
-				
-				Service pop3_svr(stPOP3);
-				pop3_svr.ReloadList();
-				
-				Service imap_svr(stIMAP);
-				imap_svr.ReloadList();
-				
-				Service http_svr(stHTTP);
-				http_svr.ReloadList();
+				Service mda_svr;
+				mda_svr.ReloadList();
 				
 			}
 			else if(strConfigName == "GLOBAL_PERMIT_LIST")
@@ -7808,17 +10030,8 @@ public:
 				if(plock != SEM_FAILED)
 					sem_close(plock);
 				
-				Service smtp_svr(stSMTP);
-				smtp_svr.ReloadList();
-				
-				Service pop3_svr(stPOP3);
-				pop3_svr.ReloadList();
-				
-				Service imap_svr(stIMAP);
-				imap_svr.ReloadList();
-				
-				Service http_svr(stHTTP);
-				http_svr.ReloadList();
+				Service mda_svr;
+				mda_svr.ReloadList();
 			}
 			else if(strConfigName == "DOMAIN_PERMIT_LIST")
 			{
@@ -7857,17 +10070,8 @@ public:
 				if(plock != SEM_FAILED)
 					sem_close(plock);
 				
-				Service smtp_svr(stSMTP);
-				smtp_svr.ReloadList();
-				
-				Service pop3_svr(stPOP3);
-				pop3_svr.ReloadList();
-				
-				Service imap_svr(stIMAP);
-				imap_svr.ReloadList();
-				
-				Service http_svr(stHTTP);
-				http_svr.ReloadList();
+				Service mda_svr;
+				mda_svr.ReloadList();
 			}
 			else if(strConfigName == "WEBADMIN_PERMIT_LIST")
 			{
@@ -7906,17 +10110,8 @@ public:
 				if(plock != SEM_FAILED)
 					sem_close(plock);
 				
-				Service smtp_svr(stSMTP);
-				smtp_svr.ReloadList();
-				
-				Service pop3_svr(stPOP3);
-				pop3_svr.ReloadList();
-				
-				Service imap_svr(stIMAP);
-				imap_svr.ReloadList();
-				
-				Service http_svr(stHTTP);
-				http_svr.ReloadList();
+				Service mda_svr;
+				mda_svr.ReloadList();
 			}
 			else
 			{
@@ -8000,8 +10195,57 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
-		strcut(strauth.c_str(), ":", NULL, password);
+        for(int x = 0; x < username.length() - 1; x++)
+        {
+            if((username[x] >= 'a' && username[x] <= 'z') 
+                || (username[x] >= 'A' && username[x] <= 'Z')
+                || (username[x] >= '0' && username[x] <= '9')
+                || (username[x] == '_' || username[x] == '.'))
+            {
+                //works fine
+            }
+            else
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
 
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
+		strcut(strauth.c_str(), ":", NULL, password);
+        for(int x = 0; x < password.length(); x++)
+        {
+            if(password[x] > 126 || password[x] < 32)
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
+        
 		if(m_mailStg && m_mailStg->CheckAdmin(username.c_str(), password.c_str()) == 0)
 		{
 			string strConfigName;
@@ -8136,8 +10380,57 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
+        for(int x = 0; x < username.length() - 1; x++)
+        {
+            if((username[x] >= 'a' && username[x] <= 'z') 
+                || (username[x] >= 'A' && username[x] <= 'Z')
+                || (username[x] >= '0' && username[x] <= '9')
+                || (username[x] == '_' || username[x] == '.'))
+            {
+                //works fine
+            }
+            else
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
 		strcut(strauth.c_str(), ":", NULL, password);
-		
+		for(int x = 0; x < password.length(); x++)
+        {
+            if(password[x] > 126 || password[x] < 32)
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
+        
 		if(m_mailStg && m_mailStg->CheckAdmin(username.c_str(), password.c_str()) == 0)
 		{
 			string strLogName;
@@ -8271,8 +10564,56 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
+        for(int x = 0; x < username.length() - 1; x++)
+        {
+            if((username[x] >= 'a' && username[x] <= 'z') 
+                || (username[x] >= 'A' && username[x] <= 'Z')
+                || (username[x] >= '0' && username[x] <= '9')
+                || (username[x] == '_' || username[x] == '.'))
+            {
+                //works fine
+            }
+            else
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
 		strcut(strauth.c_str(), ":", NULL, password);
-		 
+		for(int x = 0; x < password.length(); x++)
+        {
+            if(password[x] > 126 || password[x] < 32)
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        } 
 		
 		if(m_mailStg && m_mailStg->CheckAdmin(username.c_str(), password.c_str()) == 0)
 		{			
@@ -8493,8 +10834,57 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
+        for(int x = 0; x < username.length() - 1; x++)
+        {
+            if((username[x] >= 'a' && username[x] <= 'z') 
+                || (username[x] >= 'A' && username[x] <= 'Z')
+                || (username[x] >= '0' && username[x] <= '9')
+                || (username[x] == '_' || username[x] == '.'))
+            {
+                //works fine
+            }
+            else
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
 		strcut(strauth.c_str(), ":", NULL, password);		 
-		
+		for(int x = 0; x < password.length(); x++)
+        {
+            if(password[x] > 126 || password[x] < 32)
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
+        
 		if(m_mailStg && m_mailStg->CheckLogin(username.c_str(), password.c_str()) == 0)
 		{			
 			strResp = RSP_200_OK_XML;

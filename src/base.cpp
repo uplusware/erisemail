@@ -195,7 +195,7 @@ BOOL CMailBase::LoadConfig()
 				strtrim(m_dns_server);
 				/* printf("%s\n", m_dns_server.c_str()); */
 			}
-			else if(strncasecmp(strline.c_str(), "MaxConnPerProtocal", strlen("MaxConnPerProtocal")) == 0)
+			else if(strncasecmp(strline.c_str(), "MaxCocurrentConnNum", strlen("MaxCocurrentConnNum")) == 0)
 			{
 				string maxconn;
 				strcut(strline.c_str(), "=", NULL, maxconn );

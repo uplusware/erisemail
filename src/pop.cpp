@@ -197,7 +197,7 @@ void CMailPop::On_Apop_Handler(char* text)
 		}
 		else
 		{
-			push_reject_list(stPOP3, m_clientip.c_str());
+			push_reject_list(MDA_SERVICE_NAME, m_clientip.c_str());
 			
 			sprintf(cmd,"-ERR Unable to log on.\r\n");
 			PopSend(cmd,strlen(cmd));
@@ -205,7 +205,7 @@ void CMailPop::On_Apop_Handler(char* text)
 	}
 	else
 	{
-		push_reject_list(stPOP3, m_clientip.c_str());
+		push_reject_list(MDA_SERVICE_NAME, m_clientip.c_str());
 		
 		sprintf(cmd,"-ERR Unable to log on.\r\n");
 		PopSend(cmd,strlen(cmd));
@@ -520,7 +520,7 @@ BOOL CMailPop::On_Supose_Checking_Handler()
         }
         else
         {
-            push_reject_list(stPOP3, m_clientip.c_str());
+            push_reject_list(MDA_SERVICE_NAME, m_clientip.c_str());
             
             sprintf(cmd,"-ERR Unable to log on.\r\n");
             PopSend(cmd,strlen(cmd));
@@ -550,7 +550,7 @@ BOOL CMailPop::On_Supose_Checking_Handler()
 			}
 			else
 			{
-				push_reject_list(stPOP3, m_clientip.c_str());
+				push_reject_list(MDA_SERVICE_NAME, m_clientip.c_str());
 				sprintf(cmd,"-ERR Authentication Failed.\r\n");
 				PopSend(cmd,strlen(cmd));
 				return FALSE;
@@ -558,7 +558,7 @@ BOOL CMailPop::On_Supose_Checking_Handler()
 		}
 		else
 		{
-			push_reject_list(stPOP3, m_clientip.c_str());
+			push_reject_list(MDA_SERVICE_NAME, m_clientip.c_str());
 			sprintf(cmd,"-ERR Authentication Failed.\r\n");
 			PopSend(cmd,strlen(cmd));
 			return FALSE;
@@ -575,7 +575,7 @@ BOOL CMailPop::On_Supose_Checking_Handler()
 		}
 		else
 		{
-			push_reject_list(stPOP3, m_clientip.c_str());
+			push_reject_list(MDA_SERVICE_NAME, m_clientip.c_str());
 			char cmd[128];
 			sprintf(cmd,"-ERR Authentication Failed.\r\n");
 			PopSend(cmd,strlen(cmd));
@@ -584,7 +584,7 @@ BOOL CMailPop::On_Supose_Checking_Handler()
 	}
 	else
 	{
-		push_reject_list(stPOP3, m_clientip.c_str());
+		push_reject_list(MDA_SERVICE_NAME, m_clientip.c_str());
 		return FALSE;
 	}
 
@@ -1020,7 +1020,7 @@ void CMailPop::On_Auth_Handler(char* text)
 		}
 		else
 		{
-			push_reject_list(stPOP3, m_clientip.c_str());
+			push_reject_list(MDA_SERVICE_NAME, m_clientip.c_str());
 			sprintf(cmd, "-ERR Error: authentication failed\r\n");
 		}
 		
