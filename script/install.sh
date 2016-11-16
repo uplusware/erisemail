@@ -40,33 +40,38 @@ test -x /var/erisemail/private/cache || mkdir /var/erisemail/private/cache
 
 cp -rf ${path}/html/* /var/erisemail/html/ 
 
+test -x /etc/erisemail/erisemail.conf && mv /etc/erisemail/erisemail.conf /etc/erisemail/erisemail.conf.$((`date "+%Y%m%d%H%M%S"`))
 cp -f ${path}/erisemail.conf /etc/erisemail/erisemail.conf
 chmod 600 /etc/erisemail/erisemail.conf
 
-cp -f ${path}/ca.crt /var/erisemail/cert/ca.crt
+test -x /var/erisemail/cert/ca.crt || cp -f ${path}/ca.crt /var/erisemail/cert/ca.crt
 chmod 600 /var/erisemail/cert/ca.crt
 
-cp -f ${path}/server.key /var/erisemail/cert/server.key
+test -x /var/erisemail/cert/server.key || cp -f ${path}/server.key /var/erisemail/cert/server.key
 chmod 600 /var/erisemail/cert/server.key
 
-cp -f ${path}/server.crt /var/erisemail/cert/server.crt
+test -x /var/erisemail/cert/server.crt || cp -f ${path}/server.crt /var/erisemail/cert/server.crt
 chmod 600 /var/erisemail/cert/server.crt
 
-cp -f ${path}/client.key /var/erisemail/cert/client.key
+test -x /var/erisemail/cert/client.key || cp -f ${path}/client.key /var/erisemail/cert/client.key
 chmod 600 /var/erisemail/cert/client.key
  
-cp -f ${path}/client.crt /var/erisemail/cert/client.crt
+test -x /var/erisemail/cert/client.crt || cp -f ${path}/client.crt /var/erisemail/cert/client.crt
 chmod 600 /var/erisemail/cert/client.crt
 
-cp -f ${path}/domain.list /etc/erisemail/domain.list
+test -x /etc/erisemail/domain.list || cp -f ${path}/domain.list /etc/erisemail/domain.list
 chmod a-x /etc/erisemail/domain.list
-cp -f ${path}/permit.list /etc/erisemail/permit.list
+
+test -x /etc/erisemail/permit.list || cp -f ${path}/permit.list /etc/erisemail/permit.list
 chmod a-x /etc/erisemail/permit.list
-cp -f ${path}/reject.list /etc/erisemail/reject.list
+
+test -x /etc/erisemail/reject.list || cp -f ${path}/reject.list /etc/erisemail/reject.list
 chmod a-x /etc/erisemail/reject.list
-cp -f ${path}/webadmin.list /etc/erisemail/webadmin.list
+
+test -x /etc/erisemail/webadmin.list || cp -f ${path}/webadmin.list /etc/erisemail/webadmin.list
 chmod a-x /etc/erisemail/webadmin.list
-cp -f ${path}/mfilter.xml /etc/erisemail/mfilter.xml
+
+test -x /etc/erisemail/mfilter.xml || cp -f ${path}/mfilter.xml /etc/erisemail/mfilter.xml
 chmod a-x /etc/erisemail/mfilter.xml
 
 if uname -o | grep -i cygwin;

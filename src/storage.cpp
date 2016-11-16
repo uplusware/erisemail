@@ -22,7 +22,7 @@ static void show_error(MYSQL *mysql)
 
     CUplusTrace uTrace(MYSQLERR_LOGNAME, MYSQLERR_LCKNAME);
     
-    uTrace.Write(Trace_Error, "MySQL error(%d) [%s] \"%s\"\n", mysql_errno(mysql), mysql_sqlstate(mysql), mysql_error(mysql));
+    uTrace.Write(Trace_Error, "MySQL error(%d) [%s] \"%s\"", mysql_errno(mysql), mysql_sqlstate(mysql), mysql_error(mysql));
 }
 
 BOOL MailStorage::m_userpwd_cache_updated = TRUE;

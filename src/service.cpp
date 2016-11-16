@@ -312,7 +312,7 @@ int Service::create_server_service(CUplusTrace& uTrace, const char* hostip, unsi
     int s = getaddrinfo((hostip && hostip[0] != '\0') ? hostip : NULL, sz_port, &hints, &server_addr);
     if (s != 0)
     {
-       fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(s));
+       uTrace.Write(Trace_Error, "getaddrinfo: %s", gai_strerror(s));
        srv_sockfd = -1;
        return srv_sockfd;
     }
@@ -336,7 +336,7 @@ int Service::create_server_service(CUplusTrace& uTrace, const char* hostip, unsi
     
     if (rp == NULL)
     {               /* No address succeeded */
-          fprintf(stderr, "Could not bind\n");
+          uTrace.Write(Trace_Error, "Could not bind");
           srv_sockfd = -1;
           return srv_sockfd;
     }
