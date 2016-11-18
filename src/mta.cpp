@@ -637,6 +637,8 @@ void MTA::Stop()
 	printf("Stop %s Service OK\n", MTA_SERVICE_NAME);
 }
 
+#define MTA_QUERY_MAX_INTERVAL  5
+
 int MTA::Run(int fd)
 {		
 	ThreadPool* thd_pool;
@@ -661,7 +663,21 @@ int MTA::Run(int fd)
 			retVal = -1;
 			break;
 		}
+        
+        MailStorage* mailStg = NULL;
+        StorageEngineInstance* stgengine_instance = new StorageEngineInstance(m_storageEngine, &mailStg);
+        if(!stgengine_instance || !mailStg)
+        {
+            if(stgengine_instance)
+                delete stgengine_instance;
+            retVal = -1;
+            break;
+        }	
+        mailStg->InsertMTA(CMailBase::m_localhostname.c_str());
 
+        stgengine_instance->Release();
+        delete stgengine_instance;
+        
 		unsigned int result  = 0;
 
 		string strqueue = "/.";
@@ -741,56 +757,75 @@ int MTA::Run(int fd)
 				}
 			}
             clock_gettime(CLOCK_REALTIME, &ts2);
-            ts2.tv_sec += 5;
+            ts2.tv_sec += MTA_QUERY_MAX_INTERVAL;
             int sr = sem_timedwait(postmail_sid, &ts2);
 			if( sr == 0 || (sr == -1 && errno == ETIMEDOUT))
 			{
-                MailStorage* mailStg = NULL;
-				StorageEngineInstance stgengine_instance(m_storageEngine, &mailStg);
-				if(!mailStg)
+                mailStg = NULL;
+				stgengine_instance = new StorageEngineInstance(m_storageEngine, &mailStg);
+				if(!stgengine_instance || !mailStg)
 				{
+                    if(stgengine_instance)
+                        delete stgengine_instance;
 					continue;
 				}		
 				vector<Mail_Info> mitbl;
-                mailStg->MTALock();
-				if(mailStg->ListExternMail(mitbl, CMailBase::m_mta_relaytasknum) == 0)
+                mailStg->UpdateMTA(CMailBase::m_localhostname.c_str());
+                
+                unsigned int mta_index, mta_count;
+                
+                mailStg->GetMTAIndex(CMailBase::m_localhostname.c_str(), 2*MTA_QUERY_MAX_INTERVAL, mta_index, mta_count);
+                
+				if(mta_count > 0 && mailStg->ListExternMail(mitbl, CMailBase::m_mta_relaytasknum) == 0)
 				{
                     for(int x = 0; x < mitbl.size(); x++)
                     {
-                        ReplyInfo* reply_info = new ReplyInfo;
+                        if(mitbl[x].mid % mta_count == mta_index)
+                        {
+                            ReplyInfo* reply_info = new ReplyInfo;
+                            
+                            reply_info->mail_info.mid = mitbl[x].mid;
+                            memcpy(reply_info->mail_info.uniqid, mitbl[x].uniqid, 256);
+                            reply_info->mail_info.mailfrom = mitbl[x].mailfrom;
+                            reply_info->mail_info.rcptto = mitbl[x].rcptto;
+                            reply_info->mail_info.mtime = mitbl[x].mtime;
+                            reply_info->mail_info.mstatus = mitbl[x].mstatus;
+                            reply_info->mail_info.mtype = mitbl[x].mtype;
+                            reply_info->mail_info.mdid = mitbl[x].mdid;
+                            reply_info->mail_info.length = mitbl[x].length;
+                            reply_info->mail_info.reserve = mitbl[x].reserve;
+                            reply_info->_storageEngine = m_storageEngine;
+                            reply_info->_memcached = m_memcached;
+                            pthread_mutex_lock(&gs_thread_pool_mutex);
+                            gs_thread_pool_arg_queue.push(reply_info);
+                            pthread_mutex_unlock(&gs_thread_pool_mutex);
                         
-                        reply_info->mail_info.mid = mitbl[x].mid;
-                        memcpy(reply_info->mail_info.uniqid, mitbl[x].uniqid, 256);
-                        reply_info->mail_info.mailfrom = mitbl[x].mailfrom;
-                        reply_info->mail_info.rcptto = mitbl[x].rcptto;
-                        reply_info->mail_info.mtime = mitbl[x].mtime;
-                        reply_info->mail_info.mstatus = mitbl[x].mstatus;
-                        reply_info->mail_info.mtype = mitbl[x].mtype;
-                        reply_info->mail_info.mdid = mitbl[x].mdid;
-                        reply_info->mail_info.length = mitbl[x].length;
-                        reply_info->mail_info.reserve = mitbl[x].reserve;
-                        reply_info->_storageEngine = m_storageEngine;
-                        reply_info->_memcached = m_memcached;
-                        pthread_mutex_lock(&gs_thread_pool_mutex);
-                        gs_thread_pool_arg_queue.push(reply_info);
-                        pthread_mutex_unlock(&gs_thread_pool_mutex);
-                    
-                        sem_post(&gs_thread_pool_sem);
-                        mailStg->Prefoward(mitbl[x].mid);
+                            sem_post(&gs_thread_pool_sem);
+                            mailStg->Prefoward(mitbl[x].mid);
+                        }
                     
                     }
 				}
-                mailStg->MTAUnlock();
-				stgengine_instance.Release();
+				stgengine_instance->Release();
+                delete stgengine_instance;
 			}
 		}
 
 		if(postmail_sid != SEM_FAILED)
-  		{ 
-    			sem_close(postmail_sid);
+  		{
+            sem_close(postmail_sid);
 		}
    
-
+        mailStg = NULL;
+        stgengine_instance = new StorageEngineInstance(m_storageEngine, &mailStg);
+        if(stgengine_instance && mailStg)
+        {
+            mailStg->DeleteMTA(CMailBase::m_localhostname.c_str());
+        }
+        
+        if(stgengine_instance)
+            delete stgengine_instance;
+        
 		if(thd_pool)
 			delete thd_pool;
 		
@@ -806,6 +841,6 @@ int MTA::Run(int fd)
 		sem_unlink(strsem.c_str());
 		mq_unlink(strqueue.c_str());
 	}while(0);
-	
+        
 	return retVal;
 }

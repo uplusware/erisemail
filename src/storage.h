@@ -319,6 +319,12 @@ public:
     int MTALock();
     int MTAUnlock();
 	
+    int InsertMTA(const char* mta);
+    int DeleteMTA(const char* mta);
+    int UpdateMTA(const char* mta);
+    
+    int GetMTAIndex(const char* mta, unsigned int live_sec, unsigned int& mta_index, unsigned int& mta_count);
+    
 protected:
 	MYSQL m_hMySQL;
     memcached_st * m_memcached;

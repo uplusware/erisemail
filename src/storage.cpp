@@ -254,6 +254,16 @@ int MailStorage::Install(const char* database)
 		database);
     mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd));
     
+    //Create MTA list table
+	sprintf(sqlcmd, 
+		"CREATE TABLE IF NOT EXISTS `%s`.`mtatbl` ("
+		"`mid` INT UNSIGNED NOT NULL AUTO_INCREMENT ,"
+		"`mta` VARCHAR( 256 ) NOT NULL ,"
+		"`active_time` INT UNSIGNED NOT NULL DEFAULT '0',"
+		"PRIMARY KEY ( `mid` ) ) ENGINE = MYISAM ",
+		database);
+    mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd));
+    
 	sprintf(sqlcmd, "DROP FUNCTION IF EXISTS post_notify");
 	mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd));
 	
@@ -337,7 +347,6 @@ int MailStorage::CheckAdmin(const char* username, const char* password)
 	SqlSafetyString(strSafetyUsername);
 	sprintf(sqlcmd, "SELECT uname FROM usertbl WHERE uname='%s' AND DECODE(upasswd,'%s') = '%s' AND ustatus = %d AND urole=%d AND utype = %d", strSafetyUsername.c_str(), CODE_KEY, password, usActive, urAdministrator, utMember);
 
-	//printf("%s\r\n", sqlcmd);
 	
 	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
@@ -512,7 +521,7 @@ int MailStorage::VerifyUser(const char* username)
 	}
 	else
 	{
-	    
+	    show_error(&m_hMySQL);
 		return -1;
 	}
 }
@@ -545,7 +554,7 @@ int MailStorage::VerifyGroup(const char* groupname)
 	}
 	else
 	{
-	    
+	    show_error(&m_hMySQL);
 		return -1;
 	}
 }
@@ -645,12 +654,14 @@ int MailStorage::SetDefaultLevel(unsigned int lid)
 	sprintf(sqlcmd, "UPDATE leveltbl SET ldefault = %d WHERE ldefault = %d", ldFalse, ldTrue);
 	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) != 0)
 	{
+        show_error(&m_hMySQL);
 		return -1;
 	}
 	
 	sprintf(sqlcmd, "UPDATE leveltbl SET ldefault = %d WHERE lid = %d", ldTrue, lid);
 	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) != 0)
 	{
+        show_error(&m_hMySQL);
 		return -1;
 	}
 	return 0;
@@ -682,7 +693,10 @@ int MailStorage::SetUserLevel(const char* username, int lid)
 		return 0;
 	}
 	else
+    {
+        show_error(&m_hMySQL);
 		return -1;
+    }
 }
 
 int MailStorage::GetDefaultLevel(int& lid)
@@ -723,7 +737,7 @@ int MailStorage::GetDefaultLevel(int& lid)
 	}
 	else
 	{
-	    
+	    show_error(&m_hMySQL);
 		return -1;
 	}
 }
@@ -773,7 +787,7 @@ int MailStorage::GetDefaultLevel(Level_Info& liinfo)
 	}
 	else
 	{
-	    
+	    show_error(&m_hMySQL);
 		return -1;
 	}
 }
@@ -821,7 +835,6 @@ int MailStorage::ListLevel(vector<Level_Info>& litbl)
 	}
 	else
 	{
-	    
 		show_error(&m_hMySQL);
 		return -1;
 	}
@@ -987,6 +1000,7 @@ int MailStorage::AddID(const char* username, const char* password, const char* a
 			}
 			else
 			{
+                show_error(&m_hMySQL);
 				mysql_rollback(&m_hMySQL);
 				mysql_autocommit(&m_hMySQL, 1);
 			}
@@ -1035,7 +1049,10 @@ int MailStorage::UpdateID(const char* username, const char* alias, UserStatus st
 		return 0;
 	}
 	else
+    {
+        show_error(&m_hMySQL);
 		return -1;
+    }
 }
 
 int MailStorage::DelAllMailOfDir(int mdirid)
@@ -1098,7 +1115,7 @@ int MailStorage::DelAllMailOfID(const char* username)
 	}
 	else
 	{
-	    
+	    show_error(&m_hMySQL);
 		return -1;	
 	}
 }
@@ -1501,7 +1518,7 @@ int MailStorage::ChangeMailDir(int mdirid, int mailid)
 		}
 		else
 		{
-			//show_error(&m_hMySQL);
+			show_error(&m_hMySQL);
 			return -1;
 		}
 	}
@@ -1573,7 +1590,7 @@ int MailStorage::ListMailByDir(const char* username, vector<Mail_Info>& listtbl,
 	}
 	else
 	{
-	    
+	    show_error(&m_hMySQL);
 		return -1;
 	}
 }
@@ -1636,7 +1653,7 @@ int MailStorage::ListMailByDir(const char* username, vector<Mail_Info>& listtbl,
 	}
 	else
 	{
-		
+		show_error(&m_hMySQL);
 		return -1;
 	}
 }
@@ -1711,7 +1728,7 @@ int MailStorage::LimitListMailByDir(const char* username, vector<Mail_Info>& lis
 	}
 	else
 	{
-	    
+	    show_error(&m_hMySQL);
 		return -1;
 	}
 }
@@ -1775,7 +1792,7 @@ int MailStorage::LimitListUnauditedMailByDir(const char* username, vector<Mail_I
 	}
 	else
 	{
-	    
+	    show_error(&m_hMySQL);
 		return -1;
 	}
 }
@@ -1838,7 +1855,7 @@ int MailStorage::ListAllMail(vector<Mail_Info>& listtbl)
 	}
 	else
 	{
-	    
+	    show_error(&m_hMySQL);
 		return -1;
 	}
 }
@@ -1881,6 +1898,7 @@ int MailStorage::ListExternMail(vector<Mail_Info>& listtbl, unsigned int max_num
 	}
 	else
 	{
+        show_error(&m_hMySQL);
 	    return -1;
 	}
 }
@@ -1894,7 +1912,10 @@ int MailStorage::Prefoward(int mid)
 		return 0;
 	}
 	else
+    {
+        show_error(&m_hMySQL);
 		return -1;
+    }
 }
 
 int MailStorage::CancelFoward(int mid)
@@ -1906,7 +1927,10 @@ int MailStorage::CancelFoward(int mid)
 		return 0;
 	}
 	else
+    {
+        show_error(&m_hMySQL);
 		return -1;
+    }
 }
 
 int MailStorage::ListMemberOfGroup(const char* group, vector<User_Info>& listtbl)
@@ -1948,7 +1972,7 @@ int MailStorage::ListMemberOfGroup(const char* group, vector<User_Info>& listtbl
 	}
 	else
 	{
-	    
+	    show_error(&m_hMySQL);
 		return -1;
 	}
 }
@@ -1990,7 +2014,7 @@ int MailStorage::ListID(vector<User_Info>& listtbl, string orderby, BOOL desc)
 	}
 	else
 	{
-	    
+	    show_error(&m_hMySQL);
 		return -1;
 	}
 }
@@ -2041,7 +2065,7 @@ int MailStorage::GetID(const char* uname, User_Info& uinfo)
 	}
 	else
 	{
-	    
+	    show_error(&m_hMySQL);
 		return -1;
 	}
 }
@@ -2081,7 +2105,7 @@ int MailStorage::ListGroup(vector<User_Info>& listtbl)
 	}
 	else
 	{
-	    
+	    show_error(&m_hMySQL);
 		return -1;
 	}
 }
@@ -2120,7 +2144,7 @@ int MailStorage::ListMember(vector<User_Info>& listtbl)
 	}
 	else
 	{
-	    
+	    show_error(&m_hMySQL);
 		return -1;
 	}
 }
@@ -2146,6 +2170,7 @@ int MailStorage::Passwd(const char* uname, const char* password)
 		}
 		else
 		{
+            show_error(&m_hMySQL);
 			return -1;
 		}
 	}
@@ -2171,6 +2196,7 @@ int MailStorage::Alias(const char* uname, const char* alias)
 		}
 		else
 		{
+            show_error(&m_hMySQL);
 			return -1;
 		}
 	}
@@ -2194,6 +2220,7 @@ int MailStorage::SetUserStatus(const char* uname, UserStatus status)
 		}
 		else
 		{
+            show_error(&m_hMySQL);
 			return -1;
 		}
 	}
@@ -2216,6 +2243,7 @@ int MailStorage::SetUserSize(const char* uname, unsigned int size)
 		}
 		else
 		{
+            show_error(&m_hMySQL);
 			return -1;
 		}
 	}
@@ -2252,7 +2280,10 @@ int MailStorage::DumpMailToFile(int mid, string& dumpfile)
 		return 0;
 	}
 	else
+    {
+        show_error(&m_hMySQL);
 		return -1;
+    }
 }
 
 int MailStorage::GetMailBody(int mid, char* body)
@@ -2287,7 +2318,7 @@ int MailStorage::GetMailBody(int mid, char* body)
 	}
 	else
 	{
-	    
+	    show_error(&m_hMySQL);
 		return -1;
 	}
 }
@@ -2361,7 +2392,7 @@ int MailStorage::GetMailDir(int mid, int & dirid)
 	}
 	else
 	{
-	    
+	    show_error(&m_hMySQL);
 		return -1;
 	}
 }
@@ -2401,7 +2432,7 @@ int MailStorage::GetMailOwner(int mid, string & owner)
 		}
 		else
 		{
-		    
+		    show_error(&m_hMySQL);
 			return -1;
 		}
 	}
@@ -2442,7 +2473,7 @@ int MailStorage::GetMailFromAndTo(int mid, string & from, string &to)
 	}
 	else
 	{
-	    
+	    show_error(&m_hMySQL);
 		return -1;
 	}
 }
@@ -2478,7 +2509,7 @@ int MailStorage::IsAdmin(const char* username)
 	}
 	else
 	{
-	    
+	    show_error(&m_hMySQL);
 		return -1;
 	}
 }
@@ -2515,7 +2546,7 @@ int MailStorage::GetDirOwner(int dirid, string & owner)
 	}
 	else
 	{
-	    
+	    show_error(&m_hMySQL);
 		return -1;
 	}
 }
@@ -2564,7 +2595,10 @@ int MailStorage::ShitDelMail(int mid)
 		return 0;
 	}
 	else
+    {
+        show_error(&m_hMySQL);
 		return -1;
+    }
 }
 
 int MailStorage::DelMail(const char* username, int mid)
@@ -2622,7 +2656,7 @@ int MailStorage::AppendUserToGroup(const char* username, const char* groupname)
 		}
 		else
 		{
-		    
+		    show_error(&m_hMySQL);
 			return -1;
 		}
 		
@@ -2633,7 +2667,10 @@ int MailStorage::AppendUserToGroup(const char* username, const char* groupname)
 			return 0;
 		}
 		else
+        {
+            show_error(&m_hMySQL);
 			return -1;
+        }
 	}
 	else
 		return -1;
@@ -2654,7 +2691,10 @@ int MailStorage::RemoveUserFromGroup(const char* username, const char* groupname
 		return 0;
 	}
 	else
+    {
+        show_error(&m_hMySQL);
 		return -1;
+    }
 }
 
 int MailStorage::CreateDir(const char* username, const char* dirref)
@@ -2689,7 +2729,10 @@ int MailStorage::CreateDir(const char* username, const char* dirref)
 			return 0;
 		}
 		else
+        {
+            show_error(&m_hMySQL);
 			return -1;
+        }
 	}
 	else
 	{
@@ -2725,7 +2768,10 @@ int MailStorage::CreateDir(const char* username, const char* dirname, int parent
 		return 0;
 	}
 	else
+    {
+        show_error(&m_hMySQL);
 		return -1;
+    }
 }
 
 int MailStorage::DeleteDir(const char* username, int dirid)
@@ -2767,7 +2813,7 @@ int MailStorage::DeleteDir(const char* username, int dirid)
 	}
 	else
 	{
-		
+		show_error(&m_hMySQL);
 		return -1;
 	}
 }
@@ -2859,7 +2905,7 @@ int MailStorage::GetDirParentID(const char* username, int dirid, int& parentid)
 	}
 	else
 	{
-	    
+	    show_error(&m_hMySQL);
 		return -1;
 	}
 }
@@ -2917,7 +2963,7 @@ int MailStorage::IsDirExist(const char* username, const char* dirref)
 		}
 		else
 		{
-		    
+		    show_error(&m_hMySQL);
 			return -1;
 		}
 	}
@@ -2957,7 +3003,7 @@ int MailStorage::IsDirExist(const char* username, int dirid)
 	}
 	else
 	{
-	    
+	    show_error(&m_hMySQL);
 		return -1;
 	}
 }
@@ -3007,7 +3053,7 @@ int MailStorage::IsSubDirExist(const char* username, int parentid, const char* d
 	}
 	else
 	{
-	    
+	    show_error(&m_hMySQL);
 		return -1;
 	}
 }
@@ -3198,7 +3244,7 @@ int MailStorage::GetInboxID(const char* username, int &dirid)
 	}
 	else
 	{
-	    
+	    show_error(&m_hMySQL);
 		return -1;
 	}
 }
@@ -3251,7 +3297,7 @@ int MailStorage::GetJunkID(const char* username, int &dirid)
 	}
 	else
 	{
-	    
+	    show_error(&m_hMySQL);
 		return -1;
 	}
 }
@@ -3304,7 +3350,7 @@ int MailStorage::GetDraftsID(const char* username, int &dirid)
 	}
 	else
 	{
-	    
+	    show_error(&m_hMySQL);
 		return -1;
 	}
 }
@@ -3360,7 +3406,7 @@ int MailStorage::GetSentID(const char* username, int &dirid)
 	}
 	else
 	{
-	    
+	    show_error(&m_hMySQL);
 		return -1;
 	}
 }
@@ -3412,7 +3458,7 @@ int MailStorage::GetTrashID(const char* username, int &dirid)
 	}
 	else
 	{
-	    
+	    show_error(&m_hMySQL);
 		return -1;
 	}
 }
@@ -3467,7 +3513,7 @@ int MailStorage::GetUnauditedMailCount(const char* username, unsigned int& count
 	}
 	else
 	{
-	    
+	    show_error(&m_hMySQL);
 		return -1;
 	}
 }
@@ -3506,7 +3552,7 @@ int MailStorage::GetDirStatus(const char* username, const char* dirref, unsigned
 	}
 	else
 	{
-	    
+	    show_error(&m_hMySQL);
 		return -1;
 	}
 }
@@ -3557,7 +3603,7 @@ int MailStorage::GetMailStatus(int mid, unsigned int& status)
 	}
 	else
 	{
-	    
+	    show_error(&m_hMySQL);
 		return -1;
 	}
 }
@@ -3593,7 +3639,7 @@ int MailStorage::GetMailUID(int mid, string uid)
 	}
 	else
 	{
-	    
+	    show_error(&m_hMySQL);
 		return -1;
 	}
 }
@@ -3652,7 +3698,10 @@ int MailStorage::RenameDir(const char* username, const char* oldname, const char
 		return 0;
 	}
 	else
+    {
+        show_error(&m_hMySQL);
 		return -1;
+    }
 	
 }
 
@@ -3719,7 +3768,7 @@ int MailStorage::TraversalListDir(const char* username, const char* dirref, vect
 		}
 		else
 		{
-		    
+		    show_error(&m_hMySQL);
 			return -1;
 		}
 	}
@@ -3781,7 +3830,7 @@ int MailStorage::ListSubDir(const char* username, int pid, vector<Dir_Info>& lis
 	}
 	else
 	{
-	    
+	    show_error(&m_hMySQL);
 		return -1;
 	}
 }
@@ -3869,7 +3918,7 @@ int MailStorage::GetUnseenMail(int dirid, int& num)
 	}
 	else
 	{
-	    
+	    show_error(&m_hMySQL);
 		return -1;
 	}
 }
@@ -3928,7 +3977,7 @@ int MailStorage::EmptyDir(const char* username, int dirid)
 	}
 	else
 	{
-	    
+	    show_error(&m_hMySQL);
 		return -1;
 	}
 }
@@ -3970,7 +4019,7 @@ int MailStorage::GetDirName(const char * username, int dirid, string& dirname)
 	}
 	else
 	{
-	    
+	    show_error(&m_hMySQL);
 		return -1;
 	}
 }
@@ -4043,7 +4092,7 @@ int MailStorage::GetGlobalStorage(unsigned int& commonMailNumber, unsigned int& 
 	}
 	else
 	{
-	    
+	    show_error(&m_hMySQL);
 		return -1;
 	}
 	
@@ -4075,7 +4124,7 @@ int MailStorage::GetGlobalStorage(unsigned int& commonMailNumber, unsigned int& 
 	}
 	else
 	{
-	    
+	    show_error(&m_hMySQL);
 		return -1;
 	}
 
@@ -4107,7 +4156,7 @@ int MailStorage::GetGlobalStorage(unsigned int& commonMailNumber, unsigned int& 
 	}
 	else
 	{
-	    
+	    show_error(&m_hMySQL);
 		return -1;
 	}
 
@@ -4139,7 +4188,7 @@ int MailStorage::GetGlobalStorage(unsigned int& commonMailNumber, unsigned int& 
 	}
 	else
 	{
-	    
+	    show_error(&m_hMySQL);
 		return -1;
 	}
 
@@ -4176,7 +4225,7 @@ int MailStorage::GetAllDirOfID(const char* username, vector<int>& didtbl)
 	}
 	else
 	{
-	    
+	    show_error(&m_hMySQL);
 		return -1;
 	}
 }
@@ -4223,7 +4272,7 @@ int MailStorage::GetUserStorage(const char* username, unsigned int& commonMailNu
 		}
 		else
 		{
-		    
+		    show_error(&m_hMySQL);
 			return -1;
 		}
 		
@@ -4255,7 +4304,7 @@ int MailStorage::GetUserStorage(const char* username, unsigned int& commonMailNu
 		}
 		else
 		{
-		    
+		    show_error(&m_hMySQL);
 			return -1;
 		}
 
@@ -4287,7 +4336,7 @@ int MailStorage::GetUserStorage(const char* username, unsigned int& commonMailNu
 		}
 		else
 		{
-		    
+		    show_error(&m_hMySQL);
 			return -1;
 		}
 
@@ -4319,7 +4368,7 @@ int MailStorage::GetUserStorage(const char* username, unsigned int& commonMailNu
 		}
 		else
 		{
-		    
+		    show_error(&m_hMySQL);
 			return -1;
 		}
 	}
@@ -4398,7 +4447,7 @@ int MailStorage::LoadMailBodyToFile(const char* emlfile, const char* fullpath)
     string strSafetyEmlfile= emlfile;
 	SqlSafetyString(strSafetyEmlfile);
     
-	sprintf(sqlcmd, "SELECT mfragment FROM mbodytbl where mbody='%s' ORDER BY mid", strSafetyEmlfile.c_str());
+	sprintf(sqlcmd, "SELECT mfragment FROM mbodytbl WHERE mbody='%s' ORDER BY mid", strSafetyEmlfile.c_str());
 	
 	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{		
@@ -4445,4 +4494,111 @@ int MailStorage::LoadMailBodyToFile(const char* emlfile, const char* fullpath)
 		show_error(&m_hMySQL);
 		return -1;
 	}
+}
+
+int MailStorage::InsertMTA(const char* mta)
+{
+    string strSafetyMTA = mta;
+	SqlSafetyString(strSafetyMTA);
+    
+    char sqlcmd[1024];
+
+	sprintf(sqlcmd, "DELETE FROM mtatbl WHERE mta='%s'", strSafetyMTA.c_str());
+	
+	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) != 0)
+    {
+        show_error(&m_hMySQL);
+        return -1;
+    }
+	
+	sprintf(sqlcmd, "INSERT INTO mtatbl(mta, active_time) VALUES('%s','%d')", 
+        strSafetyMTA.c_str(), time(NULL));
+
+    if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+    {
+        return 0;
+    }
+    else
+    {
+        show_error(&m_hMySQL);
+        return -1;
+    }
+}
+
+int MailStorage::DeleteMTA(const char* mta)
+{
+    string strSafetyMTA= mta;
+	SqlSafetyString(strSafetyMTA);
+    
+    char sqlcmd[1024];
+
+	sprintf(sqlcmd, "DELETE FROM mtatbl WHERE mta='%s'", strSafetyMTA.c_str());
+	
+	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) != 0)
+	{
+        show_error(&m_hMySQL);
+		return -1;
+	}
+	
+	return 0;
+}
+
+int MailStorage::UpdateMTA(const char* mta)
+{
+    string strSafetyMTA= mta;
+	SqlSafetyString(strSafetyMTA);
+    
+    char sqlcmd[1024];
+
+	sprintf(sqlcmd, "UPDATE mtatbl SET active_time='%d' WHERE mta='%s'", time(NULL), strSafetyMTA.c_str());
+	
+	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) != 0)
+	{
+        show_error(&m_hMySQL);
+		return -1;
+	}
+    return 0;
+}
+
+int MailStorage::GetMTAIndex(const char* mta, unsigned int live_sec, unsigned int& mta_index, unsigned int& mta_count)
+{
+    
+    char sqlcmd[1024];
+
+	sprintf(sqlcmd, "SELECT mta FROM mtatbl WHERE active_time > %d ORDER BY mta", time(NULL) - live_sec);
+	
+	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) != 0)
+	{
+        show_error(&m_hMySQL);
+		return -1;
+	}
+    else
+    {
+        mta_index = 0;
+        MYSQL_RES *qResult;
+		MYSQL_ROW row;
+		
+		qResult = mysql_store_result(&m_hMySQL);
+		
+		if(qResult)
+		{
+            unsigned int l = 0;
+			while((row = mysql_fetch_row(qResult)))
+			{
+                if(strcmp(row[0], mta) == 0)
+                {
+                    mta_index = l;
+                    l++;
+                }
+			}
+            mta_count = l;
+			mysql_free_result(qResult);
+			return 0;
+		}
+		else
+		{
+			return -1;
+		}
+    }
+    return 0;
 }
