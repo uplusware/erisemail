@@ -88,8 +88,11 @@ static BOOL ReturnMail(MailStorage* mailStg, memcached_st * memcached,
 		strMailTo = strRcptTo.c_str();		
 	}
 	
-	MailLetter newLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), memcached, szUid, usermaxsize);
+	MailLetter* newLetter  = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), memcached, szUid, usermaxsize);
 	
+    if(!newLetter)
+        return FALSE;
+    
 	Letter_Info letter_info;
 	letter_info.mail_from = szMailFrom;
 	letter_info.mail_to = strMailTo.c_str();
@@ -157,40 +160,49 @@ static BOOL ReturnMail(MailStorage* mailStg, memcached_st * memcached,
 	sprintf(sztmp, " filename=\"%s.eml\";\r\n\r\n", uniqid);
 	strtmp += sztmp;
 
-	newLetter.Write(strtmp.c_str(), strtmp.length());
+	newLetter->Write(strtmp.c_str(), strtmp.length());
 
 	char codebuf[73];
 	
-	MailLetter oldLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), memcached, emlfile.c_str());
-	if(oldLetter.GetSize() > 0)
-	{
-		int llen;
-		char* lbuf = oldLetter.Body(llen);
+	MailLetter* oldLetter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), memcached, emlfile.c_str());
+    if(oldLetter)
+    {
+        if(oldLetter->GetSize() > 0)
+        {
+            int llen;
+            char* lbuf = oldLetter->Body(llen);
 
-		int wlen = 0;
-		while(1)
-		{
-			if(newLetter.Write(lbuf + wlen, (llen - wlen) > 1448 ? 1448 : (llen - wlen)) < 0)
-				break;
-			wlen += ((llen - wlen) > 1448 ? 1448 : (llen - wlen));
-			if(wlen >= llen)
-				break;
-		}
-	}
-	oldLetter.Close();
-	
+            int wlen = 0;
+            while(1)
+            {
+                if(newLetter->Write(lbuf + wlen, (llen - wlen) > 1448 ? 1448 : (llen - wlen)) < 0)
+                    break;
+                wlen += ((llen - wlen) > 1448 ? 1448 : (llen - wlen));
+                if(wlen >= llen)
+                    break;
+            }
+        }
+        oldLetter->Close();
+        
+        delete oldLetter;
+    }
+    
 	strtmp = "\r\n";
 	strtmp += "------=_NextPart_";
 	strtmp += szBoundary;
 	strtmp += "--\r\n";
 
-	newLetter.Write(strtmp.c_str(), strtmp.length());
-	newLetter.SetOK();
-	newLetter.Close();
+	newLetter->Write(strtmp.c_str(), strtmp.length());
+	newLetter->SetOK();
+	newLetter->Close();
 
 	mailStg->InsertMailIndex(letter_info.mail_from.c_str(), letter_info.mail_to.c_str(),letter_info.mail_time,
 						letter_info.mail_type, letter_info.mail_uniqueid.c_str(), letter_info.mail_dirid, letter_info.mail_status,
-						newLetter.GetEmlName(), newLetter.GetSize(), letter_info.mail_id);
+						newLetter->GetEmlName(), newLetter->GetSize(), letter_info.mail_id);
+                        
+
+    delete newLetter;
+    
 	return TRUE;
 }
 
@@ -317,7 +329,7 @@ static BOOL SendMail(MailStorage* mailStg, memcached_st * memcached,
 
     freeaddrinfo(server_addr);           /* No longer needed */
         
-    printf("[%s]: <%s>\n", mxserver, realip);	
+    /* printf("[%s]: <%s>\n", mxserver, realip); */
 	
 	getsockopt(transfer_sockfd,SOL_SOCKET,SO_ERROR,(char*)&errorCode,(socklen_t*)&errorCodeLen);
 	if(errorCode !=0)
@@ -371,23 +383,26 @@ static BOOL SendMail(MailStorage* mailStg, memcached_st * memcached,
 	string emlfile;
 	mailStg->GetMailIndex(mid, emlfile);
 	
-	MailLetter Letter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), memcached, emlfile.c_str());
-	if(Letter.GetSize() > 0)
-	{
-		int llen;
-		char* lbuf = Letter.Body(llen);
-		int wlen = 0;
-		while(1)
-		{
-			if(!pClientSmtp->Do_Dataing_Command(lbuf + wlen, (llen - wlen) > 1448 ? 1448 : (llen - wlen), errormsg))
-				break;
-			wlen += (llen - wlen) > 1448 ? 1448 : (llen - wlen);
-			if(wlen >= llen)
-				break;
-		}
-	}
-	Letter.Close();
-
+	MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), memcached, emlfile.c_str());
+	if(Letter)
+    {
+        if(Letter->GetSize() > 0)
+        {
+            int llen;
+            char* lbuf = Letter->Body(llen);
+            int wlen = 0;
+            while(1)
+            {
+                if(!pClientSmtp->Do_Dataing_Command(lbuf + wlen, (llen - wlen) > 1448 ? 1448 : (llen - wlen), errormsg))
+                    break;
+                wlen += (llen - wlen) > 1448 ? 1448 : (llen - wlen);
+                if(wlen >= llen)
+                    break;
+            }
+        }
+        Letter->Close();
+        delete Letter;
+    }
 	if(!pClientSmtp->Do_Finish_Data_Command(errormsg))
 	{
 		delete pClientSmtp;
@@ -429,7 +444,7 @@ static BOOL RelayMail(MailStorage* mailStg, memcached_st * memcached, int mid, c
 
 	for(int x = 0; x < mxcount; x++)
 	{				
-		//printf("MX: %d/%d %s\n", x, mxcount, list[x].address);
+		/* printf("MX: %d/%d %s\n", x, mxcount, list[x].address); */
 		if(SendMail(mailStg, memcached, list[x].address, "", rcpt_to, mid, errormsg) == TRUE)
 		{
 			return TRUE;
@@ -460,7 +475,7 @@ static void* begin_relay_handler(void* arg)
 	
 	s_relay_count++;
 	
-	while(!s_relay_stop)
+	while(!s_relay_stop || !gs_thread_pool_arg_queue.empty())
 	{
 		clock_gettime(CLOCK_REALTIME, &ts);
 		ts.tv_sec += 1;
@@ -610,6 +625,15 @@ void MTA::Stop()
 	if(m_memcached)
 	  memcached_free(m_memcached);
 	m_memcached = NULL;
+    
+    //wake it up when block on POST_NOTIFY
+    sem_t* post_sid = sem_open(".ERISEMAIL_POST_NOTIFY", O_RDWR);
+    if(post_sid != SEM_FAILED)
+    { 
+        sem_post(post_sid);
+        sem_close(post_sid);
+    }
+    
 	printf("Stop %s Service OK\n", MTA_SERVICE_NAME);
 }
 
@@ -718,47 +742,45 @@ int MTA::Run(int fd)
 			}
             clock_gettime(CLOCK_REALTIME, &ts2);
             ts2.tv_sec += 5;
-			if(sem_timedwait(postmail_sid, &ts2) == 0)
+            int sr = sem_timedwait(postmail_sid, &ts2);
+			if( sr == 0 || (sr == -1 && errno == ETIMEDOUT))
 			{
-				MailStorage* mailStg = NULL;
+                MailStorage* mailStg = NULL;
 				StorageEngineInstance stgengine_instance(m_storageEngine, &mailStg);
 				if(!mailStg)
 				{
 					continue;
 				}		
 				vector<Mail_Info> mitbl;
-				if(mailStg->ListExternMail(mitbl) == 0)
+                mailStg->MTALock();
+				if(mailStg->ListExternMail(mitbl, CMailBase::m_mta_relaytasknum) == 0)
 				{
-					int vlen = mitbl.size();
-				
-					if(vlen > 0)
-					{
-						for(int x = 0; x < vlen; x++)
-						{
-							ReplyInfo* reply_info = new ReplyInfo;
-						
-							reply_info->mail_info.mid = mitbl[x].mid;
-							memcpy(reply_info->mail_info.uniqid, mitbl[x].uniqid, 256);
-							reply_info->mail_info.mailfrom = mitbl[x].mailfrom;
-							reply_info->mail_info.rcptto = mitbl[x].rcptto;
-							reply_info->mail_info.mtime = mitbl[x].mtime;
-							reply_info->mail_info.mstatus = mitbl[x].mstatus;
-							reply_info->mail_info.mtype = mitbl[x].mtype;
-							reply_info->mail_info.mdid = mitbl[x].mdid;
-							reply_info->mail_info.length = mitbl[x].length;
-							reply_info->mail_info.reserve = mitbl[x].reserve;
-							reply_info->_storageEngine = m_storageEngine;
-							reply_info->_memcached = m_memcached;
-							pthread_mutex_lock(&gs_thread_pool_mutex);
-							gs_thread_pool_arg_queue.push(reply_info);
-							pthread_mutex_unlock(&gs_thread_pool_mutex);
-						
-							sem_post(&gs_thread_pool_sem);
-							mailStg->Prefoward(mitbl[x].mid);
-						
-						}
-					}
+                    for(int x = 0; x < mitbl.size(); x++)
+                    {
+                        ReplyInfo* reply_info = new ReplyInfo;
+                        
+                        reply_info->mail_info.mid = mitbl[x].mid;
+                        memcpy(reply_info->mail_info.uniqid, mitbl[x].uniqid, 256);
+                        reply_info->mail_info.mailfrom = mitbl[x].mailfrom;
+                        reply_info->mail_info.rcptto = mitbl[x].rcptto;
+                        reply_info->mail_info.mtime = mitbl[x].mtime;
+                        reply_info->mail_info.mstatus = mitbl[x].mstatus;
+                        reply_info->mail_info.mtype = mitbl[x].mtype;
+                        reply_info->mail_info.mdid = mitbl[x].mdid;
+                        reply_info->mail_info.length = mitbl[x].length;
+                        reply_info->mail_info.reserve = mitbl[x].reserve;
+                        reply_info->_storageEngine = m_storageEngine;
+                        reply_info->_memcached = m_memcached;
+                        pthread_mutex_lock(&gs_thread_pool_mutex);
+                        gs_thread_pool_arg_queue.push(reply_info);
+                        pthread_mutex_unlock(&gs_thread_pool_mutex);
+                    
+                        sem_post(&gs_thread_pool_sem);
+                        mailStg->Prefoward(mitbl[x].mid);
+                    
+                    }
 				}
+                mailStg->MTAUnlock();
 				stgengine_instance.Release();
 			}
 		}

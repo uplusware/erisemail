@@ -29,7 +29,7 @@ erisemail_start()
 erisemail_stop()
 {
 	/usr/bin/erisemaild stop
-	sleep 3
+	sleep 5
 	killall erisemaild 2> /dev/null
 }
 
@@ -51,7 +51,7 @@ erisemail_version()
 erisemail_restart()
 {
 	/usr/bin/erisemaild stop
-	sleep 3
+	sleep 5
 	killall erisemaild 2> /dev/null
 	sleep 1
 	/usr/bin/erisemaild start

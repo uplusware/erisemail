@@ -14,8 +14,11 @@
 #define MEMCACHED_EML 0x00000001
 #define MEMCACHED_XML 0x00000002
 
-MailLetter::MailLetter(const char* private_path, const char*  encoding, memcached_st * memcached, const char* uid, unsigned long long maxsize)
+MailLetter::MailLetter(MailStorage* mailStg, const char* private_path, const char*  encoding, memcached_st * memcached, const char* uid, unsigned long long maxsize)
 {
+    m_mailbody_fragment = "";
+    
+    m_mailstg = mailStg;
 	m_maxsize = maxsize;
 	
 	m_att = laIn;	
@@ -39,17 +42,18 @@ MailLetter::MailLetter(const char* private_path, const char*  encoding, memcache
     m_private_path = private_path;
     m_encoding = encoding;
     
-    //printf("%s %d %s %s\n", __FILE__, __LINE__, m_private_path.c_str(), m_encoding.c_str());
     
 	m_letterSummary = new LetterSummary(m_encoding.c_str(), m_memcached);
 }
 
-MailLetter::MailLetter(const char* private_path, const char*  encoding, memcached_st * memcached, const char* emlfile)
+MailLetter::MailLetter(MailStorage* mailStg, const char* private_path, const char*  encoding, memcached_st * memcached, const char* emlfile)
 {	
+    m_mailbody_fragment = "";
+    
+    m_mailstg = mailStg;
     m_private_path = private_path;
     m_encoding = encoding;
     
-    //printf("%s %d %s %s\n", __FILE__, __LINE__, m_private_path.c_str(), m_encoding.c_str());
     
 	m_att = laOut;
 	
@@ -110,6 +114,11 @@ MailLetter::MailLetter(const char* private_path, const char*  encoding, memcache
     }
     else
     {
+        if(access(m_eml_full_path.c_str(), F_OK) != 0)
+        {
+            m_mailstg->LoadMailBodyToFile(m_emlfile.c_str(), m_eml_full_path.c_str());
+        }
+        
         m_emlmapfd = open(m_eml_full_path.c_str(), O_RDONLY);
         
         if(m_emlmapfd > 0)
@@ -251,6 +260,14 @@ int MailLetter::Write(const char* buf, unsigned int len)
 	{
 		if(m_ofile->is_open())
 		{
+            m_mailbody_fragment += buf;
+            if(m_mailbody_fragment.length() >= 64*1024) //64k
+            {
+                if(m_mailstg->SaveMailBodyToDB(m_emlfile.c_str(), m_mailbody_fragment.c_str()) < 0)
+                    return -1;
+                m_mailbody_fragment = "";
+            }
+            
 			if(m_ofile->write(buf, len))
 			{
 				//gernate the summary
@@ -301,6 +318,11 @@ void MailLetter::Close()
 {	
 	if(m_att == laIn)
 	{
+        if(m_mailbody_fragment.length() > 0)
+        {
+            m_mailstg->SaveMailBodyToDB(m_emlfile.c_str(), m_mailbody_fragment.c_str());
+            m_mailbody_fragment = "";
+        }
 		if(m_ofile)
 		{
 			if(m_ofile->is_open())
@@ -415,8 +437,6 @@ LetterSummary::LetterSummary(const char* encoding, memcached_st * memcached) : B
 LetterSummary::LetterSummary(const char* encoding, const char* szpath, memcached_st * memcached) 
 {
     m_encoding = encoding;
-    
-    //printf("%s %d %s\n", __FILE__, __LINE__, m_encoding.c_str());
     
 	m_memcached = memcached;
 	m_isheader = TRUE;

@@ -133,9 +133,7 @@ void MailStorage::LeaveThread()
 
 int MailStorage::Install(const char* database)
 {
-	char sqlcmd[1024];
-    //Transaction begin
-	mysql_autocommit(&m_hMySQL, 0);
+	char sqlcmd[1024];    
 	if(strcasecmp(m_encoding.c_str(),"GB2312") == 0)
 	{
 		sprintf(sqlcmd,"CREATE DATABASE IF NOT EXISTS %s DEFAULT CHARACTER SET gb2312 COLLATE gb2312_chinese_ci", database);
@@ -150,13 +148,25 @@ int MailStorage::Install(const char* database)
 	}
 	else
 	{
+		fprintf(stderr, "Only support UTF-8, GB2312 and UCS2 encoding.\n");
+		return -1;
+	}
+    
+    if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) != 0)
+	{
 		show_error(&m_hMySQL);
 		return -1;
 	}
-	mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd));
 
 	sprintf(sqlcmd, "USE %s", database);
-	mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd));
+	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) != 0)
+	{
+		show_error(&m_hMySQL);
+		return -1;
+	}
+    
+    //Transaction begin
+	mysql_autocommit(&m_hMySQL, 0);
 	
 	//Create level table
 	sprintf(sqlcmd, 
@@ -224,7 +234,7 @@ int MailStorage::Install(const char* database)
 		"`muniqid` VARCHAR( 256 ) NOT NULL ,"
 		"`mfrom` VARCHAR( 256 ) NULL ,"
 		"`mto` VARCHAR( 256 ) NULL ,"
-		"`mbody` LONGTEXT NOT NULL ,"
+		"`mbody` VARCHAR( 256 ) NOT NULL ,"
 		"`msize` INT UNSIGNED NOT NULL DEFAULT '0',"
 		"`mtime` INT UNSIGNED NOT NULL DEFAULT '0',"
 		"`mtx` INT UNSIGNED NOT NULL ,"
@@ -234,6 +244,16 @@ int MailStorage::Install(const char* database)
 		database);
 	mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd));
 	
+    //Create mail body table
+	sprintf(sqlcmd, 
+		"CREATE TABLE IF NOT EXISTS `%s`.`mbodytbl` ("
+		"`mid` INT UNSIGNED NOT NULL AUTO_INCREMENT ,"
+		"`mbody` VARCHAR( 256 ) NOT NULL ,"
+		"`mfragment` LONGTEXT NOT NULL ,"
+		"PRIMARY KEY ( `mid` ) ) ENGINE = MYISAM ",
+		database);
+    mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd));
+    
 	sprintf(sqlcmd, "DROP FUNCTION IF EXISTS post_notify");
 	mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd));
 	
@@ -258,24 +278,27 @@ int MailStorage::Install(const char* database)
 	}
     else
 	{
+        printf("commit wrong\n");
 		show_error(&m_hMySQL);
 		mysql_rollback(&m_hMySQL);
 		mysql_autocommit(&m_hMySQL, 1);
 		return -1;
 	}
 	
-        unsigned int lid;
+    unsigned int lid;
 	if(AddLevel("default", "The system's default level", 5000*1024, 500000*1024, eaFalse, 5000*1024, 5000*1024, lid) == 0)
 	{
 		SetDefaultLevel(lid);
 	}
 	else
 	{
+        printf("Add level wrong\n");
 		return -1;
 	}	
 
 	if(AddID("admin", "admin", "Administrator", utMember, urAdministrator, MAX_EMAIL_LEN, -1) == -1)
 	{
+        printf("Add admin id wrong\n");
 		return -1;
 	}
 	return 0;
@@ -868,6 +891,29 @@ int MailStorage::AddID(const char* username, const char* password, const char* a
 {
 	if(strcasecmp(username, "postmaster") != 0)
 	{
+        for(int x = 0; x < strlen(username); x++)
+        {
+            if((username[x] >= 'a' && username[x] <= 'z') 
+                || (username[x] >= 'A' && username[x] <= 'Z')
+                || (username[x] >= '0' && username[x] <= '9')
+                || (username[x] == '_' || username[x] == '.'))
+            {
+                //works fine
+            }
+            else
+            {
+                return -1;
+            }
+        }
+        
+        for(int x = 0; x < strlen(password); x++)
+        {
+            if(password[x] > 126 || password[x] < 32)
+            {
+                return -1;
+            }
+        }
+        
 		if((VerifyUser(username) == -1)&&(VerifyGroup(username) == -1))
 		{
 			char sqlcmd[1024];
@@ -1797,12 +1843,13 @@ int MailStorage::ListAllMail(vector<Mail_Info>& listtbl)
 	}
 }
 
-int MailStorage::ListExternMail(vector<Mail_Info>& listtbl)
+int MailStorage::ListExternMail(vector<Mail_Info>& listtbl, unsigned int max_num)
 {
 	listtbl.clear();
 	char sqlcmd[1024];
 	sprintf(sqlcmd, "SELECT mfrom, mto, muniqid, mid FROM mailtbl WHERE mtx='%d' AND mstatus&%d<>%d AND mstatus&%d<>%d ORDER BY mid", mtExtern, MSG_ATTR_DELETED, MSG_ATTR_DELETED, MSG_ATTR_UNAUDITED, MSG_ATTR_UNAUDITED);
 	
+    max_num = (max_num == 0 ? 0x7FFFFFFFFU : max_num);
 	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
@@ -1814,23 +1861,27 @@ int MailStorage::ListExternMail(vector<Mail_Info>& listtbl)
 		{
 			while((row = mysql_fetch_row(qResult)))
 			{
+                if(max_num == 0)
+                    break;
 				Mail_Info mi;
 				mi.mailfrom = row[0];
 				mi.rcptto = row[1];
 				strcpy(mi.uniqid, row[2]);
 				mi.mid = atoi(row[3]);
 				listtbl.push_back(mi);
+                max_num--;
 			}
 			mysql_free_result(qResult);
 			return 0;
 		}
 		else
-			return -1;
+        {
+            return -1;
+        }
 	}
 	else
 	{
-	    
-		return -1;
+	    return -1;
 	}
 }
 
@@ -3966,7 +4017,6 @@ int MailStorage::GetGlobalStorage(unsigned int& commonMailNumber, unsigned int& 
 	
 	sprintf(sqlcmd, "SELECT count(*) FROM mailtbl WHERE mstatus&%d<>%d", MSG_ATTR_DELETED, MSG_ATTR_DELETED);
 
-	
 	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
@@ -4277,3 +4327,122 @@ int MailStorage::GetUserStorage(const char* username, unsigned int& commonMailNu
 	return 0;
 }
 
+int MailStorage::MTALock()
+{
+    char sqlcmd[1024];
+
+	sprintf(sqlcmd, "LOCK TABLES mailtbl write");
+	
+	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	{
+		return 0;
+	}
+	else
+	{
+        show_error(&m_hMySQL);
+		return -1;
+	}
+}
+
+int MailStorage::MTAUnlock()
+{
+    char sqlcmd[1024];
+
+	sprintf(sqlcmd, "UNLOCK TABLES");
+	
+	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	{
+		return 0;
+	}
+	else
+	{
+        show_error(&m_hMySQL);
+		return -1;
+	}
+}
+
+int MailStorage::SaveMailBodyToDB(const char* emlfile, const char* fragment)
+{
+    string strSafetyEmlfile= emlfile;
+	SqlSafetyString(strSafetyEmlfile);
+    
+    string strSafetyFragment = fragment;
+	SqlSafetyString(strSafetyFragment);
+	
+	char* sqlcmd = (char*)malloc(strSafetyEmlfile.length() + strSafetyFragment.length() + 1024);
+	if(sqlcmd)
+	{
+		sprintf(sqlcmd, "INSERT INTO mbodytbl(mbody, mfragment) VALUES('%s','%s')", 
+			strSafetyEmlfile.c_str(), strSafetyFragment.c_str());
+
+		if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+		{
+			free(sqlcmd);
+			return 0;
+		}
+		else
+		{
+			free(sqlcmd);
+			show_error(&m_hMySQL);
+			return -1;
+		}
+	}
+	else
+		return -1;
+}
+
+int MailStorage::LoadMailBodyToFile(const char* emlfile, const char* fullpath)
+{
+    char sqlcmd[1024];
+    
+    string strSafetyEmlfile= emlfile;
+	SqlSafetyString(strSafetyEmlfile);
+    
+	sprintf(sqlcmd, "SELECT mfragment FROM mbodytbl where mbody='%s' ORDER BY mid", strSafetyEmlfile.c_str());
+	
+	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	{		
+		MYSQL_RES *qResult;
+		MYSQL_ROW row;
+		
+		qResult = mysql_store_result(&m_hMySQL);
+		
+		if(qResult)
+		{
+            ofstream * ofile = new ofstream(fullpath, ios_base::binary|ios::out|ios::trunc);			
+            if(ofile)
+            {		
+                if(!ofile->is_open())
+                {
+                    delete ofile;
+                    return -1;
+                }
+                
+                while((row = mysql_fetch_row(qResult)))
+                {
+                    unsigned long* lengths = mysql_fetch_lengths(qResult);
+                    ofile->write(row[0], lengths[0]);
+                }
+
+                mysql_free_result(qResult);         
+                
+                ofile->close();
+                delete ofile;
+                
+                return 0;
+            }
+            
+            return -1;
+		}
+		else
+		{
+			return -1;
+		}
+	}
+	else
+	{
+	    
+		show_error(&m_hMySQL);
+		return -1;
+	}
+}

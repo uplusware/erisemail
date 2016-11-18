@@ -840,7 +840,7 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
-        for(int x = 0; x < username.length() - 1; x++)
+        for(int x = 0; x < username.length(); x++)
         {
             if((username[x] >= 'a' && username[x] <= 'z') 
                 || (username[x] >= 'A' && username[x] <= 'Z')
@@ -999,7 +999,7 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
-        for(int x = 0; x < username.length() - 1; x++)
+        for(int x = 0; x < username.length(); x++)
         {
             if((username[x] >= 'a' && username[x] <= 'z') 
                 || (username[x] >= 'A' && username[x] <= 'Z')
@@ -1157,7 +1157,7 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
-        for(int x = 0; x < username.length() - 1; x++)
+        for(int x = 0; x < username.length(); x++)
         {
             if((username[x] >= 'a' && username[x] <= 'z') 
                 || (username[x] >= 'A' && username[x] <= 'Z')
@@ -1332,7 +1332,7 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
-        for(int x = 0; x < username.length() - 1; x++)
+        for(int x = 0; x < username.length(); x++)
         {
             if((username[x] >= 'a' && username[x] <= 'z') 
                 || (username[x] >= 'A' && username[x] <= 'Z')
@@ -1503,7 +1503,7 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
-        for(int x = 0; x < username.length() - 1; x++)
+        for(int x = 0; x < username.length(); x++)
         {
             if((username[x] >= 'a' && username[x] <= 'z') 
                 || (username[x] >= 'A' && username[x] <= 'Z')
@@ -1659,7 +1659,7 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
-        for(int x = 0; x < username.length() - 1; x++)
+        for(int x = 0; x < username.length(); x++)
         {
             if((username[x] >= 'a' && username[x] <= 'z') 
                 || (username[x] >= 'A' && username[x] <= 'Z')
@@ -1853,7 +1853,7 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
-        for(int x = 0; x < username.length() - 1; x++)
+        for(int x = 0; x < username.length(); x++)
         {
             if((username[x] >= 'a' && username[x] <= 'z') 
                 || (username[x] >= 'A' && username[x] <= 'Z')
@@ -2010,7 +2010,7 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
-        for(int x = 0; x < username.length() - 1; x++)
+        for(int x = 0; x < username.length(); x++)
         {
             if((username[x] >= 'a' && username[x] <= 'z') 
                 || (username[x] >= 'A' && username[x] <= 'Z')
@@ -2169,7 +2169,7 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
-        for(int x = 0; x < username.length() - 1; x++)
+        for(int x = 0; x < username.length(); x++)
         {
             if((username[x] >= 'a' && username[x] <= 'z') 
                 || (username[x] >= 'A' && username[x] <= 'Z')
@@ -2359,7 +2359,7 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
-        for(int x = 0; x < username.length() - 1; x++)
+        for(int x = 0; x < username.length(); x++)
         {
             if((username[x] >= 'a' && username[x] <= 'z') 
                 || (username[x] >= 'A' && username[x] <= 'Z')
@@ -2537,7 +2537,7 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
-        for(int x = 0; x < username.length() - 1; x++)
+        for(int x = 0; x < username.length(); x++)
         {
             if((username[x] >= 'a' && username[x] <= 'z') 
                 || (username[x] >= 'A' && username[x] <= 'Z')
@@ -2705,7 +2705,7 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
-        for(int x = 0; x < username.length() - 1; x++)
+        for(int x = 0; x < username.length(); x++)
         {
             if((username[x] >= 'a' && username[x] <= 'z') 
                 || (username[x] >= 'A' && username[x] <= 'Z')
@@ -2856,7 +2856,7 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
-        for(int x = 0; x < username.length() - 1; x++)
+        for(int x = 0; x < username.length(); x++)
         {
             if((username[x] >= 'a' && username[x] <= 'z') 
                 || (username[x] >= 'A' && username[x] <= 'Z')
@@ -3009,7 +3009,7 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
-        for(int x = 0; x < username.length() - 1; x++)
+        for(int x = 0; x < username.length(); x++)
         {
             if((username[x] >= 'a' && username[x] <= 'z') 
                 || (username[x] >= 'A' && username[x] <= 'Z')
@@ -3216,7 +3216,7 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
-        for(int x = 0; x < username.length() - 1; x++)
+        for(int x = 0; x < username.length(); x++)
         {
             if((username[x] >= 'a' && username[x] <= 'z') 
                 || (username[x] >= 'A' && username[x] <= 'Z')
@@ -3408,7 +3408,7 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
-        for(int x = 0; x < username.length() - 1; x++)
+        for(int x = 0; x < username.length(); x++)
         {
             if((username[x] >= 'a' && username[x] <= 'z') 
                 || (username[x] >= 'A' && username[x] <= 'Z')
@@ -3545,7 +3545,7 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
-        for(int x = 0; x < username.length() - 1; x++)
+        for(int x = 0; x < username.length(); x++)
         {
             if((username[x] >= 'a' && username[x] <= 'z') 
                 || (username[x] >= 'A' && username[x] <= 'Z')
@@ -3653,7 +3653,7 @@ public:
 					m_mailStg->GetMailIndex(listtbl[x].mid, emlfile);
 					
 					MailLetter * Letter = NULL;
-					Letter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_session->GetMemCached(), emlfile.c_str());
+					Letter = new MailLetter(m_mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_session->GetMemCached(), emlfile.c_str());
 					if(Letter && Letter->GetSize() > 0)
 					{
 						int llen = 0;
@@ -3889,7 +3889,7 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
-        for(int x = 0; x < username.length() - 1; x++)
+        for(int x = 0; x < username.length(); x++)
         {
             if((username[x] >= 'a' && username[x] <= 'z') 
                 || (username[x] >= 'A' && username[x] <= 'Z')
@@ -3985,7 +3985,7 @@ public:
 					m_mailStg->GetMailIndex(listtbl[x].mid, emlfile);
 					
 					MailLetter * Letter = NULL;
-					Letter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_session->GetMemCached(), emlfile.c_str());
+					Letter = new MailLetter(m_mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_session->GetMemCached(), emlfile.c_str());
 					if(Letter && Letter->GetSize() > 0)
 					{
 						int llen = 0;
@@ -4184,7 +4184,7 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
-        for(int x = 0; x < username.length() - 1; x++)
+        for(int x = 0; x < username.length(); x++)
         {
             if((username[x] >= 'a' && username[x] <= 'z') 
                 || (username[x] >= 'A' && username[x] <= 'Z')
@@ -4303,7 +4303,7 @@ public:
 			m_mailStg->GetMailIndex(nMailID, emlfile);
 					
 			MailLetter * Letter;
-			Letter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_session->GetMemCached(), emlfile.c_str());
+			Letter = new MailLetter(m_mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_session->GetMemCached(), emlfile.c_str());
 			if(Letter->GetSize() > 0)
 			{	
 				int llen = 0;
@@ -4443,7 +4443,7 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
-        for(int x = 0; x < username.length() - 1; x++)
+        for(int x = 0; x < username.length(); x++)
         {
             if((username[x] >= 'a' && username[x] <= 'z') 
                 || (username[x] >= 'A' && username[x] <= 'Z')
@@ -4643,7 +4643,7 @@ public:
 							usermaxsize = 5000*1024;
 						}
 						
-						pLetter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_session->GetMemCached(), newuid, usermaxsize /*m_mailStg, "", 
+						pLetter = new MailLetter(m_mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_session->GetMemCached(), newuid, usermaxsize /*m_mailStg, "", 
 							"", mtLocal, newuid, DirID, mstatus, time(NULL), usermaxsize*/);
 
 						Letter_Info* letter_info = new Letter_Info;
@@ -4691,7 +4691,7 @@ public:
 					mailfrom += CMailBase::m_email_domain;
 
 							
-					pLetter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_session->GetMemCached(), newuid, usermaxsize /*m_mailStg, mailfrom.c_str(),
+					pLetter = new MailLetter(m_mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_session->GetMemCached(), newuid, usermaxsize /*m_mailStg, mailfrom.c_str(),
 						mailaddr.c_str(), mtExtern, newuid, -1, mstatus, time(NULL), usermaxsize*/);
 
 					Letter_Info* letter_info = new Letter_Info;
@@ -4897,7 +4897,7 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
-        for(int x = 0; x < username.length() - 1; x++)
+        for(int x = 0; x < username.length(); x++)
         {
             if((username[x] >= 'a' && username[x] <= 'z') 
                 || (username[x] >= 'A' && username[x] <= 'Z')
@@ -5177,7 +5177,7 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
-        for(int x = 0; x < username.length() - 1; x++)
+        for(int x = 0; x < username.length(); x++)
         {
             if((username[x] >= 'a' && username[x] <= 'z') 
                 || (username[x] >= 'A' && username[x] <= 'Z')
@@ -5306,7 +5306,7 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
-        for(int x = 0; x < username.length() - 1; x++)
+        for(int x = 0; x < username.length(); x++)
         {
             if((username[x] >= 'a' && username[x] <= 'z') 
                 || (username[x] >= 'A' && username[x] <= 'Z')
@@ -5396,8 +5396,8 @@ public:
 					string emlfile;
 					m_mailStg->GetMailIndex(nMailID, emlfile);
 			
-					oldLetter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_session->GetMemCached(), emlfile.c_str());
-					newLetter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_session->GetMemCached(), newuid, usermaxsize /*m_mailStg, "", "", mtLocal,
+					oldLetter = new MailLetter(m_mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_session->GetMemCached(), emlfile.c_str());
+					newLetter = new MailLetter(m_mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_session->GetMemCached(), newuid, usermaxsize /*m_mailStg, "", "", mtLocal,
 						newuid, nToDirID, mstatus, (unsigned int)time(NULL), usermaxsize*/);
 
 					Letter_Info letter_info;
@@ -5517,7 +5517,7 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
-        for(int x = 0; x < username.length() - 1; x++)
+        for(int x = 0; x < username.length(); x++)
         {
             if((username[x] >= 'a' && username[x] <= 'z') 
                 || (username[x] >= 'A' && username[x] <= 'Z')
@@ -5607,9 +5607,9 @@ public:
 					string emlfile;
 					m_mailStg->GetMailIndex(nMailID, emlfile);
 			
-					oldLetter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_session->GetMemCached(), emlfile.c_str());
+					oldLetter = new MailLetter(m_mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_session->GetMemCached(), emlfile.c_str());
 					
-					newLetter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_session->GetMemCached(), newuid, usermaxsize /*m_mailStg, "", "", mtLocal,
+					newLetter = new MailLetter(m_mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_session->GetMemCached(), newuid, usermaxsize /*m_mailStg, "", "", mtLocal,
 						newuid, nToDirID, mstatus, (unsigned int)time(NULL), usermaxsize*/);
 
 					Letter_Info letter_info;
@@ -5734,7 +5734,7 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
-        for(int x = 0; x < username.length() - 1; x++)
+        for(int x = 0; x < username.length(); x++)
         {
             if((username[x] >= 'a' && username[x] <= 'z') 
                 || (username[x] >= 'A' && username[x] <= 'Z')
@@ -5892,7 +5892,7 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
-        for(int x = 0; x < username.length() - 1; x++)
+        for(int x = 0; x < username.length(); x++)
         {
             if((username[x] >= 'a' && username[x] <= 'z') 
                 || (username[x] >= 'A' && username[x] <= 'Z')
@@ -6057,7 +6057,7 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
-        for(int x = 0; x < username.length() - 1; x++)
+        for(int x = 0; x < username.length(); x++)
         {
             if((username[x] >= 'a' && username[x] <= 'z') 
                 || (username[x] >= 'A' && username[x] <= 'Z')
@@ -6223,7 +6223,7 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
-        for(int x = 0; x < username.length() - 1; x++)
+        for(int x = 0; x < username.length(); x++)
         {
             if((username[x] >= 'a' && username[x] <= 'z') 
                 || (username[x] >= 'A' && username[x] <= 'Z')
@@ -6319,8 +6319,8 @@ public:
 					string emlfile;
 					m_mailStg->GetMailIndex(nMailID, emlfile);
 					
-					oldLetter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_session->GetMemCached(), emlfile.c_str());
-					newLetter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_session->GetMemCached(), newuid, usermaxsize /*m_mailStg, postmaster.c_str(), strFrom.c_str(), isLocal ? mtLocal : mtExtern,
+					oldLetter = new MailLetter(m_mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_session->GetMemCached(), emlfile.c_str());
+					newLetter = new MailLetter(m_mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_session->GetMemCached(), newuid, usermaxsize /*m_mailStg, postmaster.c_str(), strFrom.c_str(), isLocal ? mtLocal : mtExtern,
 						newuid, nToDirID, mstatus & (~MSG_ATTR_UNAUDITED), (unsigned int)time(NULL), usermaxsize*/);
 
 					Letter_Info letter_info;
@@ -6480,7 +6480,7 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
-        for(int x = 0; x < username.length() - 1; x++)
+        for(int x = 0; x < username.length(); x++)
         {
             if((username[x] >= 'a' && username[x] <= 'z') 
                 || (username[x] >= 'A' && username[x] <= 'Z')
@@ -6636,7 +6636,7 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
-        for(int x = 0; x < username.length() - 1; x++)
+        for(int x = 0; x < username.length(); x++)
         {
             if((username[x] >= 'a' && username[x] <= 'z') 
                 || (username[x] >= 'A' && username[x] <= 'Z')
@@ -6790,7 +6790,7 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
-        for(int x = 0; x < username.length() - 1; x++)
+        for(int x = 0; x < username.length(); x++)
         {
             if((username[x] >= 'a' && username[x] <= 'z') 
                 || (username[x] >= 'A' && username[x] <= 'Z')
@@ -6949,7 +6949,7 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
-        for(int x = 0; x < username.length() - 1; x++)
+        for(int x = 0; x < username.length(); x++)
         {
             if((username[x] >= 'a' && username[x] <= 'z') 
                 || (username[x] >= 'A' && username[x] <= 'Z')
@@ -7088,7 +7088,7 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
-        for(int x = 0; x < username.length() - 1; x++)
+        for(int x = 0; x < username.length(); x++)
         {
             if((username[x] >= 'a' && username[x] <= 'z') 
                 || (username[x] >= 'A' && username[x] <= 'Z')
@@ -7148,7 +7148,7 @@ public:
 			string emlfile;
 			m_mailStg->GetMailIndex(nMailID, emlfile);
 					
-			Letter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_session->GetMemCached(), emlfile.c_str());
+			Letter = new MailLetter(m_mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_session->GetMemCached(), emlfile.c_str());
 			if(Letter->GetSize() > 0)
 			{	
 				int llen = 0;
@@ -7333,7 +7333,7 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
-        for(int x = 0; x < username.length() - 1; x++)
+        for(int x = 0; x < username.length(); x++)
         {
             if((username[x] >= 'a' && username[x] <= 'z') 
                 || (username[x] >= 'A' && username[x] <= 'Z')
@@ -7612,7 +7612,7 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
-        for(int x = 0; x < username.length() - 1; x++)
+        for(int x = 0; x < username.length(); x++)
         {
             if((username[x] >= 'a' && username[x] <= 'z') 
                 || (username[x] >= 'A' && username[x] <= 'Z')
@@ -7672,7 +7672,7 @@ public:
 			string emlfile;
 			m_mailStg->GetMailIndex(nMailID, emlfile);
 			
-			Letter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_session->GetMemCached(), emlfile.c_str());
+			Letter = new MailLetter(m_mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_session->GetMemCached(), emlfile.c_str());
 			if(Letter->GetSize() > 0)
 			{
 				int llen = 0;
@@ -7765,7 +7765,7 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
-        for(int x = 0; x < username.length() - 1; x++)
+        for(int x = 0; x < username.length(); x++)
         {
             if((username[x] >= 'a' && username[x] <= 'z') 
                 || (username[x] >= 'A' && username[x] <= 'Z')
@@ -7908,7 +7908,7 @@ public:
 				usermaxsize = 5000*1024;
 			}
 			
-			MailLetter* pLetter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_session->GetMemCached(), newuid, usermaxsize /*m_mailStg, 
+			MailLetter* pLetter = new MailLetter(m_mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_session->GetMemCached(), newuid, usermaxsize /*m_mailStg, 
 				"", "", mtLocal, newuid, DirID, mstatus, time(NULL), usermaxsize, DraftID*/);
 
 			Letter_Info letter_info;
@@ -8074,7 +8074,7 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
-        for(int x = 0; x < username.length() - 1; x++)
+        for(int x = 0; x < username.length(); x++)
         {
             if((username[x] >= 'a' && username[x] <= 'z') 
                 || (username[x] >= 'A' && username[x] <= 'Z')
@@ -8211,7 +8211,7 @@ public:
 				usermaxsize = 5000*1024;
 			}
 			
-			MailLetter* pLetter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_session->GetMemCached(), newuid, usermaxsize /*m_mailStg, 
+			MailLetter* pLetter = new MailLetter(m_mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_session->GetMemCached(), newuid, usermaxsize /*m_mailStg, 
 				"", "", mtLocal, newuid, DirID, mstatus, time(NULL), usermaxsize, DraftID*/);
 
 			Letter_Info letter_info;
@@ -8567,7 +8567,7 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
-        for(int x = 0; x < username.length() - 1; x++)
+        for(int x = 0; x < username.length(); x++)
         {
             if((username[x] >= 'a' && username[x] <= 'z') 
                 || (username[x] >= 'A' && username[x] <= 'Z')
@@ -8706,7 +8706,7 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
-        for(int x = 0; x < username.length() - 1; x++)
+        for(int x = 0; x < username.length(); x++)
         {
             if((username[x] >= 'a' && username[x] <= 'z') 
                 || (username[x] >= 'A' && username[x] <= 'Z')
@@ -8841,7 +8841,7 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
-        for(int x = 0; x < username.length() - 1; x++)
+        for(int x = 0; x < username.length(); x++)
         {
             if((username[x] >= 'a' && username[x] <= 'z') 
                 || (username[x] >= 'A' && username[x] <= 'Z')
@@ -9028,7 +9028,7 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
-        for(int x = 0; x < username.length() - 1; x++)
+        for(int x = 0; x < username.length(); x++)
         {
             if((username[x] >= 'a' && username[x] <= 'z') 
                 || (username[x] >= 'A' && username[x] <= 'Z')
@@ -9155,7 +9155,7 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
-        for(int x = 0; x < username.length() - 1; x++)
+        for(int x = 0; x < username.length(); x++)
         {
             if((username[x] >= 'a' && username[x] <= 'z') 
                 || (username[x] >= 'A' && username[x] <= 'Z')
@@ -9299,7 +9299,7 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
-        for(int x = 0; x < username.length() - 1; x++)
+        for(int x = 0; x < username.length(); x++)
         {
             if((username[x] >= 'a' && username[x] <= 'z') 
                 || (username[x] >= 'A' && username[x] <= 'Z')
@@ -9448,7 +9448,7 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
-        for(int x = 0; x < username.length() - 1; x++)
+        for(int x = 0; x < username.length(); x++)
         {
             if((username[x] >= 'a' && username[x] <= 'z') 
                 || (username[x] >= 'A' && username[x] <= 'Z')
@@ -9608,7 +9608,7 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
-        for(int x = 0; x < username.length() - 1; x++)
+        for(int x = 0; x < username.length(); x++)
         {
             if((username[x] >= 'a' && username[x] <= 'z') 
                 || (username[x] >= 'A' && username[x] <= 'Z')
@@ -9888,7 +9888,7 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
-        for(int x = 0; x < username.length() - 1; x++)
+        for(int x = 0; x < username.length(); x++)
         {
             if((username[x] >= 'a' && username[x] <= 'z') 
                 || (username[x] >= 'A' && username[x] <= 'Z')
@@ -10195,7 +10195,7 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
-        for(int x = 0; x < username.length() - 1; x++)
+        for(int x = 0; x < username.length(); x++)
         {
             if((username[x] >= 'a' && username[x] <= 'z') 
                 || (username[x] >= 'A' && username[x] <= 'Z')
@@ -10380,7 +10380,7 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
-        for(int x = 0; x < username.length() - 1; x++)
+        for(int x = 0; x < username.length(); x++)
         {
             if((username[x] >= 'a' && username[x] <= 'z') 
                 || (username[x] >= 'A' && username[x] <= 'Z')
@@ -10564,7 +10564,7 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
-        for(int x = 0; x < username.length() - 1; x++)
+        for(int x = 0; x < username.length(); x++)
         {
             if((username[x] >= 'a' && username[x] <= 'z') 
                 || (username[x] >= 'A' && username[x] <= 'Z')
@@ -10834,7 +10834,7 @@ public:
         }
 		
 		strcut(strauth.c_str(), NULL, ":", username);
-        for(int x = 0; x < username.length() - 1; x++)
+        for(int x = 0; x < username.length(); x++)
         {
             if((username[x] >= 'a' && username[x] <= 'z') 
                 || (username[x] >= 'A' && username[x] <= 'Z')

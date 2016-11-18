@@ -207,7 +207,7 @@ public:
 	int ListMailByDir(const char* username, vector<Mail_Info>& listtbl, const char* diref);
 	int ListMailByDir(const char* username, vector<Mail_Info>& listtbl, unsigned int dirid);
 	int ListAllMail(vector<Mail_Info>& listtbl);
-	int ListExternMail(vector<Mail_Info>& listtbl);
+	int ListExternMail(vector<Mail_Info>& listtbl, unsigned int max_num = 0);
 
 	int GetMailUID(int mid, string uid);
 	int Prefoward(int mid);
@@ -312,6 +312,12 @@ public:
 	int GetUserStorage(const char* username, unsigned int& commonMailNumber, unsigned int& deletedMailNumber, unsigned int& commonMailSize, unsigned int& deletedMailSize );
 	
 	int SetMailSize(unsigned int mid, unsigned int msize);
+    
+    int SaveMailBodyToDB(const char* emlfile, const char* fragment);
+    int LoadMailBodyToFile(const char* emlfile, const char* fullpath);
+    
+    int MTALock();
+    int MTAUnlock();
 	
 protected:
 	MYSQL m_hMySQL;

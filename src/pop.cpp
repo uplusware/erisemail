@@ -186,7 +186,7 @@ void CMailPop::On_Apop_Handler(char* text)
 				string emlfile;
 				mailStg->GetMailIndex(m_mailTbl[x].mid, emlfile);
 							
-				Letter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
+				Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 				m_lettersTotalSize += Letter->GetSize();
 				delete Letter;
 			}
@@ -238,7 +238,7 @@ void CMailPop::On_Stat_Handler(char* text)
 			string emlfile;
 			mailStg->GetMailIndex(m_mailTbl[x].mid, emlfile);
 
-			Letter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
+			Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 			m_lettersTotalSize += Letter->GetSize();
 			delete Letter;
 		}
@@ -509,7 +509,7 @@ BOOL CMailPop::On_Supose_Checking_Handler()
                 string emlfile;
                 mailStg->GetMailIndex(m_mailTbl[x].mid, emlfile);
                 
-                Letter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
+                Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
                 m_lettersTotalSize += Letter->GetSize();
                 delete Letter;
             }
@@ -620,7 +620,7 @@ void CMailPop::On_List_Handler(char* text)
 				string emlfile;
 				mailStg->GetMailIndex(m_mailTbl[i].mid, emlfile);
 			
-				Letter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
+				Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 				sprintf(cmd, "%d %u\r\n", i + 1, Letter->GetSize());
 				delete Letter;
 				PopSend(cmd,strlen(cmd));
@@ -641,7 +641,7 @@ void CMailPop::On_List_Handler(char* text)
 				string emlfile;
 				mailStg->GetMailIndex(m_mailTbl[index - 1].mid, emlfile);
 			
-				Letter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
+				Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 				sprintf(cmd,"+OK %d %u\r\n",index, Letter->GetSize());
 				delete Letter;
 			}
@@ -780,7 +780,7 @@ void CMailPop::On_Retr_Handler(char* text)
 			string emlfile;
 			mailStg->GetMailIndex(m_mailTbl[index - 1].mid, emlfile);
 				
-			Letter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
+			Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 			if(Letter->GetSize() > 0)
 			{
 				sprintf(cmd,"+OK %u byte(s)\r\n",Letter->GetSize());
@@ -863,7 +863,7 @@ void CMailPop::On_Top_Handler(char* text)
 			string emlfile;
 			mailStg->GetMailIndex(m_mailTbl[index - 1].mid, emlfile);
 			
-			Letter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
+			Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 			sprintf(cmd,"+OK %u byte(s)\r\n",Letter->GetSize());
 			
 			PopSend(cmd,strlen(cmd));

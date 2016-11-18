@@ -1591,7 +1591,7 @@ void CMailImap::On_Append(char* text)
 		//printf("usermaxsize: %d\r\n", usermaxsize);
 		
 		MailLetter* Letter;
-		Letter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, newuid, usermaxsize /*mailStg, 
+		Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, newuid, usermaxsize /*mailStg, 
 		"", "", mtLocal, newuid, DirID, status,(unsigned int)time(NULL), usermaxsize*/);
 
 		Letter_Info letter_info;
@@ -2251,7 +2251,7 @@ void CMailImap::Fetch(const char* szArg, BOOL isUID)
 				string emlfile;
 				mailStg->GetMailIndex(m_maillisttbl[x].mid, emlfile);
 				
-				Letter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
+				Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 			
 				if(Letter->GetSize()> 0)
 				{
@@ -4101,8 +4101,8 @@ int CMailImap::Copy(const char* szArg, BOOL isUID)
 				string emlfile;
 				mailStg->GetMailIndex(m_maillisttbl[x].mid, emlfile);
 				
-				oldLetter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
-				newLetter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, newuid, usermaxsize /*mailStg, 
+				oldLetter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
+				newLetter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, newuid, usermaxsize /*mailStg, 
 					"", "", mtLocal, newuid, dirID, m_maillisttbl[x].mstatus, (unsigned int)time(NULL), usermaxsize*/);
 				
 				Letter_Info letter_info;
@@ -4709,7 +4709,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							string emlfile;
 							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
 				
-							MailLetter* Letter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
+							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize()> 0)
 							{
 								int llen = 0;
@@ -4733,7 +4733,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							string emlfile;
 							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
 							
-							MailLetter* Letter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
+							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize()> 0)
 							{
 								int llen = 0;
@@ -4759,7 +4759,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							string emlfile;
 							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
 							
-							MailLetter* Letter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
+							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize()> 0)
 							{
 								int llen = 0;
@@ -4784,7 +4784,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							string emlfile;
 							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
 							
-							MailLetter* Letter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
+							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize()> 0)
 							{
 								int llen = 0;
@@ -4820,7 +4820,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							string emlfile;
 							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
 							
-							MailLetter* Letter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
+							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize()> 0)
 							{
 								int llen = 0;
@@ -4842,7 +4842,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							string emlfile;
 							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
 							
-							MailLetter* Letter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
+							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize()> 0)
 							{
 								int llen = 0;
@@ -4866,7 +4866,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							string emlfile;
 							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
 							
-							MailLetter* Letter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
+							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize()> 0)
 							{
 								int llen = 0;
@@ -4888,7 +4888,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							string emlfile;
 							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
 							
-							MailLetter* Letter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
+							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize()> 0)
 							{
 								int llen = 0;
@@ -4941,7 +4941,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							string emlfile;
 							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
 							
-							MailLetter* Letter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
+							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize()> 0)
 							{
 								int llen = 0;
@@ -4965,7 +4965,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							string emlfile;
 							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
 							
-							MailLetter* Letter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
+							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize()> 0)
 							{
 								int llen = 0;
@@ -4991,7 +4991,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							string emlfile;
 							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
 							
-							MailLetter* Letter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
+							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize()> 0)
 							{
 								int llen = 0;
@@ -5016,7 +5016,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							string emlfile;
 							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
 							
-							MailLetter* Letter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
+							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize()> 0)
 							{
 								int llen = 0;
@@ -5201,7 +5201,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 								string emlfile;
 								mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
 								
-								MailLetter* Letter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
+								MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 								if(Letter->GetSize()> 0)
 								{
 									int llen = 0;
@@ -5225,7 +5225,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 								string emlfile;
 								mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
 								
-								MailLetter* Letter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
+								MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 								if(Letter->GetSize()> 0)
 								{
 									int llen = 0;
@@ -5253,7 +5253,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 								string emlfile;
 								mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
 								
-								MailLetter* Letter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
+								MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 								if(Letter->GetSize()> 0)
 								{
 									int llen = 0;
@@ -5277,7 +5277,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 								string emlfile;
 								mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
 								
-								MailLetter* Letter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
+								MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 								if(Letter->GetSize()> 0)
 								{
 									int llen = 0;
@@ -5307,7 +5307,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 								string emlfile;
 								mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
 								
-								MailLetter* Letter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
+								MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 								if(Letter->GetSize()> 0)
 								{
 									int llen = 0;
@@ -5331,7 +5331,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 								string emlfile;
 								mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
 								
-								MailLetter* Letter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
+								MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 								if(Letter->GetSize()> 0)
 								{
 									int llen = 0;
@@ -5359,7 +5359,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 								string emlfile;
 								mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
 								
-								MailLetter* Letter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
+								MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 								if(Letter->GetSize()> 0)
 								{
 									int llen = 0;
@@ -5383,7 +5383,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 								string emlfile;
 								mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
 								
-								MailLetter* Letter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
+								MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 								if(Letter->GetSize()> 0)
 								{
 									int llen = 0;
@@ -5467,7 +5467,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							string emlfile;
 							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
 							
-							MailLetter* Letter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
+							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize() <= letterSize)
 							{
 								vSearchResult[m_maillisttbl[y].mid] = 1;
@@ -5484,7 +5484,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							string emlfile;
 							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
 							
-							MailLetter* Letter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
+							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize() >= letterSize)
 							{
 								vSearchResult[m_maillisttbl[y].mid] = 1;
@@ -5503,7 +5503,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							string emlfile;
 							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
 							
-							MailLetter* Letter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
+							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize() >= letterSize)
 							{
 								vSearchResult[m_maillisttbl[y].mid] = 0;
@@ -5521,7 +5521,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							string emlfile;
 							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
 							
-							MailLetter* Letter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
+							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize() <= letterSize)
 							{
 								vSearchResult[m_maillisttbl[y].mid] = 0;
@@ -5794,7 +5794,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							string emlfile;
 							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
 							
-							MailLetter* Letter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
+							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize()> 0)
 							{
 								int llen = 0;
@@ -5816,7 +5816,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							string emlfile;
 							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
 							
-							MailLetter* Letter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
+							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize()> 0)
 							{
 								int llen = 0;
@@ -5840,7 +5840,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							string emlfile;
 							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
 							
-							MailLetter* Letter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
+							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize()> 0)
 							{
 								int llen = 0;
@@ -5862,7 +5862,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							string emlfile;
 							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
 							
-							MailLetter* Letter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
+							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize()> 0)
 							{
 								int llen = 0;
@@ -5895,7 +5895,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							string emlfile;
 							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
 							
-							MailLetter* Letter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
+							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize()> 0)
 							{
 								int llen = 0;
@@ -5917,7 +5917,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							string emlfile;
 							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
 							
-							MailLetter* Letter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
+							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize()> 0)
 							{
 								int llen = 0;
@@ -5941,7 +5941,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							string emlfile;
 							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
 							
-							MailLetter* Letter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
+							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize()> 0)
 							{
 								int llen = 0;
@@ -5963,7 +5963,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							string emlfile;
 							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
 							
-							MailLetter* Letter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
+							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize()> 0)
 							{
 								int llen = 0;
@@ -5996,7 +5996,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							string emlfile;
 							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
 							
-							MailLetter* Letter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
+							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize()> 0)
 							{
 								int llen = 0;
@@ -6018,7 +6018,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							string emlfile;
 							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
 							
-							MailLetter* Letter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
+							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize()> 0)
 							{
 								int llen = 0;
@@ -6042,7 +6042,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							string emlfile;
 							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
 							
-							MailLetter* Letter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
+							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize()> 0)
 							{
 								int llen = 0;
@@ -6064,7 +6064,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							string emlfile;
 							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
 							
-							MailLetter* Letter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
+							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize()> 0)
 							{
 								int llen = 0;
@@ -6097,7 +6097,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							string emlfile;
 							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
 							
-							MailLetter* Letter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
+							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize()> 0)
 							{
 								int llen = 0;
@@ -6119,7 +6119,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							string emlfile;
 							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
 							
-							MailLetter* Letter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
+							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize()> 0)
 							{
 								int llen = 0;
@@ -6143,7 +6143,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							string emlfile;
 							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
 							
-							MailLetter* Letter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
+							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize()> 0)
 							{
 								int llen = 0;
@@ -6165,7 +6165,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							string emlfile;
 							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
 							
-							MailLetter* Letter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
+							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize()> 0)
 							{
 								int llen = 0;
@@ -6194,7 +6194,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							string emlfile;
 							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
 							
-							MailLetter* Letter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
+							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize() >= letterSize)
 							{
 								vSearchResult[m_maillisttbl[y].mid] = 1;
@@ -6211,7 +6211,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							string emlfile;
 							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
 							
-							MailLetter* Letter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
+							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize() <= letterSize)
 							{
 								vSearchResult[m_maillisttbl[y].mid] = 1;
@@ -6230,7 +6230,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							string emlfile;
 							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
 							
-							MailLetter* Letter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
+							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize() <= letterSize)
 							{
 								vSearchResult[m_maillisttbl[y].mid] = 0;
@@ -6248,7 +6248,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							string emlfile;
 							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
 							
-							MailLetter* Letter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
+							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize() >= letterSize)
 							{
 								vSearchResult[m_maillisttbl[y].mid] = 0;
@@ -6271,7 +6271,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							string emlfile;
 							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
 							
-							MailLetter* Letter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
+							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize()> 0)
 							{
 								int llen = 0;
@@ -6295,7 +6295,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							string emlfile;
 							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
 							
-							MailLetter* Letter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
+							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize()> 0)
 							{
 								int llen = 0;
@@ -6321,7 +6321,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							string emlfile;
 							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
 							
-							MailLetter* Letter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
+							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize()> 0)
 							{
 								int llen = 0;
@@ -6346,7 +6346,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							string emlfile;
 							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
 							
-							MailLetter* Letter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
+							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize()> 0)
 							{
 								int llen = 0;
@@ -6401,7 +6401,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							string emlfile;
 							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
 							
-							MailLetter* Letter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
+							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize()> 0)
 							{
 								int llen = 0;
@@ -6425,7 +6425,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							string emlfile;
 							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
 							
-							MailLetter* Letter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
+							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize()> 0)
 							{
 								int llen = 0;
@@ -6451,7 +6451,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							string emlfile;
 							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
 							
-							MailLetter* Letter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
+							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize()> 0)
 							{
 								int llen = 0;
@@ -6476,7 +6476,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							string emlfile;
 							mailStg->GetMailIndex(m_maillisttbl[y].mid, emlfile);
 							
-							MailLetter* Letter = new MailLetter(CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
+							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize()> 0)
 							{
 								int llen = 0;

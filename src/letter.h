@@ -303,10 +303,12 @@ protected:
     string m_encoding;
     
 	memcached_st * m_memcached;
+    MailStorage* m_mailstg;
+    string m_mailbody_fragment;
 	
 public:
-	MailLetter(const char* private_path, const char* encoding, memcached_st * memcached, const char* emlfile);
-	MailLetter(const char* private_path, const char* encoding, memcached_st * memcached, const char* uid, unsigned long long maxsize);
+	MailLetter(MailStorage* mailStg, const char* private_path, const char* encoding, memcached_st * memcached, const char* emlfile);
+	MailLetter(MailStorage* mailStg, const char* private_path, const char* encoding, memcached_st * memcached, const char* uid, unsigned long long maxsize);
 	
 	virtual ~MailLetter();
 	
