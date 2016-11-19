@@ -664,15 +664,18 @@ int MTA::Run(int fd)
 			break;
 		}
         
+        StorageEngineInstance* stgengine_instance = NULL;
         MailStorage* mailStg = NULL;
-        StorageEngineInstance* stgengine_instance = new StorageEngineInstance(m_storageEngine, &mailStg);
+        
+        stgengine_instance = new StorageEngineInstance(m_storageEngine, &mailStg);
         if(!stgengine_instance || !mailStg)
         {
             if(stgengine_instance)
                 delete stgengine_instance;
             retVal = -1;
             break;
-        }	
+        }
+        
         mailStg->InsertMTA(CMailBase::m_localhostname.c_str());
 
         stgengine_instance->Release();
@@ -761,7 +764,9 @@ int MTA::Run(int fd)
             int sr = sem_timedwait(postmail_sid, &ts2);
 			if( sr == 0 || (sr == -1 && errno == ETIMEDOUT))
 			{
+                stgengine_instance = NULL;
                 mailStg = NULL;
+        
 				stgengine_instance = new StorageEngineInstance(m_storageEngine, &mailStg);
 				if(!stgengine_instance || !mailStg)
 				{
@@ -774,40 +779,38 @@ int MTA::Run(int fd)
                 
                 unsigned int mta_index, mta_count;
                 
-                mailStg->GetMTAIndex(CMailBase::m_localhostname.c_str(), 2*MTA_QUERY_MAX_INTERVAL, mta_index, mta_count);
+                mailStg->GetMTAIndex(CMailBase::m_localhostname.c_str(), 4*MTA_QUERY_MAX_INTERVAL, mta_index, mta_count);
                 
-				if(mta_count > 0 && mailStg->ListExternMail(mitbl, CMailBase::m_mta_relaytasknum) == 0)
+				if(mta_count > 0 && mailStg->ListExternMail(mitbl, mta_index, mta_count, CMailBase::m_mta_relaytasknum) == 0)
 				{
                     for(int x = 0; x < mitbl.size(); x++)
                     {
-                        if(mitbl[x].mid % mta_count == mta_index)
-                        {
-                            ReplyInfo* reply_info = new ReplyInfo;
-                            
-                            reply_info->mail_info.mid = mitbl[x].mid;
-                            memcpy(reply_info->mail_info.uniqid, mitbl[x].uniqid, 256);
-                            reply_info->mail_info.mailfrom = mitbl[x].mailfrom;
-                            reply_info->mail_info.rcptto = mitbl[x].rcptto;
-                            reply_info->mail_info.mtime = mitbl[x].mtime;
-                            reply_info->mail_info.mstatus = mitbl[x].mstatus;
-                            reply_info->mail_info.mtype = mitbl[x].mtype;
-                            reply_info->mail_info.mdid = mitbl[x].mdid;
-                            reply_info->mail_info.length = mitbl[x].length;
-                            reply_info->mail_info.reserve = mitbl[x].reserve;
-                            reply_info->_storageEngine = m_storageEngine;
-                            reply_info->_memcached = m_memcached;
-                            pthread_mutex_lock(&gs_thread_pool_mutex);
-                            gs_thread_pool_arg_queue.push(reply_info);
-                            pthread_mutex_unlock(&gs_thread_pool_mutex);
+                        ReplyInfo* reply_info = new ReplyInfo;
                         
-                            sem_post(&gs_thread_pool_sem);
-                            mailStg->Prefoward(mitbl[x].mid);
-                        }
+                        reply_info->mail_info.mid = mitbl[x].mid;
+                        memcpy(reply_info->mail_info.uniqid, mitbl[x].uniqid, 256);
+                        reply_info->mail_info.mailfrom = mitbl[x].mailfrom;
+                        reply_info->mail_info.rcptto = mitbl[x].rcptto;
+                        reply_info->mail_info.mtime = mitbl[x].mtime;
+                        reply_info->mail_info.mstatus = mitbl[x].mstatus;
+                        reply_info->mail_info.mtype = mitbl[x].mtype;
+                        reply_info->mail_info.mdid = mitbl[x].mdid;
+                        reply_info->mail_info.length = mitbl[x].length;
+                        reply_info->mail_info.reserve = mitbl[x].reserve;
+                        reply_info->_storageEngine = m_storageEngine;
+                        reply_info->_memcached = m_memcached;
+                        pthread_mutex_lock(&gs_thread_pool_mutex);
+                        gs_thread_pool_arg_queue.push(reply_info);
+                        pthread_mutex_unlock(&gs_thread_pool_mutex);
                     
+                        sem_post(&gs_thread_pool_sem);
+                        
+                        mailStg->Prefoward(mitbl[x].mid);
                     }
 				}
 				stgengine_instance->Release();
                 delete stgengine_instance;
+        
 			}
 		}
 
@@ -816,6 +819,7 @@ int MTA::Run(int fd)
             sem_close(postmail_sid);
 		}
    
+        stgengine_instance = NULL;
         mailStg = NULL;
         stgengine_instance = new StorageEngineInstance(m_storageEngine, &mailStg);
         if(stgengine_instance && mailStg)

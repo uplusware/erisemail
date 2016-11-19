@@ -207,7 +207,7 @@ public:
 	int ListMailByDir(const char* username, vector<Mail_Info>& listtbl, const char* diref);
 	int ListMailByDir(const char* username, vector<Mail_Info>& listtbl, unsigned int dirid);
 	int ListAllMail(vector<Mail_Info>& listtbl);
-	int ListExternMail(vector<Mail_Info>& listtbl, unsigned int max_num = 0);
+	int ListExternMail(vector<Mail_Info>& listtbl, unsigned int mta_index = 0, unsigned int mta_count = 1, unsigned int max_num = 0);
 
 	int GetMailUID(int mid, string uid);
 	int Prefoward(int mid);

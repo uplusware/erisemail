@@ -259,7 +259,7 @@ int MailStorage::Install(const char* database)
 		"CREATE TABLE IF NOT EXISTS `%s`.`mtatbl` ("
 		"`mid` INT UNSIGNED NOT NULL AUTO_INCREMENT ,"
 		"`mta` VARCHAR( 256 ) NOT NULL ,"
-		"`active_time` INT UNSIGNED NOT NULL DEFAULT '0',"
+		"`active_time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,"
 		"PRIMARY KEY ( `mid` ) ) ENGINE = MYISAM ",
 		database);
     mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd));
@@ -1860,12 +1860,12 @@ int MailStorage::ListAllMail(vector<Mail_Info>& listtbl)
 	}
 }
 
-int MailStorage::ListExternMail(vector<Mail_Info>& listtbl, unsigned int max_num)
+int MailStorage::ListExternMail(vector<Mail_Info>& listtbl, unsigned int mta_index, unsigned int mta_count,unsigned int max_num)
 {
 	listtbl.clear();
 	char sqlcmd[1024];
-	sprintf(sqlcmd, "SELECT mfrom, mto, muniqid, mid FROM mailtbl WHERE mtx='%d' AND mstatus&%d<>%d AND mstatus&%d<>%d ORDER BY mid", mtExtern, MSG_ATTR_DELETED, MSG_ATTR_DELETED, MSG_ATTR_UNAUDITED, MSG_ATTR_UNAUDITED);
-	
+	sprintf(sqlcmd, "SELECT mfrom, mto, muniqid, mid FROM mailtbl WHERE mtx='%d' AND mstatus&%d<>%d AND mstatus&%d<>%d AND mid%%%d=%d ORDER BY mid", mtExtern, MSG_ATTR_DELETED, MSG_ATTR_DELETED, MSG_ATTR_UNAUDITED, MSG_ATTR_UNAUDITED, mta_count, mta_index);
+	/* printf("%s\n",sqlcmd); */
     max_num = (max_num == 0 ? 0x7FFFFFFFFU : max_num);
 	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
@@ -4511,8 +4511,8 @@ int MailStorage::InsertMTA(const char* mta)
         return -1;
     }
 	
-	sprintf(sqlcmd, "INSERT INTO mtatbl(mta, active_time) VALUES('%s','%d')", 
-        strSafetyMTA.c_str(), time(NULL));
+	sprintf(sqlcmd, "INSERT INTO mtatbl(mta, active_time) VALUES('%s',CURRENT_TIMESTAMP)", 
+        strSafetyMTA.c_str());
 
     if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
     {
@@ -4550,7 +4550,7 @@ int MailStorage::UpdateMTA(const char* mta)
     
     char sqlcmd[1024];
 
-	sprintf(sqlcmd, "UPDATE mtatbl SET active_time='%d' WHERE mta='%s'", time(NULL), strSafetyMTA.c_str());
+	sprintf(sqlcmd, "UPDATE mtatbl SET active_time=CURRENT_TIMESTAMP WHERE mta='%s'", strSafetyMTA.c_str());
 	
 	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) != 0)
 	{
@@ -4565,8 +4565,8 @@ int MailStorage::GetMTAIndex(const char* mta, unsigned int live_sec, unsigned in
     
     char sqlcmd[1024];
 
-	sprintf(sqlcmd, "SELECT mta FROM mtatbl WHERE active_time > %d ORDER BY mta", time(NULL) - live_sec);
-	
+	sprintf(sqlcmd, "SELECT mta FROM mtatbl WHERE TIMESTAMPDIFF(SECOND, active_time, CURRENT_TIMESTAMP) < %d ORDER BY mta", live_sec);
+	/* printf("%s\n", sqlcmd); */
 	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) != 0)
 	{
         show_error(&m_hMySQL);
