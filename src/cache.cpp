@@ -6,11 +6,11 @@
 #include "tinyxml/tinyxml.h"
 
 #define FILE_MAX_SIZE 	(1024*512)
-#define MAX_CACHE_SIZE	(1024*1024*2)
+#define MAX_CACHE_SIZE	(1024*1024*4)
 
 memory_cache::memory_cache()
 {
-	m_htdoc.clear();
+	
 }
 
 memory_cache::~memory_cache()
@@ -235,35 +235,82 @@ void memory_cache::load(const char* szdir)
 				strfilepath += "/";
 				strfilepath += strfilename;
 				
-				int fd = open(strfilepath.c_str(), O_RDONLY);
-				if(fd > 0)
-				{
-					filedata fdata;
-					
-			  		struct stat file_stat;
-			  		fstat(fd, &file_stat);
-					
-					fdata.flen = file_stat.st_size;
-					
-					if(fdata.flen < FILE_MAX_SIZE)
-					{
-						cache_size += fdata.flen;
-						
-						//printf("Load html %s\n", strfilename.c_str());
-						fdata.pbuf = (char*)malloc(fdata.flen);
-						int nRead = 0;
-						while(1)
-						{
-							int l = read(fd, fdata.pbuf + nRead, fdata.flen - nRead);
-							if(l <= 0)
-								break;
-							else
-								nRead += l;
-						}
-						m_htdoc.insert(map<string, filedata>::value_type(strfilename, fdata));
-					}
-					close(fd);
-				}
+                int fn_len = strfilename.length();
+                if(((strfilename[fn_len - 1] == 'l' || strfilename[fn_len - 1] == 'L')
+                    && (strfilename[fn_len - 2] == 'm' || strfilename[fn_len - 2] == 'M')
+                    && (strfilename[fn_len - 3] == 't' || strfilename[fn_len - 3] == 'T')
+                    && (strfilename[fn_len - 4] == 'h' || strfilename[fn_len - 4] == 'H')
+                    && (strfilename[fn_len - 5] == '.')) //.html
+                || ((strfilename[fn_len - 1] == 'm' || strfilename[fn_len - 1] == 'M')
+                    && (strfilename[fn_len - 2] == 't' || strfilename[fn_len - 2] == 'T')
+                    && (strfilename[fn_len - 3] == 'h' || strfilename[fn_len - 3] == 'H')
+                    && (strfilename[fn_len - 4] == '.')) //.htm
+                || ((strfilename[fn_len - 1] == 'f' || strfilename[fn_len - 1] == 'F')
+                    && (strfilename[fn_len - 2] == 'i' || strfilename[fn_len - 2] == 'I')
+                    && (strfilename[fn_len - 3] == 'g' || strfilename[fn_len - 3] == 'G')
+                    && (strfilename[fn_len - 4] == '.')) //.gif
+                || ((strfilename[fn_len - 1] == 'g' || strfilename[fn_len - 1] == 'G')
+                    && (strfilename[fn_len - 2] == 'p' || strfilename[fn_len - 2] == 'P')
+                    && (strfilename[fn_len - 3] == 'j' || strfilename[fn_len - 3] == 'J')
+                    && (strfilename[fn_len - 4] == '.')) //.jpg
+                || ((strfilename[fn_len - 1] == 'g' || strfilename[fn_len - 1] == 'G')
+                    && (strfilename[fn_len - 2] == 'n' || strfilename[fn_len - 2] == 'N')
+                    && (strfilename[fn_len - 3] == 'p' || strfilename[fn_len - 3] == 'P')
+                    && (strfilename[fn_len - 4] == '.')) //.png
+                || ((strfilename[fn_len - 1] == 's' || strfilename[fn_len - 1] == 'S')
+                    && (strfilename[fn_len - 2] == 's' || strfilename[fn_len - 2] == 'S')
+                    && (strfilename[fn_len - 3] == 'c' || strfilename[fn_len - 3] == 'C')
+                    && (strfilename[fn_len - 4] == '.')) //.css
+                || ((strfilename[fn_len - 1] == 's' || strfilename[fn_len - 1] == 'S')
+                    && (strfilename[fn_len - 2] == 'j' || strfilename[fn_len - 2] == 'J')
+                    && (strfilename[fn_len - 3] == '.')) //.js
+                || ((strfilename[fn_len - 1] == 'g' || strfilename[fn_len - 1] == 'G')
+                    && (strfilename[fn_len - 2] == 'e' || strfilename[fn_len - 2] == 'E')
+                    && (strfilename[fn_len - 3] == 'p' || strfilename[fn_len - 3] == 'P')
+                    && (strfilename[fn_len - 4] == 'j' || strfilename[fn_len - 4] == 'J')
+                    && (strfilename[fn_len - 5] == '.')) //.jpeg
+                || ((strfilename[fn_len - 1] == 'o' || strfilename[fn_len - 1] == 'O')
+                    && (strfilename[fn_len - 2] == 'c' || strfilename[fn_len - 2] == 'C')
+                    && (strfilename[fn_len - 3] == 'i' || strfilename[fn_len - 3] == 'I')
+                    && (strfilename[fn_len - 4] == '.')) //.ico
+                || ((strfilename[fn_len - 1] == 't' || strfilename[fn_len - 1] == 'T')
+                    && (strfilename[fn_len - 2] == 'x' || strfilename[fn_len - 2] == 'X')
+                    && (strfilename[fn_len - 3] == 't' || strfilename[fn_len - 3] == 'T')
+                    && (strfilename[fn_len - 4] == '.'))  //.txt
+                )
+                {
+                    int fd = open(strfilepath.c_str(), O_RDONLY);
+                    if(fd > 0)
+                    {
+                        filedata fdata;
+                        
+                        struct stat file_stat;
+                        if(fstat(fd, &file_stat) == 0)
+                        {
+                            fdata.last_modified = file_stat.st_mtime;
+                            fdata.flen = file_stat.st_size;
+                            
+                            if(fdata.flen < FILE_MAX_SIZE)
+                            {
+                                cache_size += fdata.flen;
+                                
+                                /* printf("Load file to cache: %s\n", strfilename.c_str()); */
+                                fdata.pbuf = (char*)malloc(fdata.flen);
+                                int nRead = 0;
+                                while(1)
+                                {
+                                    int l = read(fd, fdata.pbuf + nRead, fdata.flen - nRead);
+                                    if(l <= 0)
+                                        break;
+                                    else
+                                        nRead += l;
+                                }
+                                m_htdoc.insert(map<string, filedata>::value_type(strfilename, fdata));
+                            }
+                        }
+                        close(fd);
+                    }
+                }
 			}
 		}
 		closedir(dp);

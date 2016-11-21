@@ -25,6 +25,7 @@ typedef struct
 {
 	char* pbuf;
 	unsigned long flen;
+    time_t last_modified; /* Last-Modified */
 } filedata;
 
 class memory_cache

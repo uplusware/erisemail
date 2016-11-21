@@ -24,6 +24,9 @@
 CHttp::CHttp(int sockfd, SSL * ssl, SSL_CTX * ssl_ctx, const char* clientip,
     StorageEngine* storage_engine, memory_cache* ch, memcached_st * memcached, BOOL isSSL)
 {
+    m_keep_alive = TRUE; // default is enabled in HTTP/1.1 
+    m_enabled_keep_alive = FALSE; //enable it in this session
+    
 	m_cache = ch;
 
 	m_sockfd = sockfd;
@@ -110,9 +113,9 @@ BOOL CHttp::Parse(char* text)
 {
 	string strtext = text;
 	strtrim(strtext);
+    //printf("%s\n", strtext.c_str());
 	if(strncasecmp(strtext.c_str(),"GET ", 4) == 0)
 	{
-		//printf("%s\n", strtext.c_str());
 		m_http_method = hmGet;
 
 		m_pagename = strtext.c_str();
@@ -254,6 +257,25 @@ BOOL CHttp::Parse(char* text)
 		strcut(strtext.c_str(), "?", " ", m_data);
 		m_data +="&";
 	}
+    else if(strncasecmp(strtext.c_str(), "If-Modified-Since:", 18) == 0)
+    {
+        strcut(strtext.c_str(), "If-Modified-Since:", NULL, m_if_modified_since);
+		strtrim(m_if_modified_since);
+    }   
+    else if(strncasecmp(strtext.c_str(),"Connection:", 11) == 0)
+    {
+        string strConnection;
+        strcut(strtext.c_str(), "Connection:", NULL, strConnection);
+        strtrim(strConnection);
+        if(strcasestr(strConnection.c_str(), "Close") != NULL)
+        {
+            m_keep_alive = FALSE;
+        }
+        else if(strcasestr(strConnection.c_str(), "Keep-Alive") != NULL)
+        {
+            m_keep_alive = TRUE;
+        }
+    }
 	else if(strncasecmp(strtext.c_str(),"Content-Length:", 15) == 0)
 	{
 		sscanf(strtext.c_str(), "Content-Length: %d", &m_content_length);

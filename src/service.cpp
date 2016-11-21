@@ -188,9 +188,6 @@ Service::Service()
     
 	m_cache = NULL;
 	m_memcached = NULL;
-	
-    m_cache = new memory_cache();
-    m_cache->load(CMailBase::m_html_path.c_str());
 }
 
 Service::~Service()
@@ -540,7 +537,7 @@ int Service::Run(int fd, vector<service_param_t> & server_params)
 	int queue_buf_len = attr.mq_msgsize;
 	char* queue_buf_ptr = (char*)malloc(queue_buf_len);
 
-	ThreadPool thd_pool(CMailBase::m_max_conn, init_thread_pool_handler, begin_thread_pool_handler, NULL, exit_thread_pool_handler);
+	ThreadPool worker_pool(CMailBase::m_max_conn, init_thread_pool_handler, begin_thread_pool_handler, NULL, exit_thread_pool_handler);
 	
 	while(!svr_exit)
 	{
@@ -551,8 +548,18 @@ int Service::Run(int fd, vector<service_param_t> & server_params)
             create_server_service(uTrace, server_params[x].host_ip.c_str(), server_params[x].host_port, server_params[x].sockfd);
             if(server_params[x].sockfd > 0)
             {
+                if(server_params[x].st == stHTTP)
+                {
+                    if(!m_cache)
+                    {
+                        m_cache = new memory_cache();
+                        if(m_cache)
+                            m_cache->load(CMailBase::m_html_path.c_str());
+                    }
+                }
                 max_fd = max_fd > server_params[x].sockfd ? max_fd : server_params[x].sockfd;
             }
+    
         }
          
 		if(max_fd == -1)

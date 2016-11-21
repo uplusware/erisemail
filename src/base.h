@@ -681,6 +681,10 @@ public:
 	/* Pure virual function	*/
 	virtual BOOL Parse(char* text) = 0;
 	virtual int ProtRecv(char* buf, int len) = 0;
+    
+    //Non-pure virtual function
+    virtual BOOL IsKeepAlive() { return FALSE; }
+    virtual BOOL IsEnabledKeepAlive() { return FALSE; }
 };
 
 #define write_lock(fd, offset, whence, len) lock_reg(fd, F_SETLK, F_WRLCK, offset, whence, len)   

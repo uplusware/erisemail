@@ -173,6 +173,15 @@ public:
 
 	StorageEngine* GetStorageEngine() { return m_storageEngine; }
 	memcached_st * GetMemCached() { return m_memcached; }
+    
+    const char* GetIfModifiedSince() { return m_if_modified_since.c_str(); }
+    
+    virtual BOOL IsKeepAlive() { return m_keep_alive; }
+    
+    BOOL EnableKeepAlive(BOOL keep_alive) { m_enabled_keep_alive = keep_alive; }
+    
+    virtual BOOL IsEnabledKeepAlive() { return m_enabled_keep_alive; }
+    
 protected:
 	BOOL m_isSSL;
 	SSL* m_ssl;
@@ -190,6 +199,12 @@ protected:
 	unsigned int m_content_length;
 
 	Post_Content_Type m_content_type;
+    
+    string m_if_modified_since;
+    
+    BOOL m_keep_alive;
+    BOOL m_enabled_keep_alive;
+    
 	string m_boundary;
 
 	string m_host_addr;

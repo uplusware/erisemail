@@ -62,18 +62,24 @@
 
 #define RSP_301_MOVED_NO_CACHE		"HTTP/1.1 301 Moved Permanently\r\n"   \
                                     "Server: eRisemail Web Server (Unix)\r\n"
+                                    
+#define RSP_304_NOT_MODIFIED		"HTTP/1.1 304 Not Modified\r\n"   \
+                                    "Server: eRisemail Web Server (Unix)\r\n"
 
 //Non html body
 #define RSP_404_NOT_FOUND			"HTTP/1.1 404 Not Found\r\n"   \
                                     "Server: eRisemail Web Server (Unix)\r\n"   \
+                                    "Content-Length: 0\r\n"   \
                                     "\r\n"
                                     
 #define RSP_500_SYS_ERR				"HTTP/1.1 500 Server Error\r\n"   \
                                     "Server: eRisemail Web Server (Unix)\r\n"   \
+                                    "Content-Length: 0\r\n"   \
                                     "\r\n"
                                     
 #define RSP_501_SYS_ERR				"HTTP/1.1 501 Not Implemented\r\n"   \
                                     "Server: eRisemail Web Server (Unix)\r\n"   \
+                                    "Content-Length: 0\r\n"   \
                                     "\r\n"
 
 
@@ -105,94 +111,165 @@ public:
 		string strResp;
 		string strDoc;
 		string strPage;
-		
+
+        string strHTTPDate;
+		OutHTTPDateString(time(NULL), strHTTPDate);
+                
 		strDoc = m_session->GetQueryPage();
+        
 		if(m_session->m_cache->m_htdoc.find(strDoc) == m_session->m_cache->m_htdoc.end())
 		{
 			strDoc = CMailBase::m_html_path.c_str();
 			strDoc += "/";
 			strDoc += m_session->GetQueryPage();
-			ifstream fsDoc(strDoc.c_str(), ios_base::binary);
+			ifstream* fs_doc = new ifstream(strDoc.c_str(), ios_base::binary);
 			string strline;
-			if(!fsDoc.is_open())
+			if(!fs_doc || !fs_doc->is_open())
 			{
+                // 404 NOT FOUND
 				strResp = RSP_404_NOT_FOUND;
 				m_session->HttpSend(strResp.c_str(), strResp.length());
 			}
 			else
-			{
-				lowercase(m_session->GetQueryPage(), strPage);				
-				get_extend_name(strPage.c_str(), strExtName);
-				
-				strResp = RSP_200_OK_CACHE;
-				
-				string strHTTPDate;
-				OutHTTPDateString(time(NULL), strHTTPDate);
-				strResp += "Date: ";
-				strResp += strHTTPDate;
-				strResp += "\r\n";
-				
-				strResp += "Content-Type: ";
-				
-				
-				if(m_session->m_cache->m_type_table.find(strExtName) == m_session->m_cache->m_type_table.end())
-				{
-					strResp += "application/*";
-				}
-				else
-				{
-					strResp += m_session->m_cache->m_type_table[strExtName];
-				}
-				strResp += "\r\n\r\n";
-				
-				
-				m_session->HttpSend(strResp.c_str(), strResp.length());
-				
-				char rbuf[1449];
-				while(1)
-				{
-					if(fsDoc.eof())
-					{
-						break;
-					}
-					if(fsDoc.read(rbuf, 1448) < 0)
-					{
-						break;
-					}
-					int rlen = fsDoc.gcount();
-					m_session->HttpSend(rbuf, rlen);
-				}
+			{   
+                string strLastModifiedDate;
+                struct stat file_stat;
+                if( stat(strDoc.c_str(), &file_stat) == 0)
+                {
+                    OutHTTPDateString(file_stat.st_mtime, strLastModifiedDate);
+                }
+                
+                if(strcasecmp(m_session->GetIfModifiedSince(), strLastModifiedDate.c_str()) == 0)
+                {
+                    strResp = RSP_304_NOT_MODIFIED;
+                    strResp += "Date: ";
+                    strResp += strHTTPDate;
+                    strResp += "\r\n";
+                    strResp += "Content-Length: 0\r\n";
+                    strResp += "\r\n";
+                    
+                    m_session->EnableKeepAlive(TRUE);
+                    m_session->HttpSend(strResp.c_str(), strResp.length());
+                }
+                else
+                {
+                    lowercase(m_session->GetQueryPage(), strPage);				
+                    get_extend_name(strPage.c_str(), strExtName);
+                    
+                    strResp = RSP_200_OK_CACHE;
+                    
+                    
+                    strResp += "Date: ";
+                    strResp += strHTTPDate;
+                    strResp += "\r\n";
+                    
+                    if(strLastModifiedDate != "")
+                    {
+                        strResp += "Last-Modified: ";
+                        strResp += strLastModifiedDate;
+                        strResp += "\r\n";
+                    }
+                    strResp += "Content-Type: ";
+                    
+                    
+                    if(m_session->m_cache->m_type_table.find(strExtName) == m_session->m_cache->m_type_table.end())
+                    {
+                        strResp += "application/*";
+                    }
+                    else
+                    {
+                        strResp += m_session->m_cache->m_type_table[strExtName];
+                    }
+                    strResp += "\r\n";
+                    
+                    char sz_content_length[64];
+                    sprintf(sz_content_length, "%u", file_stat.st_size);
+                    strResp += "Content-Length: ";
+                    strResp += sz_content_length;
+                    strResp += "\r\n";
+                    strResp += "\r\n";
+                    
+                    m_session->EnableKeepAlive(TRUE);
+                    m_session->HttpSend(strResp.c_str(), strResp.length());
+                    
+                    char rbuf[1449];
+                    while(1)
+                    {
+                        if(fs_doc->eof())
+                        {
+                            break;
+                        }
+                        if(fs_doc->read(rbuf, 1448) < 0)
+                        {
+                            break;
+                        }
+                        int rlen = fs_doc->gcount();
+                        m_session->HttpSend(rbuf, rlen);
+                    }
+                }
 			}
-			if(fsDoc.is_open())
-				fsDoc.close();
+			if(fs_doc && fs_doc->is_open())
+            {
+				fs_doc->close();
+            }
+            if(fs_doc)
+                delete fs_doc;
+            
 		}
 		else
 		{
-			lowercase(m_session->GetQueryPage(), strPage);
-			get_extend_name(strPage.c_str(), strExtName);
-			
-			strResp = RSP_200_OK_CACHE;
-			string strHTTPDate;
-			OutHTTPDateString(time(NULL), strHTTPDate);
-			strResp += "Date: ";
-			strResp += strHTTPDate;
-			strResp += "\r\n";
-			
-			strResp += "Content-Type: ";
-			
-			if(m_session->m_cache->m_type_table.find(strExtName) == m_session->m_cache->m_type_table.end())
-			{
-				strResp += "application/*";
-			}
-			else
-			{
-				strResp += m_session->m_cache->m_type_table[strExtName];
-			}
-			strResp += "\r\n\r\n";
-			
-			m_session->HttpSend(strResp.c_str(), strResp.length());
-			m_session->HttpSend(m_session->m_cache->m_htdoc[strDoc].pbuf, m_session->m_cache->m_htdoc[strDoc].flen);
-			
+            string strLastModifiedDate;
+            OutHTTPDateString(m_session->m_cache->m_htdoc[strDoc].last_modified, strLastModifiedDate);
+                
+            if(strcasecmp(m_session->GetIfModifiedSince(), strLastModifiedDate.c_str()) == 0)
+            {
+                strResp = RSP_304_NOT_MODIFIED;
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp += "Content-Length: 0\r\n";
+                strResp += "\r\n";
+                
+                m_session->EnableKeepAlive(TRUE);
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+            }
+            else
+            {
+                lowercase(m_session->GetQueryPage(), strPage);
+                get_extend_name(strPage.c_str(), strExtName);
+                
+                strResp = RSP_200_OK_CACHE;
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+
+                strResp += "Last-Modified: ";
+                strResp += strLastModifiedDate;
+                strResp += "\r\n";
+                
+                strResp += "Content-Type: ";
+                
+                if(m_session->m_cache->m_type_table.find(strExtName) == m_session->m_cache->m_type_table.end())
+                {
+                    strResp += "application/*";
+                }
+                else
+                {
+                    strResp += m_session->m_cache->m_type_table[strExtName];
+                }
+                strResp += "\r\n";
+                
+                char sz_content_length[64];
+                sprintf(sz_content_length, "%u", m_session->m_cache->m_htdoc[strDoc].flen);
+                strResp += "Content-Length: ";
+                strResp += sz_content_length;
+                strResp += "\r\n";
+                strResp += "\r\n";
+                
+                m_session->EnableKeepAlive(TRUE);
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                m_session->HttpSend(m_session->m_cache->m_htdoc[strDoc].pbuf, m_session->m_cache->m_htdoc[strDoc].flen);
+            }
 		}
 	}
 protected:
@@ -1226,12 +1303,6 @@ public:
 			code_convert_ex("UTF-8", CMailBase::m_encoding.c_str(), strAlias.c_str(), strAlias);
 
 			//POST DATA is UTF-8 format
-			/*
-			if(strcasecmp(CMailBase::m_encoding.c_str(), "GB2312") == 0)
-				utf8_to_gb2312_ex(strAlias.c_str(), strAlias);
-			else if(strcasecmp(CMailBase::m_encoding.c_str(), "UCS2") == 0)
-				utf8_to_ucs2_ex(strAlias.c_str(), strAlias);
-			*/
 			
 			strResp = RSP_200_OK_XML;
 			string strHTTPDate;
@@ -1396,13 +1467,6 @@ public:
 			m_session->parse_urlencode_value("EDIT_USER_STATUS", strStatus);
 
 			code_convert_ex("UTF-8", CMailBase::m_encoding.c_str(), strAlias.c_str(), strAlias);
-			
-			/*
-			if(strcasecmp(CMailBase::m_encoding.c_str(), "GB2312") == 0)
-				utf8_to_gb2312_ex(strAlias.c_str(), strAlias);
-			else if(strcasecmp(CMailBase::m_encoding.c_str(), "UCS2") == 0)
-				utf8_to_ucs2_ex(strAlias.c_str(), strAlias);
-			*/
 			
 			strResp = RSP_200_OK_XML;
 			string strHTTPDate;
@@ -1734,12 +1798,6 @@ public:
 
 			code_convert_ex("UTF-8", CMailBase::m_encoding.c_str(), strDescription.c_str(), strDescription);
 			
-			/*
-			if(strcasecmp(CMailBase::m_encoding.c_str(), "GB2312") == 0)
-				utf8_to_gb2312_ex(strDescription.c_str(), strDescription);
-			else if(strcasecmp(CMailBase::m_encoding.c_str(), "UCS2") == 0)
-				utf8_to_ucs2_ex(strDescription.c_str(), strDescription);
-			*/
 			
 			unsigned int lid = atoi(strLevelId.c_str());
 			
@@ -2243,12 +2301,6 @@ public:
 
 			code_convert_ex("UTF-8", CMailBase::m_encoding.c_str(), strDescription.c_str(), strDescription);
 			
-			/*
-			if(strcasecmp(CMailBase::m_encoding.c_str(), "GB2312") == 0)
-				utf8_to_gb2312_ex(strDescription.c_str(), strDescription);
-			else if(strcasecmp(CMailBase::m_encoding.c_str(), "UCS2") == 0)
-				utf8_to_ucs2_ex(strDescription.c_str(), strDescription);
-			*/
 			
 			strResp = RSP_200_OK_XML;
 			string strHTTPDate;
@@ -2472,8 +2524,6 @@ public:
 				}
 				strResp += "</response>"
 					"</erisemail>";
-				
-				//printf("%s\n", strResp.c_str());
 			}
 			else
 			{
@@ -3302,8 +3352,6 @@ public:
 				"<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
 				"</erisemail>";
 		}
-
-		//printf("%s\n", strResp.c_str());
 		
 		m_session->HttpSend(strResp.c_str(), strResp.length());
 	}
@@ -7827,60 +7875,23 @@ public:
 			m_session->parse_urlencode_value("TO_ADDRS", strTo);
 			code_convert_ex("UTF-8", CMailBase::m_encoding.c_str(), strTo.c_str(), strTo);
 			
-			/*
-			if(strcasecmp(CMailBase::m_encoding.c_str(), "GB2312") == 0)
-				utf8_to_gb2312_ex(strTo.c_str(), strTo);
-			else if(strcasecmp(CMailBase::m_encoding.c_str(), "UCS2") == 0)
-				utf8_to_ucs2_ex(strTo.c_str(), strTo);
-			*/
 			
 			m_session->parse_urlencode_value("CC_ADDRS", strCc);
 			code_convert_ex("UTF-8", CMailBase::m_encoding.c_str(), strCc.c_str(), strCc);
-
-			/*
-			if(strcasecmp(CMailBase::m_encoding.c_str(), "GB2312") == 0)
-				utf8_to_gb2312_ex(strCc.c_str(), strCc);
-			else if(strcasecmp(CMailBase::m_encoding.c_str(), "UCS2") == 0)
-				utf8_to_ucs2_ex(strCc.c_str(), strCc);
-			*/
 			
 			m_session->parse_urlencode_value("BCC_ADDRS", strBcc);
 			code_convert_ex("UTF-8", CMailBase::m_encoding.c_str(), strBcc.c_str(), strBcc);
 			
-			/*
-			if(strcasecmp(CMailBase::m_encoding.c_str(), "GB2312") == 0)
-				utf8_to_gb2312_ex(strBcc.c_str(), strBcc);
-			else if(strcasecmp(CMailBase::m_encoding.c_str(), "UCS2") == 0)
-				utf8_to_ucs2_ex(strBcc.c_str(), strBcc);
-			*/
 			
 			m_session->parse_urlencode_value("SUBJECT", strSubject);
 			code_convert_ex("UTF-8", CMailBase::m_encoding.c_str(), strSubject.c_str(), strSubject);
-			/*
-			if(strcasecmp(CMailBase::m_encoding.c_str(), "GB2312") == 0)
-				utf8_to_gb2312_ex(strSubject.c_str(), strSubject);
-			else if(strcasecmp(CMailBase::m_encoding.c_str(), "UCS2") == 0)
-				utf8_to_ucs2_ex(strSubject.c_str(), strSubject);
-			*/
 			
 			m_session->parse_urlencode_value("CONTENT", strContent);
 			code_convert_ex("UTF-8", CMailBase::m_encoding.c_str(), strContent.c_str(), strContent);
 			
-			/*
-			if(strcasecmp(CMailBase::m_encoding.c_str(), "GB2312") == 0)
-				utf8_to_gb2312_ex(strContent.c_str(), strContent);
-			else if(strcasecmp(CMailBase::m_encoding.c_str(), "UCS2") == 0)
-				utf8_to_ucs2_ex(strContent.c_str(), strContent);
-			*/
 			m_session->parse_urlencode_value("ATTACHFILES", strAttachFiles);
 			code_convert_ex("UTF-8", CMailBase::m_encoding.c_str(), strAttachFiles.c_str(), strAttachFiles);
 			
-			/*
-			if(strcasecmp(CMailBase::m_encoding.c_str(), "GB2312") == 0)
-				utf8_to_gb2312_ex(strAttachFiles.c_str(), strAttachFiles);
-			else if(strcasecmp(CMailBase::m_encoding.c_str(), "UCS2") == 0)
-				utf8_to_ucs2_ex(strAttachFiles.c_str(), strAttachFiles);
-			*/
 			
 			char newuid[256];
 			sprintf(newuid, "%08x_%08x_%016lx_%08x_%s", time(NULL), getpid(), pthread_self(), random(), CMailBase::m_localhostname.c_str());
@@ -8134,52 +8145,20 @@ public:
 			m_session->parse_urlencode_value("TO_ADDRS", strTo);
 			code_convert_ex("UTF-8", CMailBase::m_encoding.c_str(), strTo.c_str(), strTo);
 			
-			/*
-			if(strcasecmp(CMailBase::m_encoding.c_str(), "GB2312") == 0)
-				utf8_to_gb2312_ex(strTo.c_str(), strTo);
-			else if(strcasecmp(CMailBase::m_encoding.c_str(), "UCS2") == 0)
-				utf8_to_ucs2_ex(strTo.c_str(), strTo);
-			*/
 			
 			m_session->parse_urlencode_value("CC_ADDRS", strCc);
 			code_convert_ex("UTF-8", CMailBase::m_encoding.c_str(), strCc.c_str(), strCc);
 			
-			/*
-			if(strcasecmp(CMailBase::m_encoding.c_str(), "GB2312") == 0)
-				utf8_to_gb2312_ex(strCc.c_str(), strCc);
-			else if(strcasecmp(CMailBase::m_encoding.c_str(), "UCS2") == 0)
-				utf8_to_ucs2_ex(strCc.c_str(), strCc);
-			*/
 			
 			m_session->parse_urlencode_value("BCC_ADDRS", strBcc);
 			code_convert_ex("UTF-8", CMailBase::m_encoding.c_str(), strBcc.c_str(), strBcc);
 			
-			/*
-			if(strcasecmp(CMailBase::m_encoding.c_str(), "GB2312") == 0)
-				utf8_to_gb2312_ex(strBcc.c_str(), strBcc);
-			else if(strcasecmp(CMailBase::m_encoding.c_str(), "UCS2") == 0)
-				utf8_to_ucs2_ex(strBcc.c_str(), strBcc);
-			*/
-			
 			m_session->parse_urlencode_value("SUBJECT", strSubject);
 			code_convert_ex("UTF-8", CMailBase::m_encoding.c_str(), strSubject.c_str(), strSubject);
 			
-			/*
-			if(strcasecmp(CMailBase::m_encoding.c_str(), "GB2312") == 0)
-				utf8_to_gb2312_ex(strSubject.c_str(), strSubject);
-			else if(strcasecmp(CMailBase::m_encoding.c_str(), "UCS2") == 0)
-				utf8_to_ucs2_ex(strSubject.c_str(), strSubject);
-			*/
 			m_session->parse_urlencode_value("CONTENT", strContent);
 
 			code_convert_ex("UTF-8", CMailBase::m_encoding.c_str(), strContent.c_str(), strContent);
-			
-			/*
-			if(strcasecmp(CMailBase::m_encoding.c_str(), "GB2312") == 0)
-				utf8_to_gb2312_ex(strContent.c_str(), strContent);
-			else if(strcasecmp(CMailBase::m_encoding.c_str(), "UCS2") == 0)
-				utf8_to_ucs2_ex(strContent.c_str(), strContent);
-			*/
 			
 			m_session->parse_urlencode_value("ATTACHFILES", strAttachFiles);
 
@@ -8211,8 +8190,7 @@ public:
 				usermaxsize = 5000*1024;
 			}
 			
-			MailLetter* pLetter = new MailLetter(m_mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_session->GetMemCached(), newuid, usermaxsize /*m_mailStg, 
-				"", "", mtLocal, newuid, DirID, mstatus, time(NULL), usermaxsize, DraftID*/);
+			MailLetter* pLetter = new MailLetter(m_mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_session->GetMemCached(), newuid, usermaxsize);
 
 			Letter_Info letter_info;
 			letter_info.mail_from = "";
@@ -9960,13 +9938,7 @@ public:
 				m_session->parse_urlencode_value("GLOBAL_REJECT_LIST", strText);
 
 				code_convert_ex("UTF-8", CMailBase::m_encoding.c_str(), strText.c_str(), strText);
-				
-				/*
-				if(strcasecmp(CMailBase::m_encoding.c_str(), "GB2312") == 0)
-					utf8_to_gb2312_ex(strText.c_str(), strText);
-				else if(strcasecmp(CMailBase::m_encoding.c_str(), "UCS2") == 0)
-					utf8_to_ucs2_ex(strText.c_str(), strText);
-				*/
+
 				sem_t* plock = sem_open("/.ERISEMAIL_GLOBAL_REJECT_LIST.sem", O_CREAT | O_RDWR, 0644, 1);
 				if(plock != SEM_FAILED)
 					sem_wait(plock);
@@ -10000,13 +9972,7 @@ public:
 				m_session->parse_urlencode_value("GLOBAL_PERMIT_LIST", strText);
 
 				code_convert_ex("UTF-8", CMailBase::m_encoding.c_str(), strText.c_str(), strText);
-				
-				/*
-				if(strcasecmp(CMailBase::m_encoding.c_str(), "GB2312") == 0)
-					utf8_to_gb2312_ex(strText.c_str(), strText);
-				else if(strcasecmp(CMailBase::m_encoding.c_str(), "UCS2") == 0)
-					utf8_to_ucs2_ex(strText.c_str(), strText);
-				*/
+
 				sem_t* plock = sem_open("/.ERISEMAIL_GLOBAL_PERMIT_LIST.sem", O_CREAT | O_RDWR, 0644, 1);
 				if(plock != SEM_FAILED)
 					sem_wait(plock);
@@ -10040,13 +10006,6 @@ public:
 
 				code_convert_ex("UTF-8", CMailBase::m_encoding.c_str(), strText.c_str(), strText);
 				
-				/*
-				if(strcasecmp(CMailBase::m_encoding.c_str(), "GB2312") == 0)
-					utf8_to_gb2312_ex(strText.c_str(), strText);
-				else if(strcasecmp(CMailBase::m_encoding.c_str(), "UCS2") == 0)
-					utf8_to_ucs2_ex(strText.c_str(), strText);
-				*/
-				
 				sem_t* plock = sem_open("/.DOMAIN_PERMIT_LIST.sem", O_CREAT | O_RDWR, 0644, 1);
 				if(plock != SEM_FAILED)
 					sem_wait(plock);
@@ -10079,13 +10038,6 @@ public:
 				m_session->parse_urlencode_value("WEBADMIN_PERMIT_LIST", strText);
 
 				code_convert_ex("UTF-8", CMailBase::m_encoding.c_str(), strText.c_str(), strText);
-				
-				/*
-				if(strcasecmp(CMailBase::m_encoding.c_str(), "GB2312") == 0)
-					utf8_to_gb2312_ex(strText.c_str(), strText);
-				else if(strcasecmp(CMailBase::m_encoding.c_str(), "UCS2") == 0)
-					utf8_to_ucs2_ex(strText.c_str(), strText);
-				*/
 				
 				sem_t* plock = sem_open("/.WEBADMIN_PERMIT_LIST.sem", O_CREAT | O_RDWR, 0644, 1);
 				if(plock != SEM_FAILED)
@@ -10771,12 +10723,8 @@ public:
 			strResp += "<HTTPSPort>";
 			strResp += szTmp;
 			strResp += "</HTTPSPort>";
-			
-			
+
 			strResp += "</response></erisemail>";
-			
-			//printf("%s\n", strResp.c_str());
-			
 		}
 		else
 		{
