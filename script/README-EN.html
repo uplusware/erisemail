@@ -9,7 +9,7 @@
 <body>
 <h1>eRisemail Server v1.6.08 Manual</h1>
 <hr>
-<h2>About eRisemail server</h2>
+<h2>About</h2>
 <ul>
   <li>Free e-mail server which supports Linux</li>
   <li>Independently develop, not integrate with any third party systems. Easy installation and configuration, but powerful function. </li>
@@ -55,7 +55,7 @@
   <h3>Step 3:</h3>
   <ul>
     <li>Configurate the<strong> <em>/etc/erisemail/erisemail.conf </em></strong>. 
-      Please refer the <a href="#erisemail_conf">Introducation of erisemail.conf</a></li>
+      Please refer the <a href="#erisemail_conf">Introduction of erisemail.conf</a></li>
   </ul>
   <h3>Step 4:</h3>
   <ul>
@@ -82,7 +82,7 @@
     </ul>
   </li>
 </ul>
-<h2>Introducation of erisemail.conf<a name="erisemail_conf" id="erisemail_conf"></a></h2>
+<h2>Introduction of erisemail.conf<a name="erisemail_conf" id="erisemail_conf"></a></h2>
 <blockquote> 
   <table width="1000" border="1" cellpadding="2" cellspacing="2">
     <tr> 
@@ -120,7 +120,7 @@
     <tr> 
       <td align="right"><strong>MTARelayTaskNum</strong></td>
       <td>the number of forwarding task, if your mail server has a large of email 
-        to forward to others mail server every day. You can increase the valuse 
+        to forward to others mail server every day. You can increase the values 
         by depending your local computer's performance. The default value is 3.</td>
     </tr>
     <tr> 
@@ -272,7 +272,7 @@
     </tr>
   </table>
 </blockquote>
-<h2>Introducation of erisemail's tools</h2>
+<h2>Introduction of erisemail's tools</h2>
 <blockquote> 
   <table width="1000" border="1" cellspacing="2" cellpadding="2">
     <tr> 
@@ -348,7 +348,7 @@
     </tr>
   </table>
 </blockquote>
-<h2>Introducation web components</h2>
+<h2>Introduction web components</h2>
 <blockquote> 
   <ul>
     <li> Siance v1.3, the system has an embedded web server, and it both supports HTTP and HTTPS. So user no need 
@@ -356,30 +356,30 @@
     <li>Web management UI's Url: http://IP:port/admin</li>
   </ul>
 </blockquote>
-<h2>Introducation of <em> /var/log/erisemail/MTA-*.log</em></h2>
+<h2>Introduction of <em> /var/log/erisemail/MTA-*.log</em></h2>
 <ul>
   <li>MTA access list named by date of each day</li>
   <li>User can refer the information of the log file to find out the IP which 
     should be appended in <strong><em>/etc/erisemail/reject.list</em></strong></li>
 </ul>
-<h2>Introducation of <em><strong> <em>/etc/erisemail/</em></strong>domain.list</em></h2>
+<h2>Introduction of <em><strong> <em>/etc/erisemail/</em></strong>domain.list</em></h2>
 <ul>
   <li>Local domains list</li>
   <li>Support multiple domains, share account id, non-independed</li>
 </ul>
-<h2>Introducation of <em><strong> <em>/etc/erisemail/</em></strong>permit.list</em></h2>
+<h2>Introduction of <em><strong> <em>/etc/erisemail/</em></strong>permit.list</em></h2>
 <ul>
-  <li>User can add the permited IP(s) to the file. And can be used * to match 
+  <li>User can add the permitted IP(s) to the file. And can be used * to match 
     any substring.</li>
 </ul>
-<h2>Introducation of <em><strong> <em>/etc/erisemail/</em></strong>reject.list</em></h2>
+<h2>Introduction of <em><strong> <em>/etc/erisemail/</em></strong>reject.list</em></h2>
 <blockquote> 
   <ul>
     <li>User can add the rejected IP(s) to the file. And can be used * to match 
       any substring. </li>
   </ul>
 </blockquote>
-<h2>Introducation of <em><strong> <em>/etc/erisemail/</em></strong>webadmin.list</em></h2>
+<h2>Introduction of <em><strong> <em>/etc/erisemail/</em></strong>webadmin.list</em></h2>
 <blockquote> 
   <ul>
     <li>The list of IPs which can access the management web UI. And can be used 
