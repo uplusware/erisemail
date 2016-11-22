@@ -182,10 +182,10 @@ public:
                     }
                     strResp += "\r\n";
                     
-                    char sz_content_length[64];
-                    sprintf(sz_content_length, "%u", file_stat.st_size);
+                    char szContentLength[64];
+                    sprintf(szContentLength, "%u", file_stat.st_size);
                     strResp += "Content-Length: ";
-                    strResp += sz_content_length;
+                    strResp += szContentLength;
                     strResp += "\r\n";
                     strResp += "\r\n";
                     
@@ -259,10 +259,10 @@ public:
                 }
                 strResp += "\r\n";
                 
-                char sz_content_length[64];
-                sprintf(sz_content_length, "%u", m_session->m_cache->m_htdoc[strDoc].flen);
+                char szContentLength[64];
+                sprintf(szContentLength, "%u", m_session->m_cache->m_htdoc[strDoc].flen);
                 strResp += "Content-Length: ";
-                strResp += sz_content_length;
+                strResp += szContentLength;
                 strResp += "\r\n";
                 strResp += "\r\n";
                 
@@ -8331,27 +8331,34 @@ public:
 	virtual void Response()
 	{
 		string strResp;
+        string strXML;
 		string username, password;
 		if((m_session->parse_urlencode_value("USER_NAME", username) == -1) || (m_session->parse_urlencode_value("USER_PWD", password) == -1))
 		{
+            strXML= "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+			strXML += "<erisemail>"
+                      "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                      "</erisemail>";
+                
 			strResp = RSP_200_OK_XML;
 			string strHTTPDate;
 			OutHTTPDateString(time(NULL), strHTTPDate);
 			strResp += "Date: ";
 			strResp += strHTTPDate;
 			strResp += "\r\n";
-			
+            
+			char szContentLength[64];
+            sprintf(szContentLength, "%u", strXML.length());
+            strResp += "Content-Length: ";
+            strResp += szContentLength;
+            strResp += "\r\n";
+                    
 			strResp +="\r\n";
-			
-			strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
-			strResp += "<erisemail>"
-				"<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
-				"</erisemail>";
+
+            strResp += strXML;
 		}
 		else
 		{
-			
-			 
 		
 			if(m_mailStg && m_mailStg->CheckLogin(username.c_str(), password.c_str()) == 0)
 			{
@@ -8364,6 +8371,11 @@ public:
 				
 				generate_cookie_content("AUTH_TOKEN", strCookie.c_str(), "/", strOut);
 				
+                strXML = "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+				strXML += "<erisemail>"
+                          "<response errno=\"0\" reason=\"\"></response>"
+                          "</erisemail>";
+
 				strResp = RSP_200_OK_XML;
 				string strHTTPDate;
 				OutHTTPDateString(time(NULL), strHTTPDate);
@@ -8371,17 +8383,26 @@ public:
 				strResp += strHTTPDate;
 				strResp += "\r\n";
 				
+                char szContentLength[64];
+                sprintf(szContentLength, "%u", strXML.length());
+                strResp += "Content-Length: ";
+                strResp += szContentLength;
+                strResp += "\r\n";
+            
 				strResp += "Set-Cookie: ";
 				strResp += strOut;
 				strResp += "\r\n\r\n";
-				strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
 				
-				strResp += "<erisemail>"
-					"<response errno=\"0\" reason=\"\"></response>"
-					"</erisemail>";
+                strResp += strXML;
 			}
 			else
 			{
+                				
+				strXML = "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+				strXML += "<erisemail>"
+                          "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                          "</erisemail>";
+                    
 				strResp = RSP_200_OK_XML;
 				string strHTTPDate;
 				OutHTTPDateString(time(NULL), strHTTPDate);
@@ -8389,14 +8410,18 @@ public:
 				strResp += strHTTPDate;
 				strResp += "\r\n";
 				
+                char szContentLength[64];
+                sprintf(szContentLength, "%u", strXML.length());
+                strResp += "Content-Length: ";
+                strResp += szContentLength;
+                strResp += "\r\n";
+            
 				strResp +="\r\n";
-				
-				strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
-				strResp += "<erisemail>"
-					"<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
-					"</erisemail>";
+                    
+                strResp += strXML;
 			}
 		}
+        m_session->EnableKeepAlive(TRUE);
 		m_session->HttpSend(strResp.c_str(), strResp.length());
 	}
 	
@@ -8413,7 +8438,7 @@ public:
 	virtual void Response()
 	{
 		string strResp;
-		
+		string strXML;
 		//Check Admin IPs
 		BOOL access_result = FALSE;
 		for(int x = 0; x < CMailBase::m_webadmin_list.size(); x++)
@@ -8438,6 +8463,11 @@ public:
 		string username, password;
 		if((m_session->parse_urlencode_value("USER_NAME", username) == -1) || (m_session->parse_urlencode_value("USER_PWD", password) == -1))
 		{
+            strXML = "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+			strXML += "<erisemail>"
+				"<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+				"</erisemail>";
+                
 			strResp = RSP_200_OK_XML;
 			string strHTTPDate;
 			OutHTTPDateString(time(NULL), strHTTPDate);
@@ -8445,12 +8475,13 @@ public:
 			strResp += strHTTPDate;
 			strResp += "\r\n";
 			
-			strResp +="\r\n";
+            char szContentLength[64];
+            sprintf(szContentLength, "%u", strXML.length());
+            strResp += "Content-Length: ";
+            strResp += szContentLength;
+            strResp += "\r\n\r\n";
+			strResp += strXML;
 			
-			strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
-			strResp += "<erisemail>"
-				"<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
-				"</erisemail>";
 		}
 		else
 		{	
@@ -8466,6 +8497,11 @@ public:
 				
 				generate_cookie_content("AUTH_TOKEN", strCookie.c_str(), "/", strOut);
 				
+                strXML = "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+				strXML += "<erisemail>"
+					"<response errno=\"0\" reason=\"\"></response>"
+					"</erisemail>";
+                    
 				strResp = RSP_200_OK_XML;
 				string strHTTPDate;
 				OutHTTPDateString(time(NULL), strHTTPDate);
@@ -8473,16 +8509,25 @@ public:
 				strResp += strHTTPDate;
 				strResp += "\r\n";
 				
+                char szContentLength[64];
+                sprintf(szContentLength, "%u", strXML.length());
+                strResp += "Content-Length: ";
+                strResp += szContentLength;
+                strResp += "\r\n";
+                
 				strResp += "Set-Cookie: ";
 				strResp += strOut;
 				strResp += "\r\n\r\n";
-				strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
-				strResp += "<erisemail>"
-					"<response errno=\"0\" reason=\"\"></response>"
-					"</erisemail>";
+                strResp += strXML;
+				
 			}
 			else
 			{
+                strXML = "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+				strXML += "<erisemail>"
+					"<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+					"</erisemail>";
+                    
 				strResp = RSP_200_OK_XML;
 				string strHTTPDate;
 				OutHTTPDateString(time(NULL), strHTTPDate);
@@ -8490,14 +8535,16 @@ public:
 				strResp += strHTTPDate;
 				strResp += "\r\n";
 				
-				strResp +="\r\n";
-				
-				strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
-				strResp += "<erisemail>"
-					"<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
-					"</erisemail>";
+                char szContentLength[64];
+                sprintf(szContentLength, "%u", strXML.length());
+                strResp += "Content-Length: ";
+                strResp += szContentLength;
+                strResp += "\r\n\r\n";
+				strResp += strXML;
+
 			}
 		}
+        m_session->EnableKeepAlive(TRUE);
 		m_session->HttpSend(strResp.c_str(), strResp.length());
 	}
 	
