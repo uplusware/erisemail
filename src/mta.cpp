@@ -437,14 +437,12 @@ static BOOL RelayMail(MailStorage* mailStg, memcached_st * memcached, int mid, c
 		strcpy(ml.address, svraddr.c_str());
 		ml.level = 0;
 		list.push_back(ml);
-		
 	}
 	errormsg = "";
 	int mxcount = list.size();
 
 	for(int x = 0; x < mxcount; x++)
-	{				
-		/* printf("MX: %d/%d %s\n", x, mxcount, list[x].address); */
+	{
 		if(SendMail(mailStg, memcached, list[x].address, "", rcpt_to, mid, errormsg) == TRUE)
 		{
 			return TRUE;

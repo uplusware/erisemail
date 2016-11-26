@@ -84,7 +84,6 @@ public:
 				cptr <<= 8;
 				i++;
 				cptr |= dnsbuf[seek + i];
-				//printf("cptr: %d\n", cptr);
 				gethostname(dnsbuf, cptr, hostname);
 				i++;
 				break;
@@ -124,7 +123,6 @@ public:
 
 		unsigned char dnsbufptr[1024];
 		unsigned int dnsbuflength = 0;
-		memset(dnsbufptr, 0 ,1024);
 		memcpy(dnsbufptr, &DnsHdr, sizeof(Dns_Header));
 		
 		vector<string> vecDest;
@@ -196,7 +194,7 @@ public:
 
             int n = sendto(dns_sockfd, (char*)dnsbufptr, dnsbuflength, 0,
                 (struct sockaddr*)rp->ai_addr, rp->ai_addrlen);
-            /* printf("n: %d\n", n); */
+            
             if(n != dnsbuflength || n <= 0)
             {
                 close(dns_sockfd);
@@ -235,7 +233,6 @@ public:
         freeaddrinfo(server_addr);           /* No longer needed */
 
 		Dns_Header* pAckHeader = (Dns_Header*)dnsbufptr;
-		//printf("%d %d %d\n", n, pAckHeader->Tag, DnsHdr.Tag);
 		if(pAckHeader->Tag != DnsHdr.Tag)
 			return -1;
 
@@ -251,9 +248,6 @@ public:
 		}
 
 		int j;
-		
-		
-		//printf("nResource: %d\n", ntohs(pAckHeader->nResource));
 		
 		for(j = 0; j < ntohs(pAckHeader->nResource); j++)
 		{
@@ -322,7 +316,6 @@ public:
 			}
 		}
 		
-		//printf("nAuthenResource: %d\n", ntohs(pAckHeader->nAuthenResource));
 		for(j = 0; j < ntohs(pAckHeader->nAuthenResource); j++)
 		{
 			c = 1;
