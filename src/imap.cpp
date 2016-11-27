@@ -3026,18 +3026,21 @@ void CMailImap::Fetch(const char* szArg, BOOL isUID)
 							strtrim(strRange);
 							unsigned int origin, octet;
 							sscanf(strRange.c_str(), "%u.%u", &origin, &octet);
-							
-							sprintf(cmd, "BODY[]<%s> {%u}\r\n",strRange.c_str(), octet);
-							if(i > 0 || isUID)
-								ImapSend( " ", 1);
-							ImapSend( cmd, strlen(cmd));
-							
+                            
 							int llen;
-							char* lbuf = Letter->Body(llen);
-							
+							char* lbuf = Letter->Body(llen);                                                        
+                            
 							lbuf = lbuf + origin;
 							llen = origin + octet > llen ? llen  - origin : octet;
 							
+                            sprintf(cmd, "BODY[]<%u.%u> {%u}\r\n",origin, llen, llen);
+                            
+							if(i > 0 || isUID)
+								ImapSend( " ", 1);
+							ImapSend(cmd, strlen(cmd));
+							
+                            /* printf("%s\n", cmd);*/
+                            
 							int wlen = 0;
 							while(1)
 							{

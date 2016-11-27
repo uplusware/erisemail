@@ -450,7 +450,6 @@ BOOL SmtpClient::Do_Quit_Command(string& strmsg)
 
 int SmtpClient::SendCmd(int sockfd, const char * buf, unsigned int buf_len)
 {
-	//printf(buf);
 	if(m_bInTLS)
 		if(m_ssl)
 			return SSLWrite(m_sockfd, m_ssl, buf, buf_len);
