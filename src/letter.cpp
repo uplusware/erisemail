@@ -130,7 +130,7 @@ MailLetter::MailLetter(MailStorage* mailStg, const char* private_path, const cha
             m_body_memtype = MMAPED;
             if(m_memcached && m_size < 4*1024*1024)
             {
-                memc_rc = memcached_set(m_memcached, szMD5dst, 35, m_body, m_size, (time_t)0, (uint32_t)memc_flags);
+                memc_rc = memcached_set(m_memcached, szMD5dst, 35, m_body, m_size, (time_t)3600, (uint32_t)memc_flags);
                 /* if(memc_rc == MEMCACHED_SUCCESS)
                 {
                     printf("set: %s %d\n", m_eml_full_path.c_str(), m_size);
@@ -632,7 +632,7 @@ void LetterSummary::loadXML()
             TiXmlPrinter xml_printer;
             m_xml->Accept( &xml_printer );
             
-            memc_rc = memcached_set(m_memcached, szMD5dst, 35, xml_printer.CStr(), xml_printer.Size(), (time_t)0, (uint32_t)memc_flags);
+            memc_rc = memcached_set(m_memcached, szMD5dst, 35, xml_printer.CStr(), xml_printer.Size(), (time_t)3600, (uint32_t)memc_flags);
             /* if(memc_rc == MEMCACHED_SUCCESS)
             {
                 printf("set: %s %d\n", m_xmlpath.c_str(), xml_printer.Size());
