@@ -826,9 +826,14 @@ BOOL inline create_ssl(int sockfd,
     BOOL bSSLAccepted;
     X509* client_cert;
 	SSL_METHOD* meth;
-	SSL_load_error_strings();
-	OpenSSL_add_ssl_algorithms();
-	meth = (SSL_METHOD*)SSLv23_server_method();
+#ifdef OPENSSL_V_1_2
+    OPENSSL_init_ssl(OPENSSL_INIT_LOAD_SSL_STRINGS, NULL);
+    meth = (SSL_METHOD*)TLSv1_2_server_method();
+#else
+    SSL_load_error_strings();
+    OpenSSL_add_ssl_algorithms();
+    meth = (SSL_METHOD*)SSLv23_server_method();
+#endif /* TLSV1_2_SUPPORT */
 	*pp_ssl_ctx = SSL_CTX_new(meth);
 	if(!*pp_ssl_ctx)
 	{

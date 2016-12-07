@@ -324,9 +324,15 @@ BOOL SmtpClient::Do_StartTLS_Command(string& strmsg)
 		fcntl(m_sockfd, F_SETFL, flags & (~O_NONBLOCK));
 
 		SSL_METHOD* meth;
-		SSL_load_error_strings();
-		OpenSSL_add_ssl_algorithms();
-		meth = (SSL_METHOD*)TLSv1_client_method();
+#ifdef OPENSSL_V_1_2
+        OPENSSL_init_ssl(OPENSSL_INIT_LOAD_SSL_STRINGS, NULL);
+        meth = (SSL_METHOD*)TLSv1_2_client_method();
+#else
+        SSL_load_error_strings();
+        OpenSSL_add_ssl_algorithms();
+        meth = (SSL_METHOD*)TLSv1_client_method();
+#endif /* TLSV1_2_SUPPORT */
+        
 		m_ssl_ctx = SSL_CTX_new(meth);
 
 		if(!m_ssl_ctx)

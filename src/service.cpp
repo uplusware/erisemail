@@ -705,7 +705,13 @@ int Service::Run(int fd, vector<service_param_t> & server_params)
 
 	m_storageEngine = NULL;
 	
-	CMailBase::UnLoadConfig();
+    if(m_memcached)
+        memcached_free(m_memcached);
+    
+    if(memcached_servers)
+        memcached_server_list_free(memcached_servers);
+	
+    CMailBase::UnLoadConfig();
 	
 	return 0;
 }

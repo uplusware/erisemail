@@ -45,6 +45,8 @@ ThreadPool::~ThreadPool()
 	if(m_exit_pthread_handler)
 		(*m_exit_pthread_handler)();
 	
+    if(m_pthread_attr_list)
+        delete[] m_pthread_attr_list;
 	if(m_pthread_list)
 		delete[] m_pthread_list;
 }
