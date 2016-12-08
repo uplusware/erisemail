@@ -26,17 +26,28 @@ OBJUDF = postudf.o
 
 MDEF = _LINUX_OS_
 
+ifdef openssl_v_1_1
+    TLSV_DEF = OPENSSL_V_1_1
+    INCDIR := $(INCDIR) -I/usr/local/include
+    LDDIRS := $(LDDIRS) -L. -L/usr/local/lib
+else
+    TLSV_DEF = OPENSSL_V_1_0
+    INCDIR := $(INCDIR)
+    LDDIRS := $(LDDIRS) -L.
+endif
+
 ifdef GSSAPI
     GSS_DEF = _WITH_GSSAPI_
-    INCDIR = -I/usr/local/include/mariadb/
-    LDDIRS = -L/usr/local/lib/mariadb/
+    INCDIR := $(INCDIR) -I/usr/local/include/mariadb/
+    LDDIRS := $(LDDIRS) -L/usr/local/lib/mariadb/
     LDLIST_SVR = -lstdc++ -lrt -ldl -lssl -lcrypto -lpthread -lmemcached -lgss
 else
     GSS_DEF = _WITHOUT_GSSAPI_
-    INCDIR = -I/usr/local/include/mariadb/
-    LDDIRS = -L/usr/local/lib/mariadb/
+    INCDIR := $(INCDIR) -I/usr/local/include/mariadb/
+    LDDIRS := $(LDDIRS) -L/usr/local/lib/mariadb/
     LDLIST_SVR = -lstdc++ -lrt -ldl -lssl -lcrypto -lpthread -lmemcached
 endif
+
 LDLIST_STG = -lstdc++ -lrt -lmariadb -lmemcached
 LDLIST_JKS = -lstdc++
 LDLIST_UTL = -lstdc++ -lssl -lcrypto -lpthread
@@ -68,7 +79,7 @@ $(SQLUDF): $(OBJUDF)
 	$(CC) -shared -W -fPIC -o $@ $(OBJUDF) $(LDLIST_UDF)
 	
 %.o : %.cpp
-	$(CC) -D$(MDEF) -D$(GSS_DEF) $(INCDIR) $(FLAGS) -c $< -o $@
+	$(CC) -D$(MDEF) -D$(GSS_DEF) -D$(TLSV_DEF) $(INCDIR) $(FLAGS) -c $< -o $@
 
 clean:
 	-rm -f $(LIBSTG) $(LIBJKS) $(EXESVR) $(EXEUTL) $(SQLUDF) $(OBJSVR) $(OBJJKS) $(OBJSTG) $(OBJUDF) *.elf *.gdb *.o *.a *.so
