@@ -122,6 +122,7 @@
 #include "storage.h"
 #include "util/base64.h"
 #include "stgengine.h"
+#include "sslapi.h"
 
 using namespace std;
 
@@ -810,16 +811,6 @@ int inline try_single_on(const char* pflag)
 	close(fd);
 	return 0;   
 }
-
-BOOL create_ssl(int sockfd, 
-    const char* ca_crt_root,
-    const char* ca_crt_server,
-    const char* ca_password,
-    const char* ca_key_server,
-    BOOL enableclientcacheck,
-    SSL** pp_ssl, SSL_CTX** pp_ssl_ctx);
-
-BOOL close_ssl(SSL* p_ssl, SSL_CTX* p_ssl_ctx);
 
 #endif /* _MAILSYS_H_ */
 

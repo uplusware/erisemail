@@ -4,7 +4,7 @@ if [ $# = 3 ]
 then
 	echo $1
 else
-	echo "release 1.6.08 utf8 centos7"
+	echo "release 1.6.08 utf8 ubuntu"
 	exit 1
 fi
 
@@ -139,6 +139,5 @@ cp script/README-EN.html $3-erisemail-bin-en-$2-${m}-${o}/README.html
 cp script/README-ZH.html $3-erisemail-bin-en-$2-${m}-${o}/README.html
 
 chmod a+x $3-erisemail-bin-en-$2-${m}-${o}/*
-#ls -al $3-erisemail-bin-en-$2-${m}-${o}
 tar zcf $3-erisemail-bin-en-$2-${m}-${o}-$1.tar.gz $3-erisemail-bin-en-$2-${m}-${o}
 cd ${oldpwd}

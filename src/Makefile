@@ -8,7 +8,7 @@ OBJJKS = antijunk.o
 SQLUDF = postudf.so
 
 EXESVR = erisemaild
-OBJSVR = mainsrv.o service.o session.o base.o smtp.o pop.o imap.o calendar.o\
+OBJSVR = mainsrv.o sslapi.o service.o session.o base.o smtp.o pop.o imap.o calendar.o\
 	letter.o smtpclient.o mime.o mta.o fstring.o http.o email.o webmail.o cache.o stgengine.o pool.o\
 	util/md5.o	\
 	util/DES.o	\
@@ -28,29 +28,30 @@ MDEF = _LINUX_OS_
 
 ifdef openssl_v_1_1
     TLSV_DEF = OPENSSL_V_1_1
-    INCDIR := $(INCDIR) -I/usr/local/include
-    LDDIRS := $(LDDIRS) -L. -L/usr/local/lib
+    OPENSSL_DIR=openssl-1.1.x
 else
     TLSV_DEF = OPENSSL_V_1_0
-    INCDIR := $(INCDIR)
-    LDDIRS := $(LDDIRS) -L.
+    OPENSSL_DIR=openssl-1.0.x
 endif
 
+INCDIR := $(INCDIR) -I../$(OPENSSL_DIR)/include
+LDDIRS := $(LDDIRS) -L.
+    
 ifdef GSSAPI
     GSS_DEF = _WITH_GSSAPI_
     INCDIR := $(INCDIR) -I/usr/local/include/mariadb/
     LDDIRS := $(LDDIRS) -L/usr/local/lib/mariadb/
-    LDLIST_SVR = -lstdc++ -lrt -ldl -lssl -lcrypto -lpthread -lmemcached -lgss
+    LDLIST_SVR = ../$(OPENSSL_DIR)/libssl.a ../$(OPENSSL_DIR)/libcrypto.a -lstdc++ -lrt -ldl -lpthread -lmemcached -lgss
 else
     GSS_DEF = _WITHOUT_GSSAPI_
     INCDIR := $(INCDIR) -I/usr/local/include/mariadb/
     LDDIRS := $(LDDIRS) -L/usr/local/lib/mariadb/
-    LDLIST_SVR = -lstdc++ -lrt -ldl -lssl -lcrypto -lpthread -lmemcached
+    LDLIST_SVR = ../$(OPENSSL_DIR)/libssl.a ../$(OPENSSL_DIR)/libcrypto.a -lstdc++ -lrt -ldl -lpthread -lmemcached
 endif
 
 LDLIST_STG = -lstdc++ -lrt -lmariadb -lmemcached
 LDLIST_JKS = -lstdc++
-LDLIST_UTL = -lstdc++ -lssl -lcrypto -lpthread
+LDLIST_UTL = -lstdc++ -lpthread -ldl
 LDLIST_UDF = -lstdc++ -lrt
 
 FLAGS = -O2 -fPIC -w
