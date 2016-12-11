@@ -28,6 +28,7 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 #include <openssl/rand.h>
+#include <openssl/opensslv.h>
 
 #define MAX_MEMORY_THRESHOLD (1024*1024*2)
 #define MEMORY_BLOCK_SIZE (1024*64)

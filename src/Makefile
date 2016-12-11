@@ -26,13 +26,7 @@ OBJUDF = postudf.o
 
 MDEF = _LINUX_OS_
 
-ifdef openssl_v_1_1
-    TLSV_DEF = OPENSSL_V_1_1
-    OPENSSL_DIR=openssl-1.1.x
-else
-    TLSV_DEF = OPENSSL_V_1_0
-    OPENSSL_DIR=openssl-1.0.x
-endif
+OPENSSL_DIR=openssl
 
 INCDIR := $(INCDIR) -I../$(OPENSSL_DIR)/include
 LDDIRS := $(LDDIRS) -L.
@@ -80,7 +74,7 @@ $(SQLUDF): $(OBJUDF)
 	$(CC) -shared -W -fPIC -o $@ $(OBJUDF) $(LDLIST_UDF)
 	
 %.o : %.cpp
-	$(CC) -D$(MDEF) -D$(GSS_DEF) -D$(TLSV_DEF) $(INCDIR) $(FLAGS) -c $< -o $@
+	$(CC) -D$(MDEF) -D$(GSS_DEF) $(INCDIR) $(FLAGS) -c $< -o $@
 
 clean:
 	-rm -f $(LIBSTG) $(LIBJKS) $(EXESVR) $(EXEUTL) $(SQLUDF) $(OBJSVR) $(OBJJKS) $(OBJSTG) $(OBJUDF) *.elf *.gdb *.o *.a *.so
