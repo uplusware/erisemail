@@ -20,11 +20,8 @@ BOOL create_ssl(int sockfd,
     X509* client_cert;
 	SSL_METHOD* meth;
 #if OPENSSL_VERSION_NUMBER >= 0x010100000L
-    OPENSSL_init_ssl(OPENSSL_INIT_LOAD_SSL_STRINGS, NULL);
     meth = (SSL_METHOD*)TLS_server_method();
 #else
-    SSL_load_error_strings();
-    OpenSSL_add_ssl_algorithms();
     meth = (SSL_METHOD*)SSLv23_server_method();
 #endif /* OPENSSL_VERSION_NUMBER */
 	*pp_ssl_ctx = SSL_CTX_new(meth);
@@ -160,13 +157,15 @@ clean_ssl3:
 
 BOOL close_ssl(SSL* p_ssl, SSL_CTX* p_ssl_ctx)
 {
+    if(p_ssl_ctx)
+    {
+		SSL_CTX_free(p_ssl_ctx);
+    }
+    
 	if(p_ssl)
     {
 		SSL_shutdown(p_ssl);
         SSL_free(p_ssl);
     }
-	if(p_ssl_ctx)
-    {
-		SSL_CTX_free(p_ssl_ctx);
-    }
+
 }

@@ -35,6 +35,7 @@
 #include "base.h"
 #include "fstring.h"
 #include "util/trace.h"
+#include "util/general.h"
 
 using namespace std;
 
@@ -170,6 +171,7 @@ int Run()
 			daemon_init();
 			Service mda_svr;
 			mda_svr.Run(pfd[1], server_params);
+            close(pfd[1]);
 			exit(0);
 			
 		}
@@ -215,6 +217,7 @@ int Run()
                 daemon_init();
                 MTA mta;
                 mta.Run(pfd[1]);
+                close(pfd[1]);
                 exit(0);
             }
             else if(mta_pids > 0)
@@ -255,6 +258,7 @@ int Run()
 			daemon_init();
 			Watcher watcher;
 			watcher.Run(pfd[1], server_params);
+            close(pfd[1]);
 			exit(0);
 		}
 		else if(watcher_pids > 0)
@@ -268,7 +272,6 @@ int Run()
             }
 			else
 			{
-				
 				printf("Start Service Watcher Failed \t\t\t[Error]\n");
 			}
 			close(pfd[0]);
@@ -398,9 +401,16 @@ int main(int argc, char* argv[])
 		sigemptyset(&signals);
 		sigaddset(&signals, SIGPIPE);
 		sigprocmask(SIG_BLOCK, &signals, NULL);
-
+        
 		if(argc == 2)
 		{
+#if OPENSSL_VERSION_NUMBER >= 0x010100000L
+            OPENSSL_init_ssl(OPENSSL_INIT_LOAD_SSL_STRINGS, NULL);
+#else
+            SSL_load_error_strings();
+            OpenSSL_add_ssl_algorithms();
+#endif /* OPENSSL_VERSION_NUMBER */
+
 			processcmd(argv[1], CONFIG_FILE_PATH, PERMIT_FILE_PATH, REJECT_FILE_PATH, DOMAIN_FILE_PATH, WEBADMIN_FILE_PATH);
 		}
 		else

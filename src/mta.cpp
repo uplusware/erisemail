@@ -722,8 +722,8 @@ int MTA::Run(int fd)
 		write(fd, &result, sizeof(unsigned int));
 		close(fd);
 		
-		int qBufLen = attr.mq_msgsize;
-		char* qBufPtr = (char*)malloc(qBufLen);
+		int q_buf_len = attr.mq_msgsize;
+		char* q_buf_ptr = (char*)malloc(q_buf_len);
 		struct timespec ts1, ts2;
 		stQueueMsg* pQMsg;
 		int rc;
@@ -734,10 +734,10 @@ int MTA::Run(int fd)
 		{
 			clock_gettime(CLOCK_REALTIME, &ts1);
 			ts1.tv_sec += 1;
-			rc = mq_timedreceive(m_mta_qid, qBufPtr, qBufLen, 0, &ts1);
+			rc = mq_timedreceive(m_mta_qid, q_buf_ptr, q_buf_len, 0, &ts1);
 			if( rc != -1)
 			{
-				pQMsg = (stQueueMsg*)qBufPtr;
+				pQMsg = (stQueueMsg*)q_buf_ptr;
 				if(pQMsg->cmd == MSG_EXIT)
 				{
 					s_relay_stop = TRUE;
@@ -811,7 +811,9 @@ int MTA::Run(int fd)
         
 			}
 		}
-
+        
+        free(q_buf_ptr);
+        
 		if(postmail_sid != SEM_FAILED)
   		{
             sem_close(postmail_sid);
@@ -834,6 +836,12 @@ int MTA::Run(int fd)
 		if(m_storageEngine)
 			delete m_storageEngine;
 		
+        if(m_memcached)
+            memcached_free(m_memcached);
+    
+        if(memcached_servers)
+            memcached_server_list_free(memcached_servers);
+    
 		if(m_mta_sid != SEM_FAILED)
 			sem_close(m_mta_sid);
 		

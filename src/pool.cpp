@@ -29,8 +29,6 @@ ThreadPool::ThreadPool(unsigned int size, void(*init_pthread_handler)(), void*(*
 			{
 				printf("Create thread failed: %d\n", i);
 			}
-
-			
 		}
 	}
 }

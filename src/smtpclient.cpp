@@ -44,19 +44,24 @@ SmtpClient::~SmtpClient()
 {
 	if(m_ssl)
 		SSL_shutdown(m_ssl);
+    
 	if(m_ssl)
 		SSL_free(m_ssl);
+    
 	if(m_ssl_ctx)
 		SSL_CTX_free(m_ssl_ctx);
 
-	m_ssl = NULL;
-	m_ssl_ctx = NULL;
-
 	if(m_lssl)
 		delete m_lssl;
-
+    
+    if(m_lsockfd)
+        delete m_lsockfd;
+    
 	if(m_sockfd)
 		close(m_sockfd);
+    
+  	m_ssl = NULL;
+	m_ssl_ctx = NULL;
 }
 
 BOOL SmtpClient::Do_Auth_Command(string& strmsg)
@@ -325,11 +330,8 @@ BOOL SmtpClient::Do_StartTLS_Command(string& strmsg)
 
 		SSL_METHOD* meth;
 #if OPENSSL_VERSION_NUMBER >= 0x010100000L
-        OPENSSL_init_ssl(OPENSSL_INIT_LOAD_SSL_STRINGS, NULL);
         meth = (SSL_METHOD*)TLS_client_method();
 #else
-        SSL_load_error_strings();
-        OpenSSL_add_ssl_algorithms();
         meth = (SSL_METHOD*)SSLv23_client_method();
 #endif /* OPENSSL_VERSION_NUMBER */
         
@@ -342,7 +344,6 @@ BOOL SmtpClient::Do_StartTLS_Command(string& strmsg)
 		m_ssl = SSL_new(m_ssl_ctx);
 		if(!m_ssl)
 		{
-			printf("m_ssl invaild\n");
 			if(m_ssl)
 				SSL_shutdown(m_ssl);
 			if(m_ssl)
@@ -358,7 +359,7 @@ BOOL SmtpClient::Do_StartTLS_Command(string& strmsg)
 		
 		if(SSL_connect(m_ssl) <= 0)
 		{
-			printf("SSL_connect: %s\n", ERR_error_string(ERR_get_error(),NULL));
+			fprintf(stderr, "SSL_connect: %s\n", ERR_error_string(ERR_get_error(),NULL));
 			if(m_ssl)
 				SSL_shutdown(m_ssl);
 			if(m_ssl)
