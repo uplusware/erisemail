@@ -158,6 +158,8 @@ typedef struct
 class MailStorage
 {
 public:
+    static void LibInit();
+    static void LibEnd();
 	MailStorage(const char* encoding, const char* private_path, memcached_st * memcached);
 	virtual ~MailStorage();
 
@@ -167,10 +169,6 @@ public:
 	int Ping();
 	
 	void KeepLive();
-	
-	void EntryThread();
-
-	void LeaveThread();
 	
 	int Install(const char* database);
 	int Uninstall(const char* database);
@@ -345,7 +343,9 @@ protected:
     map<string, string> m_userpwd_cache;
     pthread_rwlock_t m_userpwd_cache_lock;
     int m_userpwd_cache_update_time;
+    
     static BOOL m_userpwd_cache_updated;
+    static BOOL m_lib_inited;
 };
 
 class mysql_query_lock

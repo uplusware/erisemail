@@ -27,6 +27,26 @@ static void show_error(MYSQL *mysql)
 
 BOOL MailStorage::m_userpwd_cache_updated = TRUE;
 
+BOOL MailStorage::m_lib_inited = FALSE;
+
+void MailStorage::LibInit()
+{
+    if(!m_lib_inited)
+    {
+        mysql_library_init(0, NULL, NULL);
+        m_lib_inited = TRUE;
+    }
+}
+
+void MailStorage::LibEnd()
+{
+    if(m_lib_inited)
+    {
+        mysql_library_end();
+        m_lib_inited = FALSE;
+    }
+}
+    
 void MailStorage::SqlSafetyString(string& strInOut)
 {
 	char * szOut = new char[strInOut.length()* 2 + 1];
@@ -67,9 +87,10 @@ int MailStorage::Connect(const char * host, const char* username, const char* pa
      
     if(mysql_real_connect(&m_hMySQL, host, username, password, database, port, sock_file, 0) != NULL)
     {
+#ifdef __MYSQL_RECONNECT__        
         char arg_value = 1;
         mysql_options(&m_hMySQL, MYSQL_OPT_RECONNECT, &arg_value);
-                
+#endif /* __MYSQL_RECONNECT__ */                
         m_host = host;
         m_username = username;
         m_password = password;
@@ -119,17 +140,6 @@ void MailStorage::KeepLive()
 		Connect(m_host.c_str(), m_username.c_str(), m_password.c_str(), m_database.c_str(), m_port, m_sock_file.c_str());
 	}
 }
-
-void MailStorage::EntryThread()
-{
-	mysql_thread_init();
-}
-
-void MailStorage::LeaveThread()
-{
-	mysql_thread_end();
-}
-
 
 int MailStorage::Install(const char* database)
 {
@@ -4566,7 +4576,7 @@ int MailStorage::GetMTAIndex(const char* mta, unsigned int live_sec, unsigned in
     char sqlcmd[1024];
 
 	sprintf(sqlcmd, "SELECT mta FROM mtatbl WHERE TIMESTAMPDIFF(SECOND, active_time, CURRENT_TIMESTAMP) < %d ORDER BY mta", live_sec);
-	/* printf("%s\n", sqlcmd); */
+    
 	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) != 0)
 	{
         show_error(&m_hMySQL);

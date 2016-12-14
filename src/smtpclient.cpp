@@ -42,14 +42,7 @@ SmtpClient::SmtpClient(int sockfd)
 
 SmtpClient::~SmtpClient()
 {
-	if(m_ssl)
-		SSL_shutdown(m_ssl);
-    
-	if(m_ssl)
-		SSL_free(m_ssl);
-    
-	if(m_ssl_ctx)
-		SSL_CTX_free(m_ssl_ctx);
+    close_ssl(m_ssl, m_ssl_ctx);
 
 	if(m_lssl)
 		delete m_lssl;
@@ -327,49 +320,9 @@ BOOL SmtpClient::Do_StartTLS_Command(string& strmsg)
 		//Rollback to block mode
 		int flags = fcntl(m_sockfd, F_GETFL, 0); 
 		fcntl(m_sockfd, F_SETFL, flags & (~O_NONBLOCK));
-
-		SSL_METHOD* meth;
-#if OPENSSL_VERSION_NUMBER >= 0x010100000L
-        meth = (SSL_METHOD*)TLS_client_method();
-#else
-        meth = (SSL_METHOD*)SSLv23_client_method();
-#endif /* OPENSSL_VERSION_NUMBER */
         
-		m_ssl_ctx = SSL_CTX_new(meth);
-
-		if(!m_ssl_ctx)
-		{
-			return FALSE;
-		}
-		m_ssl = SSL_new(m_ssl_ctx);
-		if(!m_ssl)
-		{
-			if(m_ssl)
-				SSL_shutdown(m_ssl);
-			if(m_ssl)
-				SSL_free(m_ssl);
-			if(m_ssl_ctx)
-				SSL_CTX_free(m_ssl_ctx);
-			m_ssl = NULL;
-			m_ssl_ctx = NULL;
-			return FALSE;
-		}
-		
-		SSL_set_fd(m_ssl, m_sockfd);
-		
-		if(SSL_connect(m_ssl) <= 0)
-		{
-			fprintf(stderr, "SSL_connect: %s\n", ERR_error_string(ERR_get_error(),NULL));
-			if(m_ssl)
-				SSL_shutdown(m_ssl);
-			if(m_ssl)
-				SSL_free(m_ssl);
-			if(m_ssl_ctx)
-				SSL_CTX_free(m_ssl_ctx);
-			m_ssl = NULL;
-			m_ssl_ctx = NULL;
-			return FALSE;
-		}
+        if(connect_ssl(m_sockfd, NULL, NULL, NULL, NULL, &m_ssl, &m_ssl_ctx) == FALSE)
+            return FALSE;
 
 		flags = fcntl(m_sockfd, F_GETFL, 0); 
 		fcntl(m_sockfd, F_SETFL, flags | O_NONBLOCK); 

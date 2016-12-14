@@ -495,7 +495,6 @@ static void* begin_relay_handler(void* arg)
 					continue;
 				}
 				
-				mailStg->EntryThread();
 				string errormsg;
 				
 				if(RelayMail(mailStg, reply_info->_memcached, reply_info->mail_info.mid, reply_info->mail_info.uniqid, reply_info->mail_info.mailfrom.c_str(), 
@@ -509,7 +508,7 @@ static void* begin_relay_handler(void* arg)
 				}
 
 				mailStg->ShitDelMail(reply_info->mail_info.mid);
-				mailStg->LeaveThread();
+                
 				stgengine_instance.Release();		
 				delete reply_info;
 			}

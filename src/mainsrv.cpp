@@ -401,16 +401,16 @@ int main(int argc, char* argv[])
 		sigemptyset(&signals);
 		sigaddset(&signals, SIGPIPE);
 		sigprocmask(SIG_BLOCK, &signals, NULL);
-        
-		if(argc == 2)
-		{
+
 #if OPENSSL_VERSION_NUMBER >= 0x010100000L
-            OPENSSL_init_ssl(OPENSSL_INIT_LOAD_SSL_STRINGS, NULL);
+        OPENSSL_init_ssl(OPENSSL_INIT_LOAD_SSL_STRINGS, NULL);
 #else
-            SSL_load_error_strings();
-            OpenSSL_add_ssl_algorithms();
+        SSL_load_error_strings();
+        OpenSSL_add_ssl_algorithms();
 #endif /* OPENSSL_VERSION_NUMBER */
 
+		if(argc == 2)
+		{
 			processcmd(argv[1], CONFIG_FILE_PATH, PERMIT_FILE_PATH, REJECT_FILE_PATH, DOMAIN_FILE_PATH, WEBADMIN_FILE_PATH);
 		}
 		else
