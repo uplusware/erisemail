@@ -19,10 +19,22 @@ static void show_error(MYSQL *mysql)
 {
     static char MYSQLERR_LOGNAME[256] = "/var/log/erisemail/mysqlerr.log";
     static char MYSQLERR_LCKNAME[256] = "/.ERISEMAIL_MYSQLERR.LOG";
-
+#ifdef _DEBUG_MYSQL_API_    
+    
+    printf("MySQL error(%d) [%s] \"%s\"", mysql_errno(mysql), mysql_sqlstate(mysql), mysql_error(mysql));
+#else
     CUplusTrace uTrace(MYSQLERR_LOGNAME, MYSQLERR_LCKNAME);
     
-    uTrace.Write(Trace_Error, "MySQL error(%d) [%s] \"%s\"", mysql_errno(mysql), mysql_sqlstate(mysql), mysql_error(mysql));
+    uTrace.Write(Trace_Error, "MySQL error(%d) [%s] \"%s\"", mysql_errno(mysql), mysql_sqlstate(mysql), mysql_error(mysql));    
+#endif /* _DEBUG_MYSQL_API_ */
+}
+
+int inline _mysql_real_query_(MYSQL *mysql, const char *stmt_str, unsigned long length)
+{
+#ifdef _DEBUG_MYSQL_API_        
+    printf("%u: %s\n", length, stmt_str);
+#endif /* _DEBUG_MYSQL_API_ */    
+    return mysql_real_query(mysql, stmt_str, length);
 }
 
 BOOL MailStorage::m_userpwd_cache_updated = TRUE;
@@ -162,14 +174,14 @@ int MailStorage::Install(const char* database)
 		return -1;
 	}
     
-    if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) != 0)
+    if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) != 0)
 	{
 		show_error(&m_hMySQL);
 		return -1;
 	}
 
 	sprintf(sqlcmd, "USE %s", database);
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) != 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) != 0)
 	{
 		show_error(&m_hMySQL);
 		return -1;
@@ -191,9 +203,9 @@ int MailStorage::Install(const char* database)
 		"`lattachsizethreshold` INT UNSIGNED NOT NULL ,"
 		"`ldefault` INT NOT NULL ,"
 		"`ltime` INT UNSIGNED NOT NULL DEFAULT '0' ,"
-		"PRIMARY KEY ( `lid` ) ) ENGINE = MYISAM",
+		"PRIMARY KEY ( `lid` ) )",
 		database);
-	mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd));
+	_mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd));
 
 	//Create dir table
 	sprintf(sqlcmd, 
@@ -205,9 +217,9 @@ int MailStorage::Install(const char* database)
 		"`dparent` INT NOT NULL DEFAULT '-1' ,"
 		"`dstatus` INT UNSIGNED NULL DEFAULT '0' ,"
 		"`dtime` INT UNSIGNED NOT NULL DEFAULT '0' ,"
-		"PRIMARY KEY ( `did` ) ) ENGINE = MYISAM",
+		"PRIMARY KEY ( `did` ) )",
 		database);
-	mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd));
+	_mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd));
 		
 	//Crate User table
 	sprintf(sqlcmd,
@@ -222,9 +234,9 @@ int MailStorage::Install(const char* database)
 		"`ustatus` INT UNSIGNED NOT NULL DEFAULT '0' ,"
 		"`ulevel` INT NOT NULL DEFAULT '0' ,"
 		"`utime` INT UNSIGNED NOT NULL DEFAULT '0' ,"
-		"PRIMARY KEY ( `uid` ) ) ENGINE = MYISAM",
+		"PRIMARY KEY ( `uid` ) )",
 		database, MAX_EMAIL_LEN);
-	mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd));
+	_mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd));
 			
 	//Create group table
 	sprintf(sqlcmd,
@@ -233,9 +245,9 @@ int MailStorage::Install(const char* database)
 		"`groupname` VARCHAR( 64 ) NOT NULL ,"
 		"`membername` VARCHAR( 64 ) NOT NULL ,"
 		"`gtime` INT UNSIGNED NOT NULL DEFAULT '0' ,"
-		"PRIMARY KEY ( `gid` ) ) ENGINE = MYISAM ",
+		"PRIMARY KEY ( `gid` ) )",
 		database);
-	mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd));
+	_mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd));
 			
 	//Create mail table
 	sprintf(sqlcmd, 
@@ -250,9 +262,9 @@ int MailStorage::Install(const char* database)
 		"`mtx` INT UNSIGNED NOT NULL ,"
 		"`mstatus` INT UNSIGNED NOT NULL DEFAULT '0' ,"
 		"`mdirid` INT NOT NULL DEFAULT -1 ,"
-		"PRIMARY KEY ( `mid` ) ) ENGINE = MYISAM ", 
+		"PRIMARY KEY ( `mid` ) )", 
 		database);
-	mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd));
+	_mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd));
 	
     //Create mail body table
 	sprintf(sqlcmd, 
@@ -260,9 +272,9 @@ int MailStorage::Install(const char* database)
 		"`mid` INT UNSIGNED NOT NULL AUTO_INCREMENT ,"
 		"`mbody` VARCHAR( 256 ) NOT NULL ,"
 		"`mfragment` LONGTEXT NOT NULL ,"
-		"PRIMARY KEY ( `mid` ) ) ENGINE = MYISAM ",
+		"PRIMARY KEY ( `mid` ) )",
 		database);
-    mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd));
+    _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd));
     
     //Create MTA list table
 	sprintf(sqlcmd, 
@@ -270,27 +282,27 @@ int MailStorage::Install(const char* database)
 		"`mid` INT UNSIGNED NOT NULL AUTO_INCREMENT ,"
 		"`mta` VARCHAR( 256 ) NOT NULL ,"
 		"`active_time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,"
-		"PRIMARY KEY ( `mid` ) ) ENGINE = MYISAM ",
+		"PRIMARY KEY ( `mid` ) )",
 		database);
-    mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd));
+    _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd));
     
 	sprintf(sqlcmd, "DROP FUNCTION IF EXISTS post_notify");
-	mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd));
+	_mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd));
 	
 	sprintf(sqlcmd, "CREATE FUNCTION post_notify RETURNS STRING SONAME \"postudf.so\"");
-	mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd));
+	_mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd));
 	
 	sprintf(sqlcmd, "DROP TRIGGER IF EXISTS postmail_notify_insert");
-	mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd));
+	_mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd));
 	
 	sprintf(sqlcmd, "DROP TRIGGER IF EXISTS postmail_notify_update");
-	mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd));
+	_mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd));
 	
 	sprintf(sqlcmd, "CREATE TRIGGER postmail_notify_insert AFTER INSERT ON mailtbl FOR EACH ROW BEGIN SET @rs = post_notify(); END");
-	mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd));
+	_mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd));
 	
 	sprintf(sqlcmd, "CREATE TRIGGER postmail_notify_update AFTER UPDATE ON mailtbl FOR EACH ROW BEGIN SET @rs = post_notify(); END");
-	mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd));
+	_mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd));
 	
 	if(mysql_commit(&m_hMySQL) == 0)
 	{
@@ -329,7 +341,7 @@ int MailStorage::Uninstall(const char* database)
 {
 	char sqlcmd[1024];
 	sprintf(sqlcmd,"DROP DATABASE %s", database);
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		return 0;
 	}
@@ -340,7 +352,7 @@ int MailStorage::SetMailSize(unsigned int mid, unsigned int msize)
 {
 	char sqlcmd[1024];
 	sprintf(sqlcmd,"UPDATE mailtbl SET msize=%d WHERE mid=%d", msize, mid);
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) != 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) != 0)
 	{
 		show_error(&m_hMySQL);
 		return -1;
@@ -358,7 +370,7 @@ int MailStorage::CheckAdmin(const char* username, const char* password)
 	sprintf(sqlcmd, "SELECT uname FROM usertbl WHERE uname='%s' AND DECODE(upasswd,'%s') = '%s' AND ustatus = %d AND urole=%d AND utype = %d", strSafetyUsername.c_str(), CODE_KEY, password, usActive, urAdministrator, utMember);
 
 	
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		qResult = mysql_store_result(&m_hMySQL);
@@ -403,7 +415,7 @@ int MailStorage::CheckLogin(const char* username, const char* password)
         m_userpwd_cache.clear();
         sprintf(sqlcmd, "SELECT uname, DECODE(upasswd,'%s') FROM usertbl WHERE ustatus = %d AND utype = %d", CODE_KEY, usActive, utMember);
         
-        if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+        if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
         {
             MYSQL_RES *qResult;
             MYSQL_ROW row;
@@ -460,7 +472,7 @@ int MailStorage::GetPassword(const char* username, string& password)
 		
 	sprintf(sqlcmd, "SELECT DECODE(upasswd,'%s') FROM usertbl WHERE uname='%s' AND utype=%d", CODE_KEY, strSafetyUsername.c_str(), utMember);
 	
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		qResult = mysql_store_result(&m_hMySQL);
@@ -508,7 +520,7 @@ int MailStorage::VerifyUser(const char* username)
 	
 	sprintf(sqlcmd, "SELECT uname FROM usertbl WHERE uname='%s' AND utype=%d", strSafetyUsername.c_str(), utMember);
 	
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		qResult = mysql_store_result(&m_hMySQL);
@@ -541,7 +553,7 @@ int MailStorage::VerifyGroup(const char* groupname)
 	char sqlcmd[1024];
 	sprintf(sqlcmd, "SELECT uname FROM usertbl WHERE uname='%s' AND utype=%d", groupname, utGroup);
 	
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		qResult = mysql_store_result(&m_hMySQL);
@@ -594,7 +606,7 @@ int MailStorage::AddLevel(const char* lname, const char* ldescription, unsigned 
 	sprintf(sqlcmd, "INSERT INTO leveltbl(lname, ldescription, lmailmaxsize, lboxmaxsize, lenableaudit, lmailsizethreshold, lattachsizethreshold, ldefault, ltime) VALUES('%s', '%s', %llu, %llu, %d, %d, %d, %d, %d)",
 		strSafetyLevelname.c_str(), strSafetyDescription.c_str(), mailmaxsize, boxmaxsize, lenableaudit, mailsizethreshold, attachsizethreshold, ldFalse, time(NULL));
 
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		lid = mysql_insert_id(&m_hMySQL);
 		return 0;
@@ -624,7 +636,7 @@ int MailStorage::UpdateLevel(unsigned int lid, const char* lname, const char* ld
 	sprintf(sqlcmd, "UPDATE leveltbl SET lname='%s', ldescription='%s', lmailmaxsize=%llu, lboxmaxsize=%llu, lenableaudit=%d, lmailsizethreshold=%d, lattachsizethreshold=%d WHERE lid=%d",
 		strSafetyLevelname.c_str(), strSafetyDescription.c_str(), mailmaxsize, boxmaxsize, lenableaudit, mailsizethreshold, attachsizethreshold, lid);
 
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		return 0;
 	}
@@ -642,14 +654,14 @@ int MailStorage::DelLevel(unsigned int lid)
 	GetDefaultLevel(defaultLid);
 	
 	sprintf(sqlcmd, "UPDATE usertbl SET ulevel=%d WHERE ulevel=%d", defaultLid, lid);
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) != 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) != 0)
 	{	
 		show_error(&m_hMySQL);
 		return -1;
 	}
 	
 	sprintf(sqlcmd, "delete FROM leveltbl WHERE lid=%d AND ldefault <> %d", lid, ldTrue);
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) != 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) != 0)
 	{
 		show_error(&m_hMySQL);
 		return -1;
@@ -662,14 +674,14 @@ int MailStorage::SetDefaultLevel(unsigned int lid)
 	char sqlcmd[1024];
 
 	sprintf(sqlcmd, "UPDATE leveltbl SET ldefault = %d WHERE ldefault = %d", ldFalse, ldTrue);
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) != 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) != 0)
 	{
         show_error(&m_hMySQL);
 		return -1;
 	}
 	
 	sprintf(sqlcmd, "UPDATE leveltbl SET ldefault = %d WHERE lid = %d", ldTrue, lid);
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) != 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) != 0)
 	{
         show_error(&m_hMySQL);
 		return -1;
@@ -698,7 +710,7 @@ int MailStorage::SetUserLevel(const char* username, int lid)
 	
 	sprintf(sqlcmd, "UPDATE usertbl SET ulevel=%d WHERE uname='%s'", lid, strSafetyUsername.c_str());
 	
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		return 0;
 	}
@@ -715,7 +727,7 @@ int MailStorage::GetDefaultLevel(int& lid)
 
 	sprintf(sqlcmd, "SELECT lid FROM leveltbl WHERE ldefault = %d", ldTrue);
 	
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
@@ -758,7 +770,7 @@ int MailStorage::GetDefaultLevel(Level_Info& liinfo)
 
 	sprintf(sqlcmd, "SELECT lid, lname, ldescription, lmailmaxsize, lboxmaxsize, lenableaudit, lmailsizethreshold, lattachsizethreshold, ldefault, ltime  FROM leveltbl WHERE ldefault = %d", ldTrue);
 	
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
@@ -809,7 +821,7 @@ int MailStorage::ListLevel(vector<Level_Info>& litbl)
 
 	sprintf(sqlcmd, "SELECT lid, lname, ldescription, lmailmaxsize, lboxmaxsize, lenableaudit, lmailsizethreshold, lattachsizethreshold, ldefault, ltime FROM leveltbl ORDER BY ltime");
 	
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{		
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
@@ -864,7 +876,7 @@ int MailStorage::GetLevel(int lid, Level_Info& linfo)
 	}
 	
 	
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{		
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
@@ -977,29 +989,29 @@ int MailStorage::AddID(const char* username, const char* password, const char* a
 			sprintf(sqlcmd, "INSERT INTO usertbl(uname, upasswd, ualias, utype, urole, usize, ustatus, ulevel, utime) VALUES('%s', ENCODE('%s','%s'), '%s', %d, %d, %d, 0, %d, %d)",
 				strSafetyUsername.c_str(), strSafetyPassword.c_str(), CODE_KEY, strSafetyAlias.c_str(), type, role, size, defaultLevel, time(NULL));
 				
-			mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd));
+			_mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd));
 			
 			if(type == utMember)
 			{
 				sprintf(sqlcmd, "INSERT INTO dirtbl(dname, downer, dparent , dstatus, dusage, dtime) VALUES('Inbox','%s',-1, %d, %d, %d)",
 					strSafetyUsername.c_str(), DIR_ATTR_MARKED|DIR_ATTR_SUBSCRIBED, duInbox, time(NULL));
-				mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd));
+				_mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd));
 					
 				sprintf(sqlcmd, "INSERT INTO dirtbl(dname, downer, dparent , dstatus, dusage, dtime) VALUES('Sent','%s',-1, %d, %d, %d)",
 					strSafetyUsername.c_str(), DIR_ATTR_MARKED|DIR_ATTR_SUBSCRIBED, duSent, time(NULL));
-				mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd));
+				_mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd));
 
 				sprintf(sqlcmd, "INSERT INTO dirtbl(dname, downer, dparent , dstatus, dusage, dtime) VALUES('Drafts','%s',-1, %d, %d, %d)",
 					strSafetyUsername.c_str(), DIR_ATTR_MARKED|DIR_ATTR_SUBSCRIBED, duDrafts, time(NULL));
-				mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd));
+				_mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd));
 
 				sprintf(sqlcmd, "INSERT INTO dirtbl(dname, downer, dparent , dstatus, dusage, dtime) VALUES('Trash','%s',-1, %d, %d, %d)",
 					strSafetyUsername.c_str(), DIR_ATTR_MARKED|DIR_ATTR_SUBSCRIBED, duTrash, time(NULL));
-				mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd));
+				_mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd));
 
 				sprintf(sqlcmd, "INSERT INTO dirtbl(dname, downer, dparent , dstatus, dusage, dtime) VALUES('Junk','%s',-1, %d, %d, %d)",
 					strSafetyUsername.c_str(), DIR_ATTR_MARKED|DIR_ATTR_SUBSCRIBED, duJunk, time(NULL));
-				mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd));
+				_mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd));
 			}
 			if(mysql_commit(&m_hMySQL) == 0)
 			{
@@ -1054,7 +1066,7 @@ int MailStorage::UpdateID(const char* username, const char* alias, UserStatus st
 	sprintf(sqlcmd, "UPDATE usertbl SET ualias='%s', ustatus=%d, ulevel=%d WHERE uname='%s'",
 		strSafetyAlias.c_str(), status, realLevel, strSafetyUsername.c_str());
 
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		return 0;
 	}
@@ -1070,7 +1082,7 @@ int MailStorage::DelAllMailOfDir(int mdirid)
 	char sqlcmd[1024];
 	sprintf(sqlcmd, "UPDATE mailtbl SET mstatus=(mstatus|%d) WHERE mdirid=%d", MSG_ATTR_DELETED, mdirid);
 	
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;		
 		qResult = mysql_store_result(&m_hMySQL);
@@ -1101,7 +1113,7 @@ int MailStorage::DelAllMailOfID(const char* username)
 
 	sprintf(sqlcmd, "SELECT did FROM dirtbl WHERE downer='%s'", username);
 	
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
@@ -1144,7 +1156,7 @@ int MailStorage::DelID(const char* username)
 		if(VerifyGroup(strSafetyUsername.c_str()) == 0)
 		{
 			sprintf(sqlcmd, "delete FROM grouptbl WHERE groupname='%s'", strSafetyUsername.c_str());
-			if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) != 0)
+			if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) != 0)
 			{
 				show_error(&m_hMySQL);
 				return -1;
@@ -1153,14 +1165,14 @@ int MailStorage::DelID(const char* username)
 		else if(VerifyUser(strSafetyUsername.c_str()) == 0)
 		{
 			sprintf(sqlcmd, "delete FROM grouptbl WHERE membername='%s'", strSafetyUsername.c_str());
-			if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) != 0)
+			if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) != 0)
 			{
 				show_error(&m_hMySQL);
 				return -1;
 			}
 			
 			sprintf(sqlcmd, "delete FROM dirtbl WHERE downer='%s'", strSafetyUsername.c_str());
-			if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) != 0)
+			if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) != 0)
 			{
 				
 				show_error(&m_hMySQL);
@@ -1180,7 +1192,7 @@ int MailStorage::DelID(const char* username)
 		}
 		
 		sprintf(sqlcmd, "delete FROM usertbl WHERE uname='%s'", strSafetyUsername.c_str());
-		if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) != 0)
+		if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) != 0)
 		{
 			show_error(&m_hMySQL);
 			return -1;
@@ -1256,7 +1268,7 @@ int MailStorage::LoadMailFromFile(const char* mfrom, const char* mto, unsigned i
 	char sqlcmd[1024];
 	sprintf(sqlcmd, "LOAD DATA LOCAL INFILE '%s' INTO TABLE mailtbl FIELDS TERMINATED BY ',' ENCLOSED BY '\"' (mfrom,mto,mtime,mtx,muniqid,mdirid,mstatus,mbody)", sqlfilepath);
 	
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		mailid = mysql_insert_id(&m_hMySQL);
 		unlink(sqlfilepath);
@@ -1333,7 +1345,7 @@ int MailStorage::UpdateMailFromFile(const char* mfrom, const char* mto, unsigned
 	char sqlcmd[1024];
 	sprintf(sqlcmd, "LOAD DATA LOCAL INFILE '%s' REPLACE INTO TABLE mailtbl FIELDS TERMINATED BY ',' ENCLOSED BY '\"' (mid,mfrom,mto,mtime,mtx,muniqid,mdirid,mstatus,mbody)", sqlfilepath);
 	
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		unlink(sqlfilepath);
 		return 0;
@@ -1363,7 +1375,7 @@ int MailStorage::InsertMail(const char* mfrom, const char* mto, unsigned int mti
 	{
 		sprintf(sqlcmd, "INSERT INTO mailtbl(mfrom,mto,mtime,mtx,muniqid,mdirid,mstatus,mbody, msize) VALUES('%s','%s',%u,%u,'%s',%d,%u,'%s', %u)", 
 			strSafetyFrom.c_str(), strSafetyTo.c_str(), mtime, mtx, muniqid, mdirid, mstatus, strSafetyBody.c_str(), msize);
-		if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+		if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 		{
 			mailid = mysql_insert_id(&m_hMySQL);
 			free(sqlcmd);
@@ -1415,7 +1427,7 @@ int MailStorage::InsertMailIndex(const char* mfrom, const char* mto, unsigned in
 		sprintf(sqlcmd, "INSERT INTO mailtbl(mfrom,mto,mtime,mtx,muniqid,mdirid,mstatus,mbody,msize) VALUES('%s','%s',%u,%u,'%s',%d,%u,'%s', %u)", 
 			strSafetyFrom.c_str(), strSafetyTo.c_str(), mtime, mtx, muniqid, mdirid, mstatus, strSafetyBody.c_str(), msize);
 
-		if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+		if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 		{
 			mailid = mysql_insert_id(&m_hMySQL);
 			free(sqlcmd);
@@ -1449,7 +1461,7 @@ int MailStorage::UpdateMail(const char* mfrom, const char* mto, unsigned int mti
 		sprintf(sqlcmd, "UPDATE mailtbl SET mfrom='%s',mto='%s',mtime=%u,mtx=%u,muniqid='%s',mdirid=%d,mstatus=%u,mbody='%s',msize='%u' WHERE mid=%d", 
 			strSafetyFrom.c_str(), strSafetyTo.c_str(), mtime, mtx, muniqid, mdirid, mstatus, strSafetyBody.c_str(), msize, mailid);
 		
-		if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+		if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 		{
 			free(sqlcmd);
 			return 0;
@@ -1497,7 +1509,7 @@ int MailStorage::UpdateMailIndex(const char* mfrom, const char* mto, unsigned in
 		sprintf(sqlcmd, "UPDATE mailtbl SET mfrom='%s',mto='%s',mtime=%u,mtx=%u,muniqid='%s',mdirid=%d,mstatus=%u,mbody='%s', msize=%u WHERE mid=%d", 
 			strSafetyFrom.c_str(), strSafetyTo.c_str(), mtime, mtx, muniqid, mdirid, mstatus, strSafetyBody.c_str(), msize, mailid);
 		
-		if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+		if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 		{
 			free(sqlcmd);
 			return 0;
@@ -1522,7 +1534,7 @@ int MailStorage::ChangeMailDir(int mdirid, int mailid)
 
 		//printf("%s\n",sqlcmd );
 		
-		if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+		if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 		{
 			return 0;
 		}
@@ -1547,7 +1559,7 @@ int MailStorage::ListMailByDir(const char* username, vector<Mail_Info>& listtbl,
 	}
 	sprintf(sqlcmd, "SELECT mbody, muniqid,mid,mtime,mstatus,mfrom,mto,mtx,mdirid FROM mailtbl WHERE mdirid=%d AND mstatus&%d<>%d ORDER BY mid", did , MSG_ATTR_DELETED, MSG_ATTR_DELETED);
 	
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
@@ -1611,7 +1623,7 @@ int MailStorage::ListMailByDir(const char* username, vector<Mail_Info>& listtbl,
 	char sqlcmd[1024];
 	sprintf(sqlcmd, "SELECT mbody, muniqid,mid,mtime,mstatus,mfrom,mto,mtx,mdirid FROM mailtbl WHERE mdirid=%d AND mstatus&%d<>%d ORDER BY mtime desc", dirid , MSG_ATTR_DELETED, MSG_ATTR_DELETED);
 	
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
@@ -1674,7 +1686,7 @@ int MailStorage::LimitListMailByDir(const char* username, vector<Mail_Info>& lis
 	char sqlcmd[1024];
 	sprintf(sqlcmd, "SELECT mbody,muniqid,mid,mtime,mstatus,mfrom,mto,mtx,mdirid FROM mailtbl WHERE mdirid=%d AND mstatus&%d<>%d ORDER BY mtime desc limit %d, %d", dirid , MSG_ATTR_DELETED, MSG_ATTR_DELETED, beg, rows);
 	
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
@@ -1749,7 +1761,7 @@ int MailStorage::LimitListUnauditedMailByDir(const char* username, vector<Mail_I
 	char sqlcmd[1024];
 	sprintf(sqlcmd, "SELECT mbody,muniqid,mid,mtime,mstatus,mfrom,mto,mtx,mdirid FROM mailtbl WHERE mstatus&%d<>%d AND mstatus&%d=%d ORDER BY mtime limit %d, %d", MSG_ATTR_DELETED, MSG_ATTR_DELETED, MSG_ATTR_UNAUDITED, MSG_ATTR_UNAUDITED, beg, rows);
 	
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
@@ -1813,7 +1825,7 @@ int MailStorage::ListAllMail(vector<Mail_Info>& listtbl)
 	char sqlcmd[1024];
 	sprintf(sqlcmd, "SELECT mbody,muniqid,mid,mtime,mstatus,mfrom,mto,mtx,mdirid FROM mailtbl WHERE mstatus&%d<>%d ORDER BY mtime desc", MSG_ATTR_DELETED, MSG_ATTR_DELETED);
 	
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
@@ -1877,7 +1889,7 @@ int MailStorage::ListExternMail(vector<Mail_Info>& listtbl, unsigned int mta_ind
 	sprintf(sqlcmd, "SELECT mfrom, mto, muniqid, mid FROM mailtbl WHERE mtx='%d' AND mstatus&%d<>%d AND mstatus&%d<>%d AND mid%%%d=%d ORDER BY mid", mtExtern, MSG_ATTR_DELETED, MSG_ATTR_DELETED, MSG_ATTR_UNAUDITED, MSG_ATTR_UNAUDITED, mta_count, mta_index);
 	/* printf("%s\n",sqlcmd); */
     max_num = (max_num == 0 ? 0x7FFFFFFFFU : max_num);
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
@@ -1917,7 +1929,7 @@ int MailStorage::Prefoward(int mid)
 {
 	char sqlcmd[1024];
 	sprintf(sqlcmd, "UPDATE mailtbl SET mtx='%d' WHERE mtx='%d' AND mid=%d", mtFowarding, mtExtern, mid);
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		return 0;
 	}
@@ -1932,7 +1944,7 @@ int MailStorage::CancelFoward(int mid)
 {
 	char sqlcmd[1024];
 	sprintf(sqlcmd, "UPDATE mailtbl SET mtx='%d' WHERE mtx='%d' AND mid=%d", mtExtern, mtFowarding, mid);
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		return 0;
 	}
@@ -1949,7 +1961,7 @@ int MailStorage::ListMemberOfGroup(const char* group, vector<User_Info>& listtbl
 	char sqlcmd[1024];
 	sprintf(sqlcmd, "SELECT membername FROM grouptbl WHERE groupname='%s'", group);
 	
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
@@ -1995,7 +2007,7 @@ int MailStorage::ListID(vector<User_Info>& listtbl, string orderby, BOOL desc)
 	sprintf(sqlcmd, "SELECT uname, ualias, utype, urole, usize, ustatus, ulevel FROM usertbl ORDER BY %s %s", orderby == "" ? "utime" : orderby.c_str(), desc ? "desc" : "");
 
 	
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
@@ -2041,7 +2053,7 @@ int MailStorage::GetID(const char* uname, User_Info& uinfo)
 		sprintf(sqlcmd, "SELECT uname, ualias, utype, urole, usize, ustatus, ulevel FROM usertbl WHERE uname='%s'", strSafetyUsername.c_str());
 	}
 	
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
@@ -2087,7 +2099,7 @@ int MailStorage::ListGroup(vector<User_Info>& listtbl)
 	char sqlcmd[1024];
 	sprintf(sqlcmd, "SELECT uname, ualias, utype, urole, usize, ustatus FROM usertbl WHERE utype=%d GROUP BY uname ORDER BY utime", utGroup);
 	
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
@@ -2126,7 +2138,7 @@ int MailStorage::ListMember(vector<User_Info>& listtbl)
 	char sqlcmd[1024];
 	sprintf(sqlcmd, "SELECT uname, ualias, utype, urole, usize, ustatus FROM usertbl WHERE utype=%d GROUP BY uname ORDER BY utime", utMember);
 	
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
@@ -2172,7 +2184,7 @@ int MailStorage::Passwd(const char* uname, const char* password)
 		SqlSafetyString(strSafetyPassword);
 		
 		sprintf(sqlcmd, "UPDATE usertbl SET upasswd=ENCODE('%s','%s') WHERE uname='%s'", strSafetyPassword.c_str(), CODE_KEY, strSafetyUsername.c_str());
-		if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+		if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 		{
 			m_userpwd_cache_update_time = 0;
 			m_userpwd_cache_updated = TRUE;
@@ -2200,7 +2212,7 @@ int MailStorage::Alias(const char* uname, const char* alias)
 		SqlSafetyString(strSafetyAlias);
 		
 		sprintf(sqlcmd, "UPDATE usertbl SET ualias='%s' WHERE uname='%s'", strSafetyAlias.c_str(), strSafetyUsername.c_str());
-		if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+		if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 		{
 			return 0;
 		}
@@ -2224,7 +2236,7 @@ int MailStorage::SetUserStatus(const char* uname, UserStatus status)
 		SqlSafetyString(strSafetyUsername);
 
 		sprintf(sqlcmd, "UPDATE usertbl SET ustatus=%d WHERE uname='%s'", status, strSafetyUsername.c_str());
-		if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+		if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 		{
 			return 0;
 		}
@@ -2247,7 +2259,7 @@ int MailStorage::SetUserSize(const char* uname, unsigned int size)
 		SqlSafetyString(strSafetyUsername);
 		
 		sprintf(sqlcmd, "UPDATE usertbl SET usize=%d WHERE uname='%s'", size, strSafetyUsername.c_str());
-		if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+		if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 		{
 			return 0;
 		}
@@ -2285,7 +2297,7 @@ int MailStorage::DumpMailToFile(int mid, string& dumpfile)
 	sprintf(sqlcmd, "/tmp/erisemail/%08x_%08x_%08x_%016lx_%08x.dat",  time(NULL), getpid(), pthread_self(), random(), mid);
 	dumpfile = sqlcmd;
 	sprintf(sqlcmd, "SELECT mbody into DUMPFILE '%s' FROM mailtbl WHERE mid='%d' AND mstatus&%d<>%d", dumpfile.c_str(), mid, MSG_ATTR_DELETED, MSG_ATTR_DELETED);
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		return 0;
 	}
@@ -2301,7 +2313,7 @@ int MailStorage::GetMailBody(int mid, char* body)
 	char sqlcmd[1024];
 	sprintf(sqlcmd, "SELECT mbody FROM mailtbl WHERE mid='%d' AND mstatus&%d<>%d", mid, MSG_ATTR_DELETED, MSG_ATTR_DELETED);
 	
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
@@ -2338,7 +2350,7 @@ int MailStorage::GetMailIndex(int mid, string& path)
 	char sqlcmd[1024];
 	sprintf(sqlcmd, "SELECT mbody FROM mailtbl WHERE mid='%d' AND mstatus&%d<>%d;", mid, MSG_ATTR_DELETED, MSG_ATTR_DELETED);
 	
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{	
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
@@ -2375,7 +2387,7 @@ int MailStorage::GetMailDir(int mid, int & dirid)
 	char sqlcmd[1024];
 	sprintf(sqlcmd, "SELECT mdirid FROM mailtbl WHERE mid='%d'", mid);
 	
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
@@ -2418,7 +2430,7 @@ int MailStorage::GetMailOwner(int mid, string & owner)
 		MYSQL_ROW row;
 		sprintf(sqlcmd, "SELECT downer FROM dirtbl WHERE did='%d'", dirid);
 		
-		if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+		if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 		{					
 			qResult = mysql_store_result(&m_hMySQL);
 			
@@ -2458,7 +2470,7 @@ int MailStorage::GetMailFromAndTo(int mid, string & from, string &to)
 	MYSQL_ROW row;
 	sprintf(sqlcmd, "SELECT mfrom, mto FROM mailtbl WHERE mid='%d'", mid);
 	
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{					
 		qResult = mysql_store_result(&m_hMySQL);
 		
@@ -2496,7 +2508,7 @@ int MailStorage::IsAdmin(const char* username)
 	MYSQL_ROW row;
 	sprintf(sqlcmd, "SELECT uname FROM usertbl WHERE uname='%s' AND urole=%d", username, urAdministrator);
 	
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{					
 		qResult = mysql_store_result(&m_hMySQL);
 		
@@ -2532,7 +2544,7 @@ int MailStorage::GetDirOwner(int dirid, string & owner)
 	sprintf(sqlcmd, "SELECT downer FROM dirtbl WHERE did='%d'", dirid);
 
     
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{					
 		qResult = mysql_store_result(&m_hMySQL);
 		
@@ -2586,7 +2598,7 @@ int MailStorage::ShitDelMail(int mid)
 {
 	char sqlcmd[1024];
 	sprintf(sqlcmd, "delete FROM mailtbl WHERE mid='%d'", mid);
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		char mailpath[512];
 		GetMailBody(mid, mailpath);
@@ -2619,7 +2631,7 @@ int MailStorage::DelMail(const char* username, int mid)
 	if(IsAdmin(username) == 0 || (GetMailOwner(mid, owner) == 0 && strcasecmp(owner.c_str(), username) == 0))
 	{
 		sprintf(sqlcmd, "UPDATE mailtbl SET mstatus=(mstatus|%d) WHERE mid='%d'", MSG_ATTR_DELETED, mid); //sprintf(sqlcmd, "delete FROM mailtbl WHERE mid='%d'", mid);
-		if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+		if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 		{
 			return 0;
 		}
@@ -2649,7 +2661,7 @@ int MailStorage::AppendUserToGroup(const char* username, const char* groupname)
 		
 		sprintf(sqlcmd, "SELECT gid FROM grouptbl WHERE groupname='%s' AND membername='%s'", strSafetyGroupname.c_str(), strSafetyUsername.c_str());
 		
-		if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+		if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 		{
 			MYSQL_RES *qResult;
 			qResult = mysql_store_result(&m_hMySQL);
@@ -2672,7 +2684,7 @@ int MailStorage::AppendUserToGroup(const char* username, const char* groupname)
 		
 		sprintf(sqlcmd, "INSERT INTO grouptbl(groupname, membername, gtime) VALUES('%s', '%s', %d)",
 		strSafetyGroupname.c_str(), strSafetyUsername.c_str(), time(NULL));
-		if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+		if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 		{
 			return 0;
 		}
@@ -2696,7 +2708,7 @@ int MailStorage::RemoveUserFromGroup(const char* username, const char* groupname
 	SqlSafetyString(strSafetyGroupname);
 		
 	sprintf(sqlcmd, "delete FROM grouptbl WHERE groupname='%s'and membername='%s'", strSafetyGroupname.c_str(), strSafetyUsername.c_str());
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		return 0;
 	}
@@ -2734,7 +2746,7 @@ int MailStorage::CreateDir(const char* username, const char* dirref)
 		SqlSafetyString(strSafetyUsername);
 		sprintf(sqlcmd, "INSERT INTO dirtbl(dname,downer,dparent,dstatus,dtime) VALUES('%s','%s',%d,%d,%d)",
 			strNewDir.c_str(), strSafetyUsername.c_str(), parentID, DIR_ATTR_SUBSCRIBED|DIR_ATTR_MARKED|DIR_ATTR_NOSELECT, time(NULL));
-		if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+		if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 		{
 			return 0;
 		}
@@ -2773,7 +2785,7 @@ int MailStorage::CreateDir(const char* username, const char* dirname, int parent
 	
 	sprintf(sqlcmd, "INSERT INTO dirtbl(dname,downer,dparent,dstatus,dtime) VALUES('%s','%s',%d,%d,%d)",
 		strNewDir.c_str(), strSafetyUsername.c_str(), parentid, DIR_ATTR_SUBSCRIBED|DIR_ATTR_MARKED|DIR_ATTR_NOSELECT, time(NULL));
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		return 0;
 	}
@@ -2790,20 +2802,20 @@ int MailStorage::DeleteDir(const char* username, int dirid)
 	//delete mail of ownself
 	sprintf(sqlcmd, "delete FROM mailtbl WHERE mdirid=%d", dirid);
 	//printf("%s\n",sqlcmd);
-	if(mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) != 0)
+	if(_mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) != 0)
 		return -1;
 
 	//delete self
 	sprintf(sqlcmd, "delete FROM dirtbl WHERE did=%d", dirid);
 	//printf("%s\n",sqlcmd);
-	if(mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) != 0)
+	if(_mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) != 0)
 		return -1;
 
 	//delete subdir of ownself
 	sprintf(sqlcmd, "SELECT did FROM dirtbl WHERE dparent=%d", dirid);
 	//printf("%s\n",sqlcmd);
 	
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
@@ -2891,7 +2903,7 @@ int MailStorage::GetDirParentID(const char* username, int dirid, int& parentid)
 	
 	sprintf(sqlcmd, "SELECT dparent FROM dirtbl WHERE did='%d'", dirid);
 	
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{					
 		qResult = mysql_store_result(&m_hMySQL);
 		
@@ -2949,7 +2961,7 @@ int MailStorage::IsDirExist(const char* username, const char* dirref)
 		//		strSafetyUsername.c_str(), strSafetyDirname.c_str(), parentid);
 		
 		
-		if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+		if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 		{
 			MYSQL_RES *qResult;
 			MYSQL_ROW row;
@@ -2989,7 +3001,7 @@ int MailStorage::IsDirExist(const char* username, int dirid)
 	sprintf(sqlcmd, "SELECT did FROM dirtbl WHERE downer='%s' AND did=%d", 
 		strSafetyUsername.c_str(), dirid);
 	
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
@@ -3035,7 +3047,7 @@ int MailStorage::IsSubDirExist(const char* username, int parentid, const char* d
 	//	sprintf(sqlcmd, "SELECT did FROM dirtbl WHERE downer='%s' AND dname like '%s' AND dparent=%d", 
 	//		strSafetyUsername.c_str(), strSafetyDirname.c_str(), parentid);
 	
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
@@ -3104,7 +3116,7 @@ int MailStorage::GetDirID(const char* username, const char* dirref, vector<int>&
 			    sprintf(sqlcmd, "SELECT did FROM dirtbl WHERE downer='%s' AND dname like '%s' AND dparent=%d", 
 				    strSafetyUsername.c_str(), strSafetyDirname.c_str(), vparentid[i]);
 		    
-		    if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+		    if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 		    {
 			    MYSQL_RES *qResult;
 			    MYSQL_ROW row;
@@ -3167,7 +3179,7 @@ int MailStorage::GetDirID(const char* username, const char* dirref, int& dirid)
 		//	sprintf(sqlcmd, "SELECT did FROM dirtbl WHERE downer='%s' AND dname like '%s' AND dparent=%d", 
 		//		strSafetyUsername.c_str(), strSafetyDirname.c_str(), parentid);
 		
-		if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+		if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 		{
 			MYSQL_RES *qResult;
 			MYSQL_ROW row;
@@ -3216,7 +3228,7 @@ int MailStorage::GetInboxID(const char* username, int &dirid)
 			strSafetyUsername.c_str(), duInbox);
 	//printf("%s\n",sqlcmd );
 	
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
@@ -3230,11 +3242,11 @@ int MailStorage::GetInboxID(const char* username, int &dirid)
 				mysql_free_result(qResult);
 				sprintf(sqlcmd, "INSERT INTO dirtbl(dname, downer, dparent , dstatus, dusage, dtime) VALUES('Inbox','%s',-1, %d, %d, %d)",
 						strSafetyUsername.c_str(), DIR_ATTR_MARKED|DIR_ATTR_SUBSCRIBED, duInbox, time(NULL));
-				if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) != 0)
+				if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) != 0)
 				{
 					sprintf(sqlcmd, "UPDATE dirtbl SET dusage=%d WHERE downer='%s' AND dname='%s' AND dparent='-1'",
 						duInbox, strSafetyUsername.c_str(), "Inbox");
-					if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) != 0)
+					if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) != 0)
 					{
 						return -1;
 					}
@@ -3268,7 +3280,7 @@ int MailStorage::GetJunkID(const char* username, int &dirid)
 	sprintf(sqlcmd, "SELECT did FROM dirtbl WHERE downer='%s' AND dusage=%d",
 			strSafetyUsername.c_str(), duJunk);
 	
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
@@ -3283,11 +3295,11 @@ int MailStorage::GetJunkID(const char* username, int &dirid)
 
 				sprintf(sqlcmd, "INSERT INTO dirtbl(dname, downer, dparent , dstatus, dusage, dtime) VALUES('Junk','%s',-1, %d, %d, %d)",
 						strSafetyUsername.c_str(), DIR_ATTR_MARKED|DIR_ATTR_SUBSCRIBED, duJunk, time(NULL));
-				if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) != 0)
+				if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) != 0)
 				{
 					sprintf(sqlcmd, "UPDATE dirtbl SET dusage=%d WHERE downer='%s' AND dname='%s' AND dparent='-1'",
 						duJunk, strSafetyUsername.c_str(), "Junk");
-					if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) != 0)
+					if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) != 0)
 					{
 						return -1;
 					}
@@ -3322,7 +3334,7 @@ int MailStorage::GetDraftsID(const char* username, int &dirid)
 			strSafetyUsername.c_str(), duDrafts);
 	//printf("%s\n",sqlcmd );
 	
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
@@ -3336,11 +3348,11 @@ int MailStorage::GetDraftsID(const char* username, int &dirid)
 				mysql_free_result(qResult);
 				sprintf(sqlcmd, "INSERT INTO dirtbl(dname, downer, dparent , dstatus, dusage, dtime) VALUES('Drafts','%s',-1, %d, %d, %d)",
 						strSafetyUsername.c_str(), DIR_ATTR_MARKED|DIR_ATTR_SUBSCRIBED, duDrafts, time(NULL));
-				if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) != 0)
+				if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) != 0)
 				{
 					sprintf(sqlcmd, "UPDATE dirtbl SET dusage=%d WHERE downer='%s' AND dname='%s' AND dparent='-1'",
 						duDrafts, strSafetyUsername.c_str(), "Drafts");
-					if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) != 0)
+					if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) != 0)
 					{
 						return -1;
 					}
@@ -3375,7 +3387,7 @@ int MailStorage::GetSentID(const char* username, int &dirid)
 			strSafetyUsername.c_str(), duSent);
 	//printf("%s\n",sqlcmd );
 	
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
@@ -3390,11 +3402,11 @@ int MailStorage::GetSentID(const char* username, int &dirid)
 				
 				sprintf(sqlcmd, "INSERT INTO dirtbl(dname, downer, dparent , dstatus, dusage, dtime) VALUES('Sent','%s',-1, %d, %d, %d)",
 						strSafetyUsername.c_str(), DIR_ATTR_MARKED|DIR_ATTR_SUBSCRIBED, duSent, time(NULL));
-				if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) != 0)
+				if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) != 0)
 				{
 					sprintf(sqlcmd, "UPDATE dirtbl SET dusage=%d WHERE downer='%s' AND dname='%s' AND dparent='-1'",
 						duSent, strSafetyUsername.c_str(), "Sent");
-					if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) != 0)
+					if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) != 0)
 					{
 						return -1;
 					}
@@ -3430,7 +3442,7 @@ int MailStorage::GetTrashID(const char* username, int &dirid)
 	sprintf(sqlcmd, "SELECT did FROM dirtbl WHERE downer='%s' AND dusage=%d",
 			strSafetyUsername.c_str(), duTrash);
 	
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
@@ -3444,11 +3456,11 @@ int MailStorage::GetTrashID(const char* username, int &dirid)
 				mysql_free_result(qResult);
 				sprintf(sqlcmd, "INSERT INTO dirtbl(dname, downer, dparent , dstatus, dusage, dtime) VALUES('Trash','%s',-1, %d, %d, %d)",
 						strSafetyUsername.c_str(), DIR_ATTR_MARKED|DIR_ATTR_SUBSCRIBED, duTrash, time(NULL));
-				if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) != 0)
+				if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) != 0)
 				{
 					sprintf(sqlcmd, "UPDATE dirtbl SET dusage=%d WHERE downer='%s' AND dname='%s' AND dparent='-1'",
 						duTrash, strSafetyUsername.c_str(), "Trash");
-					if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) != 0)
+					if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) != 0)
 					{
 						return -1;
 					}
@@ -3479,7 +3491,7 @@ int MailStorage::GetDirMailCount(const char* username, int dirid, unsigned int& 
 	char sqlcmd[1024];
 	sprintf(sqlcmd, "SELECT mdirid FROM mailtbl WHERE mdirid =%d AND mstatus&%d<>%d", dirid, MSG_ATTR_DELETED, MSG_ATTR_DELETED);
 	
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
@@ -3506,7 +3518,7 @@ int MailStorage::GetUnauditedMailCount(const char* username, unsigned int& count
 	char sqlcmd[1024];
 	sprintf(sqlcmd, "SELECT mdirid FROM mailtbl WHERE mstatus&%d<>%d AND mstatus&%d=%d", MSG_ATTR_DELETED, MSG_ATTR_DELETED, MSG_ATTR_UNAUDITED, MSG_ATTR_UNAUDITED);
 	
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
@@ -3536,7 +3548,7 @@ int MailStorage::GetDirStatus(const char* username, const char* dirref, unsigned
 	char sqlcmd[1024];
 	sprintf(sqlcmd, "SELECT dstatus FROM dirtbl WHERE did=%d", dirID);
 	
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
@@ -3574,7 +3586,7 @@ int MailStorage::SetDirStatus(const char* username, const char* dirref,unsigned 
 		return -1;
 	char sqlcmd[1024];
 	sprintf(sqlcmd, "UPDATE dirtbl SET dstatus=%d WHERE did=%d", status, dirID);
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		return 0;
 	}
@@ -3587,7 +3599,7 @@ int MailStorage::GetMailStatus(int mid, unsigned int& status)
 	char sqlcmd[1024];
 	sprintf(sqlcmd, "SELECT mstatus FROM mailtbl WHERE mid=%d", mid);
 	
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
@@ -3623,7 +3635,7 @@ int MailStorage::GetMailUID(int mid, string uid)
 	char sqlcmd[1024];
 	sprintf(sqlcmd, "SELECT muniqid FROM mailtbl WHERE mid=%d", mid);
 	
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
@@ -3661,7 +3673,7 @@ int MailStorage::SetMailStatus(const char* username, int mid, unsigned int statu
 	if(IsAdmin(username) == 0 || (GetMailOwner(mid, owner) == 0 && strcasecmp(owner.c_str(), username) == 0))
 	{
 		sprintf(sqlcmd, "UPDATE mailtbl SET mstatus=%d WHERE mid=%d", status, mid);
-		if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+		if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 		{
 			return 0;
 		}
@@ -3703,7 +3715,7 @@ int MailStorage::RenameDir(const char* username, const char* oldname, const char
 
 	sprintf(sqlcmd, "UPDATE dirtbl SET dname='%s',dparent=%d WHERE did=%d", strNewDir.c_str(), newParentID, dirID);
 
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		return 0;
 	}
@@ -3738,7 +3750,7 @@ int MailStorage::TraversalListDir(const char* username, const char* dirref, vect
 		strSafetyUsername.c_str(), dirParentID[x], dirname.c_str());
 		string nextdir = "";
 		
-		if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+		if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 		{
 			MYSQL_RES *qResult;
 			MYSQL_ROW row;
@@ -3793,7 +3805,7 @@ int MailStorage::ListSubDir(const char* username, int pid, vector<Dir_Info>& lis
 	
 	sprintf(sqlcmd, "SELECT dname, dstatus, did FROM dirtbl WHERE downer='%s' AND dparent=%d ORDER BY did", strSafetyUsername.c_str(), pid);
 	
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
@@ -3813,7 +3825,7 @@ int MailStorage::ListSubDir(const char* username, int pid, vector<Dir_Info>& lis
 				
 				sprintf(sqlcmd, "SELECT count(*) FROM dirtbl WHERE dparent=%d", di.did);
 				
-				if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+				if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 				{
 					MYSQL_RES *qResult2;
 					MYSQL_ROW row2;
@@ -3877,7 +3889,7 @@ int MailStorage::GetUnseenMail(int dirid, int& num)
 	
 	sprintf(sqlcmd, "SELECT COUNT(*) FROM mailtbl WHERE mdirid='%d' AND mstatus&%d<>%d AND mstatus&%d<>%d", dirid, MSG_ATTR_DELETED, MSG_ATTR_DELETED, MSG_ATTR_SEEN, MSG_ATTR_SEEN);
 	
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{					
 		qResult = mysql_store_result(&m_hMySQL);
 		
@@ -3892,7 +3904,7 @@ int MailStorage::GetUnseenMail(int dirid, int& num)
 
 				sprintf(sqlcmd, "SELECT did FROM dirtbl WHERE dparent=%d", dirid);
 				
-				if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+				if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 				{					
 					qResult = mysql_store_result(&m_hMySQL);
 					
@@ -3947,7 +3959,7 @@ int MailStorage::EmptyDir(const char* username, int dirid)
 	
 	sprintf(sqlcmd, "UPDATE mailtbl SET mstatus=(mstatus|%d) WHERE mdirid='%d' AND mstatus&%d<>%d", MSG_ATTR_DELETED, dirid, MSG_ATTR_DELETED, MSG_ATTR_DELETED);
     
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{					
 		qResult = mysql_store_result(&m_hMySQL);
 		
@@ -3957,7 +3969,7 @@ int MailStorage::EmptyDir(const char* username, int dirid)
 
 			sprintf(sqlcmd, "SELECT did FROM dirtbl WHERE dparent=%d", dirid);
 			
-			if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+			if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 			{					
 				qResult = mysql_store_result(&m_hMySQL);
 				
@@ -4005,7 +4017,7 @@ int MailStorage::GetDirName(const char * username, int dirid, string& dirname)
 	
 	sprintf(sqlcmd, "SELECT dname FROM dirtbl WHERE did='%d'", dirid);
 	
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{					
 		qResult = mysql_store_result(&m_hMySQL);
 		
@@ -4076,7 +4088,7 @@ int MailStorage::GetGlobalStorage(unsigned int& commonMailNumber, unsigned int& 
 	
 	sprintf(sqlcmd, "SELECT count(*) FROM mailtbl WHERE mstatus&%d<>%d", MSG_ATTR_DELETED, MSG_ATTR_DELETED);
 
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
@@ -4108,7 +4120,7 @@ int MailStorage::GetGlobalStorage(unsigned int& commonMailNumber, unsigned int& 
 	
 	sprintf(sqlcmd, "SELECT count(*) FROM mailtbl WHERE mstatus&%d=%d", MSG_ATTR_DELETED, MSG_ATTR_DELETED);
 	
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
@@ -4140,7 +4152,7 @@ int MailStorage::GetGlobalStorage(unsigned int& commonMailNumber, unsigned int& 
 
 	sprintf(sqlcmd, "SELECT SUM(msize) FROM mailtbl WHERE mstatus&%d<>%d", MSG_ATTR_DELETED, MSG_ATTR_DELETED);
 	
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
@@ -4172,7 +4184,7 @@ int MailStorage::GetGlobalStorage(unsigned int& commonMailNumber, unsigned int& 
 
 	sprintf(sqlcmd, "SELECT SUM(msize) FROM mailtbl WHERE mstatus&%d=%d", MSG_ATTR_DELETED, MSG_ATTR_DELETED);
 	
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
@@ -4211,7 +4223,7 @@ int MailStorage::GetAllDirOfID(const char* username, vector<int>& didtbl)
 
 	sprintf(sqlcmd, "SELECT did FROM dirtbl WHERE downer='%s'", username);
 	
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
@@ -4256,7 +4268,7 @@ int MailStorage::GetUserStorage(const char* username, unsigned int& commonMailNu
 	{
 		sprintf(sqlcmd, "SELECT count(*) FROM mailtbl WHERE mstatus&%d<>%d AND mdirid=%d", MSG_ATTR_DELETED, MSG_ATTR_DELETED, didtbl[x]);
 		
-		if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+		if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 		{
 			MYSQL_RES *qResult;
 			MYSQL_ROW row;
@@ -4288,7 +4300,7 @@ int MailStorage::GetUserStorage(const char* username, unsigned int& commonMailNu
 		
 		sprintf(sqlcmd, "SELECT count(*) FROM mailtbl WHERE mstatus&%d=%d AND mdirid=%d", MSG_ATTR_DELETED, MSG_ATTR_DELETED, didtbl[x]);
 		
-		if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+		if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 		{
 			MYSQL_RES *qResult;
 			MYSQL_ROW row;
@@ -4320,7 +4332,7 @@ int MailStorage::GetUserStorage(const char* username, unsigned int& commonMailNu
 
 		sprintf(sqlcmd, "SELECT SUM(msize) FROM mailtbl WHERE mstatus&%d<>%d AND mdirid=%d", MSG_ATTR_DELETED, MSG_ATTR_DELETED, didtbl[x]);
 		
-		if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+		if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 		{
 			MYSQL_RES *qResult;
 			MYSQL_ROW row;
@@ -4352,7 +4364,7 @@ int MailStorage::GetUserStorage(const char* username, unsigned int& commonMailNu
 
 		sprintf(sqlcmd, "SELECT SUM(msize) FROM mailtbl WHERE mstatus&%d=%d AND mdirid=%d", MSG_ATTR_DELETED, MSG_ATTR_DELETED, didtbl[x]);
 		
-		if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+		if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 		{
 			MYSQL_RES *qResult;
 			MYSQL_ROW row;
@@ -4392,7 +4404,7 @@ int MailStorage::MTALock()
 
 	sprintf(sqlcmd, "LOCK TABLES mailtbl write");
 	
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		return 0;
 	}
@@ -4409,7 +4421,7 @@ int MailStorage::MTAUnlock()
 
 	sprintf(sqlcmd, "UNLOCK TABLES");
 	
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		return 0;
 	}
@@ -4434,7 +4446,7 @@ int MailStorage::SaveMailBodyToDB(const char* emlfile, const char* fragment)
 		sprintf(sqlcmd, "INSERT INTO mbodytbl(mbody, mfragment) VALUES('%s','%s')", 
 			strSafetyEmlfile.c_str(), strSafetyFragment.c_str());
 
-		if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+		if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 		{
 			free(sqlcmd);
 			return 0;
@@ -4459,7 +4471,7 @@ int MailStorage::LoadMailBodyToFile(const char* emlfile, const char* fullpath)
     
 	sprintf(sqlcmd, "SELECT mfragment FROM mbodytbl WHERE mbody='%s' ORDER BY mid", strSafetyEmlfile.c_str());
 	
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{		
 		MYSQL_RES *qResult;
 		MYSQL_ROW row;
@@ -4515,7 +4527,7 @@ int MailStorage::InsertMTA(const char* mta)
 
 	sprintf(sqlcmd, "DELETE FROM mtatbl WHERE mta='%s'", strSafetyMTA.c_str());
 	
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) != 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) != 0)
     {
         show_error(&m_hMySQL);
         return -1;
@@ -4524,7 +4536,7 @@ int MailStorage::InsertMTA(const char* mta)
 	sprintf(sqlcmd, "INSERT INTO mtatbl(mta, active_time) VALUES('%s',CURRENT_TIMESTAMP)", 
         strSafetyMTA.c_str());
 
-    if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
+    if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
     {
         return 0;
     }
@@ -4544,7 +4556,7 @@ int MailStorage::DeleteMTA(const char* mta)
 
 	sprintf(sqlcmd, "DELETE FROM mtatbl WHERE mta='%s'", strSafetyMTA.c_str());
 	
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) != 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) != 0)
 	{
         show_error(&m_hMySQL);
 		return -1;
@@ -4562,7 +4574,7 @@ int MailStorage::UpdateMTA(const char* mta)
 
 	sprintf(sqlcmd, "UPDATE mtatbl SET active_time=CURRENT_TIMESTAMP WHERE mta='%s'", strSafetyMTA.c_str());
 	
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) != 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) != 0)
 	{
         show_error(&m_hMySQL);
 		return -1;
@@ -4577,7 +4589,7 @@ int MailStorage::GetMTAIndex(const char* mta, unsigned int live_sec, unsigned in
 
 	sprintf(sqlcmd, "SELECT mta FROM mtatbl WHERE TIMESTAMPDIFF(SECOND, active_time, CURRENT_TIMESTAMP) < %d ORDER BY mta", live_sec);
     
-	if( mysql_real_query(&m_hMySQL, sqlcmd, strlen(sqlcmd)) != 0)
+	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) != 0)
 	{
         show_error(&m_hMySQL);
 		return -1;
