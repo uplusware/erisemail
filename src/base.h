@@ -582,7 +582,8 @@ class CMailBase
 {
 public:
 	static string	m_sw_version;
-
+    
+    static BOOL     m_close_stderr;
 	static string	m_private_path;
 	static string 	m_html_path;
 	static string	m_localhostname;

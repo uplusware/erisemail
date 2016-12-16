@@ -14,6 +14,7 @@ static char CHAR_TBL[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ12
 string CMailBase::m_sw_version = "1.6.08";
 
 //Global
+BOOL CMailBase::m_close_stderr = TRUE;
 string CMailBase::m_encoding = "UTF-8";
 
 string CMailBase::m_private_path = "/var/erisemail/private";
@@ -153,31 +154,33 @@ BOOL CMailBase::LoadConfig()
 			{
 				strcut(strline.c_str(), "=", NULL, m_encoding);
 				strtrim(m_encoding);
-				//printf("%s\n", m_encoding.c_str());
+			}
+            else if(strncasecmp(strline.c_str(), "CloseStderr", strlen("CloseStderr")) == 0)
+			{
+				string close_stderr;
+				strcut(strline.c_str(), "=", NULL, close_stderr );
+				strtrim(close_stderr);
+				m_close_stderr = (strcasecmp(close_stderr.c_str(), "yes")) == 0 ? TRUE : FALSE;
 			}
 			else if(strncasecmp(strline.c_str(), "PrivatePath", strlen("PrivatePath")) == 0)
 			{
 				strcut(strline.c_str(), "=", NULL, m_private_path);
 				strtrim(m_private_path);
-				//printf("%s\n", m_private_path.c_str());
 			}
 			else if(strncasecmp(strline.c_str(), "HTMLPath", strlen("HTMLPath")) == 0)
 			{
 				strcut(strline.c_str(), "=", NULL, m_html_path);
 				strtrim(m_html_path);
-				//printf("%s\n", m_html_path.c_str());
 			}
 			else if(strncasecmp(strline.c_str(), "LocalHostName", strlen("LocalHostName")) == 0)
 			{
 				strcut(strline.c_str(), "=", NULL, m_localhostname );
 				strtrim(m_localhostname);
-				//printf("%s\n", m_localhostname.c_str());
 			}
 			else if(strncasecmp(strline.c_str(), "EmailDomainName", strlen("EmailDomainName")) == 0)
 			{
 				strcut(strline.c_str(), "=", NULL, m_email_domain );
 				strtrim(m_email_domain);
-				// printf("%s\n", m_email_domain.c_str());
 
 				//add to admit list
 				m_domain_list.push_back(m_email_domain);
@@ -187,13 +190,11 @@ BOOL CMailBase::LoadConfig()
 			{
 				strcut(strline.c_str(), "=", NULL, m_hostip );
 				strtrim(m_hostip);
-				/* printf("[%s]\n", m_hostip.c_str()); */
 			}
 			else if(strncasecmp(strline.c_str(), "DNSServer", strlen("DNSServer")) == 0)
 			{
 				strcut(strline.c_str(), "=", NULL, m_dns_server );
 				strtrim(m_dns_server);
-				/* printf("%s\n", m_dns_server.c_str()); */
 			}
 			else if(strncasecmp(strline.c_str(), "MaxCocurrentConnNum", strlen("MaxCocurrentConnNum")) == 0)
 			{
@@ -201,7 +202,6 @@ BOOL CMailBase::LoadConfig()
 				strcut(strline.c_str(), "=", NULL, maxconn );
 				strtrim(maxconn);
 				m_max_conn= atoi(maxconn.c_str());
-				//printf("%d\n", m_max_conn);
 			}
             else if(strncasecmp(strline.c_str(), "SMTPEnable", strlen("SMTPEnable")) == 0)
 			{
@@ -209,7 +209,6 @@ BOOL CMailBase::LoadConfig()
 				strcut(strline.c_str(), "=", NULL, enable_smtp );
 				strtrim(enable_smtp);
 				m_enablesmtp = (strcasecmp(enable_smtp.c_str(), "yes")) == 0 ? TRUE : FALSE;
-				//printf("%d\n", m_smtpport);
 			}
 			else if(strncasecmp(strline.c_str(), "SMTPPort", strlen("SMTPPort")) == 0)
 			{
@@ -217,7 +216,6 @@ BOOL CMailBase::LoadConfig()
 				strcut(strline.c_str(), "=", NULL, smtpport );
 				strtrim(smtpport);
 				m_smtpport = atoi(smtpport.c_str());
-				//printf("%d\n", m_smtpport);
 			}
 			else if(strncasecmp(strline.c_str(), "EnableSMTPTLS", strlen("EnableSMTPTLS")) == 0)
 			{
@@ -246,7 +244,6 @@ BOOL CMailBase::LoadConfig()
 				strcut(strline.c_str(), "=", NULL, pop3port );
 				strtrim(pop3port);
 				m_pop3port = atoi(pop3port.c_str());
-				//printf("%d\n", m_pop3port);
 			}
 			else if(strncasecmp(strline.c_str(), "EnablePOP3TLS", strlen("EnablePOP3TLS")) == 0)
 			{
@@ -268,7 +265,6 @@ BOOL CMailBase::LoadConfig()
 				strcut(strline.c_str(), "=", NULL, imapport );
 				strtrim(imapport);
 				m_imapport= atoi(imapport.c_str());
-				//printf("%d\n", m_imapport);
 			}
 			else if(strncasecmp(strline.c_str(), "EnableIMAPTLS", strlen("EnableIMAPTLS")) == 0)
 			{
@@ -290,7 +286,6 @@ BOOL CMailBase::LoadConfig()
 				strcut(strline.c_str(), "=", NULL, smtpsport );
 				strtrim(smtpsport);
 				m_smtpsport = atoi(smtpsport.c_str());
-				//printf("%d\n", m_smtpsport);
 			}
 			else if(strncasecmp(strline.c_str(), "POP3SEnable", strlen("POP3SEnable")) == 0)
 			{
@@ -305,7 +300,6 @@ BOOL CMailBase::LoadConfig()
 				strcut(strline.c_str(), "=", NULL, pop3sport );
 				strtrim(pop3sport);
 				m_pop3sport = atoi(pop3sport.c_str());
-				//printf("%d\n", m_pop3sport);
 			}
 			else if(strncasecmp(strline.c_str(), "IMAPSEnable", strlen("IMAPSEnable")) == 0)
 			{
@@ -320,7 +314,6 @@ BOOL CMailBase::LoadConfig()
 				strcut(strline.c_str(), "=", NULL, imapsport );
 				strtrim(imapsport);
 				m_imapsport= atoi(imapsport.c_str());
-				//printf("%d\n", m_imapsport);
 			}
 			else if(strncasecmp(strline.c_str(), "HTTPEnable", strlen("HTTPEnable")) == 0)
 			{
@@ -335,7 +328,6 @@ BOOL CMailBase::LoadConfig()
 				strcut(strline.c_str(), "=", NULL, httpport );
 				strtrim(httpport);
 				m_httpport = atoi(httpport.c_str());
-				//printf("%d\n", m_httpport);
 			}
 			else if(strncasecmp(strline.c_str(), "HTTPSEnable", strlen("HTTPSEnable")) == 0)
 			{
@@ -350,7 +342,6 @@ BOOL CMailBase::LoadConfig()
 				strcut(strline.c_str(), "=", NULL, httpsport );
 				strtrim(httpsport);
 				m_httpsport = atoi(httpsport.c_str());
-				//printf("%d\n", m_httpsport);
 			}
 			else if(strncasecmp(strline.c_str(), "CheckClientCA", strlen("CheckClientCA")) == 0)
 			{
@@ -363,31 +354,26 @@ BOOL CMailBase::LoadConfig()
 			{
 				strcut(strline.c_str(), "=", NULL, m_ca_crt_root);
 				strtrim(m_ca_crt_root);
-				//printf("%s\n", m_ca_crt_root.c_str());
 			}
 			else if(strncasecmp(strline.c_str(), "CAServerCrt", strlen("CAServerCrt")) == 0)
 			{
 				strcut(strline.c_str(), "=", NULL, m_ca_crt_server);
 				strtrim(m_ca_crt_server);
-				//printf("%s\n", m_ca_crt_server.c_str());
 			}
 			else if(strncasecmp(strline.c_str(), "CAServerKey", strlen("CAServerKey")) == 0)
 			{
 				strcut(strline.c_str(), "=", NULL, m_ca_key_server);
 				strtrim(m_ca_key_server);
-				//printf("%s\n", m_ca_crt_server.c_str());
 			}
 			else if(strncasecmp(strline.c_str(), "CAClientCrt", strlen("CAClientCrt")) == 0)
 			{
 				strcut(strline.c_str(), "=", NULL, m_ca_crt_client);
 				strtrim(m_ca_crt_client);
-				//printf("%s\n", m_ca_crt_client.c_str());
 			}
 			else if(strncasecmp(strline.c_str(), "CAClientKey", strlen("CAClientKey")) == 0)
 			{
 				strcut(strline.c_str(), "=", NULL, m_ca_key_client);
 				strtrim(m_ca_key_client);
-				//printf("%s\n", m_ca_crt_client.c_str());
 			}
 			else if(strncasecmp(strline.c_str(), "CAPassword", strlen("CAPassword")) == 0)
 			{
@@ -412,7 +398,6 @@ BOOL CMailBase::LoadConfig()
 			{
 				strcut(strline.c_str(), "=", NULL, m_db_host );
 				strtrim(m_db_host);
-				//printf("%s\n", m_db_host.c_str());
 			}
             else if(strncasecmp(strline.c_str(), "DBPort", strlen("DBPort")) == 0)
 			{
@@ -420,19 +405,16 @@ BOOL CMailBase::LoadConfig()
 				strcut(strline.c_str(), "=", NULL, dbport );
 				strtrim(dbport);
 				m_db_port = atoi(dbport.c_str());
-				//printf("%d\n", m_db_port);
 			}
 			else if(strncasecmp(strline.c_str(), "DBName", strlen("DBName")) == 0)
 			{
 				strcut(strline.c_str(), "=", NULL, m_db_name );
 				strtrim(m_db_name);
-				//printf("%s\n", m_db_name.c_str());
 			}
 			else if(strncasecmp(strline.c_str(), "DBUser", strlen("DBUser")) == 0)
 			{
 				strcut(strline.c_str(), "=", NULL, m_db_username );
 				strtrim(m_db_username);
-				//printf("%s\n", m_db_username.c_str());
 			}
 			else if(strncasecmp(strline.c_str(), "DBPassword", strlen("DBPassword")) == 0)
 			{
@@ -444,14 +426,11 @@ BOOL CMailBase::LoadConfig()
 
 				Security::Decrypt(strEncoded.c_str(), strEncoded.length(), m_db_password);
 				
-				//printf("%s\n", m_db_password.c_str());
-				
 			}
             else if(strncasecmp(strline.c_str(), "DBSockFile", strlen("DBSockFile")) == 0)
 			{
 				strcut(strline.c_str(), "=", NULL, m_db_sock_file );
 				strtrim(m_db_sock_file);
-				//printf("%s\n", m_db_sock_file.c_str());
 			}
 			else if(strncasecmp(strline.c_str(), "DBMaxConn", strlen("DBMaxConn")) == 0)
 			{
@@ -459,7 +438,6 @@ BOOL CMailBase::LoadConfig()
 				strcut(strline.c_str(), "=", NULL, DBMaxConn );
 				strtrim(DBMaxConn);
 				m_db_max_conn = atoi(DBMaxConn.c_str());
-				//printf("%d\n", m_db_max_conn);
 			}
             else if(strncasecmp(strline.c_str(), "MTAEnable", strlen("MTAEnable")) == 0)
 			{

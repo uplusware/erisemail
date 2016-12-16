@@ -19,14 +19,16 @@ static void show_error(MYSQL *mysql)
 {
     static char MYSQLERR_LOGNAME[256] = "/var/log/erisemail/mysqlerr.log";
     static char MYSQLERR_LCKNAME[256] = "/.ERISEMAIL_MYSQLERR.LOG";
-#ifdef _DEBUG_MYSQL_API_    
+    if(!CMailBase::m_close_stderr)   
+    {
+        fprintf(stderr, "MySQL error(%d) [%s] \"%s\"", mysql_errno(mysql), mysql_sqlstate(mysql), mysql_error(mysql));
+    }
+    else
+    {
+        CUplusTrace uTrace(MYSQLERR_LOGNAME, MYSQLERR_LCKNAME);
     
-    printf("MySQL error(%d) [%s] \"%s\"", mysql_errno(mysql), mysql_sqlstate(mysql), mysql_error(mysql));
-#else
-    CUplusTrace uTrace(MYSQLERR_LOGNAME, MYSQLERR_LCKNAME);
-    
-    uTrace.Write(Trace_Error, "MySQL error(%d) [%s] \"%s\"", mysql_errno(mysql), mysql_sqlstate(mysql), mysql_error(mysql));    
-#endif /* _DEBUG_MYSQL_API_ */
+        uTrace.Write(Trace_Error, "MySQL error(%d) [%s] \"%s\"", mysql_errno(mysql), mysql_sqlstate(mysql), mysql_error(mysql));
+    }
 }
 
 int inline _mysql_real_query_(MYSQL *mysql, const char *stmt_str, unsigned long length)
@@ -186,10 +188,7 @@ int MailStorage::Install(const char* database)
 		show_error(&m_hMySQL);
 		return -1;
 	}
-    
-    //Transaction begin
-	mysql_autocommit(&m_hMySQL, 0);
-	
+    	
 	//Create level table
 	sprintf(sqlcmd, 
 		"CREATE TABLE IF NOT EXISTS `%s`.`leveltbl` ("
@@ -266,6 +265,25 @@ int MailStorage::Install(const char* database)
 		database);
 	_mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd));
 	
+    //Create extern mail table
+	sprintf(sqlcmd, 
+		"CREATE TABLE IF NOT EXISTS `%s`.`extmailtbl` ("
+		"`mid` INT UNSIGNED NOT NULL AUTO_INCREMENT ,"
+		"`muniqid` VARCHAR( 256 ) NOT NULL ,"
+		"`mfrom` VARCHAR( 256 ) NULL ,"
+		"`mto` VARCHAR( 256 ) NULL ,"
+		"`mbody` VARCHAR( 256 ) NOT NULL ,"
+		"`msize` INT UNSIGNED NOT NULL DEFAULT '0',"
+		"`mtime` INT UNSIGNED NOT NULL DEFAULT '0',"
+		"`mtx` INT UNSIGNED NOT NULL ,"
+		"`mstatus` INT UNSIGNED NOT NULL DEFAULT '0' ,"
+		"`mdirid` INT NOT NULL DEFAULT -1 ,"
+        "`tried_count` INT UNSIGNED NOT NULL DEFAULT '0' ,"
+		"`next_fwd_time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,"
+		"PRIMARY KEY ( `mid` ) )", 
+		database);
+	_mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd));
+    
     //Create mail body table
 	sprintf(sqlcmd, 
 		"CREATE TABLE IF NOT EXISTS `%s`.`mbodytbl` ("
@@ -303,19 +321,6 @@ int MailStorage::Install(const char* database)
 	
 	sprintf(sqlcmd, "CREATE TRIGGER postmail_notify_update AFTER UPDATE ON mailtbl FOR EACH ROW BEGIN SET @rs = post_notify(); END");
 	_mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd));
-	
-	if(mysql_commit(&m_hMySQL) == 0)
-	{
-		mysql_autocommit(&m_hMySQL, 1);
-	}
-    else
-	{
-        printf("commit wrong\n");
-		show_error(&m_hMySQL);
-		mysql_rollback(&m_hMySQL);
-		mysql_autocommit(&m_hMySQL, 1);
-		return -1;
-	}
 	
     unsigned int lid;
 	if(AddLevel("default", "The system's default level", 5000*1024, 500000*1024, eaFalse, 5000*1024, 5000*1024, lid) == 0)
@@ -984,8 +989,10 @@ int MailStorage::AddID(const char* username, const char* password, const char* a
 					defaultLevel = -1;
 			}
 			else
+            {
 				defaultLevel = level;
-			mysql_autocommit(&m_hMySQL, 0);	
+            }
+            
 			sprintf(sqlcmd, "INSERT INTO usertbl(uname, upasswd, ualias, utype, urole, usize, ustatus, ulevel, utime) VALUES('%s', ENCODE('%s','%s'), '%s', %d, %d, %d, 0, %d, %d)",
 				strSafetyUsername.c_str(), strSafetyPassword.c_str(), CODE_KEY, strSafetyAlias.c_str(), type, role, size, defaultLevel, time(NULL));
 				
@@ -1013,19 +1020,8 @@ int MailStorage::AddID(const char* username, const char* password, const char* a
 					strSafetyUsername.c_str(), DIR_ATTR_MARKED|DIR_ATTR_SUBSCRIBED, duJunk, time(NULL));
 				_mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd));
 			}
-			if(mysql_commit(&m_hMySQL) == 0)
-			{
-				m_userpwd_cache_update_time = 0;
-				m_userpwd_cache_updated = TRUE;
-				mysql_autocommit(&m_hMySQL, 1);
-				return 0;
-			}
-			else
-			{
-                show_error(&m_hMySQL);
-				mysql_rollback(&m_hMySQL);
-				mysql_autocommit(&m_hMySQL, 1);
-			}
+            m_userpwd_cache_update_time = 0;
+            m_userpwd_cache_updated = TRUE;
 		}
 	}
 	else
@@ -1266,7 +1262,9 @@ int MailStorage::LoadMailFromFile(const char* mfrom, const char* mto, unsigned i
 	}
 					
 	char sqlcmd[1024];
-	sprintf(sqlcmd, "LOAD DATA LOCAL INFILE '%s' INTO TABLE mailtbl FIELDS TERMINATED BY ',' ENCLOSED BY '\"' (mfrom,mto,mtime,mtx,muniqid,mdirid,mstatus,mbody)", sqlfilepath);
+	sprintf(sqlcmd, "LOAD DATA LOCAL INFILE '%s' INTO TABLE %s FIELDS TERMINATED BY ',' ENCLOSED BY '\"' (mfrom,mto,mtime,mtx,muniqid,mdirid,mstatus,mbody)",
+        sqlfilepath,
+        mtx == mtExtern ? "extmailtbl" : "mailtbl");
 	
 	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
@@ -1343,7 +1341,9 @@ int MailStorage::UpdateMailFromFile(const char* mfrom, const char* mto, unsigned
 	}
 	
 	char sqlcmd[1024];
-	sprintf(sqlcmd, "LOAD DATA LOCAL INFILE '%s' REPLACE INTO TABLE mailtbl FIELDS TERMINATED BY ',' ENCLOSED BY '\"' (mid,mfrom,mto,mtime,mtx,muniqid,mdirid,mstatus,mbody)", sqlfilepath);
+	sprintf(sqlcmd, "LOAD DATA LOCAL INFILE '%s' REPLACE INTO TABLE %s FIELDS TERMINATED BY ',' ENCLOSED BY '\"' (mid,mfrom,mto,mtime,mtx,muniqid,mdirid,mstatus,mbody)",
+        sqlfilepath,
+        mtx == mtExtern ? "extmailtbl" : "mailtbl");
 	
 	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
@@ -1373,7 +1373,8 @@ int MailStorage::InsertMail(const char* mfrom, const char* mto, unsigned int mti
 	char* sqlcmd = (char*)malloc(strSafetyBody.length() + strSafetyTo.length() + strSafetyFrom.length() + 1024);
 	if(sqlcmd)
 	{
-		sprintf(sqlcmd, "INSERT INTO mailtbl(mfrom,mto,mtime,mtx,muniqid,mdirid,mstatus,mbody, msize) VALUES('%s','%s',%u,%u,'%s',%d,%u,'%s', %u)", 
+		sprintf(sqlcmd, "INSERT INTO %s(mfrom,mto,mtime,mtx,muniqid,mdirid,mstatus,mbody,msize) VALUES('%s','%s',%u,%u,'%s',%d,%u,'%s',%u)",
+            mtx == mtExtern ? "extmailtbl" : "mailtbl",
 			strSafetyFrom.c_str(), strSafetyTo.c_str(), mtime, mtx, muniqid, mdirid, mstatus, strSafetyBody.c_str(), msize);
 		if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 		{
@@ -1424,7 +1425,8 @@ int MailStorage::InsertMailIndex(const char* mfrom, const char* mto, unsigned in
 	char* sqlcmd = (char*)malloc(strSafetyBody.length() + strSafetyTo.length() + strSafetyFrom.length() + 1024);
 	if(sqlcmd)
 	{
-		sprintf(sqlcmd, "INSERT INTO mailtbl(mfrom,mto,mtime,mtx,muniqid,mdirid,mstatus,mbody,msize) VALUES('%s','%s',%u,%u,'%s',%d,%u,'%s', %u)", 
+		sprintf(sqlcmd, "INSERT INTO %s(mfrom,mto,mtime,mtx,muniqid,mdirid,mstatus,mbody,msize) VALUES('%s','%s',%u,%u,'%s',%d,%u,'%s', %u)",
+            mtx == mtExtern ? "extmailtbl" : "mailtbl",
 			strSafetyFrom.c_str(), strSafetyTo.c_str(), mtime, mtx, muniqid, mdirid, mstatus, strSafetyBody.c_str(), msize);
 
 		if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
@@ -1458,7 +1460,8 @@ int MailStorage::UpdateMail(const char* mfrom, const char* mto, unsigned int mti
 	char* sqlcmd = (char*)malloc(strSafetyBody.length() + strSafetyTo.length() + strSafetyFrom.length() + 1024);
 	if(sqlcmd)
 	{
-		sprintf(sqlcmd, "UPDATE mailtbl SET mfrom='%s',mto='%s',mtime=%u,mtx=%u,muniqid='%s',mdirid=%d,mstatus=%u,mbody='%s',msize='%u' WHERE mid=%d", 
+		sprintf(sqlcmd, "UPDATE %s SET mfrom='%s',mto='%s',mtime=%u,mtx=%u,muniqid='%s',mdirid=%d,mstatus=%u,mbody='%s',msize='%u' WHERE mid=%d",
+            mtx == mtExtern ? "extmailtbl" : "mailtbl",
 			strSafetyFrom.c_str(), strSafetyTo.c_str(), mtime, mtx, muniqid, mdirid, mstatus, strSafetyBody.c_str(), msize, mailid);
 		
 		if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
@@ -1506,7 +1509,8 @@ int MailStorage::UpdateMailIndex(const char* mfrom, const char* mto, unsigned in
 	char* sqlcmd = (char*)malloc(strSafetyBody.length() + strSafetyTo.length() + strSafetyFrom.length() + 1024);
 	if(sqlcmd)
 	{
-		sprintf(sqlcmd, "UPDATE mailtbl SET mfrom='%s',mto='%s',mtime=%u,mtx=%u,muniqid='%s',mdirid=%d,mstatus=%u,mbody='%s', msize=%u WHERE mid=%d", 
+		sprintf(sqlcmd, "UPDATE %s SET mfrom='%s',mto='%s',mtime=%u,mtx=%u,muniqid='%s',mdirid=%d,mstatus=%u,mbody='%s', msize=%u WHERE mid=%d",
+            mtx == mtExtern ? "extmailtbl" : "mailtbl",
 			strSafetyFrom.c_str(), strSafetyTo.c_str(), mtime, mtx, muniqid, mdirid, mstatus, strSafetyBody.c_str(), msize, mailid);
 		
 		if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
@@ -1699,16 +1703,7 @@ int MailStorage::LimitListMailByDir(const char* username, vector<Mail_Info>& lis
             unsigned int i;
             num_fields = mysql_num_fields(qResult);
 			while((row = mysql_fetch_row(qResult)))
-			{
-                /*unsigned long *lengths;
-                lengths = mysql_fetch_lengths(qResult);
-                for(i = 0; i < num_fields; i++)
-                {
-                    printf("[%.*s] ", (int) lengths[i],
-                           row[i] ? row[i] : "NULL");
-                }
-                printf("\n");*/
-                
+			{                
                 Mail_Info mi;
 				
 				string tmpfile = m_private_path.c_str();
@@ -1755,11 +1750,11 @@ int MailStorage::LimitListMailByDir(const char* username, vector<Mail_Info>& lis
 	}
 }
 
-int MailStorage::LimitListUnauditedMailByDir(const char* username, vector<Mail_Info>& listtbl, int beg, int rows)
+int MailStorage::LimitListUnauditedExternMailByDir(const char* username, vector<Mail_Info>& listtbl, int beg, int rows)
 {
 	listtbl.clear();
 	char sqlcmd[1024];
-	sprintf(sqlcmd, "SELECT mbody,muniqid,mid,mtime,mstatus,mfrom,mto,mtx,mdirid FROM mailtbl WHERE mstatus&%d<>%d AND mstatus&%d=%d ORDER BY mtime limit %d, %d", MSG_ATTR_DELETED, MSG_ATTR_DELETED, MSG_ATTR_UNAUDITED, MSG_ATTR_UNAUDITED, beg, rows);
+	sprintf(sqlcmd, "SELECT mbody,muniqid,mid,mtime,mstatus,mfrom,mto,mtx,mdirid FROM extmailtbl WHERE mstatus&%d<>%d AND mstatus&%d=%d ORDER BY mtime limit %d, %d", MSG_ATTR_DELETED, MSG_ATTR_DELETED, MSG_ATTR_UNAUDITED, MSG_ATTR_UNAUDITED, beg, rows);
 	
 	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
@@ -1882,12 +1877,12 @@ int MailStorage::ListAllMail(vector<Mail_Info>& listtbl)
 	}
 }
 
-int MailStorage::ListExternMail(vector<Mail_Info>& listtbl, unsigned int mta_index, unsigned int mta_count,unsigned int max_num)
+int MailStorage::ListAvailableExternMail(vector<Mail_Info>& listtbl, unsigned int mta_index, unsigned int mta_count,unsigned int max_num)
 {
 	listtbl.clear();
 	char sqlcmd[1024];
-	sprintf(sqlcmd, "SELECT mfrom, mto, muniqid, mid FROM mailtbl WHERE mtx='%d' AND mstatus&%d<>%d AND mstatus&%d<>%d AND mid%%%d=%d ORDER BY mid", mtExtern, MSG_ATTR_DELETED, MSG_ATTR_DELETED, MSG_ATTR_UNAUDITED, MSG_ATTR_UNAUDITED, mta_count, mta_index);
-	/* printf("%s\n",sqlcmd); */
+	sprintf(sqlcmd, "SELECT mfrom, mto, muniqid, mid FROM extmailtbl WHERE mtx='%d' AND mstatus&%d<>%d AND mstatus&%d<>%d AND mid%%%d=%d and TIMESTAMPDIFF(SECOND, next_fwd_time, CURRENT_TIMESTAMP) > 0 and tried_count<%d ORDER BY mid",
+        mtExtern, MSG_ATTR_DELETED, MSG_ATTR_DELETED, MSG_ATTR_UNAUDITED, MSG_ATTR_UNAUDITED, mta_count, mta_index, MAX_TRY_FORWARD_COUNT);
     max_num = (max_num == 0 ? 0x7FFFFFFFFU : max_num);
 	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
@@ -1925,10 +1920,10 @@ int MailStorage::ListExternMail(vector<Mail_Info>& listtbl, unsigned int mta_ind
 	}
 }
 
-int MailStorage::Prefoward(int mid)
+int MailStorage::ForwardingExternMail(int mid)
 {
 	char sqlcmd[1024];
-	sprintf(sqlcmd, "UPDATE mailtbl SET mtx='%d' WHERE mtx='%d' AND mid=%d", mtFowarding, mtExtern, mid);
+	sprintf(sqlcmd, "UPDATE extmailtbl SET next_fwd_time=TIMESTAMPADD(SECOND, (tried_count+1)*300, CURRENT_TIMESTAMP), tried_count=tried_count+1 WHERE mid=%d", mid);
 	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		return 0;
@@ -1940,18 +1935,35 @@ int MailStorage::Prefoward(int mid)
     }
 }
 
-int MailStorage::CancelFoward(int mid)
+int MailStorage::GetExternMailForwardedCount(int mid)
 {
+    int r = -1;
 	char sqlcmd[1024];
-	sprintf(sqlcmd, "UPDATE mailtbl SET mtx='%d' WHERE mtx='%d' AND mid=%d", mtExtern, mtFowarding, mid);
+	sprintf(sqlcmd, "SELECT tried_count FROM extmailtbl WHERE mid=%d", mid);
 	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
-		return 0;
+        MYSQL_RES *qResult;
+		MYSQL_ROW row;
+		
+		qResult = mysql_store_result(&m_hMySQL);
+		
+		if(qResult)
+		{
+            row = mysql_fetch_row(qResult);
+            if(row)
+            {
+                r = atoi(row[0]);
+            }
+            mysql_free_result(qResult);
+			return r;
+		}
+        
+		return r;
 	}
 	else
     {
         show_error(&m_hMySQL);
-		return -1;
+		return r;
     }
 }
 
@@ -2345,10 +2357,12 @@ int MailStorage::GetMailBody(int mid, char* body)
 	}
 }
 
-int MailStorage::GetMailIndex(int mid, string& path)
+int MailStorage::GetMailIndex(int mid, string& path, unsigned int mtx)
 {	
 	char sqlcmd[1024];
-	sprintf(sqlcmd, "SELECT mbody FROM mailtbl WHERE mid='%d' AND mstatus&%d<>%d;", mid, MSG_ATTR_DELETED, MSG_ATTR_DELETED);
+	sprintf(sqlcmd, "SELECT mbody FROM %s WHERE mid='%d' AND mstatus&%d<>%d;",
+        mtx == mtExtern ? "extmailtbl" : "mailtbl",
+        mid, MSG_ATTR_DELETED, MSG_ATTR_DELETED);
 	
 	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{	
@@ -2594,10 +2608,12 @@ int MailStorage::GetMailLen(int mid, int& mlen)
 	}
 }
 
-int MailStorage::ShitDelMail(int mid)
+int MailStorage::ShiftDelMail(int mid, unsigned int mtx)
 {
 	char sqlcmd[1024];
-	sprintf(sqlcmd, "delete FROM mailtbl WHERE mid='%d'", mid);
+	sprintf(sqlcmd, "delete FROM %s WHERE mid='%d'",
+        mtx == mtExtern ? "extmailtbl" : "mailtbl",
+        mid);
 	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		char mailpath[512];
@@ -2623,14 +2639,16 @@ int MailStorage::ShitDelMail(int mid)
     }
 }
 
-int MailStorage::DelMail(const char* username, int mid)
+int MailStorage::DelMail(const char* username, int mid, unsigned int mtx)
 {
 	char sqlcmd[1024];
 	
 	string owner = "";
 	if(IsAdmin(username) == 0 || (GetMailOwner(mid, owner) == 0 && strcasecmp(owner.c_str(), username) == 0))
 	{
-		sprintf(sqlcmd, "UPDATE mailtbl SET mstatus=(mstatus|%d) WHERE mid='%d'", MSG_ATTR_DELETED, mid); //sprintf(sqlcmd, "delete FROM mailtbl WHERE mid='%d'", mid);
+		sprintf(sqlcmd, "UPDATE %s SET mstatus=(mstatus|%d) WHERE mid='%d'",
+            mtx == mtExtern ? "extmailtbl" : "mailtbl",
+            MSG_ATTR_DELETED, mid);
 		if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 		{
 			return 0;
@@ -3513,10 +3531,10 @@ int MailStorage::GetDirMailCount(const char* username, int dirid, unsigned int& 
 	}
 }
 
-int MailStorage::GetUnauditedMailCount(const char* username, unsigned int& count)
+int MailStorage::GetUnauditedExternMailCount(const char* username, unsigned int& count)
 {
 	char sqlcmd[1024];
-	sprintf(sqlcmd, "SELECT mdirid FROM mailtbl WHERE mstatus&%d<>%d AND mstatus&%d=%d", MSG_ATTR_DELETED, MSG_ATTR_DELETED, MSG_ATTR_UNAUDITED, MSG_ATTR_UNAUDITED);
+	sprintf(sqlcmd, "SELECT extmdirid FROM mailtbl WHERE mstatus&%d<>%d AND mstatus&%d=%d", MSG_ATTR_DELETED, MSG_ATTR_DELETED, MSG_ATTR_UNAUDITED, MSG_ATTR_UNAUDITED);
 	
 	if( _mysql_real_query_(&m_hMySQL, sqlcmd, strlen(sqlcmd)) == 0)
 	{

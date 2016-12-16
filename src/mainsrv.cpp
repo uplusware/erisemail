@@ -52,7 +52,8 @@ static void daemon_init()
 	umask(0);
  	close(STDIN_FILENO);
 	close(STDOUT_FILENO);
-	close(STDERR_FILENO);
+    if(CMailBase::m_close_stderr)
+        close(STDERR_FILENO);
 	signal(SIGCHLD,SIG_IGN);
 }
 

@@ -39,6 +39,8 @@ typedef enum
 #define DIR_ATTR_NOINFERIORS	(1<<2)
 #define DIR_ATTR_SUBSCRIBED		(1<<3)
 
+#define MAX_TRY_FORWARD_COUNT       5
+
 typedef enum
 {
 	duCommon = 0,
@@ -205,14 +207,15 @@ public:
 	int ListMailByDir(const char* username, vector<Mail_Info>& listtbl, const char* diref);
 	int ListMailByDir(const char* username, vector<Mail_Info>& listtbl, unsigned int dirid);
 	int ListAllMail(vector<Mail_Info>& listtbl);
-	int ListExternMail(vector<Mail_Info>& listtbl, unsigned int mta_index = 0, unsigned int mta_count = 1, unsigned int max_num = 0);
 
 	int GetMailUID(int mid, string uid);
-	int Prefoward(int mid);
-	int CancelFoward(int mid);
+    
+	int ForwardingExternMail(int mid);
+	int GetExternMailForwardedCount(int mid);
+   	int ListAvailableExternMail(vector<Mail_Info>& listtbl, unsigned int mta_index = 0, unsigned int mta_count = 1, unsigned int max_num = 0);
 
 	int ListID(vector<User_Info>& listtbl, string orderby = "utime", BOOL desc = FALSE);
-	int ListGroup(vector<User_Info>& listtbl);	
+	int ListGroup(vector<User_Info>& listtbl);
 	int ListMember(vector<User_Info>& listtbl);
 	
 	int GetID(const char* uname, User_Info& uinfo);
@@ -232,8 +235,8 @@ public:
 		
 
 	int DumpMailToFile(int mid, string& dumpfile);
-	int DelMail(const char* username, int mid);
-	int ShitDelMail(int mid);
+	int DelMail(const char* username, int mid, unsigned int mtx = mtLocal);
+	int ShiftDelMail(int mid, unsigned int mtx = mtLocal);
 	int GetMailDir(int mid, int & dirid);
 	int GetMailOwner(int mid, string & owner);
 	int GetDirOwner(int dirid, string & owner);
@@ -244,8 +247,7 @@ public:
 	int GetMailLen(int mid, int& mlen);
 	int GetMailBody(int mid, char* body);
 
-	int GetMailIndex(int mid, string& path);
-	
+	int GetMailIndex(int mid, string& path, unsigned int mtx = mtLocal);
 	//dir method
 	
 	int CreateDir(const char* username, const char* dirref);
@@ -284,11 +286,11 @@ public:
 	int ListSubDir(const char* username, int pid, vector<Dir_Info>& listtbl);
 	int SplitDir(const char* dirref, string& parentdir, string& dirname);
 	int GetDirMailCount(const char* username, int dirid, unsigned int& count);
-	int GetUnauditedMailCount(const char* username, unsigned int& count);
+	int GetUnauditedExternMailCount(const char* username, unsigned int& count);
 
 
 	int LimitListMailByDir(const char* username, vector<Mail_Info>& listtbl, unsigned int dirid, int beg, int rows);
-	int LimitListUnauditedMailByDir(const char* username, vector<Mail_Info>& listtbl, int beg, int rows);
+	int LimitListUnauditedExternMailByDir(const char* username, vector<Mail_Info>& listtbl, int beg, int rows);
 
 	int InsertMail(const char* mfrom, const char* mto, unsigned int mtime,unsigned int mtx, const char* muniqid,int mdirid, unsigned int mstatus, const char* mbody, unsigned int msize, int& mailid);
 	int UpdateMail(const char* mfrom, const char* mto, unsigned int mtime,unsigned int mtx, const char* muniqid,int mdirid, unsigned int mstatus, const char* mbody, unsigned int msize,  int mailid);

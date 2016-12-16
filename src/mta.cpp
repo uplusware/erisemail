@@ -105,7 +105,7 @@ static BOOL ReturnMail(MailStorage* mailStg, memcached_st * memcached,
 	letter_info.mail_id = -1;
 				
 	string emlfile;
-	mailStg->GetMailIndex(mid, emlfile);
+	mailStg->GetMailIndex(mid, emlfile, mtExtern);
 
 	char sztmp[1024];
 
@@ -328,8 +328,6 @@ static BOOL SendMail(MailStorage* mailStg, memcached_st * memcached,
     }
 
     freeaddrinfo(server_addr);           /* No longer needed */
-        
-    /* printf("[%s]: <%s>\n", mxserver, realip); */
 	
 	getsockopt(transfer_sockfd,SOL_SOCKET,SO_ERROR,(char*)&errorCode,(socklen_t*)&errorCodeLen);
 	if(errorCode !=0)
@@ -381,7 +379,7 @@ static BOOL SendMail(MailStorage* mailStg, memcached_st * memcached,
 	}
 	
 	string emlfile;
-	mailStg->GetMailIndex(mid, emlfile);
+	mailStg->GetMailIndex(mid, emlfile, mtExtern);
 	
 	MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), memcached, emlfile.c_str());
 	if(Letter)
@@ -494,20 +492,24 @@ static void* begin_relay_handler(void* arg)
 				{
 					continue;
 				}
-				
+                
+                mailStg->KeepLive();
+                                    
 				string errormsg;
 				
 				if(RelayMail(mailStg, reply_info->_memcached, reply_info->mail_info.mid, reply_info->mail_info.uniqid, reply_info->mail_info.mailfrom.c_str(), 
 					reply_info->mail_info.rcptto.c_str(), errormsg) == FALSE)
 				{
 					fprintf(stderr, "%s", errormsg.c_str());
-					
-					mailStg->KeepLive();
-					ReturnMail(mailStg, reply_info->_memcached, reply_info->mail_info.mid, reply_info->mail_info.uniqid, reply_info->mail_info.mailfrom.c_str(), 
-						reply_info->mail_info.rcptto.c_str(), errormsg.c_str());
+                    
+                    if(mailStg->GetExternMailForwardedCount(reply_info->mail_info.mid) >= MAX_TRY_FORWARD_COUNT)
+                    {
+                        ReturnMail(mailStg, reply_info->_memcached, reply_info->mail_info.mid, reply_info->mail_info.uniqid, reply_info->mail_info.mailfrom.c_str(), 
+                            reply_info->mail_info.rcptto.c_str(), errormsg.c_str());
+                    }
 				}
-
-				mailStg->ShitDelMail(reply_info->mail_info.mid);
+                else
+                    mailStg->ShiftDelMail(reply_info->mail_info.mid, mtExtern);
                 
 				stgengine_instance.Release();		
 				delete reply_info;
@@ -778,10 +780,12 @@ int MTA::Run(int fd)
                 
                 mailStg->GetMTAIndex(CMailBase::m_localhostname.c_str(), 4*MTA_QUERY_MAX_INTERVAL, mta_index, mta_count);
                 
-				if(mta_count > 0 && mailStg->ListExternMail(mitbl, mta_index, mta_count, CMailBase::m_mta_relaytasknum) == 0)
+				if(mta_count > 0 && mailStg->ListAvailableExternMail(mitbl, mta_index, mta_count, CMailBase::m_mta_relaytasknum) == 0)
 				{
                     for(int x = 0; x < mitbl.size(); x++)
                     {
+                        mailStg->ForwardingExternMail(mitbl[x].mid);
+                        
                         ReplyInfo* reply_info = new ReplyInfo;
                         
                         reply_info->mail_info.mid = mitbl[x].mid;
@@ -802,7 +806,7 @@ int MTA::Run(int fd)
                     
                         sem_post(&gs_thread_pool_sem);
                         
-                        mailStg->Prefoward(mitbl[x].mid);
+                        
                     }
 				}
 				stgengine_instance->Release();

@@ -4011,7 +4011,7 @@ public:
 			}
 			
 			vector<Mail_Info> listtbl;
-			if(m_mailStg && m_mailStg->LimitListUnauditedMailByDir(username.c_str(), listtbl, nBeg, nRow) == 0)
+			if(m_mailStg && m_mailStg->LimitListUnauditedExternMailByDir(username.c_str(), listtbl, nBeg, nRow) == 0)
 			{	
 				char szTmp[128];
 				
@@ -4691,8 +4691,7 @@ public:
 							usermaxsize = 5000*1024;
 						}
 						
-						pLetter = new MailLetter(m_mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_session->GetMemCached(), newuid, usermaxsize /*m_mailStg, "", 
-							"", mtLocal, newuid, DirID, mstatus, time(NULL), usermaxsize*/);
+						pLetter = new MailLetter(m_mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_session->GetMemCached(), newuid, usermaxsize);
 
 						Letter_Info* letter_info = new Letter_Info;
 						if(pLetter && letter_info)
@@ -4739,8 +4738,7 @@ public:
 					mailfrom += CMailBase::m_email_domain;
 
 							
-					pLetter = new MailLetter(m_mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_session->GetMemCached(), newuid, usermaxsize /*m_mailStg, mailfrom.c_str(),
-						mailaddr.c_str(), mtExtern, newuid, -1, mstatus, time(NULL), usermaxsize*/);
+					pLetter = new MailLetter(m_mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_session->GetMemCached(), newuid, usermaxsize);
 
 					Letter_Info* letter_info = new Letter_Info;
 					
@@ -5707,7 +5705,7 @@ public:
 			}
 			
 			//delete from the system actually
-			m_mailStg->ShitDelMail(nMailID);
+			m_mailStg->ShiftDelMail(nMailID);
 			
 			strResp = RSP_200_OK_XML;
 			string strHTTPDate;
@@ -6368,8 +6366,7 @@ public:
 					m_mailStg->GetMailIndex(nMailID, emlfile);
 					
 					oldLetter = new MailLetter(m_mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_session->GetMemCached(), emlfile.c_str());
-					newLetter = new MailLetter(m_mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_session->GetMemCached(), newuid, usermaxsize /*m_mailStg, postmaster.c_str(), strFrom.c_str(), isLocal ? mtLocal : mtExtern,
-						newuid, nToDirID, mstatus & (~MSG_ATTR_UNAUDITED), (unsigned int)time(NULL), usermaxsize*/);
+					newLetter = new MailLetter(m_mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_session->GetMemCached(), newuid, usermaxsize);
 
 					Letter_Info letter_info;
 					letter_info.mail_from = postmaster.c_str();
@@ -7065,7 +7062,7 @@ public:
 			
 			char szTmp[64];
 			unsigned int count = 0;
-			m_mailStg->GetUnauditedMailCount(username.c_str(), count);
+			m_mailStg->GetUnauditedExternMailCount(username.c_str(), count);
 			sprintf(szTmp, "%u", count);
 			strResp += szTmp;
 			strResp += "</count></response></erisemail>";

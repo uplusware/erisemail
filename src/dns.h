@@ -225,7 +225,7 @@ public:
         
         if (rp == NULL)
         {               /* No address succeeded */
-              fprintf(stderr, "Could not socket\n");
+              fprintf(stderr, "Could not connect to dns server(%s) or cound not parse mx record.\n", m_server.c_str());
               freeaddrinfo(server_addr);           /* No longer needed */
               return -1;
         }
