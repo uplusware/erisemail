@@ -32,6 +32,7 @@ mkdir $3-erisemail-bin-cn-$2-${m}-${o}/html
 cp cn-html-$2/*.js $3-erisemail-bin-cn-$2-${m}-${o}/html/
 cp cn-html-$2/*.jpg $3-erisemail-bin-cn-$2-${m}-${o}/html/
 cp cn-html-$2/*.gif $3-erisemail-bin-cn-$2-${m}-${o}/html/
+cp cn-html-$2/*.png $3-erisemail-bin-cn-$2-${m}-${o}/html/
 cp cn-html-$2/*.ico $3-erisemail-bin-cn-$2-${m}-${o}/html/
 cp cn-html-$2/*.html $3-erisemail-bin-cn-$2-${m}-${o}/html/
 cp cn-html-$2/*.css $3-erisemail-bin-cn-$2-${m}-${o}/html/
@@ -92,6 +93,7 @@ cp en-html-$2/*.js $3-erisemail-bin-en-$2-${m}-${o}/html/
 cp en-html-$2/*.jpg $3-erisemail-bin-en-$2-${m}-${o}/html/
 cp en-html-$2/*.gif $3-erisemail-bin-en-$2-${m}-${o}/html/
 cp en-html-$2/*.ico $3-erisemail-bin-en-$2-${m}-${o}/html/
+cp en-html-$2/*.png $3-erisemail-bin-en-$2-${m}-${o}/html/
 cp en-html-$2/*.html $3-erisemail-bin-en-$2-${m}-${o}/html/
 cp en-html-$2/*.css $3-erisemail-bin-en-$2-${m}-${o}/html/
 cp en-html-$2/*.xml $3-erisemail-bin-en-$2-${m}-${o}/html/
