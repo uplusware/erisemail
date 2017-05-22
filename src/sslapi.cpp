@@ -178,7 +178,8 @@ BOOL connect_ssl(int sockfd,
         goto clean_ssl3;
     }
 
-    if(ca_crt_root && ca_crt_client && ca_password && ca_key_client)
+    if(ca_crt_root && ca_crt_client && ca_password && ca_key_client
+        && ca_crt_root[0] != '\0' && ca_crt_client[0] != '\0' && ca_password[0] != '\0' && ca_key_client[0] != '\0')
     {
         SSL_CTX_load_verify_locations(*pp_ssl_ctx, ca_crt_root, NULL);
         if(SSL_CTX_use_certificate_file(*pp_ssl_ctx, ca_crt_client, SSL_FILETYPE_PEM) <= 0)

@@ -57,11 +57,11 @@ BOOL		CMailBase::m_enablehttps = TRUE;
 unsigned short	CMailBase::m_httpsport = 8082;
 	
 BOOL   CMailBase::m_enableclientcacheck = FALSE;
-string CMailBase::m_ca_crt_root = "/var/cert/ca.cer";
-string CMailBase::m_ca_crt_server = "/var/cert/server.cer";
-string CMailBase::m_ca_key_server = "/var/cert/server-key.pem";
-string CMailBase::m_ca_crt_client = "/var/cert/client.cer";
-string CMailBase::m_ca_key_client = "/var/cert/client-key.pem";
+string CMailBase::m_ca_crt_root = "/var/erisemail/cert/ca.crt";
+string CMailBase::m_ca_crt_server = "/var/erisemail/cert/server.crt";
+string CMailBase::m_ca_key_server = "/var/erisemail/cert/server.key";
+string CMailBase::m_ca_crt_client = "/var/erisemail/cert/client.crt";
+string CMailBase::m_ca_key_client = "/var/erisemail/cert/client.key";
 
 string CMailBase::m_ca_password = "";
 

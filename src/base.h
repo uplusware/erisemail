@@ -194,12 +194,11 @@ public:
 	int drecv(char* pbuf, int blen)
 	{
 		int rlen = 0;
-		
 		if(blen <= dlen)
 		{
 			memcpy(pbuf, dbuf, blen);
 
-			memmove(dbuf + blen, dbuf, dlen - blen);
+			memmove(dbuf, dbuf + blen , dlen - blen);
 			dlen = dlen - blen;
 			
 			rlen = blen;
@@ -211,7 +210,7 @@ public:
 			rlen = dlen;
 			dlen = 0;
 			
-			int len = Recv(sockfd, pbuf + dlen, blen - dlen);
+			int len = Recv(sockfd, pbuf + rlen, blen - rlen);
 			if(len > 0)
 			{
 				rlen = rlen + len;	
