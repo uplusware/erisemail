@@ -382,7 +382,7 @@ public:
 		{
 			memcpy(pbuf, dbuf, blen);
 
-			memmove(dbuf + blen, dbuf, dlen - blen);
+			memmove(dbuf, dbuf + blen, dlen - blen);
 			dlen = dlen - blen;
 			
 			rlen = blen;
@@ -394,7 +394,7 @@ public:
 			rlen = dlen;
 			dlen = 0;
 			
-			int len = SSLRead(sockfd, sslhd, pbuf + dlen, blen - dlen);
+			int len = SSLRead(sockfd, sslhd, pbuf + rlen, blen - rlen);
 			if(len > 0)
 			{
 				rlen = rlen + len;	
