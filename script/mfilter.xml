@@ -1,4 +1,6 @@
-<? xml version="1.0" encoding="GB2312" ?>
+<? xml version="1.0" encoding="UTF-8" ?>
 <erisemail>
-	<filter libso="/usr/lib/liberiseantijunk.so" action="TAG" />
+<!--
+	<filter libso="/usr/lib/liberiseantispam.so" action="TAG" />
+-->
 </erisemail>

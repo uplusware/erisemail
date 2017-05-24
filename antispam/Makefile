@@ -1,7 +1,7 @@
 CC = gcc
 
-LIBJKS = libantijunk-example.so
-OBJJKS = antijunk.o
+LIBJKS = libantispam-example.so
+OBJJKS = antispam.o
 
 FLAGS = -O2 -fPIC -w
 

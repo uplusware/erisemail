@@ -18,13 +18,13 @@ typedef enum
 {
 	jaTag = 0,
 	jaDrop
-} JunkAction;
+} SpamAction;
 
 typedef struct
 {
 	void* lhandle;
 	void* dhandle;
-	JunkAction action;
+	SpamAction action;
 }FilterHandle;
 
 using namespace std;

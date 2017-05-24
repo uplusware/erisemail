@@ -37,7 +37,7 @@ fi
 rm -rf /usr/bin/erisemaild
 rm -rf /usr/bin/eriseutil
 rm -rf /usr/lib/liberisestorage.so
-rm -rf /usr/lib/liberiseantijunk.so
+rm -rf /usr/lib/liberiseantispam.so
 rm -rf /usr/bin/eriseaddgroup
 rm -rf /usr/bin/eriseadduser
 rm -rf /usr/bin/erisedeluser

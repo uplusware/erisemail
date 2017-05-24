@@ -3,8 +3,8 @@ CC = gcc
 LIBSTG = liberisestorage.so
 OBJSTG = storage.o util/trace.o
 
-LIBJKS = liberiseantijunk.so
-OBJJKS = antijunk.o
+LIBJKS = liberiseantispam.so
+OBJJKS = antispam.o
 SQLUDF = postudf.so
 
 EXESVR = erisemaild

@@ -1475,9 +1475,23 @@ void CMailSmtp::On_Finish_Data_Handler()
 	m_status = m_status&(~STATUS_SUPOSE_DATAING);
 	m_status = m_status|STATUS_DATAED;
 
-	int isjunk = -1;
-	JunkAction action = jaTag;
+	int isSpam = -1;
+	SpamAction action = jaTag;
 	
+    for(int x = 0; x < m_filterHandle.size(); x++)
+	{
+        void (*mfilter_eml) (void*, const char*, unsigned int);
+		mfilter_eml = (void (*)(void*, const char*, unsigned int))dlsym(m_filterHandle[x].lhandle, "mfilter_eml");
+        const char* errmsg;
+        if((errmsg = dlerror()) == NULL && m_letter_obj_vector.size() > 0)
+        {
+            mfilter_eml(m_filterHandle[x].dhandle, m_letter_obj_vector[0]->letter->GetEmlFullPath(), strlen(m_letter_obj_vector[0]->letter->GetEmlFullPath()));
+        }
+        else
+        {
+            fprintf(stderr, "%s\n", errmsg);
+        }
+    }
 	for(int x = 0; x < m_filterHandle.size(); x++)
 	{
 		if(m_filterHandle[x].lhandle)
@@ -1487,8 +1501,8 @@ void CMailSmtp::On_Finish_Data_Handler()
 			const char* errmsg;
 			if((errmsg = dlerror()) == NULL)
 			{
-				mfilter_result(m_filterHandle[x].dhandle, &isjunk);
-				if(isjunk != -1)
+				mfilter_result(m_filterHandle[x].dhandle, &isSpam);
+				if(isSpam != -1)
 				{
 					action = m_filterHandle[x].action;
 					break;
@@ -1496,15 +1510,15 @@ void CMailSmtp::On_Finish_Data_Handler()
 			}
 			else
 			{
-				printf("%s\n", errmsg);
+				fprintf(stderr, "%s\n", errmsg);
 			}
 		}
 	}
 	
 	int vlen = m_letter_obj_vector.size();
-	for(int x=0; x< vlen; x++)
+	for(int x = 0; x < vlen; x++)
 	{
-		if(isjunk != -1 && m_letter_obj_vector[x]->letter_info.mail_type == mtLocal)
+		if(isSpam != -1 && m_letter_obj_vector[x]->letter_info.mail_type == mtLocal)
 		{
 			if(action == jaTag)
 			{
@@ -1535,7 +1549,6 @@ void CMailSmtp::On_Finish_Data_Handler()
 			if(mailStg->GetUserLevel(m_username.c_str(), linfo) == -1)
 			{
 				mailStg->GetDefaultLevel(linfo);
-				
 			}
 
 			unsigned long mail_sumsize = m_letter_obj_vector[x]->letter->GetSize();

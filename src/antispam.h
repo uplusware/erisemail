@@ -2,9 +2,8 @@
 	Copyright (c) openheap, uplusware
 	uplusware@gmail.com
 */
-
-#ifndef _ANTIJUNK_H_
-#define _ANTIJUNK_H_
+#ifndef _ANTISPAM_H_
+#define _ANTISPAM_H_
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -20,20 +19,14 @@
 #include <netdb.h>
 #include<string.h>
 
-//////////////////////////////////////////////////////////
-// Filter handler struct content can be defined by self
-// The following is a example
 typedef struct
 {
-	int isJunk;
+	int isSpam;
 	int isVirs;
 	FILE * fLog;
 	sem_t* semLog;
 } MailFilter;
 
-
-///////////////////////////////////////////////////////////
-// The API's usage, please refer the comment in the cpp
 #ifdef __cplusplus
 extern "C"
 {
@@ -51,9 +44,11 @@ extern "C"
 
 	void mfilter_rcptto(void * filter, const char* to, unsigned int len);
 
-	void mfilter_data(void * filter, const char* buffer, unsigned int len);
-
-	void mfilter_result(void * filter, int* isjunk);
+	void mfilter_data(void * filter, const char* data, unsigned int len);
+    
+    void mfilter_eml(void * filter, const char* emlpath, unsigned int len);
+    
+	void mfilter_result(void * filter, int* isspam);
 
 	void mfilter_exit(void * filter);
 
@@ -61,4 +56,4 @@ extern "C"
 }
 #endif /* __cplusplus__ */
 
-#endif /* _ANTIJUNK_H_ */
+#endif /* _ANTISPAM_H_ */

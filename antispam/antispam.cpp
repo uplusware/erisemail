@@ -4,7 +4,7 @@
 */
 
 #include <stdio.h>
-#include "antijunk.h"
+#include "antispam.h"
 
 /*
 Brief:
@@ -21,18 +21,21 @@ void* mfilter_init()
 	MailFilter * filter = new MailFilter;
 	if(filter)
 	{
-		filter->isJunk = -1;
+		filter->isSpam = -1;
+        
+        tm * ltm;
+        time_t tt = time(NULL);
+        ltm = localtime(&tt);
+        char szFileName[1024];
+        sprintf(szFileName, "/var/log/erisemail/MTA-%04d-%02d-%02d.log", 1900 + ltm->tm_year, ltm->tm_mon + 1, ltm->tm_mday);
+        
+        
+        filter->semLog = sem_open("/.erisemail-mta-log.sem", O_CREAT | O_RDWR, 0644, 1);		
+        filter->fLog = fopen(szFileName, "ab+");
+    
 	}
 	
-	tm * ltm;
-	time_t tt = time(NULL);
-	ltm = localtime(&tt);
-	char szFileName[1024];
-	sprintf(szFileName, "/var/log/erisemail/MTA-%04d-%02d-%02d.log", 1900 + ltm->tm_year, ltm->tm_mon + 1, ltm->tm_mday);
 	
-	
-	filter->semLog = sem_open("/.erisemail-mta-log.sem", O_CREAT | O_RDWR, 0644, 1);		
-	filter->fLog = fopen(szFileName, "ab+");
 	
 	return (void*)filter;
 	// End example
@@ -140,9 +143,24 @@ Parameter:
 Return:
 	None
 */
-void mfilter_data(void * filter, const char* buffer, unsigned int len)
+void mfilter_data(void * filter, const char* data, unsigned int len)
 {
 	
+}
+
+/*
+Brief:
+	check the eml file
+Parameter:
+	The handler of the exist filter
+	A zero teminated string to the eml file path
+	The length of path string
+Return:
+	None
+*/
+void mfilter_eml(void * filter, const char* emlpath, unsigned int len)
+{
+    
 }
 
 /*
@@ -150,16 +168,16 @@ Brief:
 	Get the result of filter
 Parameter:
 	The handler of the exist filter
-	The flag whether the mail is a junk mail. -1 is a general mail, other value is junk mail
+	The flag whether the mail is a spam mail. -1 is a general mail, other value is spam mail
 Return:
 	None
 */
-void mfilter_result(void * filter, int* isjunk)
+void mfilter_result(void * filter, int* isspam)
 {
 	///////////////////////////////////////////////////////////////
 	// Example codes
 	
-	*isjunk = -1;
+	*isspam = -1;
 	
 	// End example
 	///////////////////////////////////////////////////////////////
@@ -180,10 +198,10 @@ void mfilter_exit(void * filter)
 	// Example codes
 	MailFilter * tfilter = (MailFilter *)filter;
 
-	if(tfilter->fLog)
+	if(tfilter && tfilter->fLog)
 		fclose(tfilter->fLog);
 
-	if(tfilter->semLog)
+	if(tfilter && tfilter->semLog)
 		sem_close(tfilter->semLog);
 		
 	delete filter;

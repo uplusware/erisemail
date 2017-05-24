@@ -31,6 +31,8 @@ test -x /etc/erisemail || mkdir /etc/erisemail
 test -x /var/erisemail || mkdir /var/erisemail
 test -x /var/erisemail/html || mkdir /var/erisemail/html
 test -x /var/erisemail/cert || mkdir /var/erisemail/cert
+test -x /var/erisemail/cert/client || mkdir /var/erisemail/cert/client
+test -x /var/erisemail/cert/client/smtp.fake.demo || mkdir /var/erisemail/cert/client/smtp.fake.demo
 test -x /var/erisemail/private || mkdir /var/erisemail/private
 test -x /var/erisemail/private/eml || mkdir /var/erisemail/private/eml
 test -x /var/erisemail/private/tmp || mkdir /var/erisemail/private/tmp
@@ -77,14 +79,14 @@ chmod a-x /etc/erisemail/mfilter.xml
 if uname -o | grep -i cygwin;
 then
   cp -f ${path}/liberisestorage.so /usr/bin/liberisestorage.so
-  cp -f ${path}/liberiseantijunk.so /usr/bin/liberiseantijunk.so
+  cp -f ${path}/liberiseantispam.so /usr/bin/liberiseantispam.so
 else
   if [ -x /usr/lib ]; then 
     cp -f ${path}/liberisestorage.so /usr/lib/liberisestorage.so
-    cp -f ${path}/liberiseantijunk.so /usr/lib/liberiseantijunk.so
+    cp -f ${path}/liberiseantispam.so /usr/lib/liberiseantispam.so
   elif [ -x /usr/lib64 ]; then
     cp -f ${path}/liberisestorage.so /usr/lib64/liberisestorage.so
-    cp -f ${path}/liberiseantijunk.so /usr/lib64/liberiseantijunk.so
+    cp -f ${path}/liberiseantispam.so /usr/lib64/liberiseantispam.so
   else
     exit -1
   fi

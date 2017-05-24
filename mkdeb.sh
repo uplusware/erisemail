@@ -110,9 +110,9 @@ chmod 700 $3-erisemail-bin-cn-$2-${m}/usr/bin/erisedisableuser
 
 
 cp src/liberisestorage.so $3-erisemail-bin-cn-$2-${m}/usr/lib/liberisestorage.so
-cp src/liberiseantijunk.so $3-erisemail-bin-cn-$2-${m}/usr/lib/liberiseantijunk.so
+cp src/liberiseantispam.so $3-erisemail-bin-cn-$2-${m}/usr/lib/liberiseantispam.so
 chmod 644 $3-erisemail-bin-cn-$2-${m}/usr/lib/liberisestorage.so
-chmod 644 $3-erisemail-bin-cn-$2-${m}/usr/lib/liberiseantijunk.so
+chmod 644 $3-erisemail-bin-cn-$2-${m}/usr/lib/liberiseantispam.so
 
 cp script/erisemail.sh $3-erisemail-bin-cn-$2-${m}/etc/init.d/erisemail
 chmod 700 $3-erisemail-bin-cn-$2-${m}/etc/init.d/erisemail
@@ -219,9 +219,9 @@ chmod 700 $3-erisemail-bin-en-$2-${m}/usr/bin/erisedisableuser
 
 
 cp src/liberisestorage.so $3-erisemail-bin-en-$2-${m}/usr/lib/liberisestorage.so
-cp src/liberiseantijunk.so $3-erisemail-bin-en-$2-${m}/usr/lib/liberiseantijunk.so
+cp src/liberiseantispam.so $3-erisemail-bin-en-$2-${m}/usr/lib/liberiseantispam.so
 chmod 644 $3-erisemail-bin-en-$2-${m}/usr/lib/liberisestorage.so
-chmod 644 $3-erisemail-bin-en-$2-${m}/usr/lib/liberiseantijunk.so
+chmod 644 $3-erisemail-bin-en-$2-${m}/usr/lib/liberiseantispam.so
 
 cp script/erisemail.sh $3-erisemail-bin-en-$2-${m}/etc/init.d/erisemail
 chmod 700 $3-erisemail-bin-en-$2-${m}/etc/init.d/erisemail
