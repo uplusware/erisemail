@@ -10,11 +10,11 @@
 Brief:
 	Initiate the mfilter, invoked by MTA in a new session beginning
 Parameter:
-	None
+	Parameter string for this filter
 Return:
 	Return a filter's handler
 */
-void* mfilter_init()
+void* mfilter_init(const char* param)
 {
 	///////////////////////////////////////////////////////////////
 	// Example codes
@@ -22,21 +22,11 @@ void* mfilter_init()
 	if(filter)
 	{
 		filter->isSpam = -1;
-        
-        tm * ltm;
-        time_t tt = time(NULL);
-        ltm = localtime(&tt);
-        char szFileName[1024];
-        sprintf(szFileName, "/var/log/erisemail/MTA-%04d-%02d-%02d.log", 1900 + ltm->tm_year, ltm->tm_mon + 1, ltm->tm_mday);
-        
-        
-        filter->semLog = sem_open("/.erisemail-mta-log.sem", O_CREAT | O_RDWR, 0644, 1);		
-        filter->fLog = fopen(szFileName, "ab+");
+        filter->isVirs = -1;
+        filter->param = param;
     
 	}
-	
-	
-	
+
 	return (void*)filter;
 	// End example
 	///////////////////////////////////////////////////////////////

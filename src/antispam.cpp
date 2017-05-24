@@ -5,23 +5,15 @@
 #include <stdio.h>
 #include "antispam.h"
 
-void* mfilter_init()
+void* mfilter_init(const char* param)
 {
     //TODO:
 	MailFilter * filter = new MailFilter;
 	if(filter)
 	{
 		filter->isSpam = -1;
-        
-        tm * ltm;
-        time_t tt = time(NULL);
-        ltm = localtime(&tt);
-        char szFileName[1024];
-        sprintf(szFileName, "/var/log/erisemail/MTA-%04d-%02d-%02d.log", 1900 + ltm->tm_year, ltm->tm_mon + 1, ltm->tm_mday);
-        
-        filter->semLog = sem_open("/.erisemail-mta-log.sem", O_CREAT | O_RDWR, 0644, 1);		
-        filter->fLog = fopen(szFileName, "ab+");
-    
+        filter->isVirs = -1;
+        filter->param = param;
 	}
 
 
@@ -37,20 +29,6 @@ void mfilter_emaildomain(void* filter, const char* domain, unsigned int len)
 void mfilter_clientip(void* filter, const char* ip, unsigned int len)
 {
     //TODO:
-	MailFilter * tfilter = (MailFilter *)filter;
-
-	if(tfilter->semLog != SEM_FAILED && tfilter->fLog)
-	{
-		sem_wait(tfilter->semLog);
-
-		tm * ltm;
-		time_t tt = time(NULL);
-		ltm = localtime(&tt);
-		fprintf(tfilter->fLog, "[%04d-%02d-%02d %02d:%02d:%02d]: %s\r\n", 1900 + ltm->tm_year, ltm->tm_mon + 1, ltm->tm_mday,
-            ltm->tm_hour, ltm->tm_min, ltm->tm_sec, ip);
-		fflush(tfilter->fLog);
-		sem_post(tfilter->semLog);
-	}
 }
 
 void mfilter_clientdomain(void * filter, const char* domain, unsigned int len)
@@ -75,6 +53,8 @@ void mfilter_data(void * filter, const char* data, unsigned int len)
 
 void mfilter_eml(void * filter, const char* emlpath, unsigned int len)
 {
+    MailFilter * tfilter = (MailFilter *)filter;
+    
     float scope = 0.0;
     float threshold = 0.0;
     char result_buf[4096], command[4096];
@@ -83,7 +63,7 @@ void mfilter_eml(void * filter, const char* emlpath, unsigned int len)
     FILE *fp;
     
     //checking via SpamAssassin
-    snprintf(command, sizeof(command), "test spamc && spamc -c -t 5 < %s", emlpath);
+    snprintf(command, sizeof(command), "test spamc && spamc -c %s < %s", tfilter ? tfilter->param : "-t 5", emlpath);
 
     fp = popen(command, "r");
     
@@ -101,7 +81,6 @@ void mfilter_eml(void * filter, const char* emlpath, unsigned int len)
     
     if(threshold != 0.0 && scope <= threshold)
     {
-        MailFilter * tfilter = (MailFilter *)filter;
         if(tfilter)
             tfilter->isSpam = 1;
     }
@@ -117,12 +96,6 @@ void mfilter_result(void * filter, int* isspam)
 void mfilter_exit(void * filter)
 {
     //TODO:
-	MailFilter * tfilter = (MailFilter *)filter;
-	if(tfilter && tfilter->fLog)
-		fclose(tfilter->fLog);
-
-	if(tfilter && tfilter->semLog != SEM_FAILED)
-		sem_close(tfilter->semLog);
 		
 	delete filter;
 }

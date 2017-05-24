@@ -23,8 +23,7 @@ typedef struct
 {
 	int isSpam;
 	int isVirs;
-	FILE * fLog;
-	sem_t* semLog;
+	string param;
 } MailFilter;
 
 #ifdef __cplusplus
@@ -32,7 +31,7 @@ extern "C"
 {
 #endif /* __cplusplus__ */
 
-	void* mfilter_init();
+	void* mfilter_init(const char* param);
 
 	void mfilter_emaildomain(void* filter, const char* domain, unsigned int len);
 

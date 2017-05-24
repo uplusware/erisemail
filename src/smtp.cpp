@@ -97,12 +97,12 @@ CMailSmtp::CMailSmtp(int sockfd, SSL * ssl, SSL_CTX * ssl_ctx, const char* clien
 						mfilter.action = jaTag;
 					}
 					
-					void* (*mfilter_init)();
-					mfilter_init = (void*(*)())dlsym(mfilter.lhandle, "mfilter_init");
+					void* (*mfilter_init)(const char*);
+					mfilter_init = (void*(*)(const char*))dlsym(mfilter.lhandle, "mfilter_init");
 					const char* errmsg;
 					if((errmsg = dlerror()) == NULL)
 					{
-						mfilter.dhandle = mfilter_init();
+						mfilter.dhandle = mfilter_init(pChildNode->ToElement()->Attribute("param") ? pChildNode->ToElement()->Attribute("param") : "");
 						m_filterHandle.push_back(mfilter);
 					}
 					else
