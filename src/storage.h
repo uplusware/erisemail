@@ -171,7 +171,8 @@ public:
 	int Ping();
 	
 	void KeepLive();
-	
+	int Query(const char *stmt_str, unsigned long length);
+    
 	int Install(const char* database);
 	int Uninstall(const char* database);
 	

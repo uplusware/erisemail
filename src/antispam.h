@@ -23,8 +23,8 @@ using namespace std;
 
 typedef struct
 {
-	int isSpam;
-	int isVirs;
+	int is_spam;
+	int is_virs;
     string param;
 } MailFilter;
 
@@ -49,7 +49,7 @@ extern "C"
     
     void mfilter_eml(void * filter, const char* emlpath, unsigned int len);
     
-	void mfilter_result(void * filter, int* isspam);
+	void mfilter_result(void * filter, int* is_spam);
 
 	void mfilter_exit(void * filter);
 

@@ -1478,47 +1478,84 @@ void CMailSmtp::On_Finish_Data_Handler()
 	int isSpam = -1;
 	SpamAction action = jaTag;
 	
-    for(int x = 0; x < m_filterHandle.size(); x++)
-	{
-        void (*mfilter_eml) (void*, const char*, unsigned int);
-		mfilter_eml = (void (*)(void*, const char*, unsigned int))dlsym(m_filterHandle[x].lhandle, "mfilter_eml");
-        const char* errmsg;
-        if((errmsg = dlerror()) == NULL && m_letter_obj_vector.size() > 0)
-        {
-            mfilter_eml(m_filterHandle[x].dhandle, m_letter_obj_vector[0]->letter->GetEmlFullPath(), strlen(m_letter_obj_vector[0]->letter->GetEmlFullPath()));
-        }
-        else
-        {
-            fprintf(stderr, "%s\n", errmsg);
-        }
-    }
-	for(int x = 0; x < m_filterHandle.size(); x++)
-	{
-		if(m_filterHandle[x].lhandle)
-		{
-			void (*mfilter_result) (void*, int*);
-			mfilter_result = (void (*)(void*, int*))dlsym(m_filterHandle[x].lhandle, "mfilter_result");
-			const char* errmsg;
-			if((errmsg = dlerror()) == NULL)
-			{
-				mfilter_result(m_filterHandle[x].dhandle, &isSpam);
-				if(isSpam != -1)
-				{
-					action = m_filterHandle[x].action;
-					break;
-				}
-			}
-			else
-			{
-				fprintf(stderr, "%s\n", errmsg);
-			}
-		}
-	}
-	
 	int vlen = m_letter_obj_vector.size();
 	for(int x = 0; x < vlen; x++)
 	{
-		if(isSpam != -1 && m_letter_obj_vector[x]->letter_info.mail_type == mtLocal)
+        Level_Info linfo;
+        linfo.attachsizethreshold = 5000*1024;
+        linfo.boxmaxsize = 5000*1024*1024*1024;
+        linfo.enableaudit = eaFalse;
+        linfo.ldefault = ldFalse;
+        linfo.mailmaxsize = 5000*1024;
+        linfo.mailsizethreshold = 5000*1024;
+        
+        if(mailStg->GetUserLevel(m_username.c_str(), linfo) == -1)
+        {
+            mailStg->GetDefaultLevel(linfo);
+        }
+
+        unsigned long mail_sumsize = m_letter_obj_vector[x]->letter->GetSize();
+        
+        if(m_letter_obj_vector[x]->letter_info.mail_type == mtExtern && linfo.enableaudit == eaTrue)
+        {
+            m_letter_obj_vector[x]->letter->Flush();
+            
+            unsigned long attach_count, attach_sumsize;
+            m_letter_obj_vector[x]->letter->GetAttachSummary(attach_count, attach_sumsize);
+            
+            if(mail_sumsize >= linfo.mailsizethreshold|| attach_sumsize >= linfo.attachsizethreshold)
+            {
+                m_letter_obj_vector[x]->letter_info.mail_status |= MSG_ATTR_UNAUDITED;
+            }
+        }
+        
+        if(mail_sumsize > 0)
+        {
+            m_letter_obj_vector[x]->letter->SetOK();
+        }
+        
+		m_letter_obj_vector[x]->letter->Close();
+        
+        if(x == 0) /* only check the first mail since all mail body is same */
+        {
+            for(int y = 0; y < m_filterHandle.size(); y++)
+            {
+                if(m_filterHandle[y].lhandle)
+                {
+                    void (*mfilter_eml) (void*, const char*, unsigned int);
+                    mfilter_eml = (void (*)(void*, const char*, unsigned int))dlsym(m_filterHandle[y].lhandle, "mfilter_eml");
+                    const char* errmsg;
+                    if((errmsg = dlerror()) == NULL && m_letter_obj_vector.size() > 0)
+                    {
+                        mfilter_eml(m_filterHandle[y].dhandle, m_letter_obj_vector[x]->letter->GetEmlFullPath(),
+                            strlen(m_letter_obj_vector[x]->letter->GetEmlFullPath()));
+                    }
+                    else
+                    {
+                        fprintf(stderr, "mfilter_eml: %s\n", errmsg);
+                    }
+                    
+                    void (*mfilter_result) (void*, int*);
+                    mfilter_result = (void (*)(void*, int*))dlsym(m_filterHandle[y].lhandle, "mfilter_result");
+                    if((errmsg = dlerror()) == NULL)
+                    {
+                        mfilter_result(m_filterHandle[y].dhandle, &isSpam);
+                        if(isSpam != -1)
+                        {
+                            action = m_filterHandle[y].action;
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        fprintf(stderr, "mfilter_result: %s\n", errmsg);
+                    }
+            
+                }
+            }
+        }
+        
+        if(isSpam != -1 && m_letter_obj_vector[x]->letter_info.mail_type == mtLocal)
 		{
 			if(action == jaTag)
 			{
@@ -1528,51 +1565,11 @@ void CMailSmtp::On_Finish_Data_Handler()
 				
 				mailStg->GetJunkID(rcpttoid.c_str(), DirID);
 				
-				unsigned long mail_sumsize = m_letter_obj_vector[x]->letter->GetSize();
-				m_letter_obj_vector[x]->letter_info.mail_dirid = DirID;
-				if(mail_sumsize > 0)
-				{
-					m_letter_obj_vector[x]->letter->SetOK();
-				}
+				m_letter_obj_vector[x]->letter_info.mail_dirid = DirID; //move to junk folder
 			}
 		}
-		else
-		{
-			Level_Info linfo;
-			linfo.attachsizethreshold = 5000*1024;
-			linfo.boxmaxsize = 5000*1024*1024*1024;
-			linfo.enableaudit = eaFalse;
-			linfo.ldefault = ldFalse;
-			linfo.mailmaxsize = 5000*1024;
-			linfo.mailsizethreshold = 5000*1024;
-			
-			if(mailStg->GetUserLevel(m_username.c_str(), linfo) == -1)
-			{
-				mailStg->GetDefaultLevel(linfo);
-			}
 
-			unsigned long mail_sumsize = m_letter_obj_vector[x]->letter->GetSize();
-			
-			if(m_letter_obj_vector[x]->letter_info.mail_type == mtExtern && linfo.enableaudit == eaTrue)
-			{
-				m_letter_obj_vector[x]->letter->Flush();
-				
-				unsigned long attach_count, attach_sumsize;
-				m_letter_obj_vector[x]->letter->GetAttachSummary(attach_count, attach_sumsize);
-				
-				if(mail_sumsize >= linfo.mailsizethreshold|| attach_sumsize >= linfo.attachsizethreshold)
-				{
-					m_letter_obj_vector[x]->letter_info.mail_status |= MSG_ATTR_UNAUDITED;
-				}
-			}
-			
-			if(mail_sumsize > 0)
-			{
-				m_letter_obj_vector[x]->letter->SetOK();
-			}
-		}
-		m_letter_obj_vector[x]->letter->Close();
-		if(m_letter_obj_vector[x]->letter->isOK())
+		if(action != jaDrop && m_letter_obj_vector[x]->letter->isOK())
 		{
 			mailStg->InsertMailIndex(m_letter_obj_vector[x]->letter_info.mail_from.c_str(), m_letter_obj_vector[x]->letter_info.mail_to.c_str(), 
 						m_letter_obj_vector[x]->letter_info.mail_time,

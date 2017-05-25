@@ -11,13 +11,11 @@ void* mfilter_init(const char* param)
 	MailFilter * filter = new MailFilter;
 	if(filter)
 	{
-		filter->isSpam = -1;
-        filter->isVirs = -1;
+		filter->is_spam = -1;
+        filter->is_virs = -1;
         filter->param = param;
 	}
 
-
-	
 	return (void*)filter;
 }
 
@@ -55,17 +53,14 @@ void mfilter_eml(void * filter, const char* emlpath, unsigned int len)
 {
     MailFilter * tfilter = (MailFilter *)filter;
     
-    float scope = 0.0;
+    float score = 0.0;
     float threshold = 0.0;
-    char result_buf[4096], command[4096];
+    char result_buf[1024], command[4096];
 
-    int rc = 0;
-    FILE *fp;
-    
     //checking via SpamAssassin
-    snprintf(command, sizeof(command), "test spamc && spamc -c %s < %s", tfilter ? tfilter->param : "-t 5", emlpath);
+    snprintf(command, sizeof(command), "test spamc && spamc -c %s < %s", tfilter ? (tfilter->param.c_str()) : "-t 5", emlpath);
 
-    fp = popen(command, "r");
+    FILE * fp = popen(command, "r");
     
     while(fp && fgets(result_buf, sizeof(result_buf), fp) != NULL)
     {
@@ -73,30 +68,33 @@ void mfilter_eml(void * filter, const char* emlpath, unsigned int len)
         {
             result_buf[strlen(result_buf) - 1] = '\0';
         }
-        sscanf(result_buf, "%f/%f", &scope, &threshold);
+        sscanf(result_buf, "%f/%f", &score, &threshold);
         break;
     }
+    printf("%s / %s [%f %f]\n", command, result_buf, score, threshold);
+    
     if(fp)
         pclose(fp);
     
-    if(threshold != 0.0 && scope <= threshold)
+    if(tfilter && threshold != 0.0 && score <= threshold)
     {
-        if(tfilter)
-            tfilter->isSpam = 1;
+        tfilter->is_spam = 1;
     }
 }
 
-void mfilter_result(void * filter, int* isspam)
+void mfilter_result(void * filter, int* is_spam)
 {
     MailFilter * tfilter = (MailFilter *)filter;
     if(tfilter)
-        *isspam = tfilter->isSpam;
+        *is_spam = tfilter->is_spam;
+    else
+        *is_spam = -1;
 }
 
 void mfilter_exit(void * filter)
 {
     //TODO:
-		
-	delete filter;
+	if(filter)
+        delete filter;
 }
 

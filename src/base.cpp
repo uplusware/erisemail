@@ -68,7 +68,7 @@ string CMailBase::m_ca_password = "";
 string   CMailBase::m_krb5_ktname = "/etc/erisemail/krb5.keytab";
 
 string CMailBase::m_db_host = "localhost";
-unsigned short  CMailBase::m_db_port = 0;
+unsigned short  CMailBase::m_db_port = 3306;
 string CMailBase::m_db_name = "erisemail_db";
 string CMailBase::m_db_username = "root";
 string CMailBase::m_db_password = "";

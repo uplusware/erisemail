@@ -21,8 +21,8 @@ void* mfilter_init(const char* param)
 	MailFilter * filter = new MailFilter;
 	if(filter)
 	{
-		filter->isSpam = -1;
-        filter->isVirs = -1;
+		filter->is_spam = -1;
+        filter->is_virs = -1;
         filter->param = param;
     
 	}
@@ -60,20 +60,9 @@ void mfilter_clientip(void* filter, const char* ip, unsigned int len)
 {
 	///////////////////////////////////////////////////////////////
 	// Example codes
-	MailFilter * tfilter = (MailFilter *)filter;
-
-	if(tfilter->semLog && tfilter->fLog)
-	{
-		sem_wait(tfilter->semLog);
-
-		tm * ltm;
-		time_t tt = time(NULL);
-		ltm = localtime(&tt);
-		fprintf(tfilter->fLog, "[%04d-%02d-%02d %02d:%02d:%02d]: %s\r\n", 1900 + ltm->tm_year, ltm->tm_mon + 1, ltm->tm_mday, ltm->tm_hour, ltm->tm_min, ltm->tm_sec, ip);
-		fflush(tfilter->fLog);
-		sem_post(tfilter->semLog);
-
-	}
+	
+    MailFilter * tfilter = (MailFilter *)filter;
+    
 	// End example
 	///////////////////////////////////////////////////////////////
 }
@@ -162,12 +151,12 @@ Parameter:
 Return:
 	None
 */
-void mfilter_result(void * filter, int* isspam)
+void mfilter_result(void * filter, int* is_spam)
 {
 	///////////////////////////////////////////////////////////////
 	// Example codes
 	
-	*isspam = -1;
+	*is_spam = -1;
 	
 	// End example
 	///////////////////////////////////////////////////////////////
@@ -186,15 +175,9 @@ void mfilter_exit(void * filter)
 {
 	///////////////////////////////////////////////////////////////
 	// Example codes
-	MailFilter * tfilter = (MailFilter *)filter;
-
-	if(tfilter && tfilter->fLog)
-		fclose(tfilter->fLog);
-
-	if(tfilter && tfilter->semLog)
-		sem_close(tfilter->semLog);
 		
 	delete filter;
+    
 	// End example
 	///////////////////////////////////////////////////////////////
 }
