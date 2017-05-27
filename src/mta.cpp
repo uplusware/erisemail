@@ -626,7 +626,7 @@ void MTA::Stop()
 	m_memcached = NULL;
     
     //wake it up when block on POST_NOTIFY
-    sem_t* post_sid = sem_open(".ERISEMAIL_POST_NOTIFY", O_RDWR);
+    sem_t* post_sid = sem_open("/.ERISEMAIL_POST_NOTIFY_lock", O_RDWR);
     if(post_sid != SEM_FAILED)
     { 
         sem_post(post_sid);
@@ -698,7 +698,7 @@ int MTA::Run(int fd)
 		m_mta_qid = mq_open(strqueue.c_str(), O_CREAT|O_RDWR, 0644, &attr);
 		m_mta_sid = sem_open(strsem.c_str(), O_CREAT|O_RDWR, 0644, 1);
 		
-		sem_t * postmail_sid = sem_open(".ERISEMAIL_POST_NOTIFY", O_CREAT|O_RDWR, 0666, 0);
+		sem_t * postmail_sid = sem_open("/.ERISEMAIL_POST_NOTIFY_lock", O_CREAT|O_RDWR, 0666, 0);
 		if((m_mta_qid == (mqd_t)-1) || (m_mta_sid ==  SEM_FAILED) || postmail_sid == SEM_FAILED)
 		{
 			if(m_mta_sid != SEM_FAILED)

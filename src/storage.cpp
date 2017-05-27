@@ -16,19 +16,19 @@
 #define CODE_KEY "qazWSX#$%123"
 #define MYSQL_TIMEOUT 5
 
-static void show_error(MYSQL *mysql, const char* tag = "")
+static void show_error(MYSQL *mysql, const char* sqlcmd, const char* tag = "", BOOL printit = FALSE)
 {
     static char MYSQLERR_LOGNAME[256] = "/var/log/erisemail/mysqlerr.log";
     static char MYSQLERR_LCKNAME[256] = "/.ERISEMAIL_MYSQLERR.LOG";
-    if(!CMailBase::m_close_stderr)   
+    if(!CMailBase::m_close_stderr || printit)   
     {
-        fprintf(stderr, "%sMySQL error(%d) [%s] \"%s\"\n", tag, mysql_errno(mysql), mysql_sqlstate(mysql), mysql_error(mysql));
+        fprintf(stderr, "%sMySQL error(%d) [%s] \"%s\" <%s>\n", tag, mysql_errno(mysql), mysql_sqlstate(mysql), mysql_error(mysql), sqlcmd);
     }
     else
     {
         CUplusTrace uTrace(MYSQLERR_LOGNAME, MYSQLERR_LCKNAME);
     
-        uTrace.Write(Trace_Error, "MySQL error(%d) [%s] \"%s\"", mysql_errno(mysql), mysql_sqlstate(mysql), mysql_error(mysql));
+        uTrace.Write(Trace_Error, "%sMySQL error(%d) [%s] \"%s\" <$s>", tag, mysql_errno(mysql), mysql_sqlstate(mysql), mysql_error(mysql), sqlcmd);
     }
 }
 
@@ -116,7 +116,7 @@ int MailStorage::Connect(const char * host, const char* username, const char* pa
     }
     else
     {
-        show_error(&m_hMySQL, "<mysql_real_connect>:");
+        show_error(&m_hMySQL, "CONNECT", "Connect: ");
         return -1;	
     }
 }
@@ -188,14 +188,14 @@ int MailStorage::Install(const char* database)
     
     if( Query(sqlcmd, strlen(sqlcmd)) != 0)
 	{
-		show_error(&m_hMySQL);
+		show_error(&m_hMySQL, sqlcmd, "Install: ", TRUE);
 		return -1;
 	}
 
 	sprintf(sqlcmd, "USE %s", database);
 	if( Query(sqlcmd, strlen(sqlcmd)) != 0)
 	{
-		show_error(&m_hMySQL);
+		show_error(&m_hMySQL, sqlcmd, "Install: ", TRUE);
 		return -1;
 	}
     	
@@ -214,7 +214,11 @@ int MailStorage::Install(const char* database)
 		"`ltime` INT UNSIGNED NOT NULL DEFAULT '0' ,"
 		"PRIMARY KEY ( `lid` ) ) ENGINE = MyISAM",
 		database);
-	Query(sqlcmd, strlen(sqlcmd));
+	if( Query(sqlcmd, strlen(sqlcmd)) != 0)
+	{
+		show_error(&m_hMySQL, sqlcmd, "Install: ", TRUE);
+		return -1;
+	}
 
 	//Create dir table
 	sprintf(sqlcmd, 
@@ -228,7 +232,11 @@ int MailStorage::Install(const char* database)
 		"`dtime` INT UNSIGNED NOT NULL DEFAULT '0' ,"
 		"PRIMARY KEY ( `did` ) ) ENGINE = MyISAM",
 		database);
-	Query(sqlcmd, strlen(sqlcmd));
+	if( Query(sqlcmd, strlen(sqlcmd)) != 0)
+	{
+		show_error(&m_hMySQL, sqlcmd, "Install: ", TRUE);
+		return -1;
+	}
 		
 	//Crate User table
 	sprintf(sqlcmd,
@@ -245,7 +253,11 @@ int MailStorage::Install(const char* database)
 		"`utime` INT UNSIGNED NOT NULL DEFAULT '0' ,"
 		"PRIMARY KEY ( `uid` ) ) ENGINE = MyISAM",
 		database, MAX_EMAIL_LEN);
-	Query(sqlcmd, strlen(sqlcmd));
+	if( Query(sqlcmd, strlen(sqlcmd)) != 0)
+	{
+		show_error(&m_hMySQL, sqlcmd, "Install: ", TRUE);
+		return -1;
+	}
 			
 	//Create group table
 	sprintf(sqlcmd,
@@ -256,7 +268,11 @@ int MailStorage::Install(const char* database)
 		"`gtime` INT UNSIGNED NOT NULL DEFAULT '0' ,"
 		"PRIMARY KEY ( `gid` ) ) ENGINE = MyISAM",
 		database);
-	Query(sqlcmd, strlen(sqlcmd));
+	if( Query(sqlcmd, strlen(sqlcmd)) != 0)
+	{
+		show_error(&m_hMySQL, sqlcmd, "Install: ", TRUE);
+		return -1;
+	}
 			
 	//Create mail table
 	sprintf(sqlcmd, 
@@ -273,7 +289,11 @@ int MailStorage::Install(const char* database)
 		"`mdirid` INT NOT NULL DEFAULT -1 ,"
 		"PRIMARY KEY ( `mid` ) ) ENGINE = MyISAM", 
 		database);
-	Query(sqlcmd, strlen(sqlcmd));
+	if( Query(sqlcmd, strlen(sqlcmd)) != 0)
+	{
+		show_error(&m_hMySQL, sqlcmd, "Install: ", TRUE);
+		return -1;
+	}
 	
     //Create extern mail table
 	sprintf(sqlcmd, 
@@ -292,7 +312,11 @@ int MailStorage::Install(const char* database)
 		"`next_fwd_time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,"
 		"PRIMARY KEY ( `mid` ) ) ENGINE = MyISAM", 
 		database);
-	Query(sqlcmd, strlen(sqlcmd));
+	if( Query(sqlcmd, strlen(sqlcmd)) != 0)
+	{
+		show_error(&m_hMySQL, sqlcmd, "Install: ", TRUE);
+		return -1;
+	}
     
     //Create mail body table
 	sprintf(sqlcmd, 
@@ -302,7 +326,11 @@ int MailStorage::Install(const char* database)
 		"`mfragment` LONGTEXT NOT NULL ,"
 		"PRIMARY KEY ( `mid` ) ) ENGINE = MyISAM",
 		database);
-    Query(sqlcmd, strlen(sqlcmd));
+    if( Query(sqlcmd, strlen(sqlcmd)) != 0)
+	{
+		show_error(&m_hMySQL, sqlcmd, "Install: ", TRUE);
+		return -1;
+	}
     
     //Create MTA list table
 	sprintf(sqlcmd, 
@@ -312,30 +340,9 @@ int MailStorage::Install(const char* database)
 		"`active_time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,"
 		"PRIMARY KEY ( `mid` ) ) ENGINE = MyISAM",
 		database);
-    Query(sqlcmd, strlen(sqlcmd));
-#ifdef _MYSQL_TRIGGER_    
-	sprintf(sqlcmd, "DROP FUNCTION IF EXISTS post_notify");
-	Query(sqlcmd, strlen(sqlcmd));
-	
-	sprintf(sqlcmd, "CREATE FUNCTION post_notify RETURNS STRING SONAME \"postudf.so\"");
-	Query(sqlcmd, strlen(sqlcmd));
-	
-	sprintf(sqlcmd, "DROP TRIGGER IF EXISTS postmail_notify_insert");
-	Query(sqlcmd, strlen(sqlcmd));
-	
-	sprintf(sqlcmd, "DROP TRIGGER IF EXISTS postmail_notify_update");
-	Query(sqlcmd, strlen(sqlcmd));
-	
-	sprintf(sqlcmd, "CREATE TRIGGER postmail_notify_insert AFTER INSERT ON extmailtbl FOR EACH ROW BEGIN SET @rs = post_notify(); END");
-	Query(sqlcmd, strlen(sqlcmd));
-	
-	sprintf(sqlcmd, "CREATE TRIGGER postmail_notify_update AFTER UPDATE ON extmailtbl FOR EACH ROW BEGIN SET @rs = post_notify(); END");
-	Query(sqlcmd, strlen(sqlcmd));
-#endif /* _MYSQL_TRIGGER_ */	
-    sprintf(sqlcmd, "USE %s", database);
-	if( Query(sqlcmd, strlen(sqlcmd)) != 0)
+    if( Query(sqlcmd, strlen(sqlcmd)) != 0)
 	{
-		show_error(&m_hMySQL);
+		show_error(&m_hMySQL, sqlcmd, "Install: ", TRUE);
 		return -1;
 	}
     
@@ -355,6 +362,49 @@ int MailStorage::Install(const char* database)
         printf("Add admin id wrong\n");
 		return -1;
 	}
+    
+	sprintf(sqlcmd, "DROP FUNCTION IF EXISTS post_notify");
+	if( Query(sqlcmd, strlen(sqlcmd)) != 0)
+	{
+		show_error(&m_hMySQL, sqlcmd, "Install: ", TRUE);
+		return -1;
+	}
+	
+	sprintf(sqlcmd, "CREATE FUNCTION post_notify RETURNS STRING SONAME \"postudf.so\"");
+	if( Query(sqlcmd, strlen(sqlcmd)) != 0)
+	{
+		show_error(&m_hMySQL, sqlcmd, "Install: ", TRUE);
+		return -1;
+	}
+	
+	sprintf(sqlcmd, "DROP TRIGGER IF EXISTS postmail_notify_insert");
+	if( Query(sqlcmd, strlen(sqlcmd)) != 0)
+	{
+		show_error(&m_hMySQL, sqlcmd, "Install: ", TRUE);
+		return -1;
+	}
+	
+	sprintf(sqlcmd, "DROP TRIGGER IF EXISTS postmail_notify_update");
+	if( Query(sqlcmd, strlen(sqlcmd)) != 0)
+	{
+		show_error(&m_hMySQL, sqlcmd, "Install: ", TRUE);
+		return -1;
+	}
+	
+	sprintf(sqlcmd, "CREATE TRIGGER postmail_notify_insert AFTER INSERT ON extmailtbl FOR EACH ROW BEGIN SET @rs = post_notify(); END");
+	if( Query(sqlcmd, strlen(sqlcmd)) != 0)
+	{
+		show_error(&m_hMySQL, sqlcmd, "Install: ", TRUE);
+		return -1;
+	}
+	
+	sprintf(sqlcmd, "CREATE TRIGGER postmail_notify_update AFTER UPDATE ON extmailtbl FOR EACH ROW BEGIN SET @rs = post_notify(); END");
+	if( Query(sqlcmd, strlen(sqlcmd)) != 0)
+	{
+		show_error(&m_hMySQL, sqlcmd, "Install: ", TRUE);
+		return -1;
+	}
+
 	return 0;
         
 }
@@ -376,7 +426,7 @@ int MailStorage::SetMailSize(unsigned int mid, unsigned int msize)
 	sprintf(sqlcmd,"UPDATE mailtbl SET msize=%d WHERE mid=%d", msize, mid);
 	if( Query(sqlcmd, strlen(sqlcmd)) != 0)
 	{
-		show_error(&m_hMySQL);
+		show_error(&m_hMySQL, sqlcmd);
 		return -1;
 	}
 	return 0;
@@ -415,7 +465,7 @@ int MailStorage::CheckAdmin(const char* username, const char* password)
 	}
 	else
 	{
-		show_error(&m_hMySQL);
+		show_error(&m_hMySQL, sqlcmd);
 		return -1;
 	}
 }
@@ -466,7 +516,7 @@ int MailStorage::CheckLogin(const char* username, const char* password)
         }
         else
         {
-            show_error(&m_hMySQL);
+            show_error(&m_hMySQL, sqlcmd);
             pthread_rwlock_unlock(&m_userpwd_cache_lock);
             return -1;
         }
@@ -529,7 +579,7 @@ int MailStorage::GetPassword(const char* username, string& password)
 	else
 	{
 	    
-		show_error(&m_hMySQL);
+		show_error(&m_hMySQL, sqlcmd);
 		return -1;
 	}
 }
@@ -565,7 +615,7 @@ int MailStorage::VerifyUser(const char* username)
 	}
 	else
 	{
-	    show_error(&m_hMySQL);
+	    show_error(&m_hMySQL, sqlcmd);
 		return -1;
 	}
 }
@@ -598,7 +648,7 @@ int MailStorage::VerifyGroup(const char* groupname)
 	}
 	else
 	{
-	    show_error(&m_hMySQL);
+	    show_error(&m_hMySQL, sqlcmd);
 		return -1;
 	}
 }
@@ -635,7 +685,7 @@ int MailStorage::AddLevel(const char* lname, const char* ldescription, unsigned 
 	}
 	else
 	{
-	    show_error(&m_hMySQL);
+	    show_error(&m_hMySQL, sqlcmd);
 		return -1;
 	}
 }
@@ -664,7 +714,7 @@ int MailStorage::UpdateLevel(unsigned int lid, const char* lname, const char* ld
 	}
 	else
 	{
-		show_error(&m_hMySQL);
+		show_error(&m_hMySQL, sqlcmd);
 		return -1;
 	}
 }
@@ -678,14 +728,14 @@ int MailStorage::DelLevel(unsigned int lid)
 	sprintf(sqlcmd, "UPDATE usertbl SET ulevel=%d WHERE ulevel=%d", defaultLid, lid);
 	if( Query(sqlcmd, strlen(sqlcmd)) != 0)
 	{	
-		show_error(&m_hMySQL);
+		show_error(&m_hMySQL, sqlcmd);
 		return -1;
 	}
 	
 	sprintf(sqlcmd, "delete FROM leveltbl WHERE lid=%d AND ldefault <> %d", lid, ldTrue);
 	if( Query(sqlcmd, strlen(sqlcmd)) != 0)
 	{
-		show_error(&m_hMySQL);
+		show_error(&m_hMySQL, sqlcmd);
 		return -1;
 	}
 	return 0;
@@ -698,14 +748,14 @@ int MailStorage::SetDefaultLevel(unsigned int lid)
 	sprintf(sqlcmd, "UPDATE leveltbl SET ldefault = %d WHERE ldefault = %d", ldFalse, ldTrue);
 	if( Query(sqlcmd, strlen(sqlcmd)) != 0)
 	{
-        show_error(&m_hMySQL);
+        show_error(&m_hMySQL, sqlcmd);
 		return -1;
 	}
 	
 	sprintf(sqlcmd, "UPDATE leveltbl SET ldefault = %d WHERE lid = %d", ldTrue, lid);
 	if( Query(sqlcmd, strlen(sqlcmd)) != 0)
 	{
-        show_error(&m_hMySQL);
+        show_error(&m_hMySQL, sqlcmd);
 		return -1;
 	}
 	return 0;
@@ -738,7 +788,7 @@ int MailStorage::SetUserLevel(const char* username, int lid)
 	}
 	else
     {
-        show_error(&m_hMySQL);
+        show_error(&m_hMySQL, sqlcmd);
 		return -1;
     }
 }
@@ -765,7 +815,7 @@ int MailStorage::GetDefaultLevel(int& lid)
 			}
 			else
 			{
-				show_error(&m_hMySQL);
+				show_error(&m_hMySQL, sqlcmd);
 				mysql_free_result(query_result);
 				return -1;
 			}
@@ -775,13 +825,13 @@ int MailStorage::GetDefaultLevel(int& lid)
 		}
 		else
 		{
-			show_error(&m_hMySQL);
+			show_error(&m_hMySQL, sqlcmd);
 			return -1;
 		}
 	}
 	else
 	{
-	    show_error(&m_hMySQL);
+	    show_error(&m_hMySQL, sqlcmd);
 		return -1;
 	}
 }
@@ -831,7 +881,7 @@ int MailStorage::GetDefaultLevel(Level_Info& liinfo)
 	}
 	else
 	{
-	    show_error(&m_hMySQL);
+	    show_error(&m_hMySQL, sqlcmd);
 		return -1;
 	}
 }
@@ -879,7 +929,7 @@ int MailStorage::ListLevel(vector<Level_Info>& litbl)
 	}
 	else
 	{
-		show_error(&m_hMySQL);
+		show_error(&m_hMySQL, sqlcmd);
 		return -1;
 	}
 		
@@ -937,7 +987,7 @@ int MailStorage::GetLevel(int lid, Level_Info& linfo)
 	else
 	{
 	    
-		show_error(&m_hMySQL);
+		show_error(&m_hMySQL, sqlcmd);
 		return -1;
 	}
 		
@@ -1085,7 +1135,7 @@ int MailStorage::UpdateID(const char* username, const char* alias, UserStatus st
 	}
 	else
     {
-        show_error(&m_hMySQL);
+        show_error(&m_hMySQL, sqlcmd);
 		return -1;
     }
 }
@@ -1114,7 +1164,7 @@ int MailStorage::DelAllMailOfDir(int mdirid)
 	else
 	{
 	    
-		show_error(&m_hMySQL);
+		show_error(&m_hMySQL, sqlcmd);
 		return -1;
 	}
 }
@@ -1143,14 +1193,14 @@ int MailStorage::DelAllMailOfID(const char* username)
 		}
 		else
 		{
-			show_error(&m_hMySQL);
+			show_error(&m_hMySQL, sqlcmd);
 			return -1;
 		}
 		return 0;
 	}
 	else
 	{
-	    show_error(&m_hMySQL);
+	    show_error(&m_hMySQL, sqlcmd);
 		return -1;	
 	}
 }
@@ -1171,7 +1221,7 @@ int MailStorage::DelID(const char* username)
 			sprintf(sqlcmd, "delete FROM grouptbl WHERE groupname='%s'", strSafetyUsername.c_str());
 			if( Query(sqlcmd, strlen(sqlcmd)) != 0)
 			{
-				show_error(&m_hMySQL);
+				show_error(&m_hMySQL, sqlcmd);
 				return -1;
 			}	
 		}
@@ -1180,7 +1230,7 @@ int MailStorage::DelID(const char* username)
 			sprintf(sqlcmd, "delete FROM grouptbl WHERE membername='%s'", strSafetyUsername.c_str());
 			if( Query(sqlcmd, strlen(sqlcmd)) != 0)
 			{
-				show_error(&m_hMySQL);
+				show_error(&m_hMySQL, sqlcmd);
 				return -1;
 			}
 			
@@ -1188,7 +1238,7 @@ int MailStorage::DelID(const char* username)
 			if( Query(sqlcmd, strlen(sqlcmd)) != 0)
 			{
 				
-				show_error(&m_hMySQL);
+				show_error(&m_hMySQL, sqlcmd);
 				return -1;
 			}
 
@@ -1207,7 +1257,7 @@ int MailStorage::DelID(const char* username)
 		sprintf(sqlcmd, "delete FROM usertbl WHERE uname='%s'", strSafetyUsername.c_str());
 		if( Query(sqlcmd, strlen(sqlcmd)) != 0)
 		{
-			show_error(&m_hMySQL);
+			show_error(&m_hMySQL, sqlcmd);
 			return -1;
 		}
 		m_userpwd_cache_update_time = 0;
@@ -1292,7 +1342,7 @@ int MailStorage::LoadMailFromFile(const char* mfrom, const char* mto, unsigned i
 	else
 	{
 		unlink(sqlfilepath);
-		show_error(&m_hMySQL);
+		show_error(&m_hMySQL, sqlcmd);
 		return -1;
 	}
 }
@@ -1370,7 +1420,7 @@ int MailStorage::UpdateMailFromFile(const char* mfrom, const char* mto, unsigned
 	else
 	{
 		unlink(sqlfilepath);
-		show_error(&m_hMySQL);
+		show_error(&m_hMySQL, sqlcmd);
 		return -1;
 	}
 }
@@ -1402,7 +1452,7 @@ int MailStorage::InsertMail(const char* mfrom, const char* mto, unsigned int mti
 		else
 		{
 			free(sqlcmd);
-			show_error(&m_hMySQL);
+			show_error(&m_hMySQL, sqlcmd);
 			return -1;
 		}
 	}
@@ -1456,7 +1506,7 @@ int MailStorage::InsertMailIndex(const char* mfrom, const char* mto, unsigned in
 		{
             printf("%s\n", sqlcmd);
 			free(sqlcmd);
-			show_error(&m_hMySQL);
+			show_error(&m_hMySQL, sqlcmd);
 			return -1;
 		}
 	}
@@ -1490,7 +1540,7 @@ int MailStorage::UpdateMail(const char* mfrom, const char* mto, unsigned int mti
 		else
 		{
 			free(sqlcmd);
-			show_error(&m_hMySQL);
+			show_error(&m_hMySQL, sqlcmd);
 			return -1;
 		}
 	}
@@ -1539,7 +1589,7 @@ int MailStorage::UpdateMailIndex(const char* mfrom, const char* mto, unsigned in
 		else
 		{
 			free(sqlcmd);
-			show_error(&m_hMySQL);
+			show_error(&m_hMySQL, sqlcmd);
 			return -1;
 		}
 	}
@@ -1560,7 +1610,7 @@ int MailStorage::ChangeMailDir(int mdirid, int mailid)
 		}
 		else
 		{
-			show_error(&m_hMySQL);
+			show_error(&m_hMySQL, sqlcmd);
 			return -1;
 		}
 	}
@@ -1632,7 +1682,7 @@ int MailStorage::ListMailByDir(const char* username, vector<Mail_Info>& listtbl,
 	}
 	else
 	{
-	    show_error(&m_hMySQL);
+	    show_error(&m_hMySQL, sqlcmd);
 		return -1;
 	}
 }
@@ -1695,7 +1745,7 @@ int MailStorage::ListMailByDir(const char* username, vector<Mail_Info>& listtbl,
 	}
 	else
 	{
-		show_error(&m_hMySQL);
+		show_error(&m_hMySQL, sqlcmd);
 		return -1;
 	}
 }
@@ -1755,13 +1805,13 @@ int MailStorage::LimitListMailByDir(const char* username, vector<Mail_Info>& lis
 		}
 		else
 		{
-			show_error(&m_hMySQL);
+			show_error(&m_hMySQL, sqlcmd);
 			return -1;
 		}
 	}
 	else
 	{
-	    show_error(&m_hMySQL);
+	    show_error(&m_hMySQL, sqlcmd);
 		return -1;
 	}
 }
@@ -1819,13 +1869,13 @@ int MailStorage::LimitListUnauditedExternMailByDir(const char* username, vector<
 		}
 		else
 		{
-			show_error(&m_hMySQL);
+			show_error(&m_hMySQL, sqlcmd);
 			return -1;
 		}
 	}
 	else
 	{
-	    show_error(&m_hMySQL);
+	    show_error(&m_hMySQL, sqlcmd);
 		return -1;
 	}
 }
@@ -1888,7 +1938,7 @@ int MailStorage::ListAllMail(vector<Mail_Info>& listtbl)
 	}
 	else
 	{
-	    show_error(&m_hMySQL);
+	    show_error(&m_hMySQL, sqlcmd);
 		return -1;
 	}
 }
@@ -1931,7 +1981,7 @@ int MailStorage::ListAvailableExternMail(vector<Mail_Info>& listtbl, unsigned in
 	}
 	else
 	{
-        show_error(&m_hMySQL);
+        show_error(&m_hMySQL, sqlcmd);
 	    return -1;
 	}
 }
@@ -1946,7 +1996,7 @@ int MailStorage::ForwardingExternMail(int mid)
 	}
 	else
     {
-        show_error(&m_hMySQL);
+        show_error(&m_hMySQL, sqlcmd);
 		return -1;
     }
 }
@@ -1978,7 +2028,7 @@ int MailStorage::GetExternMailForwardedCount(int mid)
 	}
 	else
     {
-        show_error(&m_hMySQL);
+        show_error(&m_hMySQL, sqlcmd);
 		return r;
     }
 }
@@ -2022,7 +2072,7 @@ int MailStorage::ListMemberOfGroup(const char* group, vector<User_Info>& listtbl
 	}
 	else
 	{
-	    show_error(&m_hMySQL);
+	    show_error(&m_hMySQL, sqlcmd);
 		return -1;
 	}
 }
@@ -2064,7 +2114,7 @@ int MailStorage::ListID(vector<User_Info>& listtbl, string orderby, BOOL desc)
 	}
 	else
 	{
-	    show_error(&m_hMySQL);
+	    show_error(&m_hMySQL, sqlcmd);
 		return -1;
 	}
 }
@@ -2115,7 +2165,7 @@ int MailStorage::GetID(const char* uname, User_Info& uinfo)
 	}
 	else
 	{
-	    show_error(&m_hMySQL);
+	    show_error(&m_hMySQL, sqlcmd);
 		return -1;
 	}
 }
@@ -2155,7 +2205,7 @@ int MailStorage::ListGroup(vector<User_Info>& listtbl)
 	}
 	else
 	{
-	    show_error(&m_hMySQL);
+	    show_error(&m_hMySQL, sqlcmd);
 		return -1;
 	}
 }
@@ -2194,7 +2244,7 @@ int MailStorage::ListMember(vector<User_Info>& listtbl)
 	}
 	else
 	{
-	    show_error(&m_hMySQL);
+	    show_error(&m_hMySQL, sqlcmd);
 		return -1;
 	}
 }
@@ -2220,7 +2270,7 @@ int MailStorage::Passwd(const char* uname, const char* password)
 		}
 		else
 		{
-            show_error(&m_hMySQL);
+            show_error(&m_hMySQL, sqlcmd);
 			return -1;
 		}
 	}
@@ -2246,7 +2296,7 @@ int MailStorage::Alias(const char* uname, const char* alias)
 		}
 		else
 		{
-            show_error(&m_hMySQL);
+            show_error(&m_hMySQL, sqlcmd);
 			return -1;
 		}
 	}
@@ -2270,7 +2320,7 @@ int MailStorage::SetUserStatus(const char* uname, UserStatus status)
 		}
 		else
 		{
-            show_error(&m_hMySQL);
+            show_error(&m_hMySQL, sqlcmd);
 			return -1;
 		}
 	}
@@ -2293,7 +2343,7 @@ int MailStorage::SetUserSize(const char* uname, unsigned int size)
 		}
 		else
 		{
-            show_error(&m_hMySQL);
+            show_error(&m_hMySQL, sqlcmd);
 			return -1;
 		}
 	}
@@ -2331,7 +2381,7 @@ int MailStorage::DumpMailToFile(int mid, string& dumpfile)
 	}
 	else
     {
-        show_error(&m_hMySQL);
+        show_error(&m_hMySQL, sqlcmd);
 		return -1;
     }
 }
@@ -2368,7 +2418,7 @@ int MailStorage::GetMailBody(int mid, char* body)
 	}
 	else
 	{
-	    show_error(&m_hMySQL);
+	    show_error(&m_hMySQL, sqlcmd);
 		return -1;
 	}
 }
@@ -2407,7 +2457,7 @@ int MailStorage::GetMailIndex(int mid, string& path, unsigned int mtx)
 	else
 	{
 	    
-		show_error(&m_hMySQL);	
+		show_error(&m_hMySQL, sqlcmd);	
 		return -1;
 	}
 }
@@ -2444,7 +2494,7 @@ int MailStorage::GetMailDir(int mid, int & dirid)
 	}
 	else
 	{
-	    show_error(&m_hMySQL);
+	    show_error(&m_hMySQL, sqlcmd);
 		return -1;
 	}
 }
@@ -2484,7 +2534,7 @@ int MailStorage::GetMailOwner(int mid, string & owner)
 		}
 		else
 		{
-		    show_error(&m_hMySQL);
+		    show_error(&m_hMySQL, sqlcmd);
 			return -1;
 		}
 	}
@@ -2525,7 +2575,7 @@ int MailStorage::GetMailFromAndTo(int mid, string & from, string &to)
 	}
 	else
 	{
-	    show_error(&m_hMySQL);
+	    show_error(&m_hMySQL, sqlcmd);
 		return -1;
 	}
 }
@@ -2561,7 +2611,7 @@ int MailStorage::IsAdmin(const char* username)
 	}
 	else
 	{
-	    show_error(&m_hMySQL);
+	    show_error(&m_hMySQL, sqlcmd);
 		return -1;
 	}
 }
@@ -2598,7 +2648,7 @@ int MailStorage::GetDirOwner(int dirid, string & owner)
 	}
 	else
 	{
-	    show_error(&m_hMySQL);
+	    show_error(&m_hMySQL, sqlcmd);
 		return -1;
 	}
 }
@@ -2650,7 +2700,7 @@ int MailStorage::ShiftDelMail(int mid, unsigned int mtx)
 	}
 	else
     {
-        show_error(&m_hMySQL);
+        show_error(&m_hMySQL, sqlcmd);
 		return -1;
     }
 }
@@ -2671,13 +2721,13 @@ int MailStorage::DelMail(const char* username, int mid, unsigned int mtx)
 		}
 		else
 		{
-			show_error(&m_hMySQL);
+			show_error(&m_hMySQL, sqlcmd);
 			return -1;
 		}
 	}
 	else
 	{
-		show_error(&m_hMySQL);
+		show_error(&m_hMySQL, sqlcmd);
 		return -1;
 	}
 }
@@ -2712,7 +2762,7 @@ int MailStorage::AppendUserToGroup(const char* username, const char* groupname)
 		}
 		else
 		{
-		    show_error(&m_hMySQL);
+		    show_error(&m_hMySQL, sqlcmd);
 			return -1;
 		}
 		
@@ -2724,7 +2774,7 @@ int MailStorage::AppendUserToGroup(const char* username, const char* groupname)
 		}
 		else
         {
-            show_error(&m_hMySQL);
+            show_error(&m_hMySQL, sqlcmd);
 			return -1;
         }
 	}
@@ -2748,7 +2798,7 @@ int MailStorage::RemoveUserFromGroup(const char* username, const char* groupname
 	}
 	else
     {
-        show_error(&m_hMySQL);
+        show_error(&m_hMySQL, sqlcmd);
 		return -1;
     }
 }
@@ -2786,7 +2836,7 @@ int MailStorage::CreateDir(const char* username, const char* dirref)
 		}
 		else
         {
-            show_error(&m_hMySQL);
+            show_error(&m_hMySQL, sqlcmd);
 			return -1;
         }
 	}
@@ -2825,7 +2875,7 @@ int MailStorage::CreateDir(const char* username, const char* dirname, int parent
 	}
 	else
     {
-        show_error(&m_hMySQL);
+        show_error(&m_hMySQL, sqlcmd);
 		return -1;
     }
 }
@@ -2869,7 +2919,7 @@ int MailStorage::DeleteDir(const char* username, int dirid)
 	}
 	else
 	{
-		show_error(&m_hMySQL);
+		show_error(&m_hMySQL, sqlcmd);
 		return -1;
 	}
 }
@@ -2961,7 +3011,7 @@ int MailStorage::GetDirParentID(const char* username, int dirid, int& parentid)
 	}
 	else
 	{
-	    show_error(&m_hMySQL);
+	    show_error(&m_hMySQL, sqlcmd);
 		return -1;
 	}
 }
@@ -3019,7 +3069,7 @@ int MailStorage::IsDirExist(const char* username, const char* dirref)
 		}
 		else
 		{
-		    show_error(&m_hMySQL);
+		    show_error(&m_hMySQL, sqlcmd);
 			return -1;
 		}
 	}
@@ -3059,7 +3109,7 @@ int MailStorage::IsDirExist(const char* username, int dirid)
 	}
 	else
 	{
-	    show_error(&m_hMySQL);
+	    show_error(&m_hMySQL, sqlcmd);
 		return -1;
 	}
 }
@@ -3109,7 +3159,7 @@ int MailStorage::IsSubDirExist(const char* username, int parentid, const char* d
 	}
 	else
 	{
-	    show_error(&m_hMySQL);
+	    show_error(&m_hMySQL, sqlcmd);
 		return -1;
 	}
 }
@@ -3167,14 +3217,14 @@ int MailStorage::GetDirID(const char* username, const char* dirref, vector<int>&
 			    }
 			    else
 			    {
-				    show_error(&m_hMySQL);
+				    show_error(&m_hMySQL, sqlcmd);
 				    return -1;
 			    }
 		    }
 		    else
 		    {
 		        
-			    show_error(&m_hMySQL);
+			    show_error(&m_hMySQL, sqlcmd);
 			    return -1;
 		    }
 		}
@@ -3226,7 +3276,7 @@ int MailStorage::GetDirID(const char* username, const char* dirref, int& dirid)
 				if(row == NULL)
 				{
 					mysql_free_result(query_result);
-					show_error(&m_hMySQL);
+					show_error(&m_hMySQL, sqlcmd);
 					return -1;
 				}
 				else
@@ -3237,14 +3287,14 @@ int MailStorage::GetDirID(const char* username, const char* dirref, int& dirid)
 			}
 			else
 			{
-				show_error(&m_hMySQL);
+				show_error(&m_hMySQL, sqlcmd);
 				return -1;
 			}
 		}
 		else
 		{
 		    
-			show_error(&m_hMySQL);
+			show_error(&m_hMySQL, sqlcmd);
 			return -1;
 		}
 	}
@@ -3300,7 +3350,7 @@ int MailStorage::GetInboxID(const char* username, int &dirid)
 	}
 	else
 	{
-	    show_error(&m_hMySQL);
+	    show_error(&m_hMySQL, sqlcmd);
 		return -1;
 	}
 }
@@ -3353,7 +3403,7 @@ int MailStorage::GetJunkID(const char* username, int &dirid)
 	}
 	else
 	{
-	    show_error(&m_hMySQL);
+	    show_error(&m_hMySQL, sqlcmd);
 		return -1;
 	}
 }
@@ -3406,7 +3456,7 @@ int MailStorage::GetDraftsID(const char* username, int &dirid)
 	}
 	else
 	{
-	    show_error(&m_hMySQL);
+	    show_error(&m_hMySQL, sqlcmd);
 		return -1;
 	}
 }
@@ -3462,7 +3512,7 @@ int MailStorage::GetSentID(const char* username, int &dirid)
 	}
 	else
 	{
-	    show_error(&m_hMySQL);
+	    show_error(&m_hMySQL, sqlcmd);
 		return -1;
 	}
 }
@@ -3514,7 +3564,7 @@ int MailStorage::GetTrashID(const char* username, int &dirid)
 	}
 	else
 	{
-	    show_error(&m_hMySQL);
+	    show_error(&m_hMySQL, sqlcmd);
 		return -1;
 	}
 }
@@ -3569,7 +3619,7 @@ int MailStorage::GetUnauditedExternMailCount(const char* username, unsigned int&
 	}
 	else
 	{
-	    show_error(&m_hMySQL);
+	    show_error(&m_hMySQL, sqlcmd);
 		return -1;
 	}
 }
@@ -3608,7 +3658,7 @@ int MailStorage::GetDirStatus(const char* username, const char* dirref, unsigned
 	}
 	else
 	{
-	    show_error(&m_hMySQL);
+	    show_error(&m_hMySQL, sqlcmd);
 		return -1;
 	}
 }
@@ -3659,7 +3709,7 @@ int MailStorage::GetMailStatus(int mid, unsigned int& status)
 	}
 	else
 	{
-	    show_error(&m_hMySQL);
+	    show_error(&m_hMySQL, sqlcmd);
 		return -1;
 	}
 }
@@ -3695,7 +3745,7 @@ int MailStorage::GetMailUID(int mid, string uid)
 	}
 	else
 	{
-	    show_error(&m_hMySQL);
+	    show_error(&m_hMySQL, sqlcmd);
 		return -1;
 	}
 }
@@ -3755,7 +3805,7 @@ int MailStorage::RenameDir(const char* username, const char* oldname, const char
 	}
 	else
     {
-        show_error(&m_hMySQL);
+        show_error(&m_hMySQL, sqlcmd);
 		return -1;
     }
 	
@@ -3824,7 +3874,7 @@ int MailStorage::TraversalListDir(const char* username, const char* dirref, vect
 		}
 		else
 		{
-		    show_error(&m_hMySQL);
+		    show_error(&m_hMySQL, sqlcmd);
 			return -1;
 		}
 	}
@@ -3886,7 +3936,7 @@ int MailStorage::ListSubDir(const char* username, int pid, vector<Dir_Info>& lis
 	}
 	else
 	{
-	    show_error(&m_hMySQL);
+	    show_error(&m_hMySQL, sqlcmd);
 		return -1;
 	}
 }
@@ -3974,7 +4024,7 @@ int MailStorage::GetUnseenMail(int dirid, int& num)
 	}
 	else
 	{
-	    show_error(&m_hMySQL);
+	    show_error(&m_hMySQL, sqlcmd);
 		return -1;
 	}
 }
@@ -4033,7 +4083,7 @@ int MailStorage::EmptyDir(const char* username, int dirid)
 	}
 	else
 	{
-	    show_error(&m_hMySQL);
+	    show_error(&m_hMySQL, sqlcmd);
 		return -1;
 	}
 }
@@ -4075,7 +4125,7 @@ int MailStorage::GetDirName(const char * username, int dirid, string& dirname)
 	}
 	else
 	{
-	    show_error(&m_hMySQL);
+	    show_error(&m_hMySQL, sqlcmd);
 		return -1;
 	}
 }
@@ -4148,7 +4198,7 @@ int MailStorage::GetGlobalStorage(unsigned int& commonMailNumber, unsigned int& 
 	}
 	else
 	{
-	    show_error(&m_hMySQL);
+	    show_error(&m_hMySQL, sqlcmd);
 		return -1;
 	}
 	
@@ -4180,7 +4230,7 @@ int MailStorage::GetGlobalStorage(unsigned int& commonMailNumber, unsigned int& 
 	}
 	else
 	{
-	    show_error(&m_hMySQL);
+	    show_error(&m_hMySQL, sqlcmd);
 		return -1;
 	}
 
@@ -4212,7 +4262,7 @@ int MailStorage::GetGlobalStorage(unsigned int& commonMailNumber, unsigned int& 
 	}
 	else
 	{
-	    show_error(&m_hMySQL);
+	    show_error(&m_hMySQL, sqlcmd);
 		return -1;
 	}
 
@@ -4244,7 +4294,7 @@ int MailStorage::GetGlobalStorage(unsigned int& commonMailNumber, unsigned int& 
 	}
 	else
 	{
-	    show_error(&m_hMySQL);
+	    show_error(&m_hMySQL, sqlcmd);
 		return -1;
 	}
 
@@ -4274,14 +4324,14 @@ int MailStorage::GetAllDirOfID(const char* username, vector<int>& didtbl)
 		}
 		else
 		{
-			show_error(&m_hMySQL);
+			show_error(&m_hMySQL, sqlcmd);
 			return -1;
 		}
 		return 0;
 	}
 	else
 	{
-	    show_error(&m_hMySQL);
+	    show_error(&m_hMySQL, sqlcmd);
 		return -1;
 	}
 }
@@ -4328,7 +4378,7 @@ int MailStorage::GetUserStorage(const char* username, unsigned int& commonMailNu
 		}
 		else
 		{
-		    show_error(&m_hMySQL);
+		    show_error(&m_hMySQL, sqlcmd);
 			return -1;
 		}
 		
@@ -4360,7 +4410,7 @@ int MailStorage::GetUserStorage(const char* username, unsigned int& commonMailNu
 		}
 		else
 		{
-		    show_error(&m_hMySQL);
+		    show_error(&m_hMySQL, sqlcmd);
 			return -1;
 		}
 
@@ -4392,7 +4442,7 @@ int MailStorage::GetUserStorage(const char* username, unsigned int& commonMailNu
 		}
 		else
 		{
-		    show_error(&m_hMySQL);
+		    show_error(&m_hMySQL, sqlcmd);
 			return -1;
 		}
 
@@ -4424,7 +4474,7 @@ int MailStorage::GetUserStorage(const char* username, unsigned int& commonMailNu
 		}
 		else
 		{
-		    show_error(&m_hMySQL);
+		    show_error(&m_hMySQL, sqlcmd);
 			return -1;
 		}
 	}
@@ -4445,7 +4495,7 @@ int MailStorage::MTALock()
 	}
 	else
 	{
-        show_error(&m_hMySQL);
+        show_error(&m_hMySQL, sqlcmd);
 		return -1;
 	}
 }
@@ -4463,7 +4513,7 @@ int MailStorage::MTAUnlock()
 	}
 	else
 	{
-        show_error(&m_hMySQL);
+        show_error(&m_hMySQL, sqlcmd);
 		return -1;
 	}
 }
@@ -4490,7 +4540,7 @@ int MailStorage::SaveMailBodyToDB(const char* emlfile, const char* fragment)
 		else
 		{
 			free(sqlcmd);
-			show_error(&m_hMySQL);
+			show_error(&m_hMySQL, sqlcmd);
 			return -1;
 		}
 	}
@@ -4549,7 +4599,7 @@ int MailStorage::LoadMailBodyToFile(const char* emlfile, const char* fullpath)
 	else
 	{
 	    
-		show_error(&m_hMySQL);
+		show_error(&m_hMySQL, sqlcmd);
 		return -1;
 	}
 }
@@ -4565,7 +4615,7 @@ int MailStorage::InsertMTA(const char* mta)
 	
 	if( Query(sqlcmd, strlen(sqlcmd)) != 0)
     {
-        show_error(&m_hMySQL);
+        show_error(&m_hMySQL, sqlcmd);
         return -1;
     }
 	
@@ -4578,7 +4628,7 @@ int MailStorage::InsertMTA(const char* mta)
     }
     else
     {
-        show_error(&m_hMySQL);
+        show_error(&m_hMySQL, sqlcmd);
         return -1;
     }
 }
@@ -4594,7 +4644,7 @@ int MailStorage::DeleteMTA(const char* mta)
 	
 	if( Query(sqlcmd, strlen(sqlcmd)) != 0)
 	{
-        show_error(&m_hMySQL);
+        show_error(&m_hMySQL, sqlcmd);
 		return -1;
 	}
 	
@@ -4612,7 +4662,7 @@ int MailStorage::UpdateMTA(const char* mta)
 	
 	if( Query(sqlcmd, strlen(sqlcmd)) != 0)
 	{
-        show_error(&m_hMySQL);
+        show_error(&m_hMySQL, sqlcmd);
 		return -1;
 	}
     return 0;
@@ -4627,7 +4677,7 @@ int MailStorage::GetMTAIndex(const char* mta, unsigned int live_sec, unsigned in
     
 	if( Query(sqlcmd, strlen(sqlcmd)) != 0)
 	{
-        show_error(&m_hMySQL);
+        show_error(&m_hMySQL, sqlcmd);
 		return -1;
 	}
     else
