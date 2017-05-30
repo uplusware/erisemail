@@ -362,7 +362,7 @@ int MailStorage::Install(const char* database)
         printf("Add admin id wrong\n");
 		return -1;
 	}
-    
+#ifdef POSTMAIL_NOTIFY    
 	sprintf(sqlcmd, "DROP FUNCTION IF EXISTS post_notify");
 	if( Query(sqlcmd, strlen(sqlcmd)) != 0)
 	{
@@ -404,7 +404,7 @@ int MailStorage::Install(const char* database)
 		show_error(&m_hMySQL, sqlcmd, "Install: ", TRUE);
 		return -1;
 	}
-
+#endif /* POSTMAIL_NOTIFY */
 	return 0;
         
 }
