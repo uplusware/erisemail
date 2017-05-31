@@ -141,19 +141,19 @@ void mimepart::parse()
 		m_blocksize += strTmp.length();
 		m_linenumber += getcharnum(strTmp.c_str(), '\n');
 		
-		if(strncasecmp(strTmp.c_str(), "Content-Type:", strlen("Content-Type:")) == 0)
+		if(strncasecmp(strTmp.c_str(), "Content-Type:", sizeof("Content-Type:") - 1) == 0)
 		{
 			m_Content_Type = new filedContentType(strTmp.c_str());
 		}
-		else if(strncasecmp(strTmp.c_str(), "Content-ID:", strlen("Content-ID:")) == 0)
+		else if(strncasecmp(strTmp.c_str(), "Content-ID:", sizeof("Content-ID:") - 1) == 0)
 		{
 			fnfy_strcut(strTmp.c_str(), ":", " \t\"<", " >\t\";\r\n", m_Content_ID);
 		}
-		else if(strncasecmp(strTmp.c_str(), "Content-Transfer-Encoding:", strlen("Content-Transfer-Encoding:")) == 0)
+		else if(strncasecmp(strTmp.c_str(), "Content-Transfer-Encoding:", sizeof("Content-Transfer-Encoding:") - 1) == 0)
 		{
 			fnfy_strcut(strTmp.c_str(), ":", " \t\"\r\n", " \t\";\r\n", m_Content_Transfer_Encoding);
 		}
-		else if(strncasecmp(strTmp.c_str(), "Content-Disposition:", strlen("Content-Disposition:")) == 0)
+		else if(strncasecmp(strTmp.c_str(), "Content-Disposition:", sizeof("Content-Disposition:") - 1) == 0)
 		{
 			m_Content_Disposition = new filedContentDisposition(strTmp.c_str());
 		}
@@ -311,36 +311,36 @@ void MIME::GlobalParse()
 		{
 			break;
 		}
-		else if(strncasecmp(fstrbuf.c_str(), "From:", strlen("From:")) == 0)
+		else if(strncasecmp(fstrbuf.c_str(), "From:", sizeof("From:") - 1) == 0)
 		{
 			m_From = new filedaddr(fstrbuf.c_str());
 		}
-		else if(strncasecmp(fstrbuf.c_str(), "To:", strlen("To:")) == 0)
+		else if(strncasecmp(fstrbuf.c_str(), "To:", sizeof("To:") - 1) == 0)
 		{
 			m_To = new filedaddr(fstrbuf.c_str());
 		}
-		else if(strncasecmp(fstrbuf.c_str(), "Sender:", strlen("Sender:")) == 0)
+		else if(strncasecmp(fstrbuf.c_str(), "Sender:", sizeof("Sender:") - 1) == 0)
 		{
 			m_Sender= new filedaddr(fstrbuf.c_str());
 		}
-		else if(strncasecmp(fstrbuf.c_str(), "Reply-To:", strlen("Reply-To:")) == 0)
+		else if(strncasecmp(fstrbuf.c_str(), "Reply-To:", sizeof("Reply-To:") - 1) == 0)
 		{
 			m_ReplyTo= new filedaddr(fstrbuf.c_str());
 		}
-		else if(strncasecmp(fstrbuf.c_str(), "Cc:", strlen("Cc:")) == 0)
+		else if(strncasecmp(fstrbuf.c_str(), "Cc:", sizeof("Cc:") - 1) == 0)
 		{
 			m_CC = new filedaddr(fstrbuf.c_str());
 		}
-		else if(strncasecmp(fstrbuf.c_str(), "BCC:", strlen("BCC:")) == 0)
+		else if(strncasecmp(fstrbuf.c_str(), "BCC:", sizeof("BCC:") - 1) == 0)
 		{
 			m_BCC = new filedaddr(fstrbuf.c_str());
 		}
-		else if(strncasecmp(fstrbuf.c_str(), "Subject:", strlen("Subject:")) == 0)
+		else if(strncasecmp(fstrbuf.c_str(), "Subject:", sizeof("Subject:") - 1) == 0)
 		{
 			fnln_strcut(fstrbuf.c_str(), ":", " \t\r\n", " \t\r\n", m_Subject);
 			DecodeMIMEString(m_Subject.c_str(), m_DecodedSubject);
 		}
-		else if(strncasecmp(fstrbuf.c_str(), "Date:", strlen("Date:")) == 0)
+		else if(strncasecmp(fstrbuf.c_str(), "Date:", sizeof("Date:") - 1) == 0)
 		{
 			fnln_strcut(fstrbuf.c_str(), ":", " \t\r\n", " \t\r\n", m_Date);
 			//eg. Tue, 04 Nov 2008 16:51:41 +0800
@@ -354,15 +354,15 @@ void MIME::GlobalParse()
 			m_tm.tm_min = min;
 			m_tm.tm_sec = sec;
 		}
-		else if(strncasecmp(fstrbuf.c_str(), "Message-ID:", strlen("Message-ID:")) == 0)
+		else if(strncasecmp(fstrbuf.c_str(), "Message-ID:", sizeof("Message-ID:") - 1) == 0)
 		{
 			fnln_strcut(fstrbuf.c_str(), ":", " \t\r\n", " \t\r\n", m_Message_ID);
 		}
-		else if(strncasecmp(fstrbuf.c_str(), "User-Agent:", strlen("User-Agent:")) == 0)
+		else if(strncasecmp(fstrbuf.c_str(), "User-Agent:", sizeof("User-Agent:") - 1) == 0)
 		{
 			fnln_strcut(fstrbuf.c_str(), ":", " \t\r\n", " \t\r\n", m_User_Agent);
 		}
-		else if(strncasecmp(fstrbuf.c_str(), "In-Reply-To:", strlen("In-Reply-To:")) == 0)
+		else if(strncasecmp(fstrbuf.c_str(), "In-Reply-To:", sizeof("In-Reply-To:") - 1) == 0)
 		{
 			fnln_strcut(fstrbuf.c_str(), ":", " \t\r\n", " \t\r\n", m_In_Reply_To);
 		}
@@ -412,36 +412,36 @@ void MIME::HeaderParse()
 		string fstrbuf;
 		m_vfbufseg[x].c_str(m_buffer, fstrbuf);
 		
-		if(strncasecmp(fstrbuf.c_str(), "From:", strlen("From:")) == 0)
+		if(strncasecmp(fstrbuf.c_str(), "From:", sizeof("From:") - 1) == 0)
 		{
 			m_From = new filedaddr(fstrbuf.c_str());
 		}
-		else if(strncasecmp(fstrbuf.c_str(), "To:", strlen("To:")) == 0)
+		else if(strncasecmp(fstrbuf.c_str(), "To:", sizeof("To:") - 1) == 0)
 		{
 			m_To = new filedaddr(fstrbuf.c_str());
 		}
-		else if(strncasecmp(fstrbuf.c_str(), "Sender:", strlen("Sender:")) == 0)
+		else if(strncasecmp(fstrbuf.c_str(), "Sender:", sizeof("Sender:") - 1) == 0)
 		{
 			m_Sender= new filedaddr(fstrbuf.c_str());
 		}
-		else if(strncasecmp(fstrbuf.c_str(), "Reply-To:", strlen("Reply-To:")) == 0)
+		else if(strncasecmp(fstrbuf.c_str(), "Reply-To:", sizeof("Reply-To:") - 1) == 0)
 		{
 			m_ReplyTo= new filedaddr(fstrbuf.c_str());
 		}
-		else if(strncasecmp(fstrbuf.c_str(), "Cc:", strlen("Cc:")) == 0)
+		else if(strncasecmp(fstrbuf.c_str(), "Cc:", sizeof("Cc:") - 1) == 0)
 		{
 			m_CC = new filedaddr(fstrbuf.c_str());
 		}
-		else if(strncasecmp(fstrbuf.c_str(), "BCC:", strlen("BCC:")) == 0)
+		else if(strncasecmp(fstrbuf.c_str(), "BCC:", sizeof("BCC:") - 1) == 0)
 		{
 			m_BCC = new filedaddr(fstrbuf.c_str());
 		}
-		else if(strncasecmp(fstrbuf.c_str(), "Subject:", strlen("Subject:")) == 0)
+		else if(strncasecmp(fstrbuf.c_str(), "Subject:", sizeof("Subject:") - 1) == 0)
 		{
 			fnln_strcut(fstrbuf.c_str(), ":", " \t\r\n", " \t\r\n", m_Subject);
 			DecodeMIMEString(m_Subject.c_str(), m_DecodedSubject);
 		}
-		else if(strncasecmp(fstrbuf.c_str(), "Date:", strlen("Date:")) == 0)
+		else if(strncasecmp(fstrbuf.c_str(), "Date:", sizeof("Date:") - 1) == 0)
 		{
 			fnln_strcut(fstrbuf.c_str(), ":", " \t\r\n", " \t\r\n", m_Date);
 			//eg. Tue, 04 Nov 2008 16:51:41 +0800
@@ -455,15 +455,15 @@ void MIME::HeaderParse()
 			m_tm.tm_min = min;
 			m_tm.tm_sec = sec;
 		}
-		else if(strncasecmp(fstrbuf.c_str(), "Message-ID:", strlen("Message-ID:")) == 0)
+		else if(strncasecmp(fstrbuf.c_str(), "Message-ID:", sizeof("Message-ID:") - 1) == 0)
 		{
 			fnln_strcut(fstrbuf.c_str(), ":", " \t\r\n", " \t\r\n", m_Message_ID);
 		}
-		else if(strncasecmp(fstrbuf.c_str(), "User-Agent:", strlen("User-Agent:")) == 0)
+		else if(strncasecmp(fstrbuf.c_str(), "User-Agent:", sizeof("User-Agent:") - 1) == 0)
 		{
 			fnln_strcut(fstrbuf.c_str(), ":", " \t\r\n", " \t\r\n", m_User_Agent);
 		}
-		else if(strncasecmp(fstrbuf.c_str(), "In-Reply-To:", strlen("In-Reply-To:")) == 0)
+		else if(strncasecmp(fstrbuf.c_str(), "In-Reply-To:", sizeof("In-Reply-To:") - 1) == 0)
 		{
 			fnln_strcut(fstrbuf.c_str(), ":", " \t\r\n", " \t\r\n", m_In_Reply_To);
 		}

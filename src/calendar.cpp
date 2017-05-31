@@ -31,7 +31,7 @@ void Calendar::_parse_()
 		_strdelete_(calbuf, "\n ");
 		_strdelete_(calbuf, "\n\t");
 		
-		if(m_phase == eNull && strncasecmp(calbuf.c_str(), "BEGIN:VCALENDAR", strlen("BEGIN:VCALENDAR")) == 0)
+		if(m_phase == eNull && strncasecmp(calbuf.c_str(), "BEGIN:VCALENDAR", sizeof("BEGIN:VCALENDAR") - 1) == 0)
 		{
 			_calendar.text = calbuf;
 			_calendar.method = "";
@@ -42,19 +42,19 @@ void Calendar::_parse_()
 			
 			m_phase = eCal;
 		}
-			else if(m_phase == eCal &&strncasecmp(calbuf.c_str(), "PRODID:", strlen("PRODID:")) == 0)
+			else if(m_phase == eCal &&strncasecmp(calbuf.c_str(), "PRODID:", sizeof("PRODID:") - 1) == 0)
 			{
 				fnfy_strcut(calbuf.c_str(), "PRODID:", " \t\r\n", " \t\r\n", _calendar.prod);
 			}
-			else if(m_phase == eCal &&strncasecmp(calbuf.c_str(), "VERSION:", strlen("VERSION:")) == 0)
+			else if(m_phase == eCal &&strncasecmp(calbuf.c_str(), "VERSION:", sizeof("VERSION:") - 1) == 0)
 			{
 				fnfy_strcut(calbuf.c_str(), "VERSION:", " \t\r\n", " \t\r\n", _calendar.version);
 			}
-			else if(m_phase == eCal && strncasecmp(calbuf.c_str(), "METHOD:", strlen("METHOD:")) == 0)
+			else if(m_phase == eCal && strncasecmp(calbuf.c_str(), "METHOD:", sizeof("METHOD:") - 1) == 0)
 			{
 				fnfy_strcut(calbuf.c_str(), "METHOD:", " \t\r\n", " \t\r\n", _calendar.method);
 			}
-			else if(m_phase == eCal && strncasecmp(calbuf.c_str(), "BEGIN:VTIMEZONE", strlen("BEGIN:VTIMEZONE")) == 0)
+			else if(m_phase == eCal && strncasecmp(calbuf.c_str(), "BEGIN:VTIMEZONE", sizeof("BEGIN:VTIMEZONE") - 1) == 0)
 			{
 				m_phase = eTimeZone;
 	
@@ -62,16 +62,16 @@ void Calendar::_parse_()
 				_time_zone.xlic_location = "";
 				_time_zone.standards.clear();
 			}
-				else if(m_phase == eTimeZone && strncasecmp(calbuf.c_str(), "TZID:", strlen("TZID:")) == 0)
+				else if(m_phase == eTimeZone && strncasecmp(calbuf.c_str(), "TZID:", sizeof("TZID:") - 1) == 0)
 				{
 					fnfy_strcut(calbuf.c_str(), "TZID:", " \t\r\n", " \t\r\n", _time_zone.tid);
 				}
-				else if(m_phase == eTimeZone && strncasecmp(calbuf.c_str(), "X-LIC-LOCATION:", strlen("X-LIC-LOCATION:")) == 0)
+				else if(m_phase == eTimeZone && strncasecmp(calbuf.c_str(), "X-LIC-LOCATION:", sizeof("X-LIC-LOCATION:") - 1) == 0)
 				{
 					fnfy_strcut(calbuf.c_str(), "X-LIC-LOCATION:", " \t\r\n", " \t\r\n", _time_zone.xlic_location);
 				}
 
-				else if(m_phase == eTimeZone && strncasecmp(calbuf.c_str(), "BEGIN:STANDARD", strlen("BEGIN:STANDARD")) == 0)
+				else if(m_phase == eTimeZone && strncasecmp(calbuf.c_str(), "BEGIN:STANDARD", sizeof("BEGIN:STANDARD") - 1) == 0)
 				{
 					m_phase == eStandard;
 					
@@ -80,22 +80,22 @@ void Calendar::_parse_()
 					_standard.tzname = "";
 					_standard.dtstart = 0;
 				}
-					else if(m_phase == eStandard && strncasecmp(calbuf.c_str(), "TZOFFSETFROM:", strlen("TZOFFSETFROM:")) == 0)
+					else if(m_phase == eStandard && strncasecmp(calbuf.c_str(), "TZOFFSETFROM:", sizeof("TZOFFSETFROM:") - 1) == 0)
 					{
 						
 						fnfy_strcut(calbuf.c_str(), "TZOFFSETFROM:", " \t\r\n", " \t\r\n", strTmp);
 						sscanf(strTmp.c_str(), "%d", _standard.offsetfr);
 					}
-					else if(m_phase == eStandard && strncasecmp(calbuf.c_str(), "TZOFFSETTO:", strlen("TZOFFSETTO:")) == 0)
+					else if(m_phase == eStandard && strncasecmp(calbuf.c_str(), "TZOFFSETTO:", sizeof("TZOFFSETTO:") - 1) == 0)
 					{
 						fnfy_strcut(calbuf.c_str(), "TZOFFSETFROM:", " \t\r\n", " \t\r\n", strTmp);
 						sscanf(strTmp.c_str(), "%d", _standard.offsetto);
 					}
-					else if(m_phase == eStandard && strncasecmp(calbuf.c_str(), "TZNAME:", strlen("TZNAME:")) == 0)
+					else if(m_phase == eStandard && strncasecmp(calbuf.c_str(), "TZNAME:", sizeof("TZNAME:") - 1) == 0)
 					{
 						fnfy_strcut(calbuf.c_str(), "TZNAME:", " \t\r\n", " \t\r\n", _standard.tzname);
 					}
-					else if(m_phase == eStandard && strncasecmp(calbuf.c_str(), "DTSTART:", strlen("DTSTART:")) == 0)
+					else if(m_phase == eStandard && strncasecmp(calbuf.c_str(), "DTSTART:", sizeof("DTSTART:") - 1) == 0)
 					{
 						fnfy_strcut(calbuf.c_str(), "DTSTART:", " \t\r\n", " \t\r\n", strTmp);
 
@@ -109,18 +109,18 @@ void Calendar::_parse_()
 						_standard.dtstart = mktime(&dtTmp);
 					
 					}
-				else if(m_phase == eStandard && strncasecmp(calbuf.c_str(), "END:STANDARD", strlen("END:STANDARD")) == 0)
+				else if(m_phase == eStandard && strncasecmp(calbuf.c_str(), "END:STANDARD", sizeof("END:STANDARD") - 1) == 0)
 				{
 					_time_zone.standards.push_back(_standard);
 					m_phase == eTimeZone;
 				}
-			else if(m_phase == eTimeZone && strncasecmp(calbuf.c_str(), "END:VTIMEZONE", strlen("END:VTIMEZONE")) == 0)
+			else if(m_phase == eTimeZone && strncasecmp(calbuf.c_str(), "END:VTIMEZONE", sizeof("END:VTIMEZONE") - 1) == 0)
 			{
 				m_phase = eCal;
 
 				_calendar.time_zones.push_back(_time_zone);
 			}
-			else if(m_phase == eCal &&strncasecmp(calbuf.c_str(), "BEGIN:VEVENT", strlen("BEGIN:VEVENT")) == 0)
+			else if(m_phase == eCal &&strncasecmp(calbuf.c_str(), "BEGIN:VEVENT", sizeof("BEGIN:VEVENT") - 1) == 0)
 			{
 				m_phase = eEvent;
 
@@ -147,7 +147,7 @@ void Calendar::_parse_()
 				_event.location = "";
 				_event.description = "";
 			}
-				else if(m_phase == eEvent &&strncasecmp(calbuf.c_str(), "CREATED:", strlen("CREATED:")) == 0)
+				else if(m_phase == eEvent &&strncasecmp(calbuf.c_str(), "CREATED:", sizeof("CREATED:") - 1) == 0)
 				{
 					fnfy_strcut(calbuf.c_str(), "CREATED:", " \t\r\n", " \t\r\n", strTmp);
 
@@ -160,7 +160,7 @@ void Calendar::_parse_()
 
 					_event.created = mktime(&dtTmp);
 				}
-				else if(m_phase == eEvent &&strncasecmp(calbuf.c_str(), "LAST-MODIFIED:", strlen("LAST-MODIFIED:")) == 0)
+				else if(m_phase == eEvent &&strncasecmp(calbuf.c_str(), "LAST-MODIFIED:", sizeof("LAST-MODIFIED:") - 1) == 0)
 				{
 					fnfy_strcut(calbuf.c_str(), "LAST-MODIFIED:", " \t\r\n", " \t\r\n", strTmp);
 
@@ -174,7 +174,7 @@ void Calendar::_parse_()
 					_event.modified = mktime(&dtTmp);
 
 				}
-				else if(m_phase == eEvent &&strncasecmp(calbuf.c_str(), "DTSTAMP:", strlen("DTSTAMP:")) == 0)
+				else if(m_phase == eEvent &&strncasecmp(calbuf.c_str(), "DTSTAMP:", sizeof("DTSTAMP:") - 1) == 0)
 				{
 					fnfy_strcut(calbuf.c_str(), "DTSTAMP:", " \t\r\n", " \t\r\n", strTmp);
 
@@ -188,15 +188,15 @@ void Calendar::_parse_()
 					_event.stamp = mktime(&dtTmp);
 						
 				}
-				else if(m_phase == eEvent &&strncasecmp(calbuf.c_str(), "UID:", strlen("UID:")) == 0)
+				else if(m_phase == eEvent &&strncasecmp(calbuf.c_str(), "UID:", sizeof("UID:") - 1) == 0)
 				{
 					fnfy_strcut(calbuf.c_str(), "UID:", " \t\r\n", " \t\r\n", _event.uid);
 				}
-				else if(m_phase == eEvent &&strncasecmp(calbuf.c_str(), "SUMMARY:", strlen("SUMMARY:")) == 0)
+				else if(m_phase == eEvent &&strncasecmp(calbuf.c_str(), "SUMMARY:", sizeof("SUMMARY:") - 1) == 0)
 				{
 					fnfy_strcut(calbuf.c_str(), "UID:", " \t\r\n", " \t\r\n", _event.summary);
 				}
-				else if(m_phase == eEvent &&strncasecmp(calbuf.c_str(), "ORGANIZER;", strlen("ORGANIZER;")) == 0)
+				else if(m_phase == eEvent &&strncasecmp(calbuf.c_str(), "ORGANIZER;", sizeof("ORGANIZER;") - 1) == 0)
 				{	
  					fnfy_strcut(calbuf.c_str(), "RSVP=", " \t\r\n", "; \t\r\n", _event.orgnizer.rsvp);
 
@@ -209,7 +209,7 @@ void Calendar::_parse_()
 					fnfy_strcut(calbuf.c_str(), "mailto:", " \t\r\n", "; \t\r\n", _event.orgnizer.mailto);
 					
 				}
-				else if(m_phase == eEvent &&strncasecmp(calbuf.c_str(), "ATTENDEE;", strlen("ATTENDEE;")) == 0)
+				else if(m_phase == eEvent &&strncasecmp(calbuf.c_str(), "ATTENDEE;", sizeof("ATTENDEE;") - 1) == 0)
 				{
 					fnfy_strcut(calbuf.c_str(), "RSVP=", " \t\r\n", "; \t\r\n",_attendee.rsvp);
 
@@ -223,7 +223,7 @@ void Calendar::_parse_()
 					
 					_event.attendees.push_back(_attendee);
 				}
-				else if(m_phase == eEvent &&strncasecmp(calbuf.c_str(), "DTSTART;", strlen("DTSTART;")) == 0)
+				else if(m_phase == eEvent &&strncasecmp(calbuf.c_str(), "DTSTART;", sizeof("DTSTART;") - 1) == 0)
 				{
 					fnfy_strcut(calbuf.c_str(), ":", " \t\r\n", " \t\r\n", strTmp);
 
@@ -239,7 +239,7 @@ void Calendar::_parse_()
 					fnfy_strcut(calbuf.c_str(), "TZID=", " \t\r\n", ": \t\r\n", strTmp);
 					_event.start.tid = strTmp;
 				}
-				else if(m_phase == eEvent &&strncasecmp(calbuf.c_str(), "DTEND;", strlen("DTEND;")) == 0)
+				else if(m_phase == eEvent &&strncasecmp(calbuf.c_str(), "DTEND;", sizeof("DTEND;") - 1) == 0)
 				{
 					fnfy_strcut(calbuf.c_str(), ":", " \t\r\n", " \t\r\n", strTmp);
 
@@ -255,29 +255,29 @@ void Calendar::_parse_()
 					fnfy_strcut(calbuf.c_str(), "TZID=", " \t\r\n", ": \t\r\n", strTmp);
 					_event.end.tid = strTmp;
 				}
-				else if(m_phase == eEvent &&strncasecmp(calbuf.c_str(), "LOCATION:", strlen("LOCATION:")) == 0)
+				else if(m_phase == eEvent &&strncasecmp(calbuf.c_str(), "LOCATION:", sizeof("LOCATION:") - 1) == 0)
 				{
 					fnfy_strcut(calbuf.c_str(), "LOCATION:", " \t\r\n", " \t\r\n", _event.location);
 				}
-				else if(m_phase == eEvent &&strncasecmp(calbuf.c_str(), "DESCRIPTION:", strlen("DESCRIPTION:")) == 0)
+				else if(m_phase == eEvent &&strncasecmp(calbuf.c_str(), "DESCRIPTION:", sizeof("DESCRIPTION:") - 1) == 0)
 				{
 					fnfy_strcut(calbuf.c_str(), "DESCRIPTION:", " \t\r\n", " \t\r\n", _event.description);
 				}
-				else if(m_phase == eEvent &&strncasecmp(calbuf.c_str(), "TRANSP:", strlen("TRANSP:")) == 0)
+				else if(m_phase == eEvent &&strncasecmp(calbuf.c_str(), "TRANSP:", sizeof("TRANSP:") - 1) == 0)
 				{
 					fnfy_strcut(calbuf.c_str(), "TRANSP:", " \t\r\n", " \t\r\n", _event.transp);
 				}
-				else if(m_phase == eEvent &&strncasecmp(calbuf.c_str(), "SEQUENCE:", strlen("SEQUENCE:")) == 0)
+				else if(m_phase == eEvent &&strncasecmp(calbuf.c_str(), "SEQUENCE:", sizeof("SEQUENCE:") - 1) == 0)
 				{
 					fnfy_strcut(calbuf.c_str(), "SEQUENCE:", " \t\r\n", " \t\r\n", strTmp);
 					sscanf(strTmp.c_str(), "%lu", &_event.sequence);
 				}
-			else if(m_phase == eEvent &&strncasecmp(calbuf.c_str(), "END:VEVENT", strlen("END:VEVENT")) == 0)
+			else if(m_phase == eEvent &&strncasecmp(calbuf.c_str(), "END:VEVENT", sizeof("END:VEVENT") - 1) == 0)
 			{
 				_calendar.events.push_back(_event);
 				m_phase = eCal;
 			}
-		else if(m_phase == eCal && strncasecmp(calbuf.c_str(), "END:VCALENDAR", strlen("END:VCALENDAR")) == 0)
+		else if(m_phase == eCal && strncasecmp(calbuf.c_str(), "END:VCALENDAR", sizeof("END:VCALENDAR") - 1) == 0)
 		{
 			m_phase = eNull;
 			m_details.push_back(_calendar);

@@ -640,7 +640,8 @@ public:
     
     static BOOL m_enablemta;
 	static unsigned int 	m_mta_relaytasknum;
-	
+	static unsigned int     m_mta_relaycheckinterval;
+    
 	static BOOL		m_enablesmtphostnamecheck;
 	static unsigned int	m_connect_num;
 	static unsigned int	m_max_conn;

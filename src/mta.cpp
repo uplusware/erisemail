@@ -18,6 +18,7 @@
 #include "letter.h"
 #include "pool.h"
 #include "service.h"
+#include "posixname.h"
 
 typedef struct
 {
@@ -556,9 +557,7 @@ static void clear_posix_queue(mqd_t qid)
 /////////////////////////////////////////////////////////////////////////////////////////
 MTA::MTA()
 {
-	char sztmp[128];
-	sprintf(sztmp, "erisemail_%s", MTA_SERVICE_NAME);
-	m_mta_name = sztmp;
+	m_mta_name = MTA_SERVICE_NAME;
 	m_memcached = NULL;
 }
 
@@ -569,13 +568,13 @@ MTA::~MTA()
 
 void MTA::ReloadConfig()
 {
-	string strqueue = "/.";
+	string strqueue = ERISEMAIL_POSIX_PREFIX;
 	strqueue += m_mta_name;
-	strqueue += "_queue";
+	strqueue += ERISEMAIL_POSIX_QUEUE_SUFFIX;
 
-	string strsem = "/.";
+	string strsem = ERISEMAIL_POSIX_PREFIX;
 	strsem += m_mta_name;
-	strsem += "_lock";
+	strsem += ERISEMAIL_POSIX_SEMAPHORE_SUFFIX;
 	
 	m_mta_qid = mq_open(strqueue.c_str(), O_RDWR);
 	m_mta_sid = sem_open(strsem.c_str(), O_RDWR);
@@ -599,13 +598,13 @@ void MTA::ReloadConfig()
 
 void MTA::Stop()
 {
-	string strqueue = "/.";
+	string strqueue = ERISEMAIL_POSIX_PREFIX;
 	strqueue += m_mta_name;
-	strqueue += "_queue";
+	strqueue += ERISEMAIL_POSIX_QUEUE_SUFFIX;
 
-	string strsem = "/.";
+	string strsem = ERISEMAIL_POSIX_PREFIX;
 	strsem += m_mta_name;
-	strsem += "_lock";
+	strsem += ERISEMAIL_POSIX_SEMAPHORE_SUFFIX;
 
 	m_mta_qid = mq_open(strqueue.c_str(), O_RDWR);
 	m_mta_sid = sem_open(strsem.c_str(), O_RDWR);
@@ -626,7 +625,7 @@ void MTA::Stop()
 	m_memcached = NULL;
     
     //wake it up when block on POST_NOTIFY
-    sem_t* post_sid = sem_open("/.ERISEMAIL_POST_NOTIFY_lock", O_RDWR);
+    sem_t* post_sid = sem_open(ERISEMAIL_POST_NOTIFY, O_RDWR);
     if(post_sid != SEM_FAILED)
     { 
         sem_post(post_sid);
@@ -635,8 +634,6 @@ void MTA::Stop()
     
 	printf("Stop %s Service OK\n", MTA_SERVICE_NAME);
 }
-
-#define MTA_QUERY_MAX_INTERVAL  5
 
 int MTA::Run(int fd)
 {		
@@ -682,13 +679,13 @@ int MTA::Run(int fd)
         
 		unsigned int result  = 0;
 
-		string strqueue = "/.";
+		string strqueue = ERISEMAIL_POSIX_PREFIX;
 		strqueue += m_mta_name;
-		strqueue += "_queue";
+		strqueue += ERISEMAIL_POSIX_QUEUE_SUFFIX;
 
-		string strsem = "/.";
+		string strsem = ERISEMAIL_POSIX_PREFIX;
 		strsem += m_mta_name;
-		strsem += "_lock";
+		strsem += ERISEMAIL_POSIX_SEMAPHORE_SUFFIX;
 
 		mq_attr attr;
 		attr.mq_maxmsg = 8;
@@ -698,7 +695,7 @@ int MTA::Run(int fd)
 		m_mta_qid = mq_open(strqueue.c_str(), O_CREAT|O_RDWR, 0644, &attr);
 		m_mta_sid = sem_open(strsem.c_str(), O_CREAT|O_RDWR, 0644, 1);
 		
-		sem_t * postmail_sid = sem_open("/.ERISEMAIL_POST_NOTIFY_lock", O_CREAT|O_RDWR, 0666, 0);
+		sem_t * postmail_sid = sem_open(ERISEMAIL_POST_NOTIFY, O_CREAT|O_RDWR, 0666, 0);
 		if((m_mta_qid == (mqd_t)-1) || (m_mta_sid ==  SEM_FAILED) || postmail_sid == SEM_FAILED)
 		{
 			if(m_mta_sid != SEM_FAILED)
@@ -759,7 +756,7 @@ int MTA::Run(int fd)
 				}
 			}
             clock_gettime(CLOCK_REALTIME, &ts2);
-            ts2.tv_sec += MTA_QUERY_MAX_INTERVAL;
+            ts2.tv_sec += CMailBase::m_mta_relaycheckinterval;
             int sr = sem_timedwait(postmail_sid, &ts2);
 			if( sr == 0 || (sr == -1 && errno == ETIMEDOUT))
 			{
@@ -778,7 +775,7 @@ int MTA::Run(int fd)
                 
                 unsigned int mta_index, mta_count;
                 
-                mailStg->GetMTAIndex(CMailBase::m_localhostname.c_str(), 4*MTA_QUERY_MAX_INTERVAL, mta_index, mta_count);
+                mailStg->GetMTAIndex(CMailBase::m_localhostname.c_str(), 4 * CMailBase::m_mta_relaycheckinterval, mta_index, mta_count);
                 
 				if(mta_count > 0 && mailStg->ListAvailableExternMail(mitbl, mta_index, mta_count, CMailBase::m_mta_relaytasknum) == 0)
 				{

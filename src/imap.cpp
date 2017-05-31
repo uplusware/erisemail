@@ -514,7 +514,7 @@ BOOL CMailImap::On_Authenticate(char* text)
 	{        
 		m_authType = atGSSAPI;
 		
-        ImapSend("+ \r\n", strlen("+ \r\n"));
+        ImapSend("+ \r\n", sizeof("+ \r\n") - 1);
         
         OM_uint32 maj_stat, min_stat;
         
@@ -1534,27 +1534,27 @@ void CMailImap::On_Append(char* text)
 		}
 		unsigned int status = 0;
 		
-		if(strStatus.find("\\Seen", 0, strlen("\\Seen")) != string::npos)
+		if(strStatus.find("\\Seen", 0, sizeof("\\Seen") - 1) != string::npos)
 		{
 			status |= MSG_ATTR_SEEN;
 		}
-		if(strStatus.find("\\Answered", 0, strlen("\\Answered")) != string::npos)
+		if(strStatus.find("\\Answered", 0, sizeof("\\Answered") - 1) != string::npos)
 		{
 			status |= MSG_ATTR_ANSWERED;
 		}
-		if(strStatus.find("\\Flagged", 0, strlen("\\Flagged")) != string::npos)
+		if(strStatus.find("\\Flagged", 0, sizeof("\\Flagged") - 1) != string::npos)
 		{
 			status |= MSG_ATTR_FLAGGED;
 		}
-		if(strStatus.find("\\Deleted", 0, strlen("\\Deleted")) != string::npos)
+		if(strStatus.find("\\Deleted", 0, sizeof("\\Deleted") - 1) != string::npos)
 		{
 			status |= MSG_ATTR_DELETED;
 		}
-		if(strStatus.find("\\Draft", 0, strlen("\\Draft")) != string::npos)
+		if(strStatus.find("\\Draft", 0, sizeof("\\Draft") - 1) != string::npos)
 		{
 			status |= MSG_ATTR_DRAFT;
 		}
-		if(strStatus.find("\\Recent", 0, strlen("\\Recent")) != string::npos)
+		if(strStatus.find("\\Recent", 0, sizeof("\\Recent") - 1) != string::npos)
 		{
 			status |= MSG_ATTR_RECENT;
 		}
@@ -3608,45 +3608,45 @@ void CMailImap::Store(const char* szArg, BOOL isUID)
 		{
 			if(((isUID ? m_maillisttbl[x].mid : x + 1) >= nBegin) && ((isUID ? m_maillisttbl[x].mid : x + 1) <= nEnd))
 			{
-				if(strncasecmp(strMsgItem.c_str(),"FLAGS.SILENT ", strlen("FLAGS.SILENT ")) == 0)
+				if(strncasecmp(strMsgItem.c_str(),"FLAGS.SILENT ", sizeof("FLAGS.SILENT ") - 1) == 0)
 				{
 					mailStg->SetMailStatus(m_username.c_str(), m_maillisttbl[x].mid, 0);
-					if(strMsgItem.find("\\Seen", 0, strlen("\\Seen")) != string::npos)
+					if(strMsgItem.find("\\Seen", 0, sizeof("\\Seen") - 1) != string::npos)
 					{
 						unsigned int status;
 						mailStg->GetMailStatus(m_maillisttbl[x].mid, status);
 						status |= MSG_ATTR_SEEN;
 						mailStg->SetMailStatus(m_username.c_str(),m_maillisttbl[x].mid, status);
 					}
-					if(strMsgItem.find("\\Answered", 0, strlen("\\Answered")) != string::npos)
+					if(strMsgItem.find("\\Answered", 0, sizeof("\\Answered") - 1) != string::npos)
 					{
 						unsigned int status;
 						mailStg->GetMailStatus(m_maillisttbl[x].mid, status);
 						status |= MSG_ATTR_ANSWERED;
 						mailStg->SetMailStatus(m_username.c_str(),m_maillisttbl[x].mid, status);
 					}
-					if(strMsgItem.find("\\Flagged", 0, strlen("\\Flagged")) != string::npos)
+					if(strMsgItem.find("\\Flagged", 0, sizeof("\\Flagged") - 1) != string::npos)
 					{
 						unsigned int status;
 						mailStg->GetMailStatus(m_maillisttbl[x].mid, status);
 						status |= MSG_ATTR_FLAGGED;
 						mailStg->SetMailStatus(m_username.c_str(),m_maillisttbl[x].mid, status);
 					}
-					if(strMsgItem.find("\\Deleted", 0, strlen("\\Deleted")) != string::npos)
+					if(strMsgItem.find("\\Deleted", 0, sizeof("\\Deleted") - 1) != string::npos)
 					{
 						unsigned int status;
 						mailStg->GetMailStatus(m_maillisttbl[x].mid, status);
 						status |= MSG_ATTR_DELETED;
 						mailStg->SetMailStatus(m_username.c_str(),m_maillisttbl[x].mid, status);
 					}
-					if(strMsgItem.find("\\Draft", 0, strlen("\\Draft")) != string::npos)
+					if(strMsgItem.find("\\Draft", 0, sizeof("\\Draft") - 1) != string::npos)
 					{
 						unsigned int status;
 						mailStg->GetMailStatus(m_maillisttbl[x].mid, status);
 						status |= MSG_ATTR_DRAFT;
 						mailStg->SetMailStatus(m_username.c_str(),m_maillisttbl[x].mid, status);
 					}
-					if(strMsgItem.find("\\Recent", 0, strlen("\\Recent")) != string::npos)
+					if(strMsgItem.find("\\Recent", 0, sizeof("\\Recent") - 1) != string::npos)
 					{
 						unsigned int status;
 						mailStg->GetMailStatus(m_maillisttbl[x].mid, status);
@@ -3654,45 +3654,45 @@ void CMailImap::Store(const char* szArg, BOOL isUID)
 						mailStg->SetMailStatus(m_username.c_str(),m_maillisttbl[x].mid, status);
 					}
 				}
-				else if(strncasecmp(strMsgItem.c_str(),"FLAGS ", strlen("FLAGS ")) == 0)
+				else if(strncasecmp(strMsgItem.c_str(),"FLAGS ", sizeof("FLAGS ") - 1) == 0)
 				{
 					mailStg->SetMailStatus(m_username.c_str(),m_maillisttbl[x].mid, 0);
-					if(strMsgItem.find("\\Seen", 0, strlen("\\Seen")) != string::npos)
+					if(strMsgItem.find("\\Seen", 0, sizeof("\\Seen") - 1) != string::npos)
 					{
 						unsigned int status;
 						mailStg->GetMailStatus(m_maillisttbl[x].mid, status);
 						status |= MSG_ATTR_SEEN;
 						mailStg->SetMailStatus(m_username.c_str(),m_maillisttbl[x].mid, status);
 					}
-					if(strMsgItem.find("\\Answered", 0, strlen("\\Answered")) != string::npos)
+					if(strMsgItem.find("\\Answered", 0, sizeof("\\Answered") - 1) != string::npos)
 					{
 						unsigned int status;
 						mailStg->GetMailStatus(m_maillisttbl[x].mid, status);
 						status |= MSG_ATTR_ANSWERED;
 						mailStg->SetMailStatus(m_username.c_str(),m_maillisttbl[x].mid, status);
 					}
-					if(strMsgItem.find("\\Flagged", 0, strlen("\\Flagged")) != string::npos)
+					if(strMsgItem.find("\\Flagged", 0, sizeof("\\Flagged") - 1) != string::npos)
 					{
 						unsigned int status;
 						mailStg->GetMailStatus(m_maillisttbl[x].mid, status);
 						status |= MSG_ATTR_FLAGGED;
 						mailStg->SetMailStatus(m_username.c_str(),m_maillisttbl[x].mid, status);
 					}
-					if(strMsgItem.find("\\Deleted", 0, strlen("\\Deleted")) != string::npos)
+					if(strMsgItem.find("\\Deleted", 0, sizeof("\\Deleted") - 1) != string::npos)
 					{
 						unsigned int status;
 						mailStg->GetMailStatus(m_maillisttbl[x].mid, status);
 						status |= MSG_ATTR_DELETED;
 						mailStg->SetMailStatus(m_username.c_str(),m_maillisttbl[x].mid, status);
 					}
-					if(strMsgItem.find("\\Draft", 0, strlen("\\Draft")) != string::npos)
+					if(strMsgItem.find("\\Draft", 0, sizeof("\\Draft") - 1) != string::npos)
 					{
 						unsigned int status;
 						mailStg->GetMailStatus(m_maillisttbl[x].mid, status);
 						status |= MSG_ATTR_DRAFT;
 						mailStg->SetMailStatus(m_username.c_str(),m_maillisttbl[x].mid, status);
 					}
-					if(strMsgItem.find("\\Recent", 0, strlen("\\Recent")) != string::npos)
+					if(strMsgItem.find("\\Recent", 0, sizeof("\\Recent") - 1) != string::npos)
 					{
 						unsigned int status;
 						mailStg->GetMailStatus(m_maillisttbl[x].mid, status);
@@ -3750,44 +3750,44 @@ void CMailImap::Store(const char* szArg, BOOL isUID)
 						sprintf(cmd ,"* %u FETCH (FLAGS (%s))\r\n", x+1, strStatus.c_str());
 					ImapSend( cmd, strlen(cmd));
 				}
-				else if(strncasecmp(strMsgItem.c_str(),"+FLAGS.SILENT ", strlen("+FLAGS.SILENT ")) == 0)
+				else if(strncasecmp(strMsgItem.c_str(),"+FLAGS.SILENT ", sizeof("+FLAGS.SILENT ") - 1) == 0)
 				{
-					if(strMsgItem.find("\\Seen", 0, strlen("\\Seen")) != string::npos)
+					if(strMsgItem.find("\\Seen", 0, sizeof("\\Seen") - 1) != string::npos)
 					{
 						unsigned int status;
 						mailStg->GetMailStatus(m_maillisttbl[x].mid, status);
 						status |= MSG_ATTR_SEEN;
 						mailStg->SetMailStatus(m_username.c_str(),m_maillisttbl[x].mid, status);
 					}
-					if(strMsgItem.find("\\Answered", 0, strlen("\\Answered")) != string::npos)
+					if(strMsgItem.find("\\Answered", 0, sizeof("\\Answered") - 1) != string::npos)
 					{
 						unsigned int status;
 						mailStg->GetMailStatus(m_maillisttbl[x].mid, status);
 						status |= MSG_ATTR_ANSWERED;
 						mailStg->SetMailStatus(m_username.c_str(),m_maillisttbl[x].mid, status);
 					}
-					if(strMsgItem.find("\\Flagged", 0, strlen("\\Flagged")) != string::npos)
+					if(strMsgItem.find("\\Flagged", 0, sizeof("\\Flagged") - 1) != string::npos)
 					{
 						unsigned int status;
 						mailStg->GetMailStatus(m_maillisttbl[x].mid, status);
 						status |= MSG_ATTR_FLAGGED;
 						mailStg->SetMailStatus(m_username.c_str(),m_maillisttbl[x].mid, status);
 					}
-					if(strMsgItem.find("\\Deleted", 0, strlen("\\Deleted")) != string::npos)
+					if(strMsgItem.find("\\Deleted", 0, sizeof("\\Deleted") - 1) != string::npos)
 					{
 						unsigned int status;
 						mailStg->GetMailStatus(m_maillisttbl[x].mid, status);
 						status |= MSG_ATTR_DELETED;
 						mailStg->SetMailStatus(m_username.c_str(),m_maillisttbl[x].mid, status);
 					}
-					if(strMsgItem.find("\\Draft", 0, strlen("\\Draft")) != string::npos)
+					if(strMsgItem.find("\\Draft", 0, sizeof("\\Draft") - 1) != string::npos)
 					{
 						unsigned int status;
 						mailStg->GetMailStatus(m_maillisttbl[x].mid, status);
 						status |= MSG_ATTR_DRAFT;
 						mailStg->SetMailStatus(m_username.c_str(),m_maillisttbl[x].mid, status);
 					}
-					if(strMsgItem.find("\\Recent", 0, strlen("\\Recent")) != string::npos)
+					if(strMsgItem.find("\\Recent", 0, sizeof("\\Recent") - 1) != string::npos)
 					{
 						unsigned int status;
 						mailStg->GetMailStatus(m_maillisttbl[x].mid, status);
@@ -3795,44 +3795,44 @@ void CMailImap::Store(const char* szArg, BOOL isUID)
 						mailStg->SetMailStatus(m_username.c_str(),m_maillisttbl[x].mid, status);
 					}
 				}
-				else if(strncasecmp(strMsgItem.c_str(),"+FLAGS ", strlen("+FLAGS ")) == 0)
+				else if(strncasecmp(strMsgItem.c_str(),"+FLAGS ", sizeof("+FLAGS ") - 1) == 0)
 				{
-					if(strMsgItem.find("\\Seen", 0, strlen("\\Seen")) != string::npos)
+					if(strMsgItem.find("\\Seen", 0, sizeof("\\Seen") - 1) != string::npos)
 					{
 						unsigned int status;
 						mailStg->GetMailStatus(m_maillisttbl[x].mid, status);
 						status |= MSG_ATTR_SEEN;
 						mailStg->SetMailStatus(m_username.c_str(),m_maillisttbl[x].mid, status);
 					}
-					if(strMsgItem.find("\\Answered", 0, strlen("\\Answered")) != string::npos)
+					if(strMsgItem.find("\\Answered", 0, sizeof("\\Answered") - 1) != string::npos)
 					{
 						unsigned int status;
 						mailStg->GetMailStatus(m_maillisttbl[x].mid, status);
 						status |= MSG_ATTR_ANSWERED;
 						mailStg->SetMailStatus(m_username.c_str(),m_maillisttbl[x].mid, status);
 					}
-					if(strMsgItem.find("\\Flagged", 0, strlen("\\Flagged")) != string::npos)
+					if(strMsgItem.find("\\Flagged", 0, sizeof("\\Flagged") - 1) != string::npos)
 					{
 						unsigned int status;
 						mailStg->GetMailStatus(m_maillisttbl[x].mid, status);
 						status |= MSG_ATTR_FLAGGED;
 						mailStg->SetMailStatus(m_username.c_str(),m_maillisttbl[x].mid, status);
 					}
-					if(strMsgItem.find("\\Deleted", 0, strlen("\\Deleted")) != string::npos)
+					if(strMsgItem.find("\\Deleted", 0, sizeof("\\Deleted") - 1) != string::npos)
 					{
 						unsigned int status;
 						mailStg->GetMailStatus(m_maillisttbl[x].mid, status);
 						status |= MSG_ATTR_DELETED;
 						mailStg->SetMailStatus(m_username.c_str(),m_maillisttbl[x].mid, status);
 					}
-					if(strMsgItem.find("\\Draft", 0, strlen("\\Draft")) != string::npos)
+					if(strMsgItem.find("\\Draft", 0, sizeof("\\Draft") - 1) != string::npos)
 					{
 						unsigned int status;
 						mailStg->GetMailStatus(m_maillisttbl[x].mid, status);
 						status |= MSG_ATTR_DRAFT;
 						mailStg->SetMailStatus(m_username.c_str(),m_maillisttbl[x].mid, status);
 					}
-					if(strMsgItem.find("\\Recent", 0, strlen("\\Recent")) != string::npos)
+					if(strMsgItem.find("\\Recent", 0, sizeof("\\Recent") - 1) != string::npos)
 					{
 						unsigned int status;
 						mailStg->GetMailStatus(m_maillisttbl[x].mid, status);
@@ -3891,44 +3891,44 @@ void CMailImap::Store(const char* szArg, BOOL isUID)
 					ImapSend( cmd, strlen(cmd));
 					
 				}
-				else if(strncasecmp(strMsgItem.c_str(),"-FLAGS ", strlen("-FLAGS ")) == 0)
+				else if(strncasecmp(strMsgItem.c_str(),"-FLAGS ", sizeof("-FLAGS ") - 1) == 0)
 				{
-					if(strMsgItem.find("\\Seen", 0, strlen("\\Seen")) != string::npos)
+					if(strMsgItem.find("\\Seen", 0, sizeof("\\Seen") - 1) != string::npos)
 					{
 						unsigned int status;
 						mailStg->GetMailStatus(m_maillisttbl[x].mid, status);
 						status &= (~MSG_ATTR_SEEN);
 						mailStg->SetMailStatus(m_username.c_str(),m_maillisttbl[x].mid, status);
 					}
-					if(strMsgItem.find("\\Answered", 0, strlen("\\Answered")) != string::npos)
+					if(strMsgItem.find("\\Answered", 0, sizeof("\\Answered") - 1) != string::npos)
 					{
 						unsigned int status;
 						mailStg->GetMailStatus(m_maillisttbl[x].mid, status);
 						status &= (~MSG_ATTR_ANSWERED);
 						mailStg->SetMailStatus(m_username.c_str(),m_maillisttbl[x].mid, status);
 					}
-					if(strMsgItem.find("\\Flagged", 0, strlen("\\Flagged")) != string::npos)
+					if(strMsgItem.find("\\Flagged", 0, sizeof("\\Flagged") - 1) != string::npos)
 					{
 						unsigned int status;
 						mailStg->GetMailStatus(m_maillisttbl[x].mid, status);
 						status &= (~MSG_ATTR_FLAGGED);
 						mailStg->SetMailStatus(m_username.c_str(),m_maillisttbl[x].mid, status);
 					}
-					if(strMsgItem.find("\\Deleted", 0, strlen("\\Deleted")) != string::npos)
+					if(strMsgItem.find("\\Deleted", 0, sizeof("\\Deleted") - 1) != string::npos)
 					{
 						unsigned int status;
 						mailStg->GetMailStatus(m_maillisttbl[x].mid, status);
 						status &= (~MSG_ATTR_DELETED);
 						mailStg->SetMailStatus(m_username.c_str(),m_maillisttbl[x].mid, status);
 					}
-					if(strMsgItem.find("\\Draft", 0, strlen("\\Draft")) != string::npos)
+					if(strMsgItem.find("\\Draft", 0, sizeof("\\Draft") - 1) != string::npos)
 					{
 						unsigned int status;
 						mailStg->GetMailStatus(m_maillisttbl[x].mid, status);
 						status &= (~MSG_ATTR_DRAFT);
 						mailStg->SetMailStatus(m_username.c_str(),m_maillisttbl[x].mid, status);
 					}
-					if(strMsgItem.find("\\Recent", 0, strlen("\\Recent")) != string::npos)
+					if(strMsgItem.find("\\Recent", 0, sizeof("\\Recent") - 1) != string::npos)
 					{
 						unsigned int status;
 						mailStg->GetMailStatus(m_maillisttbl[x].mid, status);
@@ -3986,44 +3986,44 @@ void CMailImap::Store(const char* szArg, BOOL isUID)
 						sprintf(cmd ,"* %u  FETCH (FLAGS (%s))\r\n", x+1, strStatus.c_str());
 					ImapSend( cmd, strlen(cmd));
 				}
-				else if(strncasecmp(strMsgItem.c_str(),"-FLAGS.SILENT ", strlen("-FLAGS.SILENT ")) == 0)
+				else if(strncasecmp(strMsgItem.c_str(),"-FLAGS.SILENT ", sizeof("-FLAGS.SILENT ") - 1) == 0)
 				{
-					if(strMsgItem.find("\\Seen", 0, strlen("\\Seen")) != string::npos)
+					if(strMsgItem.find("\\Seen", 0, sizeof("\\Seen") - 1) != string::npos)
 					{
 						unsigned int status;
 						mailStg->GetMailStatus(m_maillisttbl[x].mid, status);
 						status &= (~MSG_ATTR_SEEN);
 						mailStg->SetMailStatus(m_username.c_str(),m_maillisttbl[x].mid, status);
 					}
-					if(strMsgItem.find("\\Answered", 0, strlen("\\Answered")) != string::npos)
+					if(strMsgItem.find("\\Answered", 0, sizeof("\\Answered") - 1) != string::npos)
 					{
 						unsigned int status;
 						mailStg->GetMailStatus(m_maillisttbl[x].mid, status);
 						status &= (~MSG_ATTR_ANSWERED);
 						mailStg->SetMailStatus(m_username.c_str(),m_maillisttbl[x].mid, status);
 					}
-					if(strMsgItem.find("\\Flagged", 0, strlen("\\Flagged")) != string::npos)
+					if(strMsgItem.find("\\Flagged", 0, sizeof("\\Flagged") - 1) != string::npos)
 					{
 						unsigned int status;
 						mailStg->GetMailStatus(m_maillisttbl[x].mid, status);
 						status &= (~MSG_ATTR_FLAGGED);
 						mailStg->SetMailStatus(m_username.c_str(),m_maillisttbl[x].mid, status);
 					}
-					if(strMsgItem.find("\\Deleted", 0, strlen("\\Deleted")) != string::npos)
+					if(strMsgItem.find("\\Deleted", 0, sizeof("\\Deleted") - 1) != string::npos)
 					{
 						unsigned int status;
 						mailStg->GetMailStatus(m_maillisttbl[x].mid, status);
 						status &= (~MSG_ATTR_DELETED);
 						mailStg->SetMailStatus(m_username.c_str(),m_maillisttbl[x].mid, status);
 					}
-					if(strMsgItem.find("\\Draft", 0, strlen("\\Draft")) != string::npos)
+					if(strMsgItem.find("\\Draft", 0, sizeof("\\Draft") - 1) != string::npos)
 					{
 						unsigned int status;
 						mailStg->GetMailStatus(m_maillisttbl[x].mid, status);
 						status &= (~MSG_ATTR_DRAFT);
 						mailStg->SetMailStatus(m_username.c_str(),m_maillisttbl[x].mid, status);
 					}
-					if(strMsgItem.find("\\Recent", 0, strlen("\\Recent")) != string::npos)
+					if(strMsgItem.find("\\Recent", 0, sizeof("\\Recent") - 1) != string::npos)
 					{
 						unsigned int status;
 						mailStg->GetMailStatus(m_maillisttbl[x].mid, status);
@@ -4278,163 +4278,163 @@ BOOL CMailImap::Parse(char* text)
 	//Any state
 	BOOL retValue = TRUE;
 	
-	if(strncasecmp(strNotag.c_str(), "CAPABILITY", strlen("CAPABILITY")) == 0)
+	if(strncasecmp(strNotag.c_str(), "CAPABILITY", sizeof("CAPABILITY") - 1) == 0)
 	{
 		On_Capability(text);
 	}
-	else if(strncasecmp(strNotag.c_str(), "NOOP", strlen("NOOP")) == 0)
+	else if(strncasecmp(strNotag.c_str(), "NOOP", sizeof("NOOP") - 1) == 0)
 	{
 		
 		On_Noop(text);
 
 	}
-	else if(strncasecmp(strNotag.c_str(), "LOGOUT", strlen("LOGOUT")) == 0)
+	else if(strncasecmp(strNotag.c_str(), "LOGOUT", sizeof("LOGOUT") - 1) == 0)
 	{
 		On_Logout(text);
 		return FALSE;
 	}
 	
 	//Non-athenticated state
-	else if(strncasecmp(strNotag.c_str(), "AUTHENTICATE", strlen("AUTHENTICATE")) == 0)
+	else if(strncasecmp(strNotag.c_str(), "AUTHENTICATE", sizeof("AUTHENTICATE") - 1) == 0)
 	{
 
 		retValue = On_Authenticate(text);
 
 	}
-	else if(strncasecmp(strNotag.c_str(), "LOGIN", strlen("LOGIN")) == 0)
+	else if(strncasecmp(strNotag.c_str(), "LOGIN", sizeof("LOGIN") - 1) == 0)
 	{
 		
 		retValue = On_Login(text);
 		
 	}
-	else if(strncasecmp(strNotag.c_str(), "SELECT", strlen("SELECT")) == 0)
+	else if(strncasecmp(strNotag.c_str(), "SELECT", sizeof("SELECT") - 1) == 0)
 	{
 		
 		On_Select(text);
 
 	}
-	else if(strncasecmp(strNotag.c_str(), "EXAMINE", strlen("EXAMINE")) == 0)
+	else if(strncasecmp(strNotag.c_str(), "EXAMINE", sizeof("EXAMINE") - 1) == 0)
 	{
 		
 		On_Examine(text);
 
 	}
-	else if(strncasecmp(strNotag.c_str(), "CREATE", strlen("CREATE")) == 0)
+	else if(strncasecmp(strNotag.c_str(), "CREATE", sizeof("CREATE") - 1) == 0)
 	{
 		
 		On_Create(text);
 		
 	}
-	else if(strncasecmp(strNotag.c_str(), "DELETE", strlen("DELETE")) == 0)
+	else if(strncasecmp(strNotag.c_str(), "DELETE", sizeof("DELETE") - 1) == 0)
 	{
 		
 		On_Delete(text);
 		
 	}
-	else if(strncasecmp(strNotag.c_str(), "RENAME", strlen("RENAME")) == 0)
+	else if(strncasecmp(strNotag.c_str(), "RENAME", sizeof("RENAME") - 1) == 0)
 	{
 		
 		On_Rename(text);
 
 		
 	}
-	else if(strncasecmp(strNotag.c_str(), "SUBSCRIBE", strlen("SUBSCRIBE")) == 0)
+	else if(strncasecmp(strNotag.c_str(), "SUBSCRIBE", sizeof("SUBSCRIBE") - 1) == 0)
 	{
 		
 		On_Subscribe(text);
 		
 	}
-	else if(strncasecmp(strNotag.c_str(), "UNSUBSCRIBE", strlen("UNSUBSCRIBE")) == 0)
+	else if(strncasecmp(strNotag.c_str(), "UNSUBSCRIBE", sizeof("UNSUBSCRIBE") - 1) == 0)
 	{
 		
 		On_Unsubscribe(text);
 		
 	}
-	else if(strncasecmp(strNotag.c_str(), "LIST", strlen("LIST")) == 0)
+	else if(strncasecmp(strNotag.c_str(), "LIST", sizeof("LIST") - 1) == 0)
 	{
 		
 		On_List(text);
 		
 	}
-	else if(strncasecmp(strNotag.c_str(), "LSUB", strlen("LSUB")) == 0)
+	else if(strncasecmp(strNotag.c_str(), "LSUB", sizeof("LSUB") - 1) == 0)
 	{
 		
 		On_Listsub(text);
 	}
-	else if(strncasecmp(strNotag.c_str(), "STATUS", strlen("STATUS")) == 0)
+	else if(strncasecmp(strNotag.c_str(), "STATUS", sizeof("STATUS") - 1) == 0)
 	{
 		
 		On_Status(text);
 		
 	}
-	else if(strncasecmp(strNotag.c_str(), "APPEND", strlen("APPEND")) == 0)
+	else if(strncasecmp(strNotag.c_str(), "APPEND", sizeof("APPEND") - 1) == 0)
 	{
 		
 		On_Append(text);
 
 		
 	}
-	else if(strncasecmp(strNotag.c_str(), "CHECK", strlen("CHECK")) == 0)
+	else if(strncasecmp(strNotag.c_str(), "CHECK", sizeof("CHECK") - 1) == 0)
 	{
 		On_Check(text);
 	}
-	else if(strncasecmp(strNotag.c_str(), "CLOSE", strlen("CLOSE")) == 0)
+	else if(strncasecmp(strNotag.c_str(), "CLOSE", sizeof("CLOSE") - 1) == 0)
 	{
 		
 		On_Close(text);
 
 		
 	}
-	else if(strncasecmp(strNotag.c_str(), "EXPUNGE", strlen("EXPUNGE")) == 0)
+	else if(strncasecmp(strNotag.c_str(), "EXPUNGE", sizeof("EXPUNGE") - 1) == 0)
 	{
 		
 		On_Expunge(text);
 
 		
 	}
-	else if(strncasecmp(strNotag.c_str(), "SEARCH", strlen("SEARCH")) == 0)
+	else if(strncasecmp(strNotag.c_str(), "SEARCH", sizeof("SEARCH") - 1) == 0)
 	{
 		
 		On_Search(text);
 
 		
 	}
-	else if(strncasecmp(strNotag.c_str(), "FETCH", strlen("FETCH")) == 0)
+	else if(strncasecmp(strNotag.c_str(), "FETCH", sizeof("FETCH") - 1) == 0)
 	{
 		
 		On_Fetch(text);
 
 		
 	}
-	else if(strncasecmp(strNotag.c_str(), "STORE", strlen("STORE")) == 0)
+	else if(strncasecmp(strNotag.c_str(), "STORE", sizeof("STORE") - 1) == 0)
 	{
 		
 		On_Store(text);
 
 		
 	}
-	else if(strncasecmp(strNotag.c_str(), "COPY", strlen("COPY")) == 0)
+	else if(strncasecmp(strNotag.c_str(), "COPY", sizeof("COPY") - 1) == 0)
 	{
 		
 		On_Copy(text);
 
 		
 	}
-	else if(strncasecmp(strNotag.c_str(), "UID", strlen("UID")) == 0)
+	else if(strncasecmp(strNotag.c_str(), "UID", sizeof("UID") - 1) == 0)
 	{
 		
 		On_UID(text);
 
 	}
-	else if(strncasecmp(strNotag.c_str(), "STARTTLS", strlen("STARTTLS")) == 0)
+	else if(strncasecmp(strNotag.c_str(), "STARTTLS", sizeof("STARTTLS") - 1) == 0)
 	{
 		On_STARTTLS(text);
 	}
-	else if(strncasecmp(strNotag.c_str(), "X", strlen("X")) == 0)
+	else if(strncasecmp(strNotag.c_str(), "X", sizeof("X") - 1) == 0)
 	{
 		On_X_atom(text);
 	}
-	else if(strncasecmp(strNotag.c_str(),"NAMESPACE", strlen("NAMESPACE")) == 0)
+	else if(strncasecmp(strNotag.c_str(),"NAMESPACE", sizeof("NAMESPACE") - 1) == 0)
 	{
 		On_Namespace(text);
 	}

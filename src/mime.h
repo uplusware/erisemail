@@ -89,7 +89,7 @@ void __inline__ DecodeMIMEString(const char* szMIMEString, string& strDeocoded)
 	string strBefore = "", strAfter = "", strCodec = "";
 	while(1)
 	{
-		if((strMIMEString.find("=?", 0, strlen("=?")) != string::npos)&&(strMIMEString.find("?B?", 0, strlen("?B?")) != string::npos)&&(strMIMEString.find("?=", 0, strlen("?=")) != string::npos))
+		if((strMIMEString.find("=?", 0, sizeof("=?") - 1) != string::npos)&&(strMIMEString.find("?B?", 0, sizeof("?B?") - 1) != string::npos)&&(strMIMEString.find("?=", 0, sizeof("?=") - 1) != string::npos))
 		{
 			strcut(strMIMEString.c_str(), NULL, "=?", strBefore);
 			strcut(strMIMEString.c_str(), "=?", "?B?", strCodec);
@@ -118,7 +118,7 @@ void __inline__ DecodeMIMEString(const char* szMIMEString, string& strDeocoded)
 			strMIMEString = strDeocoded.c_str();
 				
 		}
-		else if((strMIMEString.find("=?", 0, strlen("=?")) != string::npos)&&(strMIMEString.find("?Q?", 0, strlen("?Q?")) != string::npos)&&(strMIMEString.find("?=", 0, strlen("?=")) != string::npos))
+		else if((strMIMEString.find("=?", 0, sizeof("=?") - 1) != string::npos)&&(strMIMEString.find("?Q?", 0, sizeof("?Q?") - 1) != string::npos)&&(strMIMEString.find("?=", 0, sizeof("?=") - 1) != string::npos))
 		{
 			strcut(strMIMEString.c_str(), NULL, "=?", strBefore);
 			strcut(strMIMEString.c_str(), "=?", "?Q?", strCodec);

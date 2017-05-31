@@ -12,23 +12,22 @@
 #include "util/trace.h"
 #include <time.h>
 #include "letter.h"
+#include "posixname.h"
 
 #define CODE_KEY "qazWSX#$%123"
 #define MYSQL_TIMEOUT 5
 
 static void show_error(MYSQL *mysql, const char* sqlcmd, const char* tag = "", BOOL printit = FALSE)
 {
-    static char MYSQLERR_LOGNAME[256] = "/var/log/erisemail/mysqlerr.log";
-    static char MYSQLERR_LCKNAME[256] = "/.ERISEMAIL_MYSQLERR.LOG";
     if(!CMailBase::m_close_stderr || printit)   
     {
         fprintf(stderr, "%sMySQL error(%d) [%s] \"%s\" <%s>\n", tag, mysql_errno(mysql), mysql_sqlstate(mysql), mysql_error(mysql), sqlcmd);
     }
     else
     {
-        CUplusTrace uTrace(MYSQLERR_LOGNAME, MYSQLERR_LCKNAME);
+        CUplusTrace uTrace(ERISEMAIL_MYSQLERR_LOGNAME, ERISEMAIL_MYSQLERR_LCKNAME);
     
-        uTrace.Write(Trace_Error, "%sMySQL error(%d) [%s] \"%s\" <$s>", tag, mysql_errno(mysql), mysql_sqlstate(mysql), mysql_error(mysql), sqlcmd);
+        uTrace.Write(Trace_Error, "%sMySQL error(%d) [%s] \"%s\" <%s>", tag, mysql_errno(mysql), mysql_sqlstate(mysql), mysql_error(mysql), sqlcmd);
     }
 }
 

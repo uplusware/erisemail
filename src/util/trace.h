@@ -14,9 +14,6 @@
 #include <stdlib.h>
 #include <stdarg.h>
 
-static char LOGNAME[256] = "/var/log/erisemail/service.log";
-static char LCKNAME[256] = "/.ERISEMAIL_SYS.LOG";
-
 enum Trace_Level
 {
 	Trace_Msg = 0,

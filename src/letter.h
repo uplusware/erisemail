@@ -20,8 +20,6 @@ using namespace std;
 
 #define POSTFIX_CACHE ".v3.cache"
 
-#define RELAY_MAIL_SEM_NAME	"/.RELAY_MAIL_NOTIFICATION.sem"
-
 typedef enum
 {
 	sRD = 0,

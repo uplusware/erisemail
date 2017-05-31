@@ -248,7 +248,7 @@ int Run()
 		if(watcher_pids == 0)
 		{
 			char szFlag[128];
-			sprintf(szFlag, "/tmp/erisemail/%s.pid", "WATCHER");
+			sprintf(szFlag, "/tmp/erisemail/%s.pid", WATCHER_SERVICE_NAME);
 			if(check_single_on(szFlag) )   
 			{   
 				printf("Service %s is aready runing.\n", "Watcher");   

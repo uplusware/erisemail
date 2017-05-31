@@ -16,6 +16,8 @@
 #include "mta.h"
 #include "util/md5.h"
 #include "service.h"
+#include "posixname.h"
+#include "postnotify.h"
 
 static char CHAR_TBL[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890=/";
 
@@ -553,7 +555,7 @@ void CMailSmtp::On_Auth_Handler(char* text)
     else if(strncasecmp(&text[5],"GSSAPI", 6) == 0)
     {
         m_authType = SMTP_AUTH_GSSAPI;
-        SmtpSend("334\r\n", strlen("334\r\n"));
+        SmtpSend("334\r\n", sizeof("334\r\n") - 1);
         
         OM_uint32 maj_stat, min_stat;
         
@@ -1576,6 +1578,10 @@ void CMailSmtp::On_Finish_Data_Handler()
 						m_letter_obj_vector[x]->letter_info.mail_type, m_letter_obj_vector[x]->letter_info.mail_uniqueid.c_str(), 
 						m_letter_obj_vector[x]->letter_info.mail_dirid, m_letter_obj_vector[x]->letter_info.mail_status,
 						m_letter_obj_vector[x]->letter->GetEmlName(), m_letter_obj_vector[x]->letter->GetSize(), m_letter_obj_vector[x]->letter_info.mail_id);
+            if(m_letter_obj_vector[x]->letter_info.mail_type == mtExtern)
+            {
+               mta_post_notify();
+            }
 		}
 		
 	}

@@ -115,6 +115,9 @@ chmod a+x /usr/bin/erisedeluserfromgroup
 cp -f ${path}/eriseutil /usr/bin/eriseutil
 chmod a+x /usr/bin/eriseutil
 
+cp -f ${path}/erisenotify /usr/bin/erisenotify
+chmod a+x /usr/bin/erisenotify
+
 cp -f ${path}/erisepasswd /usr/bin/erisepasswd
 chmod a+x /usr/bin/erisepasswd
 

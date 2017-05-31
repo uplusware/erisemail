@@ -22,9 +22,11 @@
 #include <libmemcached/memcached.h>
 #include "util/trace.h"
 #include "cache.h"
+#include "posixname.h"
 
-#define MTA_SERVICE_NAME    "MTA"
-#define MDA_SERVICE_NAME    "MDA"
+#define MTA_SERVICE_NAME        "MTA"
+#define MDA_SERVICE_NAME        "MDA"
+#define WATCHER_SERVICE_NAME    "WATCHER"
 
 void push_reject_list(const char* service_name, const char* ip);
 
@@ -76,6 +78,7 @@ public:
 protected:
 	mqd_t m_watcher_qid;
 	sem_t* m_watcher_sid;
+    string m_watcher_name;
 };
 
 #endif /* _SERVICE_H_ */

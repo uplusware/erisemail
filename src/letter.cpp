@@ -903,7 +903,7 @@ void LetterHeaderSummary::loadXML()
 
 void LetterHeaderSummary::fieldParse(const char* field)
 {
-	if(strncasecmp(field, "From:", strlen("From:")) == 0)
+	if(strncasecmp(field, "From:", sizeof("From:") - 1) == 0)
 	{
 		m_from = new filedaddr(field);
 		TiXmlElement* pNewFromElement = new TiXmlElement("from");
@@ -924,7 +924,7 @@ void LetterHeaderSummary::fieldParse(const char* field)
 		delete pNewFromElement;
 
 	}
-	else if(strncasecmp(field, "To:", strlen("To:")) == 0)
+	else if(strncasecmp(field, "To:", sizeof("To:") - 1) == 0)
 	{
 		m_to = new filedaddr(field);
 
@@ -944,7 +944,7 @@ void LetterHeaderSummary::fieldParse(const char* field)
 		delete pNewToElement;
 		
 	}
-	else if(strncasecmp(field, "Sender:", strlen("Sender:")) == 0)
+	else if(strncasecmp(field, "Sender:", sizeof("Sender:") - 1) == 0)
 	{
 		m_sender= new filedaddr(field);
 
@@ -964,7 +964,7 @@ void LetterHeaderSummary::fieldParse(const char* field)
 		delete pNewSenderElement;
 		
 	}
-	else if(strncasecmp(field, "Reply-To:", strlen("Reply-To:")) == 0)
+	else if(strncasecmp(field, "Reply-To:", sizeof("Reply-To:") - 1) == 0)
 	{
 		m_replyTo= new filedaddr(field);
 		TiXmlElement* pNewReplyToElement = new TiXmlElement("replyTo");
@@ -983,7 +983,7 @@ void LetterHeaderSummary::fieldParse(const char* field)
 		delete pNewReplyToElement;
 		
 	}
-	else if(strncasecmp(field, "Cc:", strlen("Cc:")) == 0)
+	else if(strncasecmp(field, "Cc:", sizeof("Cc:") - 1) == 0)
 	{
 		m_cc = new filedaddr(field);
 
@@ -1003,7 +1003,7 @@ void LetterHeaderSummary::fieldParse(const char* field)
 		delete pNewCcElement;
 		
 	}
-	else if(strncasecmp(field, "BCC:", strlen("BCC:")) == 0)
+	else if(strncasecmp(field, "BCC:", sizeof("BCC:") - 1) == 0)
 	{
 		m_bcc = new filedaddr(field);
 
@@ -1023,7 +1023,7 @@ void LetterHeaderSummary::fieldParse(const char* field)
 		delete pNewBccElement;
 		
 	}
-	else if(strncasecmp(field, "Subject:", strlen("Subject:")) == 0)
+	else if(strncasecmp(field, "Subject:", sizeof("Subject:") - 1) == 0)
 	{
 		fnln_strcut(field, ":", " \t\r\n", " \t\r\n", m_subject);
 		DecodeMIMEString(m_subject.c_str(), m_decodedSubject);
@@ -1037,7 +1037,7 @@ void LetterHeaderSummary::fieldParse(const char* field)
 		delete pNewSubjectElement;
 		
 	}
-	else if(strncasecmp(field, "Date:", strlen("Date:")) == 0)
+	else if(strncasecmp(field, "Date:", sizeof("Date:") - 1) == 0)
 	{
 		fnln_strcut(field, ":", " \t\r\n", " \t\r\n", m_date);
 		//eg. Tue, 04 Nov 2008 16:51:41 +0800
@@ -1077,7 +1077,7 @@ void LetterHeaderSummary::fieldParse(const char* field)
 		m_pNewElement->InsertEndChild(*pNewDateElement);
 		delete pNewDateElement;
 	}
-	else if(strncasecmp(field, "Message-ID:", strlen("Message-ID:")) == 0)
+	else if(strncasecmp(field, "Message-ID:", sizeof("Message-ID:") - 1) == 0)
 	{
 		fnln_strcut(field, ":", " \t\r\n", " \t\r\n", m_messageID);
 		
@@ -1089,7 +1089,7 @@ void LetterHeaderSummary::fieldParse(const char* field)
 		delete pNewMessageIDElement;
 		
 	}
-	else if(strncasecmp(field, "User-Agent:", strlen("User-Agent:")) == 0)
+	else if(strncasecmp(field, "User-Agent:", sizeof("User-Agent:") - 1) == 0)
 	{
 		fnln_strcut(field, ":", " \t\r\n", " \t\r\n", m_userAgent);
 		TiXmlElement* pNewUserAgentElement = new TiXmlElement("userAgent");
@@ -1099,7 +1099,7 @@ void LetterHeaderSummary::fieldParse(const char* field)
 		m_pNewElement->InsertEndChild(*pNewUserAgentElement);
 		delete pNewUserAgentElement;
 	}
-	else if(strncasecmp(field, "In-Reply-To:", strlen("In-Reply-To:")) == 0)
+	else if(strncasecmp(field, "In-Reply-To:", sizeof("In-Reply-To:") - 1) == 0)
 	{
 		fnln_strcut(field, ":", " \t\r\n", " \t\r\n", m_inReplyTo);
 		TiXmlElement* pNewInReplyToElement = new TiXmlElement("inReplyTo");
@@ -1419,7 +1419,7 @@ void MimeHeaderSummary::loadXML()
 
 void MimeHeaderSummary::fieldParse(const char* field)
 {
-	if(strncasecmp(field, "Content-Type:", strlen("Content-Type:")) == 0)
+	if(strncasecmp(field, "Content-Type:", sizeof("Content-Type:") - 1) == 0)
 	{
 		m_Content_Type = new filedContentType(field);
 
@@ -1435,7 +1435,7 @@ void MimeHeaderSummary::fieldParse(const char* field)
 		delete pNewContentTypeElement;
 		
 	}
-	else if(strncasecmp(field, "Content-ID:", strlen("Content-ID:")) == 0)
+	else if(strncasecmp(field, "Content-ID:", sizeof("Content-ID:") - 1) == 0)
 	{
 		fnfy_strcut(field, ":", " \t\"<", " >\t\";\r\n", m_Content_ID);
 
@@ -1447,7 +1447,7 @@ void MimeHeaderSummary::fieldParse(const char* field)
 		delete pNewContentIDElement;
 		
 	}
-	else if(strncasecmp(field, "Content-class:", strlen("Content-class:")) == 0)
+	else if(strncasecmp(field, "Content-class:", sizeof("Content-class:") - 1) == 0)
 	{
 		fnfy_strcut(field, ":", " \t\"<", " >\t\";\r\n", m_Content_Class);
 
@@ -1459,7 +1459,7 @@ void MimeHeaderSummary::fieldParse(const char* field)
 		delete pNewContentClassElement;
 		
 	}
-	else if(strncasecmp(field, "Content-Transfer-Encoding:", strlen("Content-Transfer-Encoding:")) == 0)
+	else if(strncasecmp(field, "Content-Transfer-Encoding:", sizeof("Content-Transfer-Encoding:") - 1) == 0)
 	{
 		fnfy_strcut(field, ":", " \t\"\r\n", " \t\";\r\n", m_Content_Transfer_Encoding);
 
@@ -1471,7 +1471,7 @@ void MimeHeaderSummary::fieldParse(const char* field)
 		delete pNewContentTransferEncodingElement;
 		
 	}
-	else if(strncasecmp(field, "Content-Disposition:", strlen("Content-Disposition:")) == 0)
+	else if(strncasecmp(field, "Content-Disposition:", sizeof("Content-Disposition:") - 1) == 0)
 	{
 		m_Content_Disposition = new filedContentDisposition(field);
 

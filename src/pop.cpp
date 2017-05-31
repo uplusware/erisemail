@@ -798,7 +798,7 @@ void CMailPop::On_Retr_Handler(char* text)
 					if(wlen >= llen)
 						break;
 				}
-				PopSend("\r\n.\r\n",strlen("\r\n.\r\n"));
+				PopSend("\r\n.\r\n", sizeof("\r\n.\r\n") - 1);
 			}
 			else
 			{		
@@ -816,7 +816,7 @@ void CMailPop::On_Retr_Handler(char* text)
 				sprintf(cmd, "+OK %u byte(s)\r\n",badmail.length());
 				PopSend(cmd, strlen(cmd));
 				PopSend(badmail.c_str(), badmail.length());
-				PopSend("\r\n.\r\n",strlen("\r\n.\r\n"));
+				PopSend("\r\n.\r\n", sizeof("\r\n.\r\n") - 1);
 			}
 			
 			delete Letter;
@@ -884,7 +884,7 @@ void CMailPop::On_Top_Handler(char* text)
 				}
 			}
 			delete Letter;
-			PopSend("\r\n.\r\n",strlen("\r\n.\r\n"));
+			PopSend("\r\n.\r\n", sizeof("\r\n.\r\n") - 1);
 		}
 	}
 	else
@@ -1079,7 +1079,7 @@ void CMailPop::On_Auth_Handler(char* text)
     else if(strncasecmp(&text[5],"GSSAPI", 6) == 0)
     {
         m_authType = POP_AUTH_GSSAPI;
-        PopSend("+OK\r\n", strlen("+OK\r\n"));
+        PopSend("+OK\r\n", sizeof("+OK\r\n") - 1);
         
         OM_uint32 maj_stat, min_stat;
         

@@ -2,11 +2,11 @@
 	Copyright (c) openheap, uplusware
 	uplusware@gmail.com
 */
-#include "postudf.h"
-
 #include <fcntl.h>           /* For O_* constants */
 #include <sys/stat.h>        /* For mode constants */
 #include <semaphore.h>
+#include "postudf.h"
+#include "posixname.h"
 
 my_bool post_notify_init(UDF_INIT *initid, UDF_ARGS *args, char *message)
 {
@@ -29,7 +29,7 @@ char * post_notify(UDF_INIT *initid,
     *is_null = 0; //not NULL returned
     *error = 0; //no error happens
     
-    sem_t* post_sid = sem_open("/.ERISEMAIL_POST_NOTIFY_lock", O_RDWR);
+    sem_t* post_sid = sem_open(ERISEMAIL_POST_NOTIFY, O_RDWR);
     if(post_sid != SEM_FAILED && sem_post(post_sid) == 0)
     {
         strcpy(result, "Yes");

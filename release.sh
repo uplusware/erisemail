@@ -40,6 +40,7 @@ cp cn-html-$2/*.xml $3-erisemail-bin-cn-$2-${m}-${o}/html/
 
 cp src/erisemaild $3-erisemail-bin-cn-$2-${m}-${o}/erisemaild
 cp src/eriseutil $3-erisemail-bin-cn-$2-${m}-${o}/eriseutil
+cp src/erisenotify $3-erisemail-bin-cn-$2-${m}-${o}/erisenotify
 cp src/liberisestorage.so $3-erisemail-bin-cn-$2-${m}-${o}/liberisestorage.so
 cp src/liberiseantispam.so $3-erisemail-bin-cn-$2-${m}-${o}/liberiseantispam.so
 cp src/postudf.so $3-erisemail-bin-cn-$2-${m}-${o}/postudf.so
@@ -100,6 +101,7 @@ cp en-html-$2/*.xml $3-erisemail-bin-en-$2-${m}-${o}/html/
 
 cp src/erisemaild $3-erisemail-bin-en-$2-${m}-${o}/erisemaild
 cp src/eriseutil $3-erisemail-bin-en-$2-${m}-${o}/eriseutil
+cp src/erisenotify $3-erisemail-bin-en-$2-${m}-${o}/erisenotify
 cp src/liberisestorage.so $3-erisemail-bin-en-$2-${m}-${o}/liberisestorage.so
 cp src/liberiseantispam.so $3-erisemail-bin-en-$2-${m}-${o}/liberiseantispam.so
 cp src/postudf.so $3-erisemail-bin-en-$2-${m}-${o}/postudf.so

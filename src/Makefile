@@ -5,11 +5,10 @@ OBJSTG = storage.o util/trace.o
 
 LIBJKS = liberiseantispam.so
 OBJJKS = antispam.o
-SQLUDF = postudf.so
 
 EXESVR = erisemaild
-OBJSVR = mainsrv.o sslapi.o service.o session.o base.o smtp.o pop.o imap.o calendar.o\
-	letter.o smtpclient.o mime.o mta.o fstring.o http.o email.o webmail.o cache.o stgengine.o pool.o\
+OBJSVR = mainsrv.o sslapi.o service.o session.o base.o smtp.o pop.o imap.o calendar.o \
+	letter.o smtpclient.o mime.o mta.o fstring.o http.o email.o webmail.o cache.o stgengine.o pool.o postnotify.o \
 	util/md5.o	\
 	util/DES.o	\
 	util/escape.o	\
@@ -22,11 +21,16 @@ OBJSVR = mainsrv.o sslapi.o service.o session.o base.o smtp.o pop.o imap.o calen
 
 EXEUTL = eriseutil
 OBJUTL = maintools.o base.o util/DES.o stgengine.o
+
+SQLUDF = postudf.so
 OBJUDF = postudf.o
+
+EXENTY = erisenotify
+OBJNTY = erisenotify.o postnotify.o
 
 MDEF = _LINUX_OS_
 
-OPENSSL_DIR=openssl
+OPENSSL_DIR = openssl
 
 INCDIR := $(INCDIR) -I../$(OPENSSL_DIR)/include
 LDDIRS := $(LDDIRS) -L.
@@ -46,17 +50,19 @@ endif
 LDLIST_STG = -lstdc++ -lrt -lmariadb -lmemcached
 LDLIST_JKS = -lstdc++
 LDLIST_UTL = -lstdc++ -lpthread -ldl
-LDLIST_UDF = -lstdc++ -lrt
+LDLIST_UDF = -lstdc++ -lpthread
+LDLIST_NTY = -lstdc++ -lpthread
 
 FLAGS = -O2 -fPIC -w
 
-all: stg svr utl jks udf
+all: stg svr utl jks udf nty
 
 svr: $(EXESVR)
 utl: $(EXEUTL)
 stg: $(LIBSTG)
 jks: $(LIBJKS)
 udf: $(SQLUDF)
+nty: $(EXENTY)
 
 $(LIBSTG): $(OBJSTG)
 	$(CC) -shared -W -fPIC -o $@ $(OBJSTG) $(LDDIRS) $(LDLIST_STG)
@@ -72,9 +78,12 @@ $(EXEUTL): $(OBJUTL)
 
 $(SQLUDF): $(OBJUDF)
 	$(CC) -shared -W -fPIC -o $@ $(OBJUDF) $(LDLIST_UDF)
+
+$(EXENTY): $(OBJNTY)
+	$(CC) -o $@ $(OBJNTY) $(LDDIRS) $(LDLIST_NTY)
 	
 %.o : %.cpp
 	$(CC) -D$(MDEF) -D$(GSS_DEF) $(INCDIR) $(FLAGS) -c $< -o $@
 
 clean:
-	-rm -f $(LIBSTG) $(LIBJKS) $(EXESVR) $(EXEUTL) $(SQLUDF) $(OBJSVR) $(OBJJKS) $(OBJSTG) $(OBJUDF) *.elf *.gdb *.o *.a *.so
+	-rm -f $(LIBSTG) $(LIBJKS) $(EXESVR) $(EXEUTL) $(SQLUDF) $(EXENTY) $(OBJSVR) $(OBJJKS) $(OBJSTG) $(OBJUDF) $(OBJNTY) *.elf *.gdb *.o *.a *.so

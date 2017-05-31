@@ -88,19 +88,19 @@ BOOL CLI::Parse(char* text)
 		}
 		ret = FALSE;
 	}
-	else if(strncasecmp(strline.c_str(), "adduser", strlen("adduser")) == 0)
+	else if(strncasecmp(strline.c_str(), "adduser", sizeof("adduser") - 1) == 0)
 	{
 		
 	}
-	else if(strncasecmp(strline.c_str(), "addgroup", strlen("addgroup")) == 0)
+	else if(strncasecmp(strline.c_str(), "addgroup", sizeof("addgroup") - 1) == 0)
 	{
 				
 	}
-	else if(strncasecmp(strline.c_str(), "deluser", strlen("deluser")) == 0)
+	else if(strncasecmp(strline.c_str(), "deluser", sizeof("deluser") - 1) == 0)
 	{
 				
 	}
-	else if(strncasecmp(strline.c_str(), "delgroup", strlen("delgroup")) == 0)
+	else if(strncasecmp(strline.c_str(), "delgroup", sizeof("delgroup") - 1) == 0)
 	{
 				
 	}

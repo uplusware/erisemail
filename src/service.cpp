@@ -154,13 +154,13 @@ static void clear_queue(mqd_t qid)
 
 void push_reject_list(const char* service_name, const char* ip)
 {
-	string strqueue = "/.erisemail_";
+	string strqueue = ERISEMAIL_POSIX_PREFIX;
 	strqueue += service_name;
-	strqueue += "_queue";
+	strqueue += ERISEMAIL_POSIX_QUEUE_SUFFIX;
 
-	string strsem = "/.erisemail_";
+	string strsem = ERISEMAIL_POSIX_PREFIX;
 	strsem += service_name;
-	strsem += "_lock";
+	strsem += ERISEMAIL_POSIX_SEMAPHORE_SUFFIX;
 
 	mqd_t service_qid = mq_open(strqueue.c_str(), O_RDWR);
 	sem_t* service_sid = sem_open(strsem.c_str(), O_RDWR);
@@ -198,13 +198,13 @@ Service::~Service()
 
 void Service::Stop()
 {
-	string strqueue = "/.erisemail_";
+	string strqueue = ERISEMAIL_POSIX_PREFIX;
 	strqueue += m_service_name;
-	strqueue += "_queue";
+	strqueue += ERISEMAIL_POSIX_QUEUE_SUFFIX;
 
-	string strsem = "/.erisemail_";
+	string strsem = ERISEMAIL_POSIX_PREFIX;
 	strsem += m_service_name;
-	strsem += "_lock";
+	strsem += ERISEMAIL_POSIX_SEMAPHORE_SUFFIX;
 	
 	m_service_qid = mq_open(strqueue.c_str(), O_RDWR);
 	m_service_sid = sem_open(strsem.c_str(), O_RDWR);
@@ -232,13 +232,13 @@ void Service::Stop()
 
 void Service::ReloadConfig()
 {
-	string strqueue = "/.erisemail_";
+	string strqueue = ERISEMAIL_POSIX_PREFIX;
 	strqueue += m_service_name;
-	strqueue += "_queue";
+	strqueue += ERISEMAIL_POSIX_QUEUE_SUFFIX;
 
-	string strsem = "/.erisemail_";
+	string strsem = ERISEMAIL_POSIX_PREFIX;
 	strsem += m_service_name;
-	strsem += "_lock";
+	strsem += ERISEMAIL_POSIX_SEMAPHORE_SUFFIX;
 	
 	m_service_qid = mq_open(strqueue.c_str(), O_RDWR);
 	m_service_sid = sem_open(strsem.c_str(), O_RDWR);
@@ -262,13 +262,13 @@ void Service::ReloadConfig()
 
 void Service::ReloadList()
 {
-	string strqueue = "/.erisemail_";
+	string strqueue = ERISEMAIL_POSIX_PREFIX;
 	strqueue += m_service_name;
-	strqueue += "_queue";
+	strqueue += ERISEMAIL_POSIX_QUEUE_SUFFIX;
 
-	string strsem = "/.erisemail_";
+	string strsem = ERISEMAIL_POSIX_PREFIX;
 	strsem += m_service_name;
-	strsem += "_lock";
+	strsem += ERISEMAIL_POSIX_SEMAPHORE_SUFFIX;
 	
 	m_service_qid = mq_open(strqueue.c_str(), O_RDWR);
 	m_service_sid = sem_open(strsem.c_str(), O_RDWR);
@@ -470,7 +470,7 @@ int Service::create_client_session(CUplusTrace& uTrace, int& clt_sockfd, Service
 
 int Service::Run(int fd, vector<service_param_t> & server_params)
 {
-    CUplusTrace uTrace(LOGNAME, LCKNAME);
+    CUplusTrace uTrace(ERISEMAIL_SERVICE_LOGNAME, ERISEMAIL_SERVICE_LCKNAME);
     memcached_server_st * memcached_servers = NULL;
 	memcached_return rc;
 	m_memcached = NULL;
@@ -495,13 +495,13 @@ int Service::Run(int fd, vector<service_param_t> & server_params)
 	}
 	m_child_list.clear();
 	unsigned int result = 0;
-	string strqueue = "/.erisemail_";
+	string strqueue = ERISEMAIL_POSIX_PREFIX;
 	strqueue += m_service_name;
-	strqueue += "_queue";
+	strqueue += ERISEMAIL_POSIX_QUEUE_SUFFIX;
 
-	string strsem = "/.erisemail_";
+	string strsem = ERISEMAIL_POSIX_PREFIX;
 	strsem += m_service_name;
-	strsem += "_lock";
+	strsem += ERISEMAIL_POSIX_SEMAPHORE_SUFFIX;
 	
 	mq_attr attr;
 	attr.mq_maxmsg = 8;
@@ -718,6 +718,7 @@ int Service::Run(int fd, vector<service_param_t> & server_params)
 
 Watcher::Watcher()
 {
+    m_watcher_name = WATCHER_SERVICE_NAME;
 }
 
 Watcher::~Watcher()
@@ -727,13 +728,13 @@ Watcher::~Watcher()
 
 void Watcher::Stop()
 {
-	string strqueue = "/.";
-	strqueue += "WATCHER";
-	strqueue += "_queue";
+	string strqueue = ERISEMAIL_POSIX_PREFIX;
+	strqueue += m_watcher_name;
+	strqueue += ERISEMAIL_POSIX_QUEUE_SUFFIX;
 
-	string strsem = "/.";
-	strsem += "WATCHER";
-	strsem += "_lock";
+	string strsem = ERISEMAIL_POSIX_PREFIX;
+	strsem += m_watcher_name;
+	strsem += ERISEMAIL_POSIX_SEMAPHORE_SUFFIX;
 	
 	m_watcher_qid = mq_open(strqueue.c_str(), O_RDWR);
 	m_watcher_sid = sem_open(strsem.c_str(), O_RDWR);
@@ -758,13 +759,13 @@ void Watcher::Stop()
 
 int Watcher::Run(int fd, vector<service_param_t> & server_params)
 {	
-	string strqueue = "/.";
-	strqueue += "WATCHER";
-	strqueue += "_queue";
+	string strqueue = ERISEMAIL_POSIX_PREFIX;
+	strqueue += m_watcher_name;
+	strqueue += ERISEMAIL_POSIX_QUEUE_SUFFIX;
 
-	string strsem = "/.";
-	strsem += "WATCHER";
-	strsem += "_lock";
+	string strsem = ERISEMAIL_POSIX_PREFIX;
+	strsem += m_watcher_name;
+	strsem += ERISEMAIL_POSIX_SEMAPHORE_SUFFIX;
 	unsigned int result = 0;
     
 	mq_attr attr;

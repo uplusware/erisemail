@@ -24,6 +24,8 @@
 #include "cache.h"
 #include "service.h"
 #include "stgengine.h"
+#include "posixname.h"
+#include "postnotify.h"
 
 #define RSP_200_OK_CACHE			"HTTP/1.1 200 OK\r\n"   \
                                     "Server: eRisemail Web Server (Unix)\r\n"
@@ -4860,7 +4862,12 @@ public:
 					m_mailStg->InsertMailIndex(vLetterInfo[v]->mail_from.c_str(), vLetterInfo[v]->mail_to.c_str(),vLetterInfo[v]->mail_time,
 						vLetterInfo[v]->mail_type, vLetterInfo[v]->mail_uniqueid.c_str(), vLetterInfo[v]->mail_dirid, vLetterInfo[v]->mail_status,
 						vLetter[v]->GetEmlName(), vLetter[v]->GetSize(), vLetterInfo[v]->mail_id);
-
+                    
+                    if(vLetterInfo[v]->mail_type == mtExtern)
+                    {
+                        mta_post_notify();
+                    }
+            
 					delete vLetterInfo[v];
 					
 					delete vLetter[v];
@@ -6384,7 +6391,7 @@ public:
 					while(oldLetter->Line(strLine) == 0)
 					{
 						strtrim(strLine, "\r\n");
-						if( !findSubject && strncasecmp(strLine.c_str(), "subject:", strlen("subject:")) == 0)
+						if( !findSubject && strncasecmp(strLine.c_str(), "subject:", sizeof("subject:") - 1) == 0)
 						{
 							string strSubject;
 							strcut(strLine.c_str(), ":", NULL, strSubject);
@@ -7456,18 +7463,18 @@ public:
 						
 						if(strLine == "\r\n" || strLine == "\n")
 						{
-							if(strncasecmp(strCell.c_str(), "Content-Type:", strlen("Content-Type:")) == 0)
+							if(strncasecmp(strCell.c_str(), "Content-Type:", sizeof("Content-Type:") - 1) == 0)
 							{
 								fnfy_strcut(strCell.c_str(), "Content-Type:", " \t\r\n\"", "\r\n\";", strContentType);
 								fnfy_strcut(strCell.c_str(), "name=", " \t\r\n\"", "\r\n\";", strFileName1);
 							}
-							else if(strncasecmp(strCell.c_str(), "Content-Disposition:", strlen("Content-Disposition:")) == 0)
+							else if(strncasecmp(strCell.c_str(), "Content-Disposition:", sizeof("Content-Disposition:") - 1) == 0)
 							{
 								
 								fnfy_strcut(strCell.c_str(), "Content-Disposition:", " \t\"\r\n", "\";\r\n", strDisposition);
 								fnfy_strcut(strCell.c_str(), "filename=", " \t\"\r\n", "\";\r\n", strFileName2);
 							}
-							else if(strncasecmp(strCell.c_str(), "Content-Transfer-Encoding:", strlen("Content-Transfer-Encoding:")) == 0)
+							else if(strncasecmp(strCell.c_str(), "Content-Transfer-Encoding:", sizeof("Content-Transfer-Encoding:") - 1) == 0)
 							{
 								fnfy_strcut(strCell.c_str(), "Content-Transfer-Encoding:", " \t\"\r\n", " \t\";\r\n", strTransferEncoding);
 							}
@@ -7484,18 +7491,18 @@ public:
 							{
 								if(strCell != "")
 								{
-									if(strncasecmp(strCell.c_str(), "Content-Type:", strlen("Content-Type:")) == 0)
+									if(strncasecmp(strCell.c_str(), "Content-Type:", sizeof("Content-Type:") - 1) == 0)
 									{
 										fnfy_strcut(strCell.c_str(), "Content-Type:", " \t\r\n\"", "\r\n\";", strContentType);
 										fnfy_strcut(strCell.c_str(), "name=", " \t\r\n\"", "\r\n\";", strFileName1);
 									}
-									else if(strncasecmp(strCell.c_str(), "Content-Disposition:", strlen("Content-Disposition:")) == 0)
+									else if(strncasecmp(strCell.c_str(), "Content-Disposition:", sizeof("Content-Disposition:") - 1) == 0)
 									{
 										
 										fnfy_strcut(strCell.c_str(), "Content-Disposition:", " \t\"\r\n", "\";\r\n", strDisposition);
 										fnfy_strcut(strCell.c_str(), "filename=", " \t\"\r\n", "\";\r\n", strFileName2);
 									}
-									else if(strncasecmp(strCell.c_str(), "Content-Transfer-Encoding:", strlen("Content-Transfer-Encoding:")) == 0)
+									else if(strncasecmp(strCell.c_str(), "Content-Transfer-Encoding:", sizeof("Content-Transfer-Encoding:") - 1) == 0)
 									{
 										fnfy_strcut(strCell.c_str(), "Content-Transfer-Encoding:", " \t\"\r\n", " \t\";\r\n", strTransferEncoding);
 									}
@@ -9698,7 +9705,7 @@ public:
 			strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
 			if(strConfigName == "GLOBAL_REJECT_LIST")
 			{
-				sem_t* plock = sem_open("/.ERISEMAIL_GLOBAL_REJECT_LIST.sem", O_CREAT | O_RDWR, 0644, 1);
+				sem_t* plock = sem_open(ERISEMAIL_GLOBAL_REJECT_LIST, O_CREAT | O_RDWR, 0644, 1);
 				if(plock != SEM_FAILED)
 					sem_wait(plock);
 				
@@ -9731,7 +9738,7 @@ public:
 			}
 			else if(strConfigName == "GLOBAL_PERMIT_LIST")
 			{
-				sem_t* plock = sem_open("/.ERISEMAIL_GLOBAL_PERMIT_LIST.sem", O_CREAT | O_RDWR, 0644, 1);
+				sem_t* plock = sem_open(ERISEMAIL_GLOBAL_PERMIT_LIST, O_CREAT | O_RDWR, 0644, 1);
 				if(plock != SEM_FAILED)
 					sem_wait(plock);
 				
@@ -9764,7 +9771,7 @@ public:
 			}
 			else if(strConfigName == "DOMAIN_PERMIT_LIST")
 			{
-				sem_t* plock = sem_open("/.DOMAIN_PERMIT_LIST.sem", O_CREAT | O_RDWR, 0644, 1);
+				sem_t* plock = sem_open(ERISEMAIL_DOMAIN_PERMIT_LIST, O_CREAT | O_RDWR, 0644, 1);
 				if(plock != SEM_FAILED)
 					sem_wait(plock);
 				
@@ -9797,7 +9804,7 @@ public:
 			}
 			else if(strConfigName == "WEBADMIN_PERMIT_LIST")
 			{
-				sem_t* plock = sem_open("/.WEBADMIN_PERMIT_LIST.sem", O_CREAT | O_RDWR, 0644, 1);
+				sem_t* plock = sem_open(ERISEMAIL_WEBADMIN_PERMIT_LIST, O_CREAT | O_RDWR, 0644, 1);
 				if(plock != SEM_FAILED)
 					sem_wait(plock);
 				
@@ -9983,7 +9990,7 @@ public:
 
 				code_convert_ex("UTF-8", CMailBase::m_encoding.c_str(), strText.c_str(), strText);
 
-				sem_t* plock = sem_open("/.ERISEMAIL_GLOBAL_REJECT_LIST.sem", O_CREAT | O_RDWR, 0644, 1);
+				sem_t* plock = sem_open(ERISEMAIL_GLOBAL_REJECT_LIST, O_CREAT | O_RDWR, 0644, 1);
 				if(plock != SEM_FAILED)
 					sem_wait(plock);
 				
@@ -10017,7 +10024,7 @@ public:
 
 				code_convert_ex("UTF-8", CMailBase::m_encoding.c_str(), strText.c_str(), strText);
 
-				sem_t* plock = sem_open("/.ERISEMAIL_GLOBAL_PERMIT_LIST.sem", O_CREAT | O_RDWR, 0644, 1);
+				sem_t* plock = sem_open(ERISEMAIL_GLOBAL_PERMIT_LIST, O_CREAT | O_RDWR, 0644, 1);
 				if(plock != SEM_FAILED)
 					sem_wait(plock);
 				
@@ -10050,7 +10057,7 @@ public:
 
 				code_convert_ex("UTF-8", CMailBase::m_encoding.c_str(), strText.c_str(), strText);
 				
-				sem_t* plock = sem_open("/.DOMAIN_PERMIT_LIST.sem", O_CREAT | O_RDWR, 0644, 1);
+				sem_t* plock = sem_open(ERISEMAIL_DOMAIN_PERMIT_LIST, O_CREAT | O_RDWR, 0644, 1);
 				if(plock != SEM_FAILED)
 					sem_wait(plock);
 				
@@ -10083,7 +10090,7 @@ public:
 
 				code_convert_ex("UTF-8", CMailBase::m_encoding.c_str(), strText.c_str(), strText);
 				
-				sem_t* plock = sem_open("/.WEBADMIN_PERMIT_LIST.sem", O_CREAT | O_RDWR, 0644, 1);
+				sem_t* plock = sem_open(ERISEMAIL_WEBADMIN_PERMIT_LIST, O_CREAT | O_RDWR, 0644, 1);
 				if(plock != SEM_FAILED)
 					sem_wait(plock);
 				
