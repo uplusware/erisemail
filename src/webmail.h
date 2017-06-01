@@ -8,43 +8,45 @@
 
 #include <mqueue.h>
 #include <semaphore.h>
-
+#include <libmemcached/memcached.h>
+#include "util/base64.h"
+#include "util/qp.h"
+#include "util/escape.h"
+#include "util/DES.h"
+#include "util/security.h"
 #include "base.h"
 #include "storage.h"
 #include "letter.h"
 #include "mime.h"
 #include "fstring.h"
-#include "util/DES.h"
-#include "util/security.h"
 #include "http.h"
 #include "email.h"
-#include "util/base64.h"
-#include "util/qp.h"
-#include "util/escape.h"
 #include "cache.h"
 #include "service.h"
 #include "stgengine.h"
 #include "posixname.h"
 #include "postnotify.h"
 
+#define ERISEMAIL_WEB_SERVER_NAME        "Server: eRisemail Web Server/1.6.08 (*NIX)"
+
 #define RSP_200_OK_CACHE			"HTTP/1.1 200 OK\r\n"   \
-                                    "Server: eRisemail Web Server (Unix)\r\n"
+                                    ERISEMAIL_WEB_SERVER_NAME "\r\n"
                                     
 #define RSP_200_OK_NO_CACHE			"HTTP/1.1 200 OK\r\n"   \
-                                    "Server: eRisemail Web Server (Unix)\r\n"   \
+                                    ERISEMAIL_WEB_SERVER_NAME "\r\n"   \
                                     "Pragma: no-cache\r\n"   \
                                     "Cache-Control: no-cache, must-revalidate\r\n"   \
                                     "Expires: 0\r\n"
                                     
 #define RSP_200_OK_XML				"HTTP/1.1 200 OK\r\n"   \
-                                    "Server: eRisemail Web Server (Unix)\r\n"   \
+                                    ERISEMAIL_WEB_SERVER_NAME "\r\n"   \
                                     "Pragma: no-cache\r\n"   \
                                     "Cache-Control: no-cache, must-revalidate\r\n"   \
                                     "Expires: 0\r\n"   \
                                     "Content-Type: text/xml\r\n"
                                     
 #define RSP_200_OK_JSON				"HTTP/1.1 200 OK\r\n"   \
-                                    "Server: eRisemail Web Server (Unix)\r\n"   \
+                                    ERISEMAIL_WEB_SERVER_NAME "\r\n"   \
                                     "Pragma: no-cache\r\n"   \
                                     "Cache-Control: no-cache, must-revalidate\r\n"   \
                                     "Expires: 0\r\n"   \
@@ -52,35 +54,35 @@
 
 
 #define RSP_200_OK_CACHE_PLAIN		"HTTP/1.1 200 OK\r\n"   \
-                                    "Server: eRisemail Web Server (Unix)\r\n"   \
+                                    ERISEMAIL_WEB_SERVER_NAME "\r\n"   \
                                     "Content-Type: text/plain\r\n"
                                     
 #define RSP_200_OK_NO_CACHE_PLAIN	"HTTP/1.1 200 OK\r\n"   \
-                                    "Server: eRisemail Web Server (Unix)\r\n"   \
+                                    ERISEMAIL_WEB_SERVER_NAME "\r\n"   \
                                     "Pragma: no-cache\r\n"   \
                                     "Cache-Control: no-cache, must-revalidate\r\n"   \
                                     "Expires: 0\r\n"   \
                                     "Content-Type: text/plain\r\n"
 
 #define RSP_301_MOVED_NO_CACHE		"HTTP/1.1 301 Moved Permanently\r\n"   \
-                                    "Server: eRisemail Web Server (Unix)\r\n"
+                                    ERISEMAIL_WEB_SERVER_NAME "\r\n"
                                     
 #define RSP_304_NOT_MODIFIED		"HTTP/1.1 304 Not Modified\r\n"   \
-                                    "Server: eRisemail Web Server (Unix)\r\n"
+                                    ERISEMAIL_WEB_SERVER_NAME "\r\n"
 
-//Non html body
+/* Non html body (Content-Length: 0) */
 #define RSP_404_NOT_FOUND			"HTTP/1.1 404 Not Found\r\n"   \
-                                    "Server: eRisemail Web Server (Unix)\r\n"   \
+                                    ERISEMAIL_WEB_SERVER_NAME "\r\n"   \
                                     "Content-Length: 0\r\n"   \
                                     "\r\n"
                                     
 #define RSP_500_SYS_ERR				"HTTP/1.1 500 Server Error\r\n"   \
-                                    "Server: eRisemail Web Server (Unix)\r\n"   \
+                                    ERISEMAIL_WEB_SERVER_NAME "\r\n"   \
                                     "Content-Length: 0\r\n"   \
                                     "\r\n"
                                     
 #define RSP_501_SYS_ERR				"HTTP/1.1 501 Not Implemented\r\n"   \
-                                    "Server: eRisemail Web Server (Unix)\r\n"   \
+                                    ERISEMAIL_WEB_SERVER_NAME "\r\n"   \
                                     "Content-Length: 0\r\n"   \
                                     "\r\n"
 
@@ -99,11 +101,12 @@ class doc
 {
 protected:
 	CHttp * m_session;
-	
+	memcached_st * m_memcached;
 public:
 	doc(CHttp* session)
 	{
 		m_session = session;
+        m_memcached = m_session->GetMemCached();
 	}
 	virtual ~doc(){}
 	
@@ -3331,13 +3334,15 @@ public:
 			
 			strResp +="\r\n";
 			
-			strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+            string strXML = "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
 			
-			strResp += "<erisemail><response errno=\"0\" reason=\"\">";
+			strXML += "<erisemail><response errno=\"0\" reason=\"\">";
 
-			List(username.c_str(), nPID, strGlobalPath.c_str(),  strResp);
+			List(username.c_str(), nPID, strGlobalPath.c_str(), strXML);
 			
-			strResp += "</response></erisemail>";
+			strXML += "</response></erisemail>";
+            
+            strResp += strXML;
 		}
 		else
 		{

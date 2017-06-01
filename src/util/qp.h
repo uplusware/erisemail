@@ -5,6 +5,8 @@
 #ifndef _QP_H_
 #define _QP_H_
 
+#include <stdio.h>
+
 int __inline__ EncodeQuoted(const unsigned char* pSrc, int nSrcLen, char* pDst, int nMaxLineLen)
 {
 	int nDstLen;

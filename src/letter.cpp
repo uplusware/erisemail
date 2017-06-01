@@ -99,7 +99,6 @@ MailLetter::MailLetter(MailStorage* mailStg, const char* private_path, const cha
             "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
             digest[0], digest[1], digest[2], digest[3], digest[4], digest[5], digest[6], digest[7],
             digest[8], digest[9], digest[10], digest[11], digest[12], digest[13], digest[14], digest[15]);
-        //printf("%s\n", szMD5dst);
         szMD5dst[32] = 'e';
         szMD5dst[33] = 'm';
         szMD5dst[34] = 'l';
@@ -131,10 +130,10 @@ MailLetter::MailLetter(MailStorage* mailStg, const char* private_path, const cha
             if(m_memcached && m_size < 4*1024*1024)
             {
                 memc_rc = memcached_set(m_memcached, szMD5dst, 35, m_body, m_size, (time_t)3600, (uint32_t)memc_flags);
-                /* if(memc_rc == MEMCACHED_SUCCESS)
+                if(memc_rc != MEMCACHED_SUCCESS)
                 {
-                    printf("set: %s %d\n", m_eml_full_path.c_str(), m_size);
-                }*/
+                    fprintf(stderr, "memcached_set: %s %d\n", m_eml_full_path.c_str(), m_size);
+                }
             }
         }
         else
@@ -633,10 +632,10 @@ void LetterSummary::loadXML()
             m_xml->Accept( &xml_printer );
             
             memc_rc = memcached_set(m_memcached, szMD5dst, 35, xml_printer.CStr(), xml_printer.Size(), (time_t)3600, (uint32_t)memc_flags);
-            /* if(memc_rc == MEMCACHED_SUCCESS)
+            if(memc_rc != MEMCACHED_SUCCESS)
             {
-                printf("set: %s %d\n", m_xmlpath.c_str(), xml_printer.Size());
-            } */
+                fprintf(stderr, "memcached_set: %s %d\n", m_xmlpath.c_str(), xml_printer.Size());
+            }
         }
   
 	}

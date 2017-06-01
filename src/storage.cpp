@@ -3036,13 +3036,8 @@ int MailStorage::IsDirExist(const char* username, const char* dirref)
 		string strSafetyDirname = vDirRef[x];
 		SqlSafetyString(strSafetyDirname);
 		Replace(strSafetyDirname, "%", "_%");
-		//if(strSafetyDirname.find("%") == string::npos)
-			sprintf(sqlcmd, "SELECT did FROM dirtbl WHERE downer='%s' AND dname='%s' AND dparent=%d", 
-				strSafetyUsername.c_str(), strSafetyDirname.c_str(), parentid);
-		//else
-		//	sprintf(sqlcmd, "SELECT did FROM dirtbl WHERE downer='%s' AND dname like '%s' AND dparent=%d", 
-		//		strSafetyUsername.c_str(), strSafetyDirname.c_str(), parentid);
-		
+		sprintf(sqlcmd, "SELECT did FROM dirtbl WHERE downer='%s' AND dname='%s' AND dparent=%d", 
+            strSafetyUsername.c_str(), strSafetyDirname.c_str(), parentid);
 		
 		if( Query(sqlcmd, strlen(sqlcmd)) == 0)
 		{
@@ -3123,12 +3118,8 @@ int MailStorage::IsSubDirExist(const char* username, int parentid, const char* d
 	SqlSafetyString(strSafetyDirname);
 	Replace(strSafetyDirname, "%", "_%");
 
-	//if(strSafetyDirname.find("%") == string::npos)
-		sprintf(sqlcmd, "SELECT did FROM dirtbl WHERE downer='%s' AND dname='%s' AND dparent=%d", 
-			strSafetyUsername.c_str(), strSafetyDirname.c_str(), parentid);
-	//else
-	//	sprintf(sqlcmd, "SELECT did FROM dirtbl WHERE downer='%s' AND dname like '%s' AND dparent=%d", 
-	//		strSafetyUsername.c_str(), strSafetyDirname.c_str(), parentid);
+	sprintf(sqlcmd, "SELECT did FROM dirtbl WHERE downer='%s' AND dname='%s' AND dparent=%d", 
+        strSafetyUsername.c_str(), strSafetyDirname.c_str(), parentid);
 	
 	if( Query(sqlcmd, strlen(sqlcmd)) == 0)
 	{
@@ -3255,12 +3246,8 @@ int MailStorage::GetDirID(const char* username, const char* dirref, int& dirid)
 		SqlSafetyString(strSafetyDirname);
 		Replace(strSafetyDirname, "%", "_%");
 
-		//if(strSafetyDirname.find("%") == string::npos)
-			sprintf(sqlcmd, "SELECT did FROM dirtbl WHERE downer='%s' AND dname='%s' AND dparent=%d", 
-				strSafetyUsername.c_str(), strSafetyDirname.c_str(), parentid);
-		//else
-		//	sprintf(sqlcmd, "SELECT did FROM dirtbl WHERE downer='%s' AND dname like '%s' AND dparent=%d", 
-		//		strSafetyUsername.c_str(), strSafetyDirname.c_str(), parentid);
+		sprintf(sqlcmd, "SELECT did FROM dirtbl WHERE downer='%s' AND dname='%s' AND dparent=%d", 
+            strSafetyUsername.c_str(), strSafetyDirname.c_str(), parentid);
 		
 		if( Query(sqlcmd, strlen(sqlcmd)) == 0)
 		{
@@ -3309,7 +3296,6 @@ int MailStorage::GetInboxID(const char* username, int &dirid)
 		
 	sprintf(sqlcmd, "SELECT did FROM dirtbl WHERE downer='%s' AND dusage=%d",
 			strSafetyUsername.c_str(), duInbox);
-	//printf("%s\n",sqlcmd );
 	
 	if( Query(sqlcmd, strlen(sqlcmd)) == 0)
 	{
@@ -3815,15 +3801,14 @@ int MailStorage::TraversalListDir(const char* username, const char* dirref, vect
 	char sqlcmd[1024];
 	string strDirRef = dirref;
 	vector<int> dirParentID;
-	//printf("%s\r\n", dirref);
-	//Replace(strDirRef, "%", "_%");
+    
 	Replace(strDirRef, "*", "%");
 	
 	if(GetDirParentID(username, dirref, dirParentID) == -1)
 		return -1;
+    
 	for(int x = 0; x < dirParentID.size(); x++)
 	{
-
 		string parentdir, dirname;
 		SplitDir(strDirRef.c_str(), parentdir, dirname);
 
