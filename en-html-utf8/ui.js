@@ -225,6 +225,8 @@ function show_dirs(divobj, tblobj, x, y, checkname)
 	{
 		clear_table(tblobj);
 		load_dirs(tblobj, -1, "", -1, 0, checkname);
+        var trHeader = tblobj.insertRow(0);
+        trHeader.innerHTML = "<td class=\"title\" height=\"25\"><table bordercolorlight=\"#C0C0C0\" bordercolordark=\"#FFFFFF\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" background=\"pathbg.gif\" border=\"0\"><tbody><tr height=\"25\"><td width=\"22\" align=\"right\"><img src=\"lfolder.gif\"></td><td style=\"cursor: default;\" onmouseover=\"this.mousepoint = 99;this.style.cursor = 'move';\" onmouseout=\"this.mousepoint = 99;this.style.cursor = 'default';\" onmousedown=\"return drag($('" + divobj.id + "'), (event ? event : window.event));\" valign=\"middle\" align=\"center\"><font color=\"#FFFFFF\"><b>Folders</b></font></td><td width=\"22\" align=\"left\"><input src=\"close.gif\" onclick=\"$('" + divobj.id + "').style.display='none'\" type=\"image\"></td></tr></tbody></table></td>";
 		divobj.setAttribute("loaded", "true");
 	}
 	
