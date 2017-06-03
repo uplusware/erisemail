@@ -399,5 +399,3 @@ vCalendar.prototype.Parse = function (strcal)
 	
 	return calDetail;
 }
- 
- 
