@@ -27,6 +27,7 @@ StorageEngine::StorageEngine(const char * host, const char* username, const char
 	{
 		m_engine[i].storage = new MailStorage(m_encoding.c_str(), m_private_path.c_str(), m_memcached);
         m_engine[i].inUse = FALSE;
+        m_engine[i].isConnected = FALSE;
 	}
 	pthread_mutex_init(&m_engineMutex, NULL);
     
@@ -54,6 +55,9 @@ StorageEngine::~StorageEngine()
 
 MailStorage* StorageEngine::Wait(int &index)
 {
+    //set to a impossible value
+    index = -1;
+    
     MailStorage* freeOne = NULL;
     sem_wait(&m_engineSem);
     pthread_mutex_lock(&m_engineMutex);
@@ -61,47 +65,45 @@ MailStorage* StorageEngine::Wait(int &index)
 	{
         if(m_engine[i].inUse == FALSE)
         {
-            index = i;
-            m_engine[index].inUse = TRUE;
-            break;
+            if(m_engine[i].isConnected == FALSE)
+            {
+                if(m_engine[i].storage->Connect(m_host.c_str(),
+                    m_username.c_str(), m_password.c_str(),  
+                    m_database.c_str(), m_port, m_sock_file.c_str()) != 0)
+                {
+                    fprintf(stderr, "Coundn't connect to %s via <%d>/<%s>\n", m_host.c_str(), m_port, m_sock_file.c_str());
+                }
+                else
+                {
+                    m_engine[i].isConnected = TRUE;
+                }
+            }
+            
+            /* re-check */
+            if(m_engine[i].isConnected == TRUE)
+            {
+                index = i;
+                m_engine[index].inUse = TRUE;
+                break;
+            }
         }
     }
+    
     pthread_mutex_unlock(&m_engineMutex);
     
-    unsigned int connect_timeout = 0;
-    while(!freeOne && connect_timeout < 1000 * 1000 * 20) //20 seconds
-    {
-        if(m_engine[index].storage && m_engine[index].storage->Ping() != 0)
-        {
-            m_engine[index].storage->Close();
-            
-            if(m_engine[index].storage->Connect(m_host.c_str(),
-                m_username.c_str(), m_password.c_str(),  
-                m_database.c_str(), m_port, m_sock_file.c_str()) == 0)
-            {
-                freeOne = m_engine[index].storage;
-            }
-            else
-            {
-               freeOne = NULL;
-               usleep(1000);
-               connect_timeout += 1000;
-            }
-        }
-        else
-        {
-            freeOne = m_engine[index].storage;
-        }
-    }
+    freeOne = (index == -1 ? NULL : m_engine[index].storage);
+    
 	return freeOne;
 }
 
 void StorageEngine::Post(int index)
 {
-    pthread_mutex_lock(&m_engineMutex);
-    m_engine[index].inUse = FALSE;
-    pthread_mutex_unlock(&m_engineMutex);
-    
+    if(index > 0 && index  < m_maxConn)
+    {
+        pthread_mutex_lock(&m_engineMutex);
+        m_engine[index].inUse = FALSE;
+        pthread_mutex_unlock(&m_engineMutex);
+    }
     sem_post(&m_engineSem);
 }
 	

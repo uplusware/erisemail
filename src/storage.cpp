@@ -39,7 +39,11 @@ int inline _mysql_real_query_(MYSQL *mysql, const char *stmt_str, unsigned long 
     return mysql_real_query(mysql, stmt_str, length);
 }
 
-//Static member
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Class MailStorage
+
+
+/* Static member variable */
 BOOL MailStorage::m_userpwd_cache_updated = TRUE;
 BOOL MailStorage::m_lib_inited = FALSE;
 
@@ -70,8 +74,6 @@ void MailStorage::SqlSafetyString(string& strInOut)
 	delete szOut;
 }
 
-static unsigned int timeout_val = MYSQL_TIMEOUT;
-
 MailStorage::MailStorage(const char* encoding, const char* private_path, memcached_st * memcached)
 {
     pthread_rwlock_init(&m_userpwd_cache_lock, NULL);
@@ -82,12 +84,7 @@ MailStorage::MailStorage(const char* encoding, const char* private_path, memcach
     m_private_path = private_path;
     
     m_bOpened = FALSE;
-    mysql_init(&m_hMySQL);
-    
-    mysql_optionsv(&m_hMySQL, MYSQL_OPT_CONNECT_TIMEOUT, (const void*)&timeout_val);
-    mysql_optionsv(&m_hMySQL, MYSQL_OPT_READ_TIMEOUT, (const void*)&timeout_val);
-    mysql_optionsv(&m_hMySQL, MYSQL_OPT_WRITE_TIMEOUT, (const void*)&timeout_val);
-    
+    m_isInited = FALSE;
     m_memcached = memcached;
     srandom(time(NULL));
 }
@@ -98,18 +95,30 @@ MailStorage::~MailStorage()
     pthread_rwlock_destroy(&m_userpwd_cache_lock);
 }
 
+static unsigned int timeout_val = MYSQL_TIMEOUT;
+
 int MailStorage::Connect(const char * host, const char* username, const char* password, const char* database, unsigned short port, const char* sock_file)
-{   
+{
+    m_host = host;
+    m_username = username;
+    m_password = password;
+    m_port = port;
+    m_sock_file = sock_file;
+    if(database != NULL)
+        m_database = database;
+    
+    if(!m_isInited)
+    {
+        mysql_init(&m_hMySQL);
+        m_isInited = TRUE;
+    }
+    
+    mysql_optionsv(&m_hMySQL, MYSQL_OPT_CONNECT_TIMEOUT, (const void*)&timeout_val);
+    mysql_optionsv(&m_hMySQL, MYSQL_OPT_READ_TIMEOUT, (const void*)&timeout_val);
+    mysql_optionsv(&m_hMySQL, MYSQL_OPT_WRITE_TIMEOUT, (const void*)&timeout_val);
+        
     if(mysql_real_connect(&m_hMySQL, host, username, password, database, port, sock_file && sock_file[0] != '\0' ? sock_file : NULL, 0) != NULL)
     {
-        m_host = host;
-        m_username = username;
-        m_password = password;
-        m_port = port;
-        m_sock_file = sock_file;
-        if(database != NULL)
-            m_database = database;
-        
         m_bOpened = TRUE;
         return 0;
     }
@@ -122,11 +131,12 @@ int MailStorage::Connect(const char * host, const char* username, const char* pa
 
 void MailStorage::Close()
 {
-    mysql_close(&m_hMySQL);
-    if(m_bOpened)
+    if(m_isInited)
     {
-        m_bOpened = FALSE;
+        mysql_close(&m_hMySQL);
+        m_isInited = FALSE;
     }
+    m_bOpened = FALSE;
 }
 
 int MailStorage::Ping()
@@ -3585,7 +3595,7 @@ int MailStorage::GetDirMailCount(const char* username, int dirid, unsigned int& 
 int MailStorage::GetUnauditedExternMailCount(const char* username, unsigned int& count)
 {
 	char sqlcmd[1024];
-	sprintf(sqlcmd, "SELECT extmdirid FROM mailtbl WHERE mstatus&%d<>%d AND mstatus&%d=%d", MSG_ATTR_DELETED, MSG_ATTR_DELETED, MSG_ATTR_UNAUDITED, MSG_ATTR_UNAUDITED);
+	sprintf(sqlcmd, "SELECT mdirid FROM extmailtbl WHERE mstatus&%d<>%d AND mstatus&%d=%d", MSG_ATTR_DELETED, MSG_ATTR_DELETED, MSG_ATTR_UNAUDITED, MSG_ATTR_UNAUDITED);
 	
 	if( Query(sqlcmd, strlen(sqlcmd)) == 0)
 	{

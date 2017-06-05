@@ -13,6 +13,7 @@ typedef struct
 {
 	MailStorage* storage;
 	BOOL inUse;
+    BOOL isConnected;
 }stStorageEngine;
 
 
