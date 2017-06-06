@@ -40,7 +40,7 @@
 							{
 								if(logList.item(i).tagName == "log")
 								{
-									tr = $('LOGTBL').insertRow($('LOGTBL').rows.length);
+									tr = _$_('LOGTBL').insertRow(_$_('LOGTBL').rows.length);
 									tr.setAttribute("name", logList.item(i).getAttribute("name"));
 									tr.setAttribute("size", logList.item(i).getAttribute("size"));
 									
@@ -82,15 +82,15 @@
 									
 								}
 							}
-							$("STATUS").innerHTML = "";
-							$("STATUS").style.display = "none";
+							_$_("STATUS").innerHTML = "";
+							_$_("STATUS").style.display = "none";
 						}
 					}
 				}
 			}
 			else
 			{
-				$("STATUS").innerHTML = "<center><img src=\"waiting.gif\"></center>";
+				_$_("STATUS").innerHTML = "<center><img src=\"waiting.gif\"></center>";
 			}
 		}
 		xmlHttp.open("GET", qUrl , true);

@@ -11,8 +11,8 @@
 	function init()
 	{
 		window.parent.uploading(false);
-		window.parent.$("attach_flag").innerHTML="";
-		$('SELFPAGENAME').value = window.location.pathname;
+		window.parent._$_("attach_flag").innerHTML="";
+		_$_('SELFPAGENAME').value = window.location.pathname;
 		
 		var strUploaded = Request.QueryString('UPLOADEDFILES');
 		if(strUploaded == null)
@@ -35,13 +35,13 @@
 	
 	function upfile()
 	{
-		if($('ATTACHFILEBODY').value != "")
+		if(_$_('ATTACHFILEBODY').value != "")
 		{
 			window.parent.uploading(true);
-			window.parent.$("attach_flag").innerHTML="<img src=\"uploading.gif\">";
+			window.parent._$_("attach_flag").innerHTML="<img src=\"uploading.gif\">";
 		
 			window.parent.upfile();
-			$('upfileform').submit();
+			_$_('upfileform').submit();
 			return true;
 		}
 		else

@@ -166,7 +166,7 @@
 		xmlHttp.onreadystatechange = function()
 		{
 			var strmid = "mailtr" + mid;
-			var trid = window.opener.$(strmid);
+			var trid = window.opener._$_(strmid);
 
 			if(trid == null)
 				return false;
@@ -182,7 +182,7 @@
 					if(errno == "0" || errno == 0)
 					{
 						window.opener.refresh();
-						$('PROCESSING_DIV').style.display = "none";
+						_$_('PROCESSING_DIV').style.display = "none";
 						return true;
 					}
 					else
@@ -193,9 +193,9 @@
 			}
 			else
 			{
-				$('PROCESSING_DIV').style.zIndex = 18;
-				$('PROCESSING_DIV').style.display = "block";
-				$('PROCESSING_TBL').rows[0].cells[1].innerHTML = "Processing, please wait...";
+				_$_('PROCESSING_DIV').style.zIndex = 18;
+				_$_('PROCESSING_DIV').style.display = "block";
+				_$_('PROCESSING_TBL').rows[0].cells[1].innerHTML = "Processing, please wait...";
 			}
 		}
 		xmlHttp.open("GET", qUrl , true);
@@ -206,17 +206,17 @@
 		
 	function show_copy_mail_dir_div()
 	{
-		$('DIRS_DIV2').style.display = "none";
-		var Pos = GetObjPos($('COPYMAIL'))
-		show_dirs($('DIRS_DIV1'), $('DIRTBL1'), Pos.x, Pos.y + Pos.h + 2, "seldir1");
+		_$_('DIRS_DIV2').style.display = "none";
+		var Pos = GetObjPos(_$_('COPYMAIL'))
+		show_dirs(_$_('DIRS_DIV1'), _$_('DIRTBL1'), Pos.x, Pos.y + Pos.h + 2, "seldir1");
 	}
 
 	function show_move_mail_dir_div()
 	{
-		$('DIRS_DIV1').style.display = "none";
+		_$_('DIRS_DIV1').style.display = "none";
 		
-		var Pos = GetObjPos($('MOVEMAIL'))
-		show_dirs($('DIRS_DIV2'), $('DIRTBL2'), Pos.x, Pos.y + Pos.h + 2, "seldir2");
+		var Pos = GetObjPos(_$_('MOVEMAIL'))
+		show_dirs(_$_('DIRS_DIV2'), _$_('DIRTBL2'), Pos.x, Pos.y + Pos.h + 2, "seldir2");
 	}
 	
 	function copy_mail(todirs)
@@ -231,7 +231,7 @@
 	    xmlHttp.onreadystatechange = function()
 		{
 			var strmid = "mailtr" + mid;
-			var trid = window.opener.$(strmid);
+			var trid = window.opener._$_(strmid);
 
 			if(trid == null)
 				return false;
@@ -246,7 +246,7 @@
 					var errno = responseNode.getAttribute("errno")
 					if(errno == "0" || errno == 0)
 					{
-						$('PROCESSING_DIV').style.display = "none";
+						_$_('PROCESSING_DIV').style.display = "none";
 
 						window.opener.delete_maillist_row(mid);
 						
@@ -259,9 +259,9 @@
 			}
 			else
 			{
-				$('PROCESSING_DIV').style.zIndex = 18;
-				$('PROCESSING_DIV').style.display = "block";
-				$('PROCESSING_TBL').rows[0].cells[1].innerHTML = "Processing, please wait...";
+				_$_('PROCESSING_DIV').style.zIndex = 18;
+				_$_('PROCESSING_DIV').style.display = "block";
+				_$_('PROCESSING_TBL').rows[0].cells[1].innerHTML = "Processing, please wait...";
 			}
 
 		}
@@ -364,11 +364,11 @@
 							}
 							if(strCc == "")
 							{
-								$("cccol").style.display = "none";	
+								_$_("cccol").style.display = "none";	
 							}
 
-							$("mailcontent").style.width = $('mailcontentframe').offsetWidth - 5;
-							$("mailcontent").style.height = $('mailcontentframe').offsetHeight - 5;
+							_$_("mailcontent").style.width = _$_('mailcontentframe').offsetWidth - 5;
+							_$_("mailcontent").style.height = _$_('mailcontentframe').offsetHeight - 5;
 							
 							if(strCalendarContent != "")
 							{
@@ -474,11 +474,11 @@
 								}
 							}							
 							
-							$("mailfrom").innerHTML = "<input class=\"text3\" size=\"110\" type=\"text\" value=\"" + TextToHTML(strFrom) + "\" readonly>";
-							$("mailto").innerHTML = "<input class=\"text3\" size=\"110\" type=\"text\" value=\"" + TextToHTML(strTo) + "\" readonly>";
-							$("mailcc").innerHTML = "<input class=\"text3\" size=\"110\" type=\"text\" value=\"" + TextToHTML(strCc) + "\" readonly>";
-							$("maildate").innerHTML = "<input class=\"text3\" size=\"110\" type=\"text\" value=\"" + TextToHTML(strDate) + "\" readonly>";
-							$("mailsubject").innerHTML = "<input class=\"text3\" size=\"110\" type=\"text\" value=\"" + (strSubject == "" ? "No Subject" : TextToHTML(strSubject)) + "\" readonly>";
+							_$_("mailfrom").innerHTML = "<input class=\"text3\" size=\"110\" type=\"text\" value=\"" + TextToHTML(strFrom) + "\" readonly>";
+							_$_("mailto").innerHTML = "<input class=\"text3\" size=\"110\" type=\"text\" value=\"" + TextToHTML(strTo) + "\" readonly>";
+							_$_("mailcc").innerHTML = "<input class=\"text3\" size=\"110\" type=\"text\" value=\"" + TextToHTML(strCc) + "\" readonly>";
+							_$_("maildate").innerHTML = "<input class=\"text3\" size=\"110\" type=\"text\" value=\"" + TextToHTML(strDate) + "\" readonly>";
+							_$_("mailsubject").innerHTML = "<input class=\"text3\" size=\"110\" type=\"text\" value=\"" + (strSubject == "" ? "No Subject" : TextToHTML(strSubject)) + "\" readonly>";
 
 							var strrpl = "/api/attachment.cgi?ID=";
 							strrpl += strID;
@@ -488,34 +488,34 @@
 							strHtmlContent = strHtmlContent.replace(regS1, strrpl);
 							if(strCalendarContent == "")
 							{
-								$("mailcontent").innerHTML = (strHtmlContent != "" ? strHtmlContent : TextToHTML(strTextContent)) + (strPreview != "" ? ("<p></p><hr><b>" + att_count + " attachment(s)</b>" + strPreview) : "");
+								_$_("mailcontent").innerHTML = (strHtmlContent != "" ? strHtmlContent : TextToHTML(strTextContent)) + (strPreview != "" ? ("<p></p><hr><b>" + att_count + " attachment(s)</b>" + strPreview) : "");
 							}
 							else
 							{
-								$("timecol").style.display = "none";
+								_$_("timecol").style.display = "none";
 								
-								$("mailcontent").innerHTML = strCalendarContent + (strPreview != "" ? ("<p></p><hr><b>" + att_count + " attachment(s)</b>" + strPreview) : "");
+								_$_("mailcontent").innerHTML = strCalendarContent + (strPreview != "" ? ("<p></p><hr><b>" + att_count + " attachment(s)</b>" + strPreview) : "");
 							}
 						}
 						else
 						{
-							$("mailcontent").innerHTML = "<table border=\"0\"><tr><td><img src=\"alert.gif\"></td><td>Fail to load</td></tr></table>";
+							_$_("mailcontent").innerHTML = "<table border=\"0\"><tr><td><img src=\"alert.gif\"></td><td>Fail to load</td></tr></table>";
 						}
 					}
 				}
 				else
 				{
-					$("mailcontent").innerHTML = "<table border=\"0\"><tr><td><img src=\"alert.gif\"></td><td>Fail to load</td></tr></table>";
+					_$_("mailcontent").innerHTML = "<table border=\"0\"><tr><td><img src=\"alert.gif\"></td><td>Fail to load</td></tr></table>";
 				}
 			}
 			else
 			{
-				$("mailfrom").innerHTML = "<img src=\"loading.gif\">";
-				$("mailto").innerHTML = "<img src=\"loading.gif\">";
-				$("mailcc").innerHTML = "<img src=\"loading.gif\">";
-				$("maildate").innerHTML = "<img src=\"loading.gif\">";
-				$("mailsubject").innerHTML = "<img src=\"loading.gif\">";
-				$("mailcontent").innerHTML = "<img src=\"loading.gif\">";
+				_$_("mailfrom").innerHTML = "<img src=\"loading.gif\">";
+				_$_("mailto").innerHTML = "<img src=\"loading.gif\">";
+				_$_("mailcc").innerHTML = "<img src=\"loading.gif\">";
+				_$_("maildate").innerHTML = "<img src=\"loading.gif\">";
+				_$_("mailsubject").innerHTML = "<img src=\"loading.gif\">";
+				_$_("mailcontent").innerHTML = "<img src=\"loading.gif\">";
 			}
 		}
 		xmlHttp.open("GET", qUrl , true);
@@ -530,7 +530,7 @@
 	function init()
 	{
 		
-		$('GLOBALPATH').innerHTML = (Request.QueryString('GPATH') == null ? ("/Inbox") : decodeURIComponent(Request.QueryString('GPATH')));
+		_$_('GLOBALPATH').innerHTML = (Request.QueryString('GPATH') == null ? ("/Inbox") : decodeURIComponent(Request.QueryString('GPATH')));
 							
 		read_mail(Request.QueryString('ID'));
 	}
@@ -544,7 +544,7 @@
 
 <body onLoad="init()">
 
-<div id="PROCESSING_DIV" class="div1" style="display:none; width: 300; height:100; left:300; top:200;background-color: #FFFFCC;">
+<div id="PROCESSING_DIV" class="div1" style="display:none; width: 300; height:100; left:300; top:200;background-color: #fafafa;">
 	<table id="PROCESSING_TBL" width="100%" height="100%">
 		<tr><td align="right"><img src="busy.gif"></td><td align="left"></td></tr>
 	</table>	
@@ -560,8 +560,8 @@
     <tr><td bgcolor="#EDF1F8" height="32">
     	<table width="100%" border="0" cellspacing="1" cellpadding="1">
           <tr>
-            <td align="center" valign="middle"><input type="image" src="ok.gif" onMouseOver="this.src='ok2.gif'" onMouseOut="this.src='ok.gif'" onClick="ok_copy_mail();$('DIRS_DIV1').style.display = 'none';"></td>
-            <td align="center" valign="middle"><input type="image" src="cancel.gif" onMouseOver="this.src='cancel2.gif'" onMouseOut="this.src='cancel.gif'" onClick="$('DIRS_DIV1').style.display = 'none';"></td>
+            <td align="center" valign="middle"><input type="image" src="ok.gif" onMouseOver="this.src='ok2.gif'" onMouseOut="this.src='ok.gif'" onClick="ok_copy_mail();_$_('DIRS_DIV1').style.display = 'none';"></td>
+            <td align="center" valign="middle"><input type="image" src="cancel.gif" onMouseOver="this.src='cancel2.gif'" onMouseOut="this.src='cancel.gif'" onClick="_$_('DIRS_DIV1').style.display = 'none';"></td>
           </tr>
         </table>
      </td></tr>
@@ -577,8 +577,8 @@
     <tr><td bgcolor="#EDF1F8" height="32">
     	 <table width="100%" border="0" cellspacing="1" cellpadding="1">
           <tr>
-            <td align="center" valign="middle"><input type="image" src="ok.gif" onMouseOver="this.src='ok2.gif'" onMouseOut="this.src='ok.gif'" onClick="ok_move_mail();$('DIRS_DIV2').style.display = 'none';"></td>
-            <td align="center" valign="middle"><input type="image" src="cancel.gif" onMouseOver="this.src='cancel2.gif'" onMouseOut="this.src='cancel.gif'" onClick="$('DIRS_DIV2').style.display = 'none';"></td>
+            <td align="center" valign="middle"><input type="image" src="ok.gif" onMouseOver="this.src='ok2.gif'" onMouseOut="this.src='ok.gif'" onClick="ok_move_mail();_$_('DIRS_DIV2').style.display = 'none';"></td>
+            <td align="center" valign="middle"><input type="image" src="cancel.gif" onMouseOver="this.src='cancel2.gif'" onMouseOut="this.src='cancel.gif'" onClick="_$_('DIRS_DIV2').style.display = 'none';"></td>
           </tr>
         </table>
     </td></tr>

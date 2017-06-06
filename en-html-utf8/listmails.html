@@ -18,7 +18,7 @@
 	    xmlHttp.onreadystatechange = function()
 		{
 			var strmid = "mailtr" + mid;
-			var trid = $(strmid);
+			var trid = _$_(strmid);
 
 			if(trid == null)
 				return false;
@@ -33,8 +33,8 @@
 					var errno = responseNode.getAttribute("errno")
 					if(errno == "0" || errno == 0)
 					{
-						$('MAILTBL').deleteRow(trid.rowIndex);
-						load_mails(Request.QueryString('DIRID'), $('PAGE_CUR').value, Request.QueryString('TOP_USAGE'));
+						_$_('MAILTBL').deleteRow(trid.rowIndex);
+						load_mails(Request.QueryString('DIRID'), _$_('PAGE_CUR').value, Request.QueryString('TOP_USAGE'));
 					}
 					else
 					{
@@ -61,7 +61,7 @@
 
 	function ontimer()
 	{
-		load_mails(Request.QueryString('DIRID'), $('PAGE_CUR').value, Request.QueryString('TOP_USAGE'));
+		load_mails(Request.QueryString('DIRID'), _$_('PAGE_CUR').value, Request.QueryString('TOP_USAGE'));
 		
 		setTimeout('ontimer()', 10000);
 	}
@@ -73,7 +73,7 @@
 	    xmlHttp.onreadystatechange = function()
 		{
 			var strmid = "mailtr" + mid;
-			var trid = $(strmid);
+			var trid = _$_(strmid);
 
 			if(trid == null)
 				return false;
@@ -89,10 +89,10 @@
 					if(errno == "0" || errno == 0)
 					{
 						var strmid = "mailtr" + mid;
-						var trid = $(strmid); 
-						$('MAILTBL').deleteRow(trid.rowIndex);
+						var trid = _$_(strmid); 
+						_$_('MAILTBL').deleteRow(trid.rowIndex);
 
-						load_mails(Request.QueryString('DIRID'), $('PAGE_CUR').value, Request.QueryString('TOP_USAGE'));
+						load_mails(Request.QueryString('DIRID'), _$_('PAGE_CUR').value, Request.QueryString('TOP_USAGE'));
 					}
 					else
 					{
@@ -156,7 +156,7 @@
 
 	function refresh()
 	{
-		load_mails(Request.QueryString('DIRID'), $('PAGE_CUR').value, Request.QueryString('TOP_USAGE'));
+		load_mails(Request.QueryString('DIRID'), _$_('PAGE_CUR').value, Request.QueryString('TOP_USAGE'));
 	}
 	
 	function remail()
@@ -273,7 +273,7 @@
 	{
 		var fid = "flag" + mid;
 		
-		if(!$(fid))
+		if(!_$_(fid))
 			return;
 		
 		if(flag ==  true)
@@ -281,7 +281,7 @@
 		else
 			strFlag = "no";
 		
-		var oldsrc = $(fid).src;
+		var oldsrc = _$_(fid).src;
 		
 		var qUrl = "/api/flagmail.xml?ID=" + mid + "&FLAG=" + strFlag;
 		
@@ -299,29 +299,29 @@
 					if(errno == "0" || errno == 0)
 					{
 						var strmid = "mailtr" + mid;
-						var trid = $(strmid);
+						var trid = _$_(strmid);
 						if(flag == true)
 						{
 							trid.cells[1].setAttribute("flag", "yes");
-							$(fid).src = "hot.gif";
+							_$_(fid).src = "hot.gif";
 						}
 						else
 						{
 							trid.cells[1].setAttribute("flag", "no");
-							$(fid).src = "unhot.gif";
+							_$_(fid).src = "unhot.gif";
 						}
 						
 					}
 					else
 					{
 						
-						$(fid).src = oldsrc;
+						_$_(fid).src = oldsrc;
 					}
 				}
 			}
 			else
 			{
-				$(fid).src = "loading.gif";
+				_$_(fid).src = "loading.gif";
 			}
 		}
 		xmlHttp.open("GET", qUrl , true);
@@ -342,10 +342,10 @@
 	function do_seen_mail(flag, mid)
 	{
 		var seenid = "seen" + mid;
-		if(!$(seenid))
+		if(!_$_(seenid))
 			return;
 
-		var oldsrc = $(seenid).src;
+		var oldsrc = _$_(seenid).src;
 		
 		if(flag ==  true)
 			strFlag="yes";
@@ -368,29 +368,29 @@
 					if(errno == "0" || errno == 0)
 					{
 						var strmid = "mailtr" + mid;
-						var trid = $(strmid);
+						var trid = _$_(strmid);
 						
 						if(flag == true)
 						{
 							trid.style.fontWeight="normal"
-							$(seenid).src = "seen.gif";
+							_$_(seenid).src = "seen.gif";
 						}
 						else
 						{
 							trid.style.fontWeight="bold"
-							$(seenid).src = "unseen.gif";
+							_$_(seenid).src = "unseen.gif";
 						}
 					}
 					else
 					{
 						
-						$(seenid).src = oldsrc;
+						_$_(seenid).src = oldsrc;
 					}
 				}
 			}
 			else
 			{
-				$(seenid).src = "loading.gif";
+				_$_(seenid).src = "loading.gif";
 			}
 		}
 		xmlHttp.open("GET", qUrl , true);
@@ -416,7 +416,7 @@
 		xmlHttp.onreadystatechange = function()
 		{
 			var strmid = "mailtr" + mid;
-			var trid = $(strmid);
+			var trid = _$_(strmid);
 
 			if(trid == null)
 				return false;
@@ -436,7 +436,7 @@
 					var errno = responseNode.getAttribute("errno")
 					if(errno == "0" || errno == 0)
 					{
-						load_mails(Request.QueryString('DIRID'), $('PAGE_CUR').value, Request.QueryString('TOP_USAGE'));
+						load_mails(Request.QueryString('DIRID'), _$_('PAGE_CUR').value, Request.QueryString('TOP_USAGE'));
 						return true;
 					}
 					else
@@ -483,7 +483,7 @@
 	    xmlHttp.onreadystatechange = function()
 		{
 			var strmid = "mailtr" + mid;
-			var trid = $(strmid);
+			var trid = _$_(strmid);
 
 			if(trid == null)
 				return false;
@@ -499,10 +499,10 @@
 					if(errno == "0" || errno == 0)
 					{
 						var strmid = "mailtr" + mid;
-						var trid = $(strmid);
-						$('MAILTBL').deleteRow(trid.rowIndex);
+						var trid = _$_(strmid);
+						_$_('MAILTBL').deleteRow(trid.rowIndex);
 
-						load_mails(Request.QueryString('DIRID'), $('PAGE_CUR').value, Request.QueryString('TOP_USAGE'));
+						load_mails(Request.QueryString('DIRID'), _$_('PAGE_CUR').value, Request.QueryString('TOP_USAGE'));
 					}
 					else
 					{
@@ -581,11 +581,11 @@
 									mailnum = countList.item(i).childNodes[0] == null ? "" : countList.item(i).childNodes[0].nodeValue;
 									
 									if(mailnum % num_of_page == 0)
-										$("PAGE_NUM").value = (mailnum/num_of_page);
+										_$_("PAGE_NUM").value = (mailnum/num_of_page);
 									else
-										$("PAGE_NUM").value = ((mailnum - mailnum % num_of_page)/num_of_page + 1);
+										_$_("PAGE_NUM").value = ((mailnum - mailnum % num_of_page)/num_of_page + 1);
 										
-									$("PAGE").value = (parseInt(npage) + 1) + "/" + $("PAGE_NUM").value;
+									_$_("PAGE").value = (parseInt(npage) + 1) + "/" + _$_("PAGE_NUM").value;
 
 									update_page_button();
 								}
@@ -603,18 +603,18 @@
 	{	
 		var i = 0;
 		var tmp = 0;
-		if($('MAILTBL').rows.length == 0)
+		if(_$_('MAILTBL').rows.length == 0)
 			return 0;
 		
-		for(i = 0; i < $('MAILTBL').rows.length; i++)
+		for(i = 0; i < _$_('MAILTBL').rows.length; i++)
 		{
-			if($('MAILTBL').rows[i].getAttribute("uniqid") == uniqid)
+			if(_$_('MAILTBL').rows[i].getAttribute("uniqid") == uniqid)
 			{
 				return -1;
 			}
 			else
 			{
-				if(parseInt(time) > parseInt($('MAILTBL').rows[i].getAttribute("sort")))
+				if(parseInt(time) > parseInt(_$_('MAILTBL').rows[i].getAttribute("sort")))
 				{
 					return i;
 				}
@@ -635,17 +635,17 @@
 		}
 		if(document.getElementsByName('sel').length == 0)
 		{
-			if($('selall') != null)
-				$('selall').checked = false;
+			if(_$_('selall') != null)
+				_$_('selall').checked = false;
 		}
 		else
 		{
-			if($('selall') != null)
+			if(_$_('selall') != null)
 			{
 				if(x == document.getElementsByName('sel').length)
-					$('selall').checked = true;
+					_$_('selall').checked = true;
 				else
-					$('selall').checked = false;
+					_$_('selall').checked = false;
 			}
 		}
 	}
@@ -656,30 +656,30 @@
 		var strmid = "mailtr" + mid;
 		var seenid = "seen" + mid;
 		
-		if(!$(fid) || !$(strmid) || !$(seenid))
+		if(!_$_(fid) || !_$_(strmid) || !_$_(seenid))
 			return;
 			
-		var trid = $(strmid);
+		var trid = _$_(strmid);
 		if(flag == true)
 		{
 			trid.cells[1].setAttribute("flag", "yes");
-			$(fid).src = "hot.gif";
+			_$_(fid).src = "hot.gif";
 		}
 		else
 		{
 			trid.cells[1].setAttribute("flag", "no");
-			$(fid).src = "unhot.gif";
+			_$_(fid).src = "unhot.gif";
 		}
 		
 		if(seen == true)
 		{
 			trid.style.fontWeight="normal"
-			$(seenid).src = "seen.gif";
+			_$_(seenid).src = "seen.gif";
 		}
 		else
 		{
 			trid.style.fontWeight="bold"
-			$(seenid).src = "unseen.gif";
+			_$_(seenid).src = "unseen.gif";
 		}
 						
 	}
@@ -689,19 +689,19 @@
 		var fid = "flag" + mid;
 		var strmid = "mailtr" + mid;
 		
-		if(!$(fid) || !$(strmid))
+		if(!_$_(fid) || !_$_(strmid))
 			return;
 			
-		var trid = $(strmid);
+		var trid = _$_(strmid);
 		if(flag == true)
 		{
 			trid.cells[1].setAttribute("flag", "yes");
-			$(fid).src = "hot.gif";
+			_$_(fid).src = "hot.gif";
 		}
 		else
 		{
 			trid.cells[1].setAttribute("flag", "no");
-			$(fid).src = "unhot.gif";
+			_$_(fid).src = "unhot.gif";
 		}				
 	}
 	
@@ -710,27 +710,27 @@
 		var strmid = "mailtr" + mid;
 		var seenid = "seen" + mid;
 		
-		if(!$(strmid) || !$(seenid))
+		if(!_$_(strmid) || !_$_(seenid))
 			return;
 			
-		var trid = $(strmid);		
+		var trid = _$_(strmid);		
 		if(seen == true)
 		{
 			trid.style.fontWeight="normal"
-			$(seenid).src = "seen.gif";
+			_$_(seenid).src = "seen.gif";
 		}
 		else
 		{
 			trid.style.fontWeight="bold";
-			$(seenid).src = "unseen.gif";
+			_$_(seenid).src = "unseen.gif";
 		}
 	}
 
 	function delete_maillist_row(mid)
 	{
 		var strmid = "mailtr" + mid;
-		var trid = $(strmid);
-		$('MAILTBL').deleteRow(trid.rowIndex);
+		var trid = _$_(strmid);
+		_$_('MAILTBL').deleteRow(trid.rowIndex);
 						
 	}
 	
@@ -759,7 +759,7 @@
 			{
 				if(xmlHttp.status == 200)
 				{
-					$('STATUS').style.display = "none";
+					_$_('STATUS').style.display = "none";
 					
 					var xmldom = xmlHttp.responseXML;
 					xmldom.documentElement.normalize();
@@ -801,9 +801,9 @@
 
 									strSubject = abbrString(strSubject, 32);
 									
-									while($('MAILTBL').rows.length > num_of_page)
+									while(_$_('MAILTBL').rows.length > num_of_page)
 									{
-										$('MAILTBL').deleteRow($('MAILTBL').rows.length - 1 );
+										_$_('MAILTBL').deleteRow(_$_('MAILTBL').rows.length - 1 );
 									}
 
 									var pos = get_insert_pos(mailList.item(i).getAttribute("sort"), mailList.item(i).getAttribute("uniqid"));
@@ -833,7 +833,7 @@
 										update_mail_status(mailList.item(i).getAttribute("id"), bFlag, bSeen);
 										continue;
 									}
-									tr = $('MAILTBL').insertRow(pos);
+									tr = _$_('MAILTBL').insertRow(pos);
 									if(i%2 == 1)
 									{
 										tr.style.backgroundColor = "#F0F0F0";
@@ -1085,15 +1085,15 @@
 				}
 				else
 				{
-					$('STATUS').style.display = "block";
-		      	  $('STATUS').innerHTML = "<center><img src=\"alert.gif\"></center>";
+					_$_('STATUS').style.display = "block";
+		      	  _$_('STATUS').innerHTML = "<center><img src=\"alert.gif\"></center>";
 
 				}
 			}
 			else
 			{
-				$('STATUS').style.display = "block";
-		        $('STATUS').innerHTML = "<center><img src=\"waiting.gif\"></center>";
+				_$_('STATUS').style.display = "block";
+		        _$_('STATUS').innerHTML = "<center><img src=\"waiting.gif\"></center>";
 
 			}
 		}
@@ -1103,90 +1103,90 @@
 
 	function init()
 	{				
-		window.parent.$('REMAIL').src="remail.gif";
-		window.parent.$('REMAIL').disabled = false;
+		window.parent._$_('REMAIL').src="remail.gif";
+		window.parent._$_('REMAIL').disabled = false;
 		
-		window.parent.$('RETOALL').src="retoall.gif";
-		window.parent.$('RETOALL').disabled = false;
+		window.parent._$_('RETOALL').src="retoall.gif";
+		window.parent._$_('RETOALL').disabled = false;
 
-		window.parent.$('FORWARD').src="forward.gif";
-		window.parent.$('FORWARD').disabled = false;
+		window.parent._$_('FORWARD').src="forward.gif";
+		window.parent._$_('FORWARD').disabled = false;
 		
-		window.parent.$('MAILBAR').style.display = "block";
-		window.parent.$('DIRBAR').style.display = "none";
-		window.parent.$('CALBAR').style.display = "none";
-		window.parent.$('READCALBAR').style.display = "none";
-		window.parent.$('NULLBAR').style.display = "none";
+		window.parent._$_('MAILBAR').style.display = "block";
+		window.parent._$_('DIRBAR').style.display = "none";
+		window.parent._$_('CALBAR').style.display = "none";
+		window.parent._$_('READCALBAR').style.display = "none";
+		window.parent._$_('NULLBAR').style.display = "none";
 		
-		$('GLOBALPATH').innerHTML = (Request.QueryString('GPATH') == null? ("/Inbox") : decodeURIComponent(Request.QueryString('GPATH')));
+		_$_('GLOBALPATH').innerHTML = (Request.QueryString('GPATH') == null? ("/Inbox") : decodeURIComponent(Request.QueryString('GPATH')));
 		
 		ontimer();
 	}
 	
 	function update_page_button()
 	{
-		if($('PAGE_CUR').value < 0)
+		if(_$_('PAGE_CUR').value < 0)
 		{
-			$('PAGE_CUR').value = 0;
+			_$_('PAGE_CUR').value = 0;
 		}
 
-		if($('PAGE_NUM').value <= 0)
+		if(_$_('PAGE_NUM').value <= 0)
 		{
-			$('PAGE_NUM').value = 0;
+			_$_('PAGE_NUM').value = 0;
 			
-			$('next_page_btn').src="next2.gif";
-			$('next_page_btn').disabled = true;
+			_$_('next_page_btn').src="next2.gif";
+			_$_('next_page_btn').disabled = true;
 			
-			$('last_page_btn').src="last2.gif"
-			$('last_page_btn').disabled = true;
+			_$_('last_page_btn').src="last2.gif"
+			_$_('last_page_btn').disabled = true;
 
-			$('first_page_btn').src="first2.gif";
-			$('first_page_btn').disabled = true;
+			_$_('first_page_btn').src="first2.gif";
+			_$_('first_page_btn').disabled = true;
 			
-			$('prev_page_btn').src="prev2.gif"
-			$('prev_page_btn').disabled = true;
+			_$_('prev_page_btn').src="prev2.gif"
+			_$_('prev_page_btn').disabled = true;
 			
 		}
 		else
 		{
-			if($('PAGE_CUR').value <= 0)
+			if(_$_('PAGE_CUR').value <= 0)
 			{
-				$('PAGE_CUR').value = 0;
+				_$_('PAGE_CUR').value = 0;
 				
-				$('first_page_btn').src="first2.gif";
-				$('first_page_btn').disabled = true;
+				_$_('first_page_btn').src="first2.gif";
+				_$_('first_page_btn').disabled = true;
 				
-				$('prev_page_btn').src="prev2.gif"
-				$('prev_page_btn').disabled = true;
+				_$_('prev_page_btn').src="prev2.gif"
+				_$_('prev_page_btn').disabled = true;
 
 				
 			}
 			else
 			{
-				$('first_page_btn').src="first.gif";
-				$('first_page_btn').disabled = false;
+				_$_('first_page_btn').src="first.gif";
+				_$_('first_page_btn').disabled = false;
 				
-				$('prev_page_btn').src="prev.gif"
-				$('prev_page_btn').disabled = false;
+				_$_('prev_page_btn').src="prev.gif"
+				_$_('prev_page_btn').disabled = false;
 			}
 
-			if(parseInt($('PAGE_CUR').value) >= parseInt($('PAGE_NUM').value - 1))
+			if(parseInt(_$_('PAGE_CUR').value) >= parseInt(_$_('PAGE_NUM').value - 1))
 			{
-				$('PAGE_CUR').value = parseInt($('PAGE_NUM').value) - 1;
+				_$_('PAGE_CUR').value = parseInt(_$_('PAGE_NUM').value) - 1;
 				
-				$('next_page_btn').src="next2.gif";
-				$('next_page_btn').disabled = true;
+				_$_('next_page_btn').src="next2.gif";
+				_$_('next_page_btn').disabled = true;
 				
-				$('last_page_btn').src="last2.gif"
-				$('last_page_btn').disabled = true;
+				_$_('last_page_btn').src="last2.gif"
+				_$_('last_page_btn').disabled = true;
 			}
 			else
 			{
-				$('next_page_btn').src="next.gif";
-				$('next_page_btn').disabled = false;
+				_$_('next_page_btn').src="next.gif";
+				_$_('next_page_btn').disabled = false;
 				
-				$('last_page_btn').src="last.gif"
-				$('last_page_btn').disabled = false;
+				_$_('last_page_btn').src="last.gif"
+				_$_('last_page_btn').disabled = false;
 			}
 
 		}
@@ -1223,13 +1223,13 @@
 	<tr><td align="center" valign="middle" height="10">
 		<table>
 		<tr>
-			<td><input name="first_page_btn" id="first_page_btn" type="image" src="first.gif" onClick="clear_table($('MAILTBL')); $('PAGE_CUR').value = 0;load_mails(Request.QueryString('DIRID'), $('PAGE_CUR').value, Request.QueryString('TOP_USAGE'));"></td>
-			<td><input name="prev_page_btn" id="prev_page_btn" type="image" src="prev.gif" onClick="clear_table($('MAILTBL')); $('PAGE_CUR').value = (parseInt($('PAGE_CUR').value) - 1); load_mails(Request.QueryString('DIRID'), $('PAGE_CUR').value, Request.QueryString('TOP_USAGE'));"></td>
+			<td><input name="first_page_btn" id="first_page_btn" type="image" src="first.gif" onClick="clear_table(_$_('MAILTBL')); _$_('PAGE_CUR').value = 0;load_mails(Request.QueryString('DIRID'), _$_('PAGE_CUR').value, Request.QueryString('TOP_USAGE'));"></td>
+			<td><input name="prev_page_btn" id="prev_page_btn" type="image" src="prev.gif" onClick="clear_table(_$_('MAILTBL')); _$_('PAGE_CUR').value = (parseInt(_$_('PAGE_CUR').value) - 1); load_mails(Request.QueryString('DIRID'), _$_('PAGE_CUR').value, Request.QueryString('TOP_USAGE'));"></td>
 			
 			<td><input type="text" class="text1"  id="PAGE" value="..." name="PAGE" size="5" readonly></td>
 			
-			<td><input name="next_page_btn" id="next_page_btn" type="image" src="next.gif" onClick="clear_table($('MAILTBL')); $('PAGE_CUR').value = (parseInt($('PAGE_CUR').value) + 1);load_mails(Request.QueryString('DIRID'), $('PAGE_CUR').value, Request.QueryString('TOP_USAGE'));"></td>
-			<td><input name="last_page_btn" id="last_page_btn" type="image" src="last.gif" onClick="clear_table($('MAILTBL')); $('PAGE_CUR').value = (parseInt($('PAGE_NUM').value) - 1); load_mails(Request.QueryString('DIRID'), $('PAGE_CUR').value);"></td>
+			<td><input name="next_page_btn" id="next_page_btn" type="image" src="next.gif" onClick="clear_table(_$_('MAILTBL')); _$_('PAGE_CUR').value = (parseInt(_$_('PAGE_CUR').value) + 1);load_mails(Request.QueryString('DIRID'), _$_('PAGE_CUR').value, Request.QueryString('TOP_USAGE'));"></td>
+			<td><input name="last_page_btn" id="last_page_btn" type="image" src="last.gif" onClick="clear_table(_$_('MAILTBL')); _$_('PAGE_CUR').value = (parseInt(_$_('PAGE_NUM').value) - 1); load_mails(Request.QueryString('DIRID'), _$_('PAGE_CUR').value);"></td>
 		</tr>
 		</table>
 	</td></tr>

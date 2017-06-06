@@ -15,14 +15,16 @@
 		list_status();
 	}
 
-	function display_tbl(tblobj)
+	function display_tbl(tblobj, btnobj)
 	{
 		if(tblobj.style.display == "none")
 		{
+            btnobj.src="closediv.gif";
 			tblobj.style.display = "block";
 		}
 		else
 		{
+            btnobj.src="opendiv.gif";
 			tblobj.style.display = "none";
 		}
 	}
@@ -52,140 +54,140 @@
 							{
 								if(statusList.item(i).tagName == "commonMailNumber")
 								{
-									$('commonMailNumber').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" :  statusList.item(i).childNodes[0].nodeValue;
+									_$_('commonMailNumber').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" :  statusList.item(i).childNodes[0].nodeValue;
 								}
 								else if(statusList.item(i).tagName == "deletedMailNumber")
 								{
-									$('deletedMailNumber').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" :  statusList.item(i).childNodes[0].nodeValue;
+									_$_('deletedMailNumber').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" :  statusList.item(i).childNodes[0].nodeValue;
 								}
 								else if(statusList.item(i).tagName == "commonMailSize")
 								{
-									$('commonMailSize').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" :  Math.round(statusList.item(i).childNodes[0].nodeValue/1024*100)/100 + "KB";
+									_$_('commonMailSize').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" :  Math.round(statusList.item(i).childNodes[0].nodeValue/1024*100)/100 + "KB";
 								}
 								else if(statusList.item(i).tagName == "deletedMailSize")
 								{
-									$('deletedMailSize').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" :  Math.round(statusList.item(i).childNodes[0].nodeValue/1024*100)/100 + "KB";
+									_$_('deletedMailSize').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" :  Math.round(statusList.item(i).childNodes[0].nodeValue/1024*100)/100 + "KB";
 								}
 								else if(statusList.item(i).tagName == "Encoding")
 								{
-									$('Encoding').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" :  statusList.item(i).childNodes[0].nodeValue;
+									_$_('Encoding').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" :  statusList.item(i).childNodes[0].nodeValue;
 								}
 								else if(statusList.item(i).tagName == "EmailDomainName")
 								{
-									$('EmailDomainName').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" :  statusList.item(i).childNodes[0].nodeValue;
+									_$_('EmailDomainName').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" :  statusList.item(i).childNodes[0].nodeValue;
 								}
 								else if(statusList.item(i).tagName == "LocalHostName")
 								{
-									$('LocalHostName').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" :  statusList.item(i).childNodes[0].nodeValue;
+									_$_('LocalHostName').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" :  statusList.item(i).childNodes[0].nodeValue;
 								}
 								else if(statusList.item(i).tagName == "HostIP")
 								{
-									$('HostIP').innerHTML = statusList.item(i).childNodes[0] == null ? "Unbinded IP" :  statusList.item(i).childNodes[0].nodeValue;
+									_$_('HostIP').innerHTML = statusList.item(i).childNodes[0] == null ? "Unbinded IP" :  statusList.item(i).childNodes[0].nodeValue;
 								}
 								else if(statusList.item(i).tagName == "DNSServer")
 								{
-									$('DNSServer').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" :  statusList.item(i).childNodes[0].nodeValue;
+									_$_('DNSServer').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" :  statusList.item(i).childNodes[0].nodeValue;
 								}
 								else if(statusList.item(i).tagName == "MaxConnPerProtocal")
 								{
-									$('MaxConnPerProtocal').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" :  statusList.item(i).childNodes[0].nodeValue;
+									_$_('MaxConnPerProtocal').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" :  statusList.item(i).childNodes[0].nodeValue;
 								}
 								else if(statusList.item(i).tagName == "RelayTaskNum")
 								{
-									$('RelayTaskNum').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" :  statusList.item(i).childNodes[0].nodeValue;
+									_$_('RelayTaskNum').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" :  statusList.item(i).childNodes[0].nodeValue;
 								}
 
 
 								else if(statusList.item(i).tagName == "EnableRelay")
 								{
-									$('EnableRelay').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue == "yes" ? "<img src=\"yes.gif\">" : "<img src=\"no.gif\">";
+									_$_('EnableRelay').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue == "yes" ? "<img src=\"yes.gif\">" : "<img src=\"no.gif\">";
 								}
 								else if(statusList.item(i).tagName == "SMTPHostNameCheck")
 								{
-									$('SMTPHostNameCheck').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue == "yes" ? "<img src=\"yes.gif\">" : "<img src=\"no.gif\">";
+									_$_('SMTPHostNameCheck').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue == "yes" ? "<img src=\"yes.gif\">" : "<img src=\"no.gif\">";
 								}
 								else if(statusList.item(i).tagName == "EnableSMTPTLS")
 								{
-									$('EnableSMTPTLS').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue == "yes" ? "<img src=\"yes.gif\">" : "<img src=\"no.gif\">";
+									_$_('EnableSMTPTLS').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue == "yes" ? "<img src=\"yes.gif\">" : "<img src=\"no.gif\">";
 								}
 								else if(statusList.item(i).tagName == "SMTPSEnable")
 								{
-									$('SMTPSEnable').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue == "yes" ? "<img src=\"yes.gif\">" : "<img src=\"no.gif\">";
+									_$_('SMTPSEnable').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue == "yes" ? "<img src=\"yes.gif\">" : "<img src=\"no.gif\">";
 								}
 								else if(statusList.item(i).tagName == "SMTPSPort")
 								{
-									$('SMTPSPort').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" :  statusList.item(i).childNodes[0].nodeValue;
+									_$_('SMTPSPort').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" :  statusList.item(i).childNodes[0].nodeValue;
 								}
 								
 								else if(statusList.item(i).tagName == "POP3Enable")
 								{
-									$('POP3Enable').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue == "yes" ? "<img src=\"yes.gif\">" : "<img src=\"no.gif\">";
+									_$_('POP3Enable').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue == "yes" ? "<img src=\"yes.gif\">" : "<img src=\"no.gif\">";
 								}
 								else if(statusList.item(i).tagName == "POP3Port")
 								{
-									$('POP3Port').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" :  statusList.item(i).childNodes[0].nodeValue;
+									_$_('POP3Port').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" :  statusList.item(i).childNodes[0].nodeValue;
 								}
 								else if(statusList.item(i).tagName == "EnablePOP3TLS")
 								{
-									$('EnablePOP3TLS').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue == "yes" ? "<img src=\"yes.gif\">" : "<img src=\"no.gif\">";
+									_$_('EnablePOP3TLS').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue == "yes" ? "<img src=\"yes.gif\">" : "<img src=\"no.gif\">";
 								}
 								else if(statusList.item(i).tagName == "POP3SEnable")
 								{
-									$('POP3SEnable').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue == "yes" ? "<img src=\"yes.gif\">" : "<img src=\"no.gif\">";
+									_$_('POP3SEnable').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue == "yes" ? "<img src=\"yes.gif\">" : "<img src=\"no.gif\">";
 								}
 								else if(statusList.item(i).tagName == "POP3SPort")
 								{
-									$('POP3SPort').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" :  statusList.item(i).childNodes[0].nodeValue;
+									_$_('POP3SPort').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" :  statusList.item(i).childNodes[0].nodeValue;
 								}
 								
 								else if(statusList.item(i).tagName == "IMAPEnable")
 								{
-									$('IMAPEnable').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue == "yes" ? "<img src=\"yes.gif\">" : "<img src=\"no.gif\">";
+									_$_('IMAPEnable').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue == "yes" ? "<img src=\"yes.gif\">" : "<img src=\"no.gif\">";
 								}
 								else if(statusList.item(i).tagName == "IMAPPort")
 								{
-									$('IMAPPort').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" :  statusList.item(i).childNodes[0].nodeValue;
+									_$_('IMAPPort').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" :  statusList.item(i).childNodes[0].nodeValue;
 								}
 								else if(statusList.item(i).tagName == "EnableIMAPTLS")
 								{
-									$('EnableIMAPTLS').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue == "yes" ? "<img src=\"yes.gif\">" : "<img src=\"no.gif\">";
+									_$_('EnableIMAPTLS').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue == "yes" ? "<img src=\"yes.gif\">" : "<img src=\"no.gif\">";
 								}
 								else if(statusList.item(i).tagName == "IMAPSEnable")
 								{
-									$('IMAPSEnable').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue == "yes" ? "<img src=\"yes.gif\">" : "<img src=\"no.gif\">";
+									_$_('IMAPSEnable').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue == "yes" ? "<img src=\"yes.gif\">" : "<img src=\"no.gif\">";
 								}
 								else if(statusList.item(i).tagName == "IMAPSPort")
 								{
-									$('IMAPSPort').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" :  statusList.item(i).childNodes[0].nodeValue;
+									_$_('IMAPSPort').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" :  statusList.item(i).childNodes[0].nodeValue;
 								}
 
 
 								else if(statusList.item(i).tagName == "HTTPEnable")
 								{
-									$('HTTPEnable').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue == "yes" ? "<img src=\"yes.gif\">" : "<img src=\"no.gif\">";
+									_$_('HTTPEnable').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue == "yes" ? "<img src=\"yes.gif\">" : "<img src=\"no.gif\">";
 								}
 								else if(statusList.item(i).tagName == "HTTPPort")
 								{
-									$('HTTPPort').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" :  statusList.item(i).childNodes[0].nodeValue;
+									_$_('HTTPPort').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" :  statusList.item(i).childNodes[0].nodeValue;
 								}
 								else if(statusList.item(i).tagName == "HTTPSEnable")
 								{
-									$('HTTPSEnable').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue == "yes" ? "<img src=\"yes.gif\">" : "<img src=\"no.gif\">";
+									_$_('HTTPSEnable').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue == "yes" ? "<img src=\"yes.gif\">" : "<img src=\"no.gif\">";
 								}
 								else if(statusList.item(i).tagName == "HTTPSPort")
 								{
-									$('HTTPSPort').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" :  statusList.item(i).childNodes[0].nodeValue;
+									_$_('HTTPSPort').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" :  statusList.item(i).childNodes[0].nodeValue;
 								}
 							}
-							$("STATUS").innerHTML = "";
-							$("STATUS").style.display = "none";
+							_$_("STATUS").innerHTML = "";
+							_$_("STATUS").style.display = "none";
 						}
 					}
 				}
 			}
 			else
 			{
-				$("STATUS").innerHTML = "<center><img src=\"waiting.gif\"></center>";
+				_$_("STATUS").innerHTML = "<center><img src=\"waiting.gif\"></center>";
 			}
 		}
 		xmlHttp.open("GET", qUrl , true);
@@ -210,125 +212,132 @@
 </table>
 
 <table border="0" width="100%" bordercolorlight="#C0C0C0" cellpadding="0" cellspacing="0" bordercolordark="#FFFFFF">
-	  <tr><td>
+<tr><td>
 
 	<table border="0" width="100%" bordercolorlight="#C0C0C0" cellpadding="1" cellspacing="0" bordercolordark="#FFFFFF">
 	  <tr><td class="blue">
 	  <table border="0" width="100%" cellpadding="0" cellspacing="0">
-	  <tr align="center" valign="middle" height="25">
+	  <tr align="center" valign="middle" height="25" onMouseOver="this.mousepoint = 99;this.style.cursor = 'pointer';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onClick="display_tbl(_$_('STORAGETBL'), _$_('STORAGE_LIST_BTN'))">
 	    <td width="22"><img src="statusinfo.gif"></td>
-	    <td align="left" onMouseOver="this.mousepoint = 99;this.style.cursor = 'pointer';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onClick="display_tbl($('STORAGETBL'))"><font color="#FFFFFF">Storage</font></td>
+	    <td align="left"><font color="#FFFFFF">Storage</font></td>
+        <td align="right" width="20"><img id="STORAGE_LIST_BTN" src="opendiv.gif"></td>
 	  </tr>
 	  </table>
 	  </td></tr>
 	</table>
 	
-	<table id="STORAGETBL" style="display:none" bgcolor="#FFFFCC" border="0" width="100%" bordercolorlight="#C0C0C0" cellspacing="0" cellpadding="1" bordercolordark="#FFFFFF" class="gray">
+	<table id="STORAGETBL" style="display:none" bgcolor="#fafafa" border="0" width="100%" bordercolorlight="#C0C0C0" cellspacing="0" cellpadding="1" bordercolordark="#FFFFFF" class="gray">
 		<tr bgcolor="#FFFFFF"><td class="gray" width="200" height="25" align="right">Active Mail Count:</td><td class="gray" width="660"><div border="0" id="commonMailNumber"></div></td></tr>
-		<tr bgcolor="#FFFFCC"><td class="gray" width="200" height="25" align="right">Deleted Mail Count:</td><td class="gray" width="660"><div border="0" id="deletedMailNumber"></div></td></tr>
+		<tr bgcolor="#fafafa"><td class="gray" width="200" height="25" align="right">Deleted Mail Count:</td><td class="gray" width="660"><div border="0" id="deletedMailNumber"></div></td></tr>
 		<tr bgcolor="#FFFFFF"><td class="gray" width="200" height="25" align="right">Total Active Mail Size:</td><td class="gray" width="660"><div border="0" id="commonMailSize"></div></td></tr>
-		<tr bgcolor="#FFFFCC"><td class="gray" width="200" height="25" align="right">Total Deleted Mail Size:</td><td class="gray" width="660"><div border="0" id="deletedMailSize"></div></td></tr>
+		<tr bgcolor="#fafafa"><td class="gray" width="200" height="25" align="right">Total Deleted Mail Size:</td><td class="gray" width="660"><div border="0" id="deletedMailSize"></div></td></tr>
 	</table>
 	
 	<table border="0" width="100%" bordercolorlight="#C0C0C0" cellpadding="1" cellspacing="0" bordercolordark="#FFFFFF">
 	  <tr><td class="blue">
 	  <table border="0" width="100%" cellpadding="0" cellspacing="0">
-	  <tr align="center" valign="middle" height="25">
+	  <tr align="center" valign="middle" height="25" onMouseOver="this.mousepoint = 99;this.style.cursor = 'pointer';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onClick="display_tbl(_$_('GLOBALTBL'), _$_('BASIC_LIST_BTN'))">
 	    <td width="22"><img src="statusinfo.gif"></td>
-	    <td align="left" onMouseOver="this.mousepoint = 99;this.style.cursor = 'pointer';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onClick="display_tbl($('GLOBALTBL'))"><font color="#FFFFFF">Basic</font></td>
+	    <td align="left"><font color="#FFFFFF">Basic</font></td>
+        <td align="right" width="20"><img id="BASIC_LIST_BTN" src="opendiv.gif"></td>
 	  </tr>
 	  </table>
 	  </td></tr>
 	</table>
 	
-	<table id="GLOBALTBL" style="display:none" bgcolor="#FFFFCC" border="0" width="100%" bordercolorlight="#C0C0C0" cellspacing="0" cellpadding="1" bordercolordark="#FFFFFF" class="gray">
+	<table id="GLOBALTBL" style="display:none" bgcolor="#fafafa" border="0" width="100%" bordercolorlight="#C0C0C0" cellspacing="0" cellpadding="1" bordercolordark="#FFFFFF" class="gray">
 		<tr bgcolor="#FFFFFF"><td class="gray" width="200" height="25" align="right">Encoding:</td><td class="gray" width="660"><div border="0" id="Encoding"></div></td></tr>
-		<tr bgcolor="#FFFFCC"><td class="gray" width="200" height="25" align="right">Postfix of Email:</td><td class="gray" width="660"><div border="0" id="EmailDomainName"></div></td></tr>
+		<tr bgcolor="#fafafa"><td class="gray" width="200" height="25" align="right">Postfix of Email:</td><td class="gray" width="660"><div border="0" id="EmailDomainName"></div></td></tr>
 		<tr bgcolor="#FFFFFF"><td class="gray" width="200" height="25" align="right">Local Hostname:</td><td class="gray" width="660"><div border="0" id="LocalHostName"></div></td></tr>
-		<tr bgcolor="#FFFFCC"><td class="gray" width="200" height="25" align="right">Local Binded IP:</td><td class="gray" width="660"><div border="0" id="HostIP"></div></td></tr>
+		<tr bgcolor="#fafafa"><td class="gray" width="200" height="25" align="right">Local Binded IP:</td><td class="gray" width="660"><div border="0" id="HostIP"></div></td></tr>
 		<tr bgcolor="#FFFFFF"><td class="gray" width="200" height="25" align="right">DNS Server IP:</td><td class="gray" width="660"><div border="0" id="DNSServer"></div></td></tr>
-		<tr bgcolor="#FFFFCC"><td class="gray" width="200" height="25" align="right">Max Simultaneous Connections:</td><td class="gray" width="660"><div border="0" id="MaxConnPerProtocal"> / Service</div></td></tr>
+		<tr bgcolor="#fafafa"><td class="gray" width="200" height="25" align="right">Max Simultaneous Connections:</td><td class="gray" width="660"><div border="0" id="MaxConnPerProtocal"> / Service</div></td></tr>
 		<tr bgcolor="#FFFFFF"><td class="gray" width="200" height="25" align="right">Relay Task Number:</td><td class="gray" width="660"><div border="0" id="RelayTaskNum"></div></td></tr>
 	</table>
 
 	<table border="0" width="100%" bordercolorlight="#C0C0C0" cellpadding="1" cellspacing="0" bordercolordark="#FFFFFF">
 	  <tr><td class="blue">
 	  <table border="0" width="100%" cellpadding="0" cellspacing="0">
-	  <tr align="center" valign="middle" height="25">
+	  <tr align="center" valign="middle" height="25" onMouseOver="this.mousepoint = 99;this.style.cursor = 'pointer';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onClick="display_tbl(_$_('SMTPTBL'), _$_('SMTP_LIST_BTN'))">
 	    <td width="22"><img src="statusinfo.gif"></td>
-	    <td align="left" onMouseOver="this.mousepoint = 99;this.style.cursor = 'pointer';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onClick="display_tbl($('SMTPTBL'))"><font color="#FFFFFF">SMTP</font></td>
+	    <td align="left"><font color="#FFFFFF">SMTP</font></td>
+        <td align="right" width="20"><img id="SMTP_LIST_BTN" src="opendiv.gif"></td>
 	  </tr>
 	  </table>
 	  </td></tr>
 	</table>
 	
-	<table id="SMTPTBL" style="display:none"  bgcolor="#FFFFCC" border="0" width="100%" bordercolorlight="#C0C0C0" cellspacing="0" cellpadding="1" bordercolordark="#FFFFFF" class="gray">
-		<tr bgcolor="#FFFFCC"><td class="gray" width="200" height="25" align="right">Enable Relay:</td><td class="gray" width="660"><div border="0" id="EnableRelay"></div></td></tr>
+	<table id="SMTPTBL" style="display:none"  bgcolor="#fafafa" border="0" width="100%" bordercolorlight="#C0C0C0" cellspacing="0" cellpadding="1" bordercolordark="#FFFFFF" class="gray">
+		<tr bgcolor="#fafafa"><td class="gray" width="200" height="25" align="right">Enable Relay:</td><td class="gray" width="660"><div border="0" id="EnableRelay"></div></td></tr>
 		<tr bgcolor="#FFFFFF"><td class="gray" width="200" height="25" align="right">Check Domain:</td><td class="gray" width="660"><div border="0" id="SMTPHostNameCheck"></div></td></tr>
-		<tr bgcolor="#FFFFCC"><td class="gray" width="200" height="25" align="right">SMTP Service:</td><td><img src="yes.gif"></td></tr>
+		<tr bgcolor="#fafafa"><td class="gray" width="200" height="25" align="right">SMTP Service:</td><td><img src="yes.gif"></td></tr>
 		<tr bgcolor="#FFFFFF"><td class="gray" width="200" height="25" align="right">SMTP Port:</td><td>25</td></tr>
-		<tr bgcolor="#FFFFCC"><td class="gray" width="200" height="25" align="right">TLS:</td><td class="gray" width="660"><div border="0" id="EnableSMTPTLS"></div></td></tr>
+		<tr bgcolor="#fafafa"><td class="gray" width="200" height="25" align="right">TLS:</td><td class="gray" width="660"><div border="0" id="EnableSMTPTLS"></div></td></tr>
 		<tr bgcolor="#FFFFFF"><td class="gray" width="200" height="25" align="right">SMTP-SSL Service:</td><td class="gray" width="660"><div border="0" id="SMTPSEnable"></div></td></tr>
-		<tr bgcolor="#FFFFCC"><td class="gray" width="200" height="25" align="right">SMTP-SSL Port:</td><td class="gray" width="660"><div border="0" id="SMTPSPort"></div></td></tr>
+		<tr bgcolor="#fafafa"><td class="gray" width="200" height="25" align="right">SMTP-SSL Port:</td><td class="gray" width="660"><div border="0" id="SMTPSPort"></div></td></tr>
 	</table>
 
 	<table border="0" width="100%" bordercolorlight="#C0C0C0" cellpadding="1" cellspacing="0" bordercolordark="#FFFFFF">
 	  <tr><td class="blue">
 	  <table border="0" width="100%" cellpadding="0" cellspacing="0">
-	  <tr align="center" valign="middle" height="25">
+	  <tr align="center" valign="middle" height="25" onMouseOver="this.mousepoint = 99;this.style.cursor = 'pointer';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onClick="display_tbl(_$_('POP3TBL'), _$_('POP3_LIST_BTN'))">
 	    <td width="22"><img src="statusinfo.gif"></td>
-	    <td align="left" onMouseOver="this.mousepoint = 99;this.style.cursor = 'pointer';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onClick="display_tbl($('POP3TBL'))"><font color="#FFFFFF">POP3</font></td>
+	    <td align="left"><font color="#FFFFFF">POP3</font></td>
+        <td align="right" width="20"><img id="POP3_LIST_BTN" src="opendiv.gif"></td>
 	  </tr>
 	  </table>
 	  </td></tr>
 	</table>
 	
-	<table id="POP3TBL" style="display:none"  bgcolor="#FFFFCC" border="0" width="100%" bordercolorlight="#C0C0C0" cellspacing="0" cellpadding="1" bordercolordark="#FFFFFF" class="gray">
+	<table id="POP3TBL" style="display:none"  bgcolor="#fafafa" border="0" width="100%" bordercolorlight="#C0C0C0" cellspacing="0" cellpadding="1" bordercolordark="#FFFFFF" class="gray">
 		<tr bgcolor="#FFFFFF"><td class="gray" width="200" height="25" align="right">POP3 Service:</td><td class="gray" width="660"><div border="0" id="POP3Enable"></div></td></tr>
-		<tr bgcolor="#FFFFCC"><td class="gray" width="200" height="25" align="right">POP3 Port:</td><td class="gray" width="660"><div border="0" id="POP3Port"></div></td></tr>
+		<tr bgcolor="#fafafa"><td class="gray" width="200" height="25" align="right">POP3 Port:</td><td class="gray" width="660"><div border="0" id="POP3Port"></div></td></tr>
 		<tr bgcolor="#FFFFFF"><td class="gray" width="200" height="25" align="right">TLS:</td><td class="gray" width="660"><div border="0" id="EnablePOP3TLS"></div></td></tr>
-		<tr bgcolor="#FFFFCC"><td class="gray" width="200" height="25" align="right">POP3-SSL Service:</td><td class="gray" width="660"><div border="0" id="POP3SEnable"></div></td></tr>
+		<tr bgcolor="#fafafa"><td class="gray" width="200" height="25" align="right">POP3-SSL Service:</td><td class="gray" width="660"><div border="0" id="POP3SEnable"></div></td></tr>
 		<tr bgcolor="#FFFFFF"><td class="gray" width="200" height="25" align="right">POP3-SSL Port:</td><td class="gray" width="660"><div border="0" id="POP3SPort"></div></td></tr>
 	</table>
 
 	<table border="0" width="100%" bordercolorlight="#C0C0C0" cellpadding="1" cellspacing="0" bordercolordark="#FFFFFF">
 	  <tr><td class="blue">
 	  <table border="0" width="100%" cellpadding="0" cellspacing="0">
-	  <tr align="center" valign="middle" height="25">
+	  <tr align="center" valign="middle" height="25" onMouseOver="this.mousepoint = 99;this.style.cursor = 'pointer';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onClick="display_tbl(_$_('IMAPTBL'), _$_('IMAP_LIST_BTN'))">
 	    <td width="22"><img src="statusinfo.gif"></td>
-	    <td align="left" onMouseOver="this.mousepoint = 99;this.style.cursor = 'pointer';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onClick="display_tbl($('IMAPTBL'))"><font color="#FFFFFF">IMAP</font></td>
+	    <td align="left"><font color="#FFFFFF">IMAP</font></td>
+        <td align="right" width="20"><img id="IMAP_LIST_BTN" src="opendiv.gif"></td>
 	  </tr>
 	  </table>
 	  </td></tr>
 	</table>
 	
-	<table id="IMAPTBL" style="display:none" bgcolor="#FFFFCC" border="0" width="100%" bordercolorlight="#C0C0C0" cellspacing="0" cellpadding="1" bordercolordark="#FFFFFF" class="gray">
-		<tr bgcolor="#FFFFCC"><td class="gray" width="200" height="25" align="right">IMAP Service:</td><td class="gray" width="660"><div border="0" id="IMAPEnable"></div></td></tr>
+	<table id="IMAPTBL" style="display:none" bgcolor="#fafafa" border="0" width="100%" bordercolorlight="#C0C0C0" cellspacing="0" cellpadding="1" bordercolordark="#FFFFFF" class="gray">
+		<tr bgcolor="#fafafa"><td class="gray" width="200" height="25" align="right">IMAP Service:</td><td class="gray" width="660"><div border="0" id="IMAPEnable"></div></td></tr>
 		<tr bgcolor="#FFFFFF"><td class="gray" width="200" height="25" align="right">IMAP Port:</td><td class="gray" width="660"><div border="0" id="IMAPPort"></div></td></tr>
-		<tr bgcolor="#FFFFCC"><td class="gray" width="200" height="25" align="right">TLS:</td><td class="gray" width="660"><div border="0" id="EnableIMAPTLS"></div></td></tr>
+		<tr bgcolor="#fafafa"><td class="gray" width="200" height="25" align="right">TLS:</td><td class="gray" width="660"><div border="0" id="EnableIMAPTLS"></div></td></tr>
 		<tr bgcolor="#FFFFFF"><td class="gray" width="200" height="25" align="right">IMAP-SSL Service:</td><td class="gray" width="660"><div border="0" id="IMAPSEnable"></div></td></tr>
-		<tr bgcolor="#FFFFCC"><td class="gray" width="200" height="25" align="right">IMAP-SSL Port:</td><td class="gray" width="660"><div border="0" id="IMAPSPort"></div></td></tr>
+		<tr bgcolor="#fafafa"><td class="gray" width="200" height="25" align="right">IMAP-SSL Port:</td><td class="gray" width="660"><div border="0" id="IMAPSPort"></div></td></tr>
 	</table>
 
 	<table border="0" width="100%" bordercolorlight="#C0C0C0" cellpadding="1" cellspacing="0" bordercolordark="#FFFFFF">
 	  <tr><td class="blue">
 	  <table border="0" width="100%" cellpadding="0" cellspacing="0">
-	  <tr align="center" valign="middle" height="25">
+	  <tr align="center" valign="middle" height="25" onMouseOver="this.mousepoint = 99;this.style.cursor = 'pointer';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onClick="display_tbl(_$_('HTTPTBL'), _$_('HTTP_LIST_BTN'))">
 	    <td width="22"><img src="statusinfo.gif"></td>
-	    <td align="left" onMouseOver="this.mousepoint = 99;this.style.cursor = 'pointer';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onClick="display_tbl($('HTTPTBL'))"><font color="#FFFFFF">HTTP</font></td>
+	    <td align="left"><font color="#FFFFFF">HTTP</font></td>
+        <td align="right" width="20"><img id="HTTP_LIST_BTN" src="opendiv.gif"></td>
 	  </tr>
 	  </table>
 	  </td></tr>
 	</table>
 	
-	<table id="HTTPTBL" style="display:none" bgcolor="#FFFFCC" border="0" width="100%" bordercolorlight="#C0C0C0" cellspacing="0" cellpadding="1" bordercolordark="#FFFFFF" class="gray">
+	<table id="HTTPTBL" style="display:none" bgcolor="#fafafa" border="0" width="100%" bordercolorlight="#C0C0C0" cellspacing="0" cellpadding="1" bordercolordark="#FFFFFF" class="gray">
 		<tr bgcolor="#FFFFFF"><td class="gray" width="200" height="25" align="right">HTTP Service:</td><td class="gray" width="660"><div border="0" id="HTTPEnable"></div></td></tr>
-		<tr bgcolor="#FFFFCC"><td class="gray" width="200" height="25" align="right">HTTP Port:</td><td class="gray" width="660"><div border="0" id="HTTPPort"></div></td></tr>
+		<tr bgcolor="#fafafa"><td class="gray" width="200" height="25" align="right">HTTP Port:</td><td class="gray" width="660"><div border="0" id="HTTPPort"></div></td></tr>
 		<tr bgcolor="#FFFFFF"><td class="gray" width="200" height="25" align="right">HTTPS Service:</td><td class="gray" width="660"><div border="0" id="HTTPSEnable"></div></td></tr>
-		<tr bgcolor="#FFFFCC"><td class="gray" width="200" height="25" align="right">HTTPS Port:</td><td class="gray" width="660"><div border="0" id="HTTPSPort"></div></td></tr>
+		<tr bgcolor="#fafafa"><td class="gray" width="200" height="25" align="right">HTTPS Port:</td><td class="gray" width="660"><div border="0" id="HTTPSPort"></div></td></tr>
 	</table>
 	
 	<div border="0" id="STATUS"></div>
+    
 </td></tr>
 </table>
 </body>

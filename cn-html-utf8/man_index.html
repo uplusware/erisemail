@@ -11,8 +11,8 @@
 <script language="JavaScript"> 
 	function manlogin()
 	{
-		var username = $("USER_NAME").value;
-		var password = $("USER_PWD").value
+		var username = _$_("USER_NAME").value;
+		var password = _$_("USER_PWD").value
 		var qUrl = "/api/manlogin.xml?USER_NAME=" + username + "&USER_PWD="+ password;
 		var xmlHttp = initxmlhttp();
 	    xmlHttp.onreadystatechange = function()
@@ -29,12 +29,12 @@
 					var errno = responseNode.getAttribute("errno")
 					if(errno == "0" || errno == 0)
 					{
-						$("content").innerHTML = "<img src=\"waiting.gif\">";
+						_$_("content").innerHTML = "<img src=\"waiting.gif\">";
 						window.location = "/man_home.html";
 					}
 					else
 					{
-						$("content").innerHTML = "<table border=\"0\"><tr><td><img src=\"alert.gif\"></td><td>认证失败</td></tr></table>";
+						_$_("content").innerHTML = "<table border=\"0\"><tr><td><img src=\"alert.gif\"></td><td>认证失败</td></tr></table>";
 					}
 				}
 			}

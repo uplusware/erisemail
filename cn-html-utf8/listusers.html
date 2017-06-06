@@ -56,7 +56,7 @@
 											image = "inactive_member.gif";
 									}
 
-									tr = $('USERTBL').insertRow($('USERTBL').rows.length);
+									tr = _$_('USERTBL').insertRow(_$_('USERTBL').rows.length);
 									
 									tr.onmouseover = function()
 									{
@@ -131,15 +131,15 @@
 							        	tr.disabled = "true";
 								}
 							}
-							$("STATUS").innerHTML = "";
-							$("STATUS").style.display = "none";
+							_$_("STATUS").innerHTML = "";
+							_$_("STATUS").style.display = "none";
 						}
 					}
 				}
 			}
 			else
 			{
-				$("STATUS").innerHTML = "<center><img src=\"waiting.gif\"></center>";
+				_$_("STATUS").innerHTML = "<center><img src=\"waiting.gif\"></center>";
 			}
 		}
 		xmlHttp.open("GET", qUrl , true);
@@ -148,11 +148,11 @@
 
 	function init()
 	{		
-		window.parent.$('MAILBAR').style.display = "none";
-		window.parent.$('DIRBAR').style.display = "none";
-		window.parent.$('CALBAR').style.display = "none";
-		window.parent.$('READCALBAR').style.display = "none";
-		window.parent.$('NULLBAR').style.display = "block";
+		window.parent._$_('MAILBAR').style.display = "none";
+		window.parent._$_('DIRBAR').style.display = "none";
+		window.parent._$_('CALBAR').style.display = "none";
+		window.parent._$_('READCALBAR').style.display = "none";
+		window.parent._$_('NULLBAR').style.display = "block";
 		
 	}
 
@@ -168,21 +168,21 @@
 
 	function sort_users(orderby)
 	{
-		$('USERTBL').setAttribute('orderby', orderby);
+		_$_('USERTBL').setAttribute('orderby', orderby);
 
-		clear_table_without_header($('USERTBL'));
+		clear_table_without_header(_$_('USERTBL'));
 
-		if($('USERTBL').getAttribute(orderby) == 'true')
-			$('USERTBL').setAttribute(orderby, 'false');
+		if(_$_('USERTBL').getAttribute(orderby) == 'true')
+			_$_('USERTBL').setAttribute(orderby, 'false');
 		else
-			$('USERTBL').setAttribute(orderby, 'true');
+			_$_('USERTBL').setAttribute(orderby, 'true');
 
-		load_users($('USERTBL').getAttribute('orderby'), $('USERTBL').getAttribute($('USERTBL').getAttribute('orderby')))
+		load_users(_$_('USERTBL').getAttribute('orderby'), _$_('USERTBL').getAttribute(_$_('USERTBL').getAttribute('orderby')))
 	}
 </script>
 </head>
 
-<body onLoad="init();$('USERTBL').setAttribute('orderby', 'utime');load_users($('USERTBL').getAttribute('orderby'), $('USERTBL').getAttribute($('USERTBL').getAttribute('orderby')));" onUnload="uninit()" bgcolor="#FFFFFF">
+<body onLoad="init();_$_('USERTBL').setAttribute('orderby', 'utime');load_users(_$_('USERTBL').getAttribute('orderby'), _$_('USERTBL').getAttribute(_$_('USERTBL').getAttribute('orderby')));" onUnload="uninit()" bgcolor="#FFFFFF">
 
 <table border="0" width="100%" cellpadding="0" cellspacing="0" height="100%" bgcolor="#FFFFFF">
 	<tr>

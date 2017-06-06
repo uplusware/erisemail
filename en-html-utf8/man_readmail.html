@@ -98,11 +98,11 @@
 							}
 							if(strCc == "")
 							{
-								$("cccol").style.display = "none";	
+								_$_("cccol").style.display = "none";	
 							}
 
-							$("mailcontent").style.width = $('mailcontentframe').offsetWidth - 5;
-							$("mailcontent").style.height = $('mailcontentframe').offsetHeight - 5;
+							_$_("mailcontent").style.width = _$_('mailcontentframe').offsetWidth - 5;
+							_$_("mailcontent").style.height = _$_('mailcontentframe').offsetHeight - 5;
 							
 							if(strCalendarContent != "")
 							{
@@ -207,11 +207,11 @@
 								}
 							}		
 							
-							$("mailfrom").innerHTML = "<input class=\"text3\" size=\"100\" type=\"text\" value=\"" + TextToHTML(strFrom) + "\" readonly>";
-							$("mailto").innerHTML = "<input class=\"text3\" size=\"100\" type=\"text\" value=\"" + TextToHTML(strTo) + "\" readonly>";
-							$("mailcc").innerHTML = "<input class=\"text3\" size=\"100\" type=\"text\" value=\"" + TextToHTML(strCc) + "\" readonly>";
-							$("maildate").innerHTML = "<input class=\"text3\" size=\"100\" type=\"text\" value=\"" + TextToHTML(strDate) + "\" readonly>";
-							$("mailsubject").innerHTML = "<input class=\"text3\" size=\"100\" type=\"text\" value=\"" + (strSubject == "" ? "No Subject" : TextToHTML(strSubject)) + "\" readonly>";
+							_$_("mailfrom").innerHTML = "<input class=\"text3\" size=\"100\" type=\"text\" value=\"" + TextToHTML(strFrom) + "\" readonly>";
+							_$_("mailto").innerHTML = "<input class=\"text3\" size=\"100\" type=\"text\" value=\"" + TextToHTML(strTo) + "\" readonly>";
+							_$_("mailcc").innerHTML = "<input class=\"text3\" size=\"100\" type=\"text\" value=\"" + TextToHTML(strCc) + "\" readonly>";
+							_$_("maildate").innerHTML = "<input class=\"text3\" size=\"100\" type=\"text\" value=\"" + TextToHTML(strDate) + "\" readonly>";
+							_$_("mailsubject").innerHTML = "<input class=\"text3\" size=\"100\" type=\"text\" value=\"" + (strSubject == "" ? "No Subject" : TextToHTML(strSubject)) + "\" readonly>";
 
 							var strrpl = "/api/attachment.cgi?ID=";
 							strrpl += strID;
@@ -221,33 +221,33 @@
 							strHtmlContent = strHtmlContent.replace(regS1, strrpl);
 							if(strCalendarContent == "")
 							{
-							$("mailcontent").innerHTML = (strHtmlContent != "" ? strHtmlContent : TextToHTML(strTextContent)) + (strPreview != "" ? ("<p></p><hr><b>" + att_count + " attachment(s)</b>" + strPreview) : "");
+							_$_("mailcontent").innerHTML = (strHtmlContent != "" ? strHtmlContent : TextToHTML(strTextContent)) + (strPreview != "" ? ("<p></p><hr><b>" + att_count + " attachment(s)</b>" + strPreview) : "");
 							}
 							else
 							{
-								$("timecol").style.display = "none";								
-								$("mailcontent").innerHTML = strCalendarContent + (strPreview != "" ? ("<p></p><hr><b>" + att_count + " attachment(s)</b>" + strPreview) : "");
+								_$_("timecol").style.display = "none";								
+								_$_("mailcontent").innerHTML = strCalendarContent + (strPreview != "" ? ("<p></p><hr><b>" + att_count + " attachment(s)</b>" + strPreview) : "");
 							}
 						}
 						else
 						{
-							$("mailcontent").innerHTML = "<table border=\"0\"><tr><td><img src=\"alert.gif\"></td><td>Load Failed</td></tr></table>";
+							_$_("mailcontent").innerHTML = "<table border=\"0\"><tr><td><img src=\"alert.gif\"></td><td>Load Failed</td></tr></table>";
 						}
 					}
 				}
 				else
 				{
-					$("mailcontent").innerHTML = "<table border=\"0\"><tr><td><img src=\"alert.gif\"></td><td>Load Failed</td></tr></table>";
+					_$_("mailcontent").innerHTML = "<table border=\"0\"><tr><td><img src=\"alert.gif\"></td><td>Load Failed</td></tr></table>";
 				}
 			}
 			else
 			{
-				$("mailfrom").innerHTML = "<img src=\"loading.gif\">";
-				$("mailto").innerHTML = "<img src=\"loading.gif\">";
-				$("mailcc").innerHTML = "<img src=\"loading.gif\">";
-				$("maildate").innerHTML = "<img src=\"loading.gif\">";
-				$("mailsubject").innerHTML = "<img src=\"loading.gif\">";
-				$("mailcontent").innerHTML = "<img src=\"loading.gif\">";
+				_$_("mailfrom").innerHTML = "<img src=\"loading.gif\">";
+				_$_("mailto").innerHTML = "<img src=\"loading.gif\">";
+				_$_("mailcc").innerHTML = "<img src=\"loading.gif\">";
+				_$_("maildate").innerHTML = "<img src=\"loading.gif\">";
+				_$_("mailsubject").innerHTML = "<img src=\"loading.gif\">";
+				_$_("mailcontent").innerHTML = "<img src=\"loading.gif\">";
 			}
 		}
 		xmlHttp.open("GET", qUrl , true);

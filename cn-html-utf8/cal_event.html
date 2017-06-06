@@ -243,7 +243,7 @@
 								{
 									strSubject = bodyList.item(i).childNodes[0] == null ? "" : bodyList.item(i).childNodes[0].nodeValue;
 									
-									$('EVENT_SUBJECT').innerHTML = strSubject;
+									_$_('EVENT_SUBJECT').innerHTML = strSubject;
 								}
 								else if(bodyList.item(i).tagName == "attach")
 								{
@@ -265,11 +265,11 @@
 							
 							if(strCc == "")
 							{
-								$("cccol").style.display = "none";	
+								_$_("cccol").style.display = "none";	
 							}
 							if(strAttach == "")
 							{
-								$("attcol").style.display = "none";	
+								_$_("attcol").style.display = "none";	
 							}
 							
 							var strHrefAttach = "";
@@ -283,12 +283,12 @@
 								}
 							}
 							strHrefAttach +="</tr></table>";
-							$("mailfrom").innerHTML = "<input class=\"text3\" size=\"110\" type=\"text\" value=\"" + TextToHTML(strFrom) + "\" readonly>";
-							$("mailto").innerHTML = "<input class=\"text3\" size=\"110\" type=\"text\" value=\"" + TextToHTML(strTo) + "\" readonly>";
-							$("mailcc").innerHTML = "<input class=\"text3\" size=\"110\" type=\"text\" value=\"" + TextToHTML(strCc) + "\" readonly>";
-							$("maildate").innerHTML = "<input class=\"text3\" size=\"110\" type=\"text\" value=\"" + TextToHTML(strDate) + "\" readonly>";
-							$("mailsubject").innerHTML = "<input class=\"text3\" size=\"110\" type=\"text\" value=\"" + (strSubject == "" ? "无主题" : TextToHTML(strSubject)) + "\" readonly>";
-							$("mailattach").innerHTML = strHrefAttach == "" ? "<img src=\"pad.gif\">" : strHrefAttach;
+							_$_("mailfrom").innerHTML = "<input class=\"text3\" size=\"110\" type=\"text\" value=\"" + TextToHTML(strFrom) + "\" readonly>";
+							_$_("mailto").innerHTML = "<input class=\"text3\" size=\"110\" type=\"text\" value=\"" + TextToHTML(strTo) + "\" readonly>";
+							_$_("mailcc").innerHTML = "<input class=\"text3\" size=\"110\" type=\"text\" value=\"" + TextToHTML(strCc) + "\" readonly>";
+							_$_("maildate").innerHTML = "<input class=\"text3\" size=\"110\" type=\"text\" value=\"" + TextToHTML(strDate) + "\" readonly>";
+							_$_("mailsubject").innerHTML = "<input class=\"text3\" size=\"110\" type=\"text\" value=\"" + (strSubject == "" ? "无主题" : TextToHTML(strSubject)) + "\" readonly>";
+							_$_("mailattach").innerHTML = strHrefAttach == "" ? "<img src=\"pad.gif\">" : strHrefAttach;
 
 							var strrpl = "/api/attachment.cgi?ID=";
 							strrpl += strID;
@@ -297,54 +297,54 @@
 							var regS1 = new RegExp("cid:","gi");
 							strHtmlContent = strHtmlContent.replace(regS1, strrpl);
 							
-							$("mailcontent").style.width = $('mailcontentframe').offsetWidth - 5;
-							$("mailcontent").style.height = $('mailcontentframe').offsetHeight - 5;
+							_$_("mailcontent").style.width = _$_('mailcontentframe').offsetWidth - 5;
+							_$_("mailcontent").style.height = _$_('mailcontentframe').offsetHeight - 5;
 							
-							$("mailcontent").innerHTML = strHtmlContent != "" ? strHtmlContent : (strCalendarContent !="" ? TextToHTML(strCalendarContent) : TextToHTML(strTextContent));
+							_$_("mailcontent").innerHTML = strHtmlContent != "" ? strHtmlContent : (strCalendarContent !="" ? TextToHTML(strCalendarContent) : TextToHTML(strTextContent));
 							
-							if($('mailattach').scrollWidth > $('mailattach').clientWidth)
+							if(_$_('mailattach').scrollWidth > _$_('mailattach').clientWidth)
 							{
-								$('MOVE_LEFT').src = "moveleft2.gif";
-								$('MOVE_LEFT').disabled = true;
+								_$_('MOVE_LEFT').src = "moveleft2.gif";
+								_$_('MOVE_LEFT').disabled = true;
 								
-								$('MOVE_RIGHT').src = "moveright.gif";
-								$('MOVE_RIGHT').disabled = false;
+								_$_('MOVE_RIGHT').src = "moveright.gif";
+								_$_('MOVE_RIGHT').disabled = false;
 								
-								$('MOVE_LEFT').style.display = "block";
-								$('MOVE_RIGHT').style.display = "block";
+								_$_('MOVE_LEFT').style.display = "block";
+								_$_('MOVE_RIGHT').style.display = "block";
 
-								$('MOVE_LEFT_TD').style.display = "block";
-								$('MOVE_RIGHT_TD').style.display = "block";
+								_$_('MOVE_LEFT_TD').style.display = "block";
+								_$_('MOVE_RIGHT_TD').style.display = "block";
 							}
 							else
 							{
-								$('MOVE_LEFT').style.display = "none";
-								$('MOVE_RIGHT').style.display = "none";
+								_$_('MOVE_LEFT').style.display = "none";
+								_$_('MOVE_RIGHT').style.display = "none";
 
-								$('MOVE_LEFT_TD').style.display = "none";
-								$('MOVE_RIGHT_TD').style.display = "none";
+								_$_('MOVE_LEFT_TD').style.display = "none";
+								_$_('MOVE_RIGHT_TD').style.display = "none";
 							}
 						}
 						else
 						{
-							$("mailcontent").innerHTML = "<table border=\"0\"><tr><td><img src=\"alert.gif\"></td><td>加载失败</td></tr></table>";
+							_$_("mailcontent").innerHTML = "<table border=\"0\"><tr><td><img src=\"alert.gif\"></td><td>加载失败</td></tr></table>";
 						}
 					}
 				}
 				else
 				{
-					$("mailcontent").innerHTML = "<table border=\"0\"><tr><td><img src=\"alert.gif\"></td><td>加载失败</td></tr></table>";
+					_$_("mailcontent").innerHTML = "<table border=\"0\"><tr><td><img src=\"alert.gif\"></td><td>加载失败</td></tr></table>";
 				}
 			}
 			else
 			{
-				$("mailfrom").innerHTML = "<img src=\"loading.gif\">";
-				$("mailto").innerHTML = "<img src=\"loading.gif\">";
-				$("mailcc").innerHTML = "<img src=\"loading.gif\">";
-				$("maildate").innerHTML = "<img src=\"loading.gif\">";
-				$("mailsubject").innerHTML = "<img src=\"loading.gif\">";
-				$("mailattach").innerHTML = "<img src=\"loading.gif\">";
-				$("mailcontent").innerHTML = "<img src=\"loading.gif\">";
+				_$_("mailfrom").innerHTML = "<img src=\"loading.gif\">";
+				_$_("mailto").innerHTML = "<img src=\"loading.gif\">";
+				_$_("mailcc").innerHTML = "<img src=\"loading.gif\">";
+				_$_("maildate").innerHTML = "<img src=\"loading.gif\">";
+				_$_("mailsubject").innerHTML = "<img src=\"loading.gif\">";
+				_$_("mailattach").innerHTML = "<img src=\"loading.gif\">";
+				_$_("mailcontent").innerHTML = "<img src=\"loading.gif\">";
 			}
 		}
 		xmlHttp.open("GET", qUrl , true);
@@ -358,35 +358,35 @@
 	
 	function init()
 	{
-		window.parent.parent.$('MAILBAR').style.display = "none";
-		window.parent.parent.$('DIRBAR').style.display = "none";
-		window.parent.parent.$('CALBAR').style.display = "none";
-		window.parent.parent.$('NULLBAR').style.display = "block";
+		window.parent.parent._$_('MAILBAR').style.display = "none";
+		window.parent.parent._$_('DIRBAR').style.display = "none";
+		window.parent.parent._$_('CALBAR').style.display = "none";
+		window.parent.parent._$_('NULLBAR').style.display = "block";
 		
 		read_mail(Request.QueryString('ID'));
 	}
 
 	function move_left()
 	{
-		if($('MOVE_LEFT').disabled == false)
+		if(_$_('MOVE_LEFT').disabled == false)
 		{			
-			$('mailattach').scrollLeft -= ($('mailattach').scrollLeft > 8 ? 8 : $('mailattach').scrollLeft);
+			_$_('mailattach').scrollLeft -= (_$_('mailattach').scrollLeft > 8 ? 8 : _$_('mailattach').scrollLeft);
 			
-			if($('mailattach').scrollLeft <= 0)
+			if(_$_('mailattach').scrollLeft <= 0)
 			{
-				$('mailattach').scrollLeft = 0;
+				_$_('mailattach').scrollLeft = 0;
 
-				$('MOVE_LEFT').src = "moveleft2.gif";
-				$('MOVE_LEFT').disabled = true;
+				_$_('MOVE_LEFT').src = "moveleft2.gif";
+				_$_('MOVE_LEFT').disabled = true;
 			}
 
-			if($('mailattach').scrollLeft < ($('mailattach').scrollWidth - $('mailattach').clientWidth))
+			if(_$_('mailattach').scrollLeft < (_$_('mailattach').scrollWidth - _$_('mailattach').clientWidth))
 			{
-				$('MOVE_RIGHT').src = "moveright.gif";
-				$('MOVE_RIGHT').disabled = false;
+				_$_('MOVE_RIGHT').src = "moveright.gif";
+				_$_('MOVE_RIGHT').disabled = false;
 			}
 
-			if($('MOVE_LEFT').getAttribute("down") == "true")
+			if(_$_('MOVE_LEFT').getAttribute("down") == "true")
 			{
 				setTimeout('left_timer()', 50);
 			}
@@ -396,30 +396,30 @@
 
 	function move_right()
 	{
-		if($('MOVE_RIGHT').disabled == false)
+		if(_$_('MOVE_RIGHT').disabled == false)
 		{
 			
-			if( $('mailattach').scrollLeft < ( $('mailattach').scrollWidth - $('mailattach').clientWidth))
+			if( _$_('mailattach').scrollLeft < ( _$_('mailattach').scrollWidth - _$_('mailattach').clientWidth))
 			{
-				$('mailattach').scrollLeft += (( $('mailattach').scrollWidth - $('mailattach').clientWidth - $('mailattach').scrollLeft ) > 8 ? 8 : ( $('mailattach').scrollWidth - $('mailattach').clientWidth - $('mailattach').scrollLeft ));
+				_$_('mailattach').scrollLeft += (( _$_('mailattach').scrollWidth - _$_('mailattach').clientWidth - _$_('mailattach').scrollLeft ) > 8 ? 8 : ( _$_('mailattach').scrollWidth - _$_('mailattach').clientWidth - _$_('mailattach').scrollLeft ));
 			}
 			
-			if($('mailattach').scrollLeft >= ($('mailattach').scrollWidth - $('mailattach').clientWidth))
+			if(_$_('mailattach').scrollLeft >= (_$_('mailattach').scrollWidth - _$_('mailattach').clientWidth))
 			{
 				
-				$('mailattach').scrollLeft = $('mailattach').scrollWidth - $('mailattach').clientWidth;
+				_$_('mailattach').scrollLeft = _$_('mailattach').scrollWidth - _$_('mailattach').clientWidth;
 
-				$('MOVE_RIGHT').src = "moveright2.gif";
-				$('MOVE_RIGHT').disabled = true;				
+				_$_('MOVE_RIGHT').src = "moveright2.gif";
+				_$_('MOVE_RIGHT').disabled = true;				
 			}
 			
-			if($('mailattach').scrollLeft > 0)
+			if(_$_('mailattach').scrollLeft > 0)
 			{
-				$('MOVE_LEFT').src = "moveleft.gif";
-				$('MOVE_LEFT').disabled = false;
+				_$_('MOVE_LEFT').src = "moveleft.gif";
+				_$_('MOVE_LEFT').disabled = false;
 			}
 
-			if($('MOVE_RIGHT').getAttribute("down") == "true")
+			if(_$_('MOVE_RIGHT').getAttribute("down") == "true")
 			{
 				setTimeout('right_timer()', 50);
 			}
@@ -430,7 +430,7 @@
 
 	function left_timer()
 	{
-		if($('MOVE_LEFT').getAttribute("down") == "true")
+		if(_$_('MOVE_LEFT').getAttribute("down") == "true")
 		{
 			move_left();
 		}
@@ -438,7 +438,7 @@
 
 	function right_timer()
 	{
-		if($('MOVE_RIGHT').getAttribute("down") == "true")
+		if(_$_('MOVE_RIGHT').getAttribute("down") == "true")
 		{
 			move_right();
 		}
@@ -448,10 +448,10 @@
 	{
 		window.parent.close_mail_detail();	
 		
-		window.parent.parent.$('MAILBAR').style.display = "block";
-		window.parent.parent.$('DIRBAR').style.display = "none";
-		window.parent.parent.$('CALBAR').style.display = "none";
-		window.parent.parent.$('NULLBAR').style.display = "none";
+		window.parent.parent._$_('MAILBAR').style.display = "block";
+		window.parent.parent._$_('DIRBAR').style.display = "none";
+		window.parent.parent._$_('CALBAR').style.display = "none";
+		window.parent.parent._$_('NULLBAR').style.display = "none";
 		
 	}
 </script>

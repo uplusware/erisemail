@@ -75,7 +75,7 @@
 	{
 		RTC("richeditor").execCommand(cmd, false ,color);
 
-		$(divid).style.display = "none";
+		_$_(divid).style.display = "none";
 	}
 
 	function sizeCmd(size)
@@ -84,7 +84,7 @@
 			return;
 		RTC("richeditor").execCommand('FontSize', false, size);
 
-		$('fontSizeTbl').style.display = "none";
+		_$_('fontSizeTbl').style.display = "none";
 	}
 	
 	function paintColorDiv(cmd, divid)
@@ -95,7 +95,7 @@
 	      Str+="<tr>";
 	      for(var j = 0; j < arrColor[i].length;j++)
 		  {
-	         Str+="<td class='td' style='background-color:#" + arrColor[i][j] + ";border:1px solid #f6f6f6;'"
+	         Str+="<td class='td' style='background-color:#" + arrColor[i][j] + ";border:1px solid #fafafa;'"
 	         + " onmouseover='this.mousepoint = 99; this.style.cursor =\"pointer\";' onmouseout='this.mousepoint = 99;this.style.cursor =\"default\";'"
 	         + " onclick='colorCmd(\"" + cmd + "\", \"" + divid + "\", \"#" + arrColor[i][j] + "\")'>"
 	         + "<img style='width:12px;height:12px' "+" style='background-color:#"+arrColor[i][j]+";border:solid 1px #cccccc'/></td>";
@@ -122,55 +122,55 @@
 
 	function popforeDiv()
 	{
-		if($('foreColorTbl').style.display == 'block')
-			$('foreColorTbl').style.display='none'; 
+		if(_$_('foreColorTbl').style.display == 'block')
+			_$_('foreColorTbl').style.display='none'; 
 		else 
-			$('foreColorTbl').style.display='block';
+			_$_('foreColorTbl').style.display='block';
 		
-		$('backColorTbl').style.display='none'; 
-		$('fontSizeTbl').style.display='none'; 
+		_$_('backColorTbl').style.display='none'; 
+		_$_('fontSizeTbl').style.display='none'; 
 		
-		$('foreColorTbl').style.left = 89;
-		$('foreColorTbl').style.top = 258;
+		_$_('foreColorTbl').style.left = 89;
+		_$_('foreColorTbl').style.top = 258;
 	}
 
 	function popbackDiv()
 	{
-		if($('backColorTbl').style.display == 'block')
-			$('backColorTbl').style.display='none'; 
+		if(_$_('backColorTbl').style.display == 'block')
+			_$_('backColorTbl').style.display='none'; 
 		else 
-			$('backColorTbl').style.display='block';
+			_$_('backColorTbl').style.display='block';
 
-		$('foreColorTbl').style.display='none';
-		$('fontSizeTbl').style.display='none'; 
+		_$_('foreColorTbl').style.display='none';
+		_$_('fontSizeTbl').style.display='none'; 
 		
-		$('backColorTbl').style.left = 115;
-		$('backColorTbl').style.top = 258;
+		_$_('backColorTbl').style.left = 115;
+		_$_('backColorTbl').style.top = 258;
 	}
 
 	function popsizeDiv()
 	{
-		if($('fontSizeTbl').style.display == 'block')
-			$('fontSizeTbl').style.display='none'; 
+		if(_$_('fontSizeTbl').style.display == 'block')
+			_$_('fontSizeTbl').style.display='none'; 
 		else 
-			$('fontSizeTbl').style.display='block';
+			_$_('fontSizeTbl').style.display='block';
 
-		$('foreColorTbl').style.display='none';
-		$('backColorTbl').style.display='none'; 
+		_$_('foreColorTbl').style.display='none';
+		_$_('backColorTbl').style.display='none'; 
 		
-		$('fontSizeTbl').style.left = 150;
-		$('fontSizeTbl').style.top = 258;
+		_$_('fontSizeTbl').style.left = 150;
+		_$_('fontSizeTbl').style.top = 258;
 	}
 
 	function ontimer()
 	{	
-		if($("CONTENT").value != $('richeditor').contentWindow.document.body.innerHTML)
+		if(_$_("CONTENT").value != _$_('richeditor').contentWindow.document.body.innerHTML)
 		{
 			isChange = true;
 
 			toggle_onbeforeunload(isChange)
 				
-			$("CONTENT").value = $('richeditor').contentWindow.document.body.innerHTML;
+			_$_("CONTENT").value = _$_('richeditor').contentWindow.document.body.innerHTML;
 		}
 		
 		setTimeout('ontimer()',1000);
@@ -184,7 +184,7 @@
 		uploading_status = false;
 		isChange = false;
 		
-		$('GLOBALPATH').innerHTML = (Request.QueryString('GPATH') == null? ("/草稿箱") : decodeURIComponent(Request.QueryString('GPATH')));
+		_$_('GLOBALPATH').innerHTML = (Request.QueryString('GPATH') == null? ("/草稿箱") : decodeURIComponent(Request.QueryString('GPATH')));
 
 		strID = Request.QueryString('ID');
 		strType = Request.QueryString('TYPE');
@@ -195,14 +195,14 @@
 		}
 		else
 		{
-			$('TO_ADDRS').value = Request.QueryString('TOADDRS') == null ? "" : Request.QueryString('TOADDRS');
+			_$_('TO_ADDRS').value = Request.QueryString('TOADDRS') == null ? "" : Request.QueryString('TOADDRS');
 		}
 
-		$('foreColorTbl').innerHTML = paintColorDiv("ForeColor", "foreColorTbl");
-		$('backColorTbl').innerHTML = paintColorDiv("BackColor", "backColorTbl");
-		$('fontSizeTbl').innerHTML = paintSizeDiv("FontSize", "fontSizeTbl");
+		_$_('foreColorTbl').innerHTML = paintColorDiv("ForeColor", "foreColorTbl");
+		_$_('backColorTbl').innerHTML = paintColorDiv("BackColor", "backColorTbl");
+		_$_('fontSizeTbl').innerHTML = paintSizeDiv("FontSize", "fontSizeTbl");
 
-		$("CONTENT").value = $('richeditor').contentWindow.document.body.innerHTML;
+		_$_("CONTENT").value = _$_('richeditor').contentWindow.document.body.innerHTML;
 		
 		ontimer();
 	}
@@ -215,7 +215,7 @@
 	
 	function delmail(force)
 	{
-		if($('DRAFTID').value == null || $('DRAFTID').value == "" || $('DRAFTID').value == -1)
+		if(_$_('DRAFTID').value == null || _$_('DRAFTID').value == "" || _$_('DRAFTID').value == -1)
 		{
 			alert("此草稿尚未保存")
 			return false;
@@ -233,7 +233,7 @@
 	
 	function do_delsentmail()
 	{
-		if($('DRAFTID').value == null || $('DRAFTID').value == "" || $('DRAFTID').value == -1)
+		if(_$_('DRAFTID').value == null || _$_('DRAFTID').value == "" || _$_('DRAFTID').value == -1)
 		{
 			return;
 		}
@@ -241,7 +241,7 @@
 		isChange = false;
 		toggle_onbeforeunload(isChange);
 		
-		var qUrl = "/api/delmail.xml?MAILID=" + $('DRAFTID').value;
+		var qUrl = "/api/delmail.xml?MAILID=" + _$_('DRAFTID').value;
 		var xmlHttp = initxmlhttp();
 		xmlHttp.open("GET", qUrl , false);
 		xmlHttp.send("");
@@ -265,14 +265,14 @@
 
 	function do_trashmail()
 	{
-		if($('DRAFTID').value == null || $('DRAFTID').value == "" || $('DRAFTID').value == -1)
+		if(_$_('DRAFTID').value == null || _$_('DRAFTID').value == "" || _$_('DRAFTID').value == -1)
 		{
 			return;
 		}
 		
 		isChange = false;
 		toggle_onbeforeunload(isChange);
-		var qUrl = "/api/trashmail.xml?MAILID=" + $('DRAFTID').value;
+		var qUrl = "/api/trashmail.xml?MAILID=" + _$_('DRAFTID').value;
 		var xmlHttp = initxmlhttp();
 		xmlHttp.open("GET", qUrl , false);
 		xmlHttp.send("");
@@ -369,8 +369,8 @@
 	
 	function close_processing_div()
 	{
-		$('PROCESSING_DIV').style.zIndex = 9;
-		$('PROCESSING_DIV').style.display = "none";
+		_$_('PROCESSING_DIV').style.zIndex = 9;
+		_$_('PROCESSING_DIV').style.display = "none";
 		
 	}
 	
@@ -382,12 +382,12 @@
 			uploadedfiles += document.getElementsByName('TMPFILENAME')[x].value;
 			uploadedfiles += "*"
 		}
-		$("CONTENT").value = $('richeditor').contentWindow.document.body.innerHTML;
-		var strPostData = "TO_ADDRS=" + encodeURIComponent($('TO_ADDRS').value) + "&";
-		strPostData += "CC_ADDRS=" + encodeURIComponent($('CC_ADDRS').value) + "&";
-		strPostData += "BCC_ADDRS=" + encodeURIComponent($('BCC_ADDRS').value) + "&";
-		strPostData += "SUBJECT=" + encodeURIComponent($('SUBJECT').value) + "&";
-		strPostData += "CONTENT=" + encodeURIComponent($('CONTENT').value) + "&";
+		_$_("CONTENT").value = _$_('richeditor').contentWindow.document.body.innerHTML;
+		var strPostData = "TO_ADDRS=" + encodeURIComponent(_$_('TO_ADDRS').value) + "&";
+		strPostData += "CC_ADDRS=" + encodeURIComponent(_$_('CC_ADDRS').value) + "&";
+		strPostData += "BCC_ADDRS=" + encodeURIComponent(_$_('BCC_ADDRS').value) + "&";
+		strPostData += "SUBJECT=" + encodeURIComponent(_$_('SUBJECT').value) + "&";
+		strPostData += "CONTENT=" + encodeURIComponent(_$_('CONTENT').value) + "&";
 		strPostData += "ATTACHFILES=" + encodeURIComponent(uploadedfiles);
 		
 		var qUrl = "api/savesent.xml";
@@ -411,9 +411,9 @@
 						{
 							do_delsentmail();
 
-							$('PROCESSING_DIV').style.zIndex = 18;
-							$('PROCESSING_DIV').style.display = "block";
-							$('PROCESSING_TBL').rows[0].cells[0].innerHTML = "保存邮件到已发送邮件文件夹成功";
+							_$_('PROCESSING_DIV').style.zIndex = 18;
+							_$_('PROCESSING_DIV').style.display = "block";
+							_$_('PROCESSING_TBL').rows[0].cells[0].innerHTML = "保存邮件到已发送邮件文件夹成功";
 				
 
 							if(window.opener && window.opener.refresh)
@@ -429,17 +429,17 @@
 						}
 						else
 						{
-							$('PROCESSING_DIV').style.zIndex = 18;
-							$('PROCESSING_DIV').style.display = "block";
-							$('PROCESSING_TBL').rows[0].cells[0].innerHTML = "<font color='#FF0000'>保存邮件到已发送邮件文件夹失败</font>";
+							_$_('PROCESSING_DIV').style.zIndex = 18;
+							_$_('PROCESSING_DIV').style.display = "block";
+							_$_('PROCESSING_TBL').rows[0].cells[0].innerHTML = "<font color='#FF0000'>保存邮件到已发送邮件文件夹失败</font>";
 						}
 					}
 				}
 				else
 				{
-					$('PROCESSING_DIV').style.zIndex = 18;
-					$('PROCESSING_DIV').style.display = "block";
-					$('PROCESSING_TBL').rows[0].cells[0].innerHTML = "<font color='#FF0000'>保存邮件到已发送邮件文件夹失败</font>";
+					_$_('PROCESSING_DIV').style.zIndex = 18;
+					_$_('PROCESSING_DIV').style.display = "block";
+					_$_('PROCESSING_TBL').rows[0].cells[0].innerHTML = "<font color='#FF0000'>保存邮件到已发送邮件文件夹失败</font>";
 				}
 			}
 			else
@@ -447,9 +447,9 @@
 				sent_status = true;
 				toggle_onbeforeunload(sent_status);
 
-				$('PROCESSING_DIV').style.zIndex = 18;
-				$('PROCESSING_DIV').style.display = "block";
-				$('PROCESSING_TBL').rows[0].cells[0].innerHTML = "正在保存邮件到发件箱 - <img src=\"waiting.gif\" />";
+				_$_('PROCESSING_DIV').style.zIndex = 18;
+				_$_('PROCESSING_DIV').style.display = "block";
+				_$_('PROCESSING_TBL').rows[0].cells[0].innerHTML = "正在保存邮件到发件箱 - <img src=\"waiting.gif\" />";
 			}
 		}
 
@@ -466,13 +466,13 @@
 	
 	function do_send_mail()
 	{
-		if($('TO_ADDRS').value == "")
+		if(_$_('TO_ADDRS').value == "")
 		{
 			alert("收件人不能为空");
 			return;
 		}
 		
-		if($('SUBJECT').value == "")
+		if(_$_('SUBJECT').value == "")
 		{
 			if(confirm("信件主题为空，您要继续吗？") == false)
 				return;
@@ -484,12 +484,12 @@
 			uploadedfiles += document.getElementsByName('TMPFILENAME')[x].value;
 			uploadedfiles += "*"
 		}
-		$("CONTENT").value = $('richeditor').contentWindow.document.body.innerHTML;
-		var strPostData = "TO_ADDRS=" + encodeURIComponent($('TO_ADDRS').value) + "&";
-		strPostData += "CC_ADDRS=" + encodeURIComponent($('CC_ADDRS').value) + "&";
-		strPostData += "BCC_ADDRS=" + encodeURIComponent($('BCC_ADDRS').value) + "&";
-		strPostData += "SUBJECT=" + encodeURIComponent($('SUBJECT').value) + "&";
-		strPostData += "CONTENT=" + encodeURIComponent($('CONTENT').value) + "&";
+		_$_("CONTENT").value = _$_('richeditor').contentWindow.document.body.innerHTML;
+		var strPostData = "TO_ADDRS=" + encodeURIComponent(_$_('TO_ADDRS').value) + "&";
+		strPostData += "CC_ADDRS=" + encodeURIComponent(_$_('CC_ADDRS').value) + "&";
+		strPostData += "BCC_ADDRS=" + encodeURIComponent(_$_('BCC_ADDRS').value) + "&";
+		strPostData += "SUBJECT=" + encodeURIComponent(_$_('SUBJECT').value) + "&";
+		strPostData += "CONTENT=" + encodeURIComponent(_$_('CONTENT').value) + "&";
 		strPostData += "ATTACHFILES=" + encodeURIComponent(uploadedfiles);
 		var qUrl = "api/sendmail.xml";
 		
@@ -512,34 +512,34 @@
 						{
 							isChange = false;
 							toggle_onbeforeunload(isChange);
-							$('PROCESSING_DIV').style.zIndex = 18;
-							$('PROCESSING_DIV').style.display = "block";
-							$('PROCESSING_TBL').rows[0].cells[0].innerHTML = "发送邮件成功";
+							_$_('PROCESSING_DIV').style.zIndex = 18;
+							_$_('PROCESSING_DIV').style.display = "block";
+							_$_('PROCESSING_TBL').rows[0].cells[0].innerHTML = "发送邮件成功";
 							
 							do_savesent();
 						}
 						else
 						{
-							$('PROCESSING_DIV').style.zIndex = 18;
-							$('PROCESSING_DIV').style.display = "block";
-							$('PROCESSING_TBL').rows[0].cells[0].innerHTML = "<font color='#FF0000'>发送邮件失败(邮件太大)</font>";
+							_$_('PROCESSING_DIV').style.zIndex = 18;
+							_$_('PROCESSING_DIV').style.display = "block";
+							_$_('PROCESSING_TBL').rows[0].cells[0].innerHTML = "<font color='#FF0000'>发送邮件失败(邮件太大)</font>";
 						}
 					}
 				}
 				else
 				{
-					$('PROCESSING_DIV').style.zIndex = 18;
-					$('PROCESSING_DIV').style.display = "block";
-					$('PROCESSING_TBL').rows[0].cells[0].innerHTML = "<font color='#FF0000'>发送邮件失败</font>";
+					_$_('PROCESSING_DIV').style.zIndex = 18;
+					_$_('PROCESSING_DIV').style.display = "block";
+					_$_('PROCESSING_TBL').rows[0].cells[0].innerHTML = "<font color='#FF0000'>发送邮件失败</font>";
 				}
 			}
 			else
 			{
 				sending_status = true;
 				toggle_onbeforeunload(sending_status);
-				$('PROCESSING_DIV').style.zIndex = 18;
-				$('PROCESSING_DIV').style.display = "block";
-				$('PROCESSING_TBL').rows[0].cells[0].innerHTML = "正在发送邮件 - <img src=\"waiting.gif\" />";
+				_$_('PROCESSING_DIV').style.zIndex = 18;
+				_$_('PROCESSING_DIV').style.display = "block";
+				_$_('PROCESSING_TBL').rows[0].cells[0].innerHTML = "正在发送邮件 - <img src=\"waiting.gif\" />";
 			}
 		}
 		xmlHttp.open("POST", qUrl , true);
@@ -563,13 +563,13 @@
 			uploadedfiles += document.getElementsByName('TMPFILENAME')[x].value;
 			uploadedfiles += "*"
 		}
-		$("CONTENT").value = $('richeditor').contentWindow.document.body.innerHTML;
-		var strPostData = "DRAFTID=" + $('DRAFTID').value + "&";
-		strPostData += "TO_ADDRS=" + encodeURIComponent($('TO_ADDRS').value) + "&";
-		strPostData += "CC_ADDRS=" + encodeURIComponent($('CC_ADDRS').value) + "&";
-		strPostData += "BCC_ADDRS=" + encodeURIComponent($('BCC_ADDRS').value) + "&";
-		strPostData += "SUBJECT=" + encodeURIComponent($('SUBJECT').value) + "&";
-		strPostData += "CONTENT=" + encodeURIComponent($('CONTENT').value) + "&";
+		_$_("CONTENT").value = _$_('richeditor').contentWindow.document.body.innerHTML;
+		var strPostData = "DRAFTID=" + _$_('DRAFTID').value + "&";
+		strPostData += "TO_ADDRS=" + encodeURIComponent(_$_('TO_ADDRS').value) + "&";
+		strPostData += "CC_ADDRS=" + encodeURIComponent(_$_('CC_ADDRS').value) + "&";
+		strPostData += "BCC_ADDRS=" + encodeURIComponent(_$_('BCC_ADDRS').value) + "&";
+		strPostData += "SUBJECT=" + encodeURIComponent(_$_('SUBJECT').value) + "&";
+		strPostData += "CONTENT=" + encodeURIComponent(_$_('CONTENT').value) + "&";
 		strPostData += "ATTACHFILES=" + encodeURIComponent(uploadedfiles);
 		var qUrl = "api/savedraft.xml";
 
@@ -598,21 +598,21 @@
 							{
 								if(bodyList.item(i).tagName == "draftid")
 								{
-									$('DRAFTID').value = bodyList.item(i).childNodes[0].nodeValue;
+									_$_('DRAFTID').value = bodyList.item(i).childNodes[0].nodeValue;
 								}
 							}
 							
-							$('PROCESSING_DIV').style.zIndex = 18;
-							$('PROCESSING_DIV').style.display = "block";
-							$('PROCESSING_TBL').rows[0].cells[0].innerHTML = "保存草稿成功";
+							_$_('PROCESSING_DIV').style.zIndex = 18;
+							_$_('PROCESSING_DIV').style.display = "block";
+							_$_('PROCESSING_TBL').rows[0].cells[0].innerHTML = "保存草稿成功";
 							
 						}
 						else
 						{
 							
-							$('PROCESSING_DIV').style.zIndex = 18;
-							$('PROCESSING_DIV').style.display = "block";
-							$('PROCESSING_TBL').rows[0].cells[0].innerHTML = "<font color='#FF0000'>保存草稿出错(邮件太大)</font>";
+							_$_('PROCESSING_DIV').style.zIndex = 18;
+							_$_('PROCESSING_DIV').style.display = "block";
+							_$_('PROCESSING_TBL').rows[0].cells[0].innerHTML = "<font color='#FF0000'>保存草稿出错(邮件太大)</font>";
 
 
 						}
@@ -621,9 +621,9 @@
 				else
 				{
 
-					$('PROCESSING_DIV').style.zIndex = 18;
-					$('PROCESSING_DIV').style.display = "block";
-					$('PROCESSING_TBL').rows[0].cells[0].innerHTML = "<font color='#FF0000'>保存草稿出错</font>";
+					_$_('PROCESSING_DIV').style.zIndex = 18;
+					_$_('PROCESSING_DIV').style.display = "block";
+					_$_('PROCESSING_TBL').rows[0].cells[0].innerHTML = "<font color='#FF0000'>保存草稿出错</font>";
 
 
 				}
@@ -633,9 +633,9 @@
 			{
 				saving_status = true;
 				toggle_onbeforeunload(saving_status);
-				$('PROCESSING_DIV').style.zIndex = 18;
-				$('PROCESSING_DIV').style.display = "block";
-				$('PROCESSING_TBL').rows[0].cells[0].innerHTML = "正在保存草稿 - <img src=\"waiting.gif\" />";
+				_$_('PROCESSING_DIV').style.zIndex = 18;
+				_$_('PROCESSING_DIV').style.display = "block";
+				_$_('PROCESSING_TBL').rows[0].cells[0].innerHTML = "正在保存草稿 - <img src=\"waiting.gif\" />";
 			}
 		}
 		
@@ -712,14 +712,14 @@
 							
 							if(strType == "4")
 							{
-								$('DRAFTID').value = strID;
+								_$_('DRAFTID').value = strID;
 							
-								$("TO_ADDRS").value = strTo;
-								$("CC_ADDRS").value = strCc;
-								$("SUBJECT").value = strSubject;
-								$("CONTENT").value = (strHtmlContent!= "" ? strHtmlContent : strTextContent);
-								$('richeditor').contentWindow.document.body.innerHTML = $("CONTENT").value;
-								$("CONTENT").value = $('richeditor').contentWindow.document.body.innerHTML;
+								_$_("TO_ADDRS").value = strTo;
+								_$_("CC_ADDRS").value = strCc;
+								_$_("SUBJECT").value = strSubject;
+								_$_("CONTENT").value = (strHtmlContent!= "" ? strHtmlContent : strTextContent);
+								_$_('richeditor').contentWindow.document.body.innerHTML = _$_("CONTENT").value;
+								_$_("CONTENT").value = _$_('richeditor').contentWindow.document.body.innerHTML;
 								if(strAttach != "")
 								{
 									extract_att(strID);	
@@ -728,10 +728,10 @@
 							}
 							else if(strType == "3")
 							{
-								$("SUBJECT").value = "Fwd: " + strSubject;
+								_$_("SUBJECT").value = "Fwd: " + strSubject;
 								
-								$("CONTENT").value = (strHtmlContent!= "" ? strHtmlContent : strTextContent);
-								$('richeditor').contentWindow.document.body.innerHTML = $("CONTENT").value;
+								_$_("CONTENT").value = (strHtmlContent!= "" ? strHtmlContent : strTextContent);
+								_$_('richeditor').contentWindow.document.body.innerHTML = _$_("CONTENT").value;
 								
 								strReply = "<br><br><br><br><hr>";
 								strReply += "<table border='0' bgcolor='#EFEFEF' bordercolorlight='#C0C0C0' bordercolordark='#FFFFFF' cellpadding='5' cellspacing='1' width='100%'>";
@@ -743,12 +743,12 @@
 								strReply += "<tr><td bgcolor='#EFEFEF' align='right' width='80'><b>主题:</b></td><td bgcolor='#FFFFFF' align='left' width='910'>" + TextToHTML(strSubject) + "</td></tr>";
 								strReply += "</table>";
 
-								strReply += $('richeditor').contentWindow.document.body.innerHTML;
+								strReply += _$_('richeditor').contentWindow.document.body.innerHTML;
 								
-								$("CONTENT").value = strReply;
+								_$_("CONTENT").value = strReply;
 								
-								$('richeditor').contentWindow.document.body.innerHTML = $("CONTENT").value;
-								$("CONTENT").value = $('richeditor').contentWindow.document.body.innerHTML;
+								_$_('richeditor').contentWindow.document.body.innerHTML = _$_("CONTENT").value;
+								_$_("CONTENT").value = _$_('richeditor').contentWindow.document.body.innerHTML;
 								
 								if(strAttach != "")
 								{
@@ -824,13 +824,13 @@
 									}
 								}
 								
-								$("TO_ADDRS").value = to_addrs;
-								$("CC_ADDRS").value = cc_addrs;
+								_$_("TO_ADDRS").value = to_addrs;
+								_$_("CC_ADDRS").value = cc_addrs;
 								
-								$("SUBJECT").value = "Re: " + strSubject;
+								_$_("SUBJECT").value = "Re: " + strSubject;
 								
-								$("CONTENT").value = (strHtmlContent!= "" ? strHtmlContent : strTextContent);
-								$('richeditor').contentWindow.document.body.innerHTML = $("CONTENT").value;
+								_$_("CONTENT").value = (strHtmlContent!= "" ? strHtmlContent : strTextContent);
+								_$_('richeditor').contentWindow.document.body.innerHTML = _$_("CONTENT").value;
 								
 								strReply = "<br><br><br><br><hr>";
 								strReply += "<table border='0' bgcolor='#EFEFEF' bordercolorlight='#C0C0C0' bordercolordark='#FFFFFF' cellpadding='5' cellspacing='1' width='100%'>";
@@ -842,21 +842,21 @@
 								strReply += "<tr><td bgcolor='#EFEFEF' align='right' width='80'><b>主题:</b></td><td bgcolor='#FFFFFF' align='left' width='910'>" + TextToHTML(strSubject) + "</td></tr>";
 								strReply += "</table>";
 
-								strReply += $('richeditor').contentWindow.document.body.innerHTML;
+								strReply += _$_('richeditor').contentWindow.document.body.innerHTML;
 								
-								$("CONTENT").value = strReply;
+								_$_("CONTENT").value = strReply;
 								
-								$('richeditor').contentWindow.document.body.innerHTML = $("CONTENT").value;
-								$("CONTENT").value = $('richeditor').contentWindow.document.body.innerHTML;
+								_$_('richeditor').contentWindow.document.body.innerHTML = _$_("CONTENT").value;
+								_$_("CONTENT").value = _$_('richeditor').contentWindow.document.body.innerHTML;
 								
 							}
 							else if(strType == "1")
 							{
-								$("TO_ADDRS").value = strFrom;
-								$("SUBJECT").value = "Re: " + strSubject;
+								_$_("TO_ADDRS").value = strFrom;
+								_$_("SUBJECT").value = "Re: " + strSubject;
 
-								$("CONTENT").value = (strHtmlContent!= "" ? strHtmlContent : strTextContent);
-								$('richeditor').contentWindow.document.body.innerHTML = $("CONTENT").value;
+								_$_("CONTENT").value = (strHtmlContent!= "" ? strHtmlContent : strTextContent);
+								_$_('richeditor').contentWindow.document.body.innerHTML = _$_("CONTENT").value;
 								
 								strReply = "<br><br><br><br><hr>";
 								strReply += "<table border='0' bgcolor='#EFEFEF' bordercolorlight='#C0C0C0' bordercolordark='#FFFFFF' cellpadding='5' cellspacing='1' width='100%'>";
@@ -868,12 +868,12 @@
 								strReply += "<tr><td bgcolor='#EFEFEF' align='right' width='80'><b>主题:</b></td><td bgcolor='#FFFFFF' align='left' width='910'>" + TextToHTML(strSubject) + "</td></tr>";
 								strReply += "</table>";
 
-								strReply += $('richeditor').contentWindow.document.body.innerHTML;
+								strReply += _$_('richeditor').contentWindow.document.body.innerHTML;
 								
-								$("CONTENT").value = strReply;
+								_$_("CONTENT").value = strReply;
 								
-								$('richeditor').contentWindow.document.body.innerHTML = $("CONTENT").value;
-								$("CONTENT").value = $('richeditor').contentWindow.document.body.innerHTML;
+								_$_('richeditor').contentWindow.document.body.innerHTML = _$_("CONTENT").value;
+								_$_("CONTENT").value = _$_('richeditor').contentWindow.document.body.innerHTML;
 								
 							}
 						}
@@ -919,22 +919,22 @@
 									}
 								}
 							}
-							$('attach_flag').innerHTML = "";
+							_$_('attach_flag').innerHTML = "";
 						}
 						else
 						{
-							$('attach_flag').innerHTML = "<img src=\"alert.gif\">";	
+							_$_('attach_flag').innerHTML = "<img src=\"alert.gif\">";	
 						}
 					}
 				}
 				else
 				{
-					$('attach_flag').innerHTML = "<img src=\"alert.gif\">";	
+					_$_('attach_flag').innerHTML = "<img src=\"alert.gif\">";	
 				}
 			}
 			else
 			{
-				$('attach_flag').innerHTML = "<img src=\"loading.gif\">";
+				_$_('attach_flag').innerHTML = "<img src=\"loading.gif\">";
 			}
 		}
 		xmlHttp.open("GET", qUrl , true);
@@ -945,8 +945,8 @@
 	{
 		if(del_uploaded(tmpname))
 		{
-			var tObj = $('SHOW_UPLOADEDFILES');
-			tObj.deleteRow($(selfid).rowIndex);	
+			var tObj = _$_('SHOW_UPLOADEDFILES');
+			tObj.deleteRow(_$_(selfid).rowIndex);	
 		}
 	}
 	
@@ -976,7 +976,7 @@
 	
 	function show_attachs(tmpname, showname, attsize)
 	{
-		var tObj = $('SHOW_UPLOADEDFILES');
+		var tObj = _$_('SHOW_UPLOADEDFILES');
 		tr = tObj.insertRow(tObj.rows.length);
 		tr.setAttribute("id", "file" + tr.rowIndex);
 		var td1 = tr.insertCell(0);
@@ -1010,25 +1010,25 @@
 			{
 				isChange = true;
 				toggle_onbeforeunload(isChange)
-				if($('ADDR_BOOK_DIV').getAttribute("who") == "1")
+				if(_$_('ADDR_BOOK_DIV').getAttribute("who") == "1")
 				{
-					if($('TO_ADDRS').value != "")
-						$('TO_ADDRS').value += ", "
-					$('TO_ADDRS').value += document.getElementsByName('seluser')[x].value;
+					if(_$_('TO_ADDRS').value != "")
+						_$_('TO_ADDRS').value += ", "
+					_$_('TO_ADDRS').value += document.getElementsByName('seluser')[x].value;
 					
 				}
-				else if($('ADDR_BOOK_DIV').getAttribute("who") == "2")
+				else if(_$_('ADDR_BOOK_DIV').getAttribute("who") == "2")
 				{
-					if($('CC_ADDRS').value != "")
-						$('CC_ADDRS').value += ", "
-					$('CC_ADDRS').value += document.getElementsByName('seluser')[x].value;
+					if(_$_('CC_ADDRS').value != "")
+						_$_('CC_ADDRS').value += ", "
+					_$_('CC_ADDRS').value += document.getElementsByName('seluser')[x].value;
 					
 				}	
-				else if($('ADDR_BOOK_DIV').getAttribute("who") == "3")
+				else if(_$_('ADDR_BOOK_DIV').getAttribute("who") == "3")
 				{
-					if($('BCC_ADDRS').value != "")
-						$('BCC_ADDRS').value += ", "
-					$('BCC_ADDRS').value += document.getElementsByName('seluser')[x].value;
+					if(_$_('BCC_ADDRS').value != "")
+						_$_('BCC_ADDRS').value += ", "
+					_$_('BCC_ADDRS').value += document.getElementsByName('seluser')[x].value;
 				}	
 			}
 		}
@@ -1055,7 +1055,7 @@
 					var strTmp;
 					var userList = responseNode.childNodes;
 
-					clear_table_without_header($('USERTBL'));
+					clear_table_without_header(_$_('USERTBL'));
 						
 					for(var i = 0; i < userList.length; i++)
 					{
@@ -1082,7 +1082,7 @@
 									image = "inactive_member.gif";
 							}
 
-							tr = $('USERTBL').insertRow($('USERTBL').rows.length);
+							tr = _$_('USERTBL').insertRow(_$_('USERTBL').rows.length);
 
 							
 							var td0 = tr.insertCell(0);
@@ -1122,22 +1122,22 @@
 	function showbook(who, x, y, orderby)
 	{	
 		sel_alluser(false);
-		$('ADDR_BOOK_DIV').setAttribute("who", who);
+		_$_('ADDR_BOOK_DIV').setAttribute("who", who);
 		
-		$('selalluser').checked = false;
+		_$_('selalluser').checked = false;
 
-		if($('ADDR_BOOK_DIV').getAttribute("loaded") != "true")
+		if(_$_('ADDR_BOOK_DIV').getAttribute("loaded") != "true")
 		{
-			$('USERTBL').setAttribute('orderby', orderby);
-			load_users($('USERTBL').getAttribute('orderby'), $('USERTBL').getAttribute($('USERTBL').getAttribute('orderby')));
+			_$_('USERTBL').setAttribute('orderby', orderby);
+			load_users(_$_('USERTBL').getAttribute('orderby'), _$_('USERTBL').getAttribute(_$_('USERTBL').getAttribute('orderby')));
 			
-			$('ADDR_BOOK_DIV').setAttribute("loaded", "true");
+			_$_('ADDR_BOOK_DIV').setAttribute("loaded", "true");
 		}
 
-		$('ADDR_BOOK_DIV').style.display = "block";
+		_$_('ADDR_BOOK_DIV').style.display = "block";
 
-		$('ADDR_BOOK_DIV').style.left = x;
-		$('ADDR_BOOK_DIV').style.top = y;
+		_$_('ADDR_BOOK_DIV').style.left = x;
+		_$_('ADDR_BOOK_DIV').style.top = y;
 	}
 
 	function do_copy_mail(mid, todirs)
@@ -1148,7 +1148,7 @@
 		xmlHttp.onreadystatechange = function()
 		{
 			var strmid = "mailtr" + mid;
-			var trid = window.opener.$(strmid);
+			var trid = window.opener._$_(strmid);
 
 			if(trid == null)
 				return false;
@@ -1165,7 +1165,7 @@
 					{
 						if(window.opener && window.opener.refresh)
 								window.opener.refresh();
-						$('PROCESSING_DIV').style.display = "none";
+						_$_('PROCESSING_DIV').style.display = "none";
 						return true;
 					}
 					else
@@ -1176,9 +1176,9 @@
 			}
 			else
 			{
-				$('PROCESSING_DIV').style.zIndex = 18;
-				$('PROCESSING_DIV').style.display = "block";
-				$('PROCESSING_TBL').rows[0].cells[0].innerHTML = "正在复制，请等待...";
+				_$_('PROCESSING_DIV').style.zIndex = 18;
+				_$_('PROCESSING_DIV').style.display = "block";
+				_$_('PROCESSING_TBL').rows[0].cells[0].innerHTML = "正在复制，请等待...";
 			}
 		}
 		xmlHttp.open("GET", qUrl , true);
@@ -1189,12 +1189,12 @@
 	
 	function copy_mail(todir)
 	{	
-		if($('DRAFTID').value == null || $('DRAFTID').value == "" || $('DRAFTID').value == -1)
+		if(_$_('DRAFTID').value == null || _$_('DRAFTID').value == "" || _$_('DRAFTID').value == -1)
 		{
 			alert("此草稿尚未保存");
 			return;
 		}
-		do_copy_mail($('DRAFTID').value, todir);
+		do_copy_mail(_$_('DRAFTID').value, todir);
 	}
 
 	function do_move_mail(mid, todirs)
@@ -1205,7 +1205,7 @@
 	    xmlHttp.onreadystatechange = function()
 		{
 			var strmid = "mailtr" + mid;
-			var trid = window.opener.$(strmid);
+			var trid = window.opener._$_(strmid);
 
 			if(trid == null)
 				return false;
@@ -1220,7 +1220,7 @@
 					var errno = responseNode.getAttribute("errno")
 					if(errno == "0" || errno == 0)
 					{
-						$('PROCESSING_DIV').style.display = "none";
+						_$_('PROCESSING_DIV').style.display = "none";
 						
 						window.opener.delete_maillist_row(mid);
 	
@@ -1234,9 +1234,9 @@
 			}
 			else
 			{
-				$('PROCESSING_DIV').style.zIndex = 18;
-				$('PROCESSING_DIV').style.display = "block";
-				$('PROCESSING_TBL').rows[0].cells[0].innerHTML = "正在移动，请等待...";
+				_$_('PROCESSING_DIV').style.zIndex = 18;
+				_$_('PROCESSING_DIV').style.display = "block";
+				_$_('PROCESSING_TBL').rows[0].cells[0].innerHTML = "正在移动，请等待...";
 			}
 
 		}
@@ -1248,12 +1248,12 @@
 	
 	function move_mail(todir)
 	{	
-		if($('DRAFTID').value == null || $('DRAFTID').value == "" || $('DRAFTID').value == -1)
+		if(_$_('DRAFTID').value == null || _$_('DRAFTID').value == "" || _$_('DRAFTID').value == -1)
 		{
 			alert("此草稿尚未保存");
 			return;
 		}
-		do_copy_mail($('DRAFTID').value, todir);
+		do_copy_mail(_$_('DRAFTID').value, todir);
 	}
 
 	function init_editor()
@@ -1309,47 +1309,47 @@
 	
 	function show_copy_mail_dir_div()
 	{
-		$('DIRS_DIV2').style.display = "none";
+		_$_('DIRS_DIV2').style.display = "none";
 		
-		var Pos = GetObjPos($('COPYMAIL'))
-		show_dirs($('DIRS_DIV1'), $('DIRTBL1'), Pos.x, Pos.y + Pos.h + 2, "seldir1");
+		var Pos = GetObjPos(_$_('COPYMAIL'))
+		show_dirs(_$_('DIRS_DIV1'), _$_('DIRTBL1'), Pos.x, Pos.y + Pos.h + 2, "seldir1");
 	}
 
 	function show_move_mail_dir_div()
 	{
-		$('DIRS_DIV1').style.display = "none";
+		_$_('DIRS_DIV1').style.display = "none";
 		
-		var Pos = GetObjPos($('MOVEMAIL'))
-		show_dirs($('DIRS_DIV2'), $('DIRTBL2'), Pos.x, Pos.y + Pos.h + 2, "seldir2");
+		var Pos = GetObjPos(_$_('MOVEMAIL'))
+		show_dirs(_$_('DIRS_DIV2'), _$_('DIRTBL2'), Pos.x, Pos.y + Pos.h + 2, "seldir2");
 	}
 
 	function sort_users(who, orderby)
 	{
-		$('selalluser').checked = false;
+		_$_('selalluser').checked = false;
 		
-		$('USERTBL').setAttribute('orderby', orderby);
+		_$_('USERTBL').setAttribute('orderby', orderby);
 
-		clear_table_without_header($('USERTBL'));
+		clear_table_without_header(_$_('USERTBL'));
 
-		if($('USERTBL').getAttribute(orderby) == 'true')
-			$('USERTBL').setAttribute(orderby, 'false');
+		if(_$_('USERTBL').getAttribute(orderby) == 'true')
+			_$_('USERTBL').setAttribute(orderby, 'false');
 		else
-			$('USERTBL').setAttribute(orderby, 'true');
+			_$_('USERTBL').setAttribute(orderby, 'true');
 
-		load_users(who, $('USERTBL').getAttribute('orderby'), $('USERTBL').getAttribute($('USERTBL').getAttribute('orderby')));
+		load_users(who, _$_('USERTBL').getAttribute('orderby'), _$_('USERTBL').getAttribute(_$_('USERTBL').getAttribute('orderby')));
 	}
 </script>
 </head>
 
 <body onLoad="init()" onUnload="uninit()">
 
-<div id="PROCESSING_DIV" class="div1" style="display:none; width: 380; height:100; left:300; top:200; background-color: #FFFFCC;">
+<div id="PROCESSING_DIV" class="div1" style="display:none; width: 380; height:100; left:300; top:200; background-color: #fafafa;">
 	<table border="0" width="100%" bordercolorlight="#C0C0C0" cellpadding="0" cellspacing="0" bordercolordark="#FFFFFF">
 		<tr height="22"><td class="gray">
 			<table width="100%" height="100%" border="0" cellpadding="1" cellspacing="1" background="titlebg.gif">
 				<tr>
 					<td width="16" align="left" valign="middle"><img src="writemail.gif"></td>
-					<td align="center" valign="middle" onMouseOver="this.mousepoint = 99;this.style.cursor = 'move';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onMouseDown="return drag($('PROCESSING_DIV'), (event ? event : window.event));"><font color="#FFFFFF"><b>写邮件</b></font></td>
+					<td align="center" valign="middle" onMouseOver="this.mousepoint = 99;this.style.cursor = 'move';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onMouseDown="return drag(_$_('PROCESSING_DIV'), (event ? event : window.event));"><font color="#FFFFFF"><b>写邮件</b></font></td>
 					<td align="right" width="16" height="22"><input type="image" src="close.gif" onClick="close_processing_div()"></td>
 				</tr>
 			</table>
@@ -1370,8 +1370,8 @@
     <tr><td bgcolor="#EDF1F8" height="32">
     	<table width="100%" border="0" cellspacing="1" cellpadding="1">
           <tr>
-            <td align="center" valign="middle"><input type="image" src="ok.gif" onMouseOver="this.src='ok2.gif'" onMouseOut="this.src='ok.gif'" onClick="ok_copy_mail();$('DIRS_DIV1').style.display = 'none';"></td>
-            <td align="center" valign="middle"><input type="image" src="cancel.gif" onMouseOver="this.src='cancel2.gif'" onMouseOut="this.src='cancel.gif'" onClick="$('DIRS_DIV1').style.display = 'none';"></td>
+            <td align="center" valign="middle"><input type="image" src="ok.gif" onMouseOver="this.src='ok2.gif'" onMouseOut="this.src='ok.gif'" onClick="ok_copy_mail();_$_('DIRS_DIV1').style.display = 'none';"></td>
+            <td align="center" valign="middle"><input type="image" src="cancel.gif" onMouseOver="this.src='cancel2.gif'" onMouseOut="this.src='cancel.gif'" onClick="_$_('DIRS_DIV1').style.display = 'none';"></td>
           </tr>
         </table>
      </td></tr>
@@ -1387,8 +1387,8 @@
     <tr><td bgcolor="#EDF1F8" height="32">
     	 <table width="100%" border="0" cellspacing="1" cellpadding="1">
           <tr>
-            <td align="center" valign="middle"><input type="image" src="ok.gif" onMouseOver="this.src='ok2.gif'" onMouseOut="this.src='ok.gif'" onClick="ok_move_mail();$('DIRS_DIV2').style.display = 'none';"></td>
-            <td align="center" valign="middle"><input type="image" src="cancel.gif" onMouseOver="this.src='cancel2.gif'" onMouseOut="this.src='cancel.gif'" onClick="$('DIRS_DIV2').style.display = 'none';"></td>
+            <td align="center" valign="middle"><input type="image" src="ok.gif" onMouseOver="this.src='ok2.gif'" onMouseOut="this.src='ok.gif'" onClick="ok_move_mail();_$_('DIRS_DIV2').style.display = 'none';"></td>
+            <td align="center" valign="middle"><input type="image" src="cancel.gif" onMouseOver="this.src='cancel2.gif'" onMouseOut="this.src='cancel.gif'" onClick="_$_('DIRS_DIV2').style.display = 'none';"></td>
           </tr>
         </table>
     </td></tr>
@@ -1401,8 +1401,8 @@
 			<table border="0" width="100%" bordercolorlight="#C0C0C0" cellpadding="0" cellspacing="0" bordercolordark="#FFFFFF" background="pathbg.gif">
 				<tr height="25">
 					<td width="22" align="right"><img src="book.gif"></td>
-					<td align="center" valign="middle" onMouseOver="this.mousepoint = 99;this.style.cursor = 'move';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onMouseDown="return drag($('ADDR_BOOK_DIV'), (event ? event : window.event));"><font color="#FFFFFF"><b>地址簿</b></font></td>
-					<td width="22" align="left"><input type="image" src="close.gif" onClick="$('ADDR_BOOK_DIV').style.display='none'"></td>
+					<td align="center" valign="middle" onMouseOver="this.mousepoint = 99;this.style.cursor = 'move';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onMouseDown="return drag(_$_('ADDR_BOOK_DIV'), (event ? event : window.event));"><font color="#FFFFFF"><b>地址簿</b></font></td>
+					<td width="22" align="left"><input type="image" src="close.gif" onClick="_$_('ADDR_BOOK_DIV').style.display='none'"></td>
 				</tr>
 			</table>
 		</td></tr>
@@ -1412,8 +1412,8 @@
 				<tr bgcolor="#FFFFCC">
 					<td class="gray" width="22" align="left"><input type="checkbox" name="selalluser" id="selalluser" onClick="sel_alluser(this.checked)"></td>
 					<td class="gray" width="22" align="left"><img src="pad.gif"></td>
-					<td class="gray" height="22" width="150" align="center" onMouseOver="this.mousepoint = 99;this.style.cursor = 'pointer';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onClick="sort_users($('ADDR_BOOK_DIV').getAttribute('who'), 'uname')"><b>账号</b></td>
-					<td class="gray" height="22" width="350" align="center" onMouseOver="this.mousepoint = 99;this.style.cursor = 'pointer';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onClick="sort_users($('ADDR_BOOK_DIV').getAttribute('who'), 'ualias')"><b>名称</b></td>
+					<td class="gray" height="22" width="150" align="center" onMouseOver="this.mousepoint = 99;this.style.cursor = 'pointer';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onClick="sort_users(_$_('ADDR_BOOK_DIV').getAttribute('who'), 'uname')"><b>账号</b></td>
+					<td class="gray" height="22" width="350" align="center" onMouseOver="this.mousepoint = 99;this.style.cursor = 'pointer';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onClick="sort_users(_$_('ADDR_BOOK_DIV').getAttribute('who'), 'ualias')"><b>名称</b></td>
 				</tr>
 				</table>
 			</div>
@@ -1423,8 +1423,8 @@
 			<tr><td>
 				<table border="0" width="100%" cellspacing="1" cellpadding="1">
 				<tr>
-					<td align="center" valign="middle"><input type="image" src="ok.gif" onMouseOver="this.src='ok2.gif'" onMouseOut="this.src='ok.gif'" onClick="append_addrs();$('ADDR_BOOK_DIV').style.display='none';"></td>
-					<td align="center" valign="middle"><input type="image" src="cancel.gif" onMouseOver="this.src='cancel2.gif'" onMouseOut="this.src='cancel.gif'" onClick="$('ADDR_BOOK_DIV').style.display='none'"></td>
+					<td align="center" valign="middle"><input type="image" src="ok.gif" onMouseOver="this.src='ok2.gif'" onMouseOut="this.src='ok.gif'" onClick="append_addrs();_$_('ADDR_BOOK_DIV').style.display='none';"></td>
+					<td align="center" valign="middle"><input type="image" src="cancel.gif" onMouseOver="this.src='cancel2.gif'" onMouseOut="this.src='cancel.gif'" onClick="_$_('ADDR_BOOK_DIV').style.display='none'"></td>
 				</tr>
 				</table>
 			</td></tr>
@@ -1466,7 +1466,7 @@
 				<table border="0" cellspacing="0" cellpadding="0">
 					<tr>
 						<td><input type="text" value="" size="80" id="TO_ADDRS" name="TO_ADDRS" onChange="isChange = true;toggle_onbeforeunload(isChange)"></td>
-						<td width="100" align="center"><input type="image" src="showbook.gif" onMouseOver="this.src='showbook2.gif'" onMouseOut="this.src='showbook.gif'" onClick="Pos = GetObjPos($('TO_ADDRS')); showbook(1, Pos.x, Pos.y + Pos.h + 2 ,'uname')"></td>
+						<td width="100" align="center"><input type="image" src="showbook.gif" onMouseOver="this.src='showbook2.gif'" onMouseOut="this.src='showbook.gif'" onClick="Pos = GetObjPos(_$_('TO_ADDRS')); showbook(1, Pos.x, Pos.y + Pos.h + 2 ,'uname')"></td>
 					</tr>
 				</table>
 			</td>
@@ -1478,7 +1478,7 @@
 				<table border="0" cellspacing="0" cellpadding="0">
 					<tr>
 						<td><input type="text" value="" size="80" id="CC_ADDRS" name="CC_ADDRS" onChange="isChange = true;toggle_onbeforeunload(isChange)"></td>
-						<td width="100" align="center"><input type="image" src="showbook.gif" onMouseOver="this.src='showbook2.gif'" onMouseOut="this.src='showbook.gif'" onClick="Pos = GetObjPos($('CC_ADDRS')); showbook(2, Pos.x, Pos.y + Pos.h + 2 ,'uname')"></td>
+						<td width="100" align="center"><input type="image" src="showbook.gif" onMouseOver="this.src='showbook2.gif'" onMouseOut="this.src='showbook.gif'" onClick="Pos = GetObjPos(_$_('CC_ADDRS')); showbook(2, Pos.x, Pos.y + Pos.h + 2 ,'uname')"></td>
 					</tr>
 				</table>
 			</td>
@@ -1490,7 +1490,7 @@
 				<table border="0"  cellspacing="0" cellpadding="0">
 					<tr>
 						<td><input type="text" value="" size="80" id="BCC_ADDRS" name="BCC_ADDRS" onChange="isChange = true;toggle_onbeforeunload(isChange)"></td>
-						<td width="100" align="center"><input type="image" src="showbook.gif" onMouseOver="this.src='showbook2.gif'" onMouseOut="this.src='showbook.gif'" onClick="Pos = GetObjPos($('BCC_ADDRS')); showbook(3, Pos.x, Pos.y + Pos.h + 2 ,'uname')"></td>
+						<td width="100" align="center"><input type="image" src="showbook.gif" onMouseOver="this.src='showbook2.gif'" onMouseOut="this.src='showbook.gif'" onClick="Pos = GetObjPos(_$_('BCC_ADDRS')); showbook(3, Pos.x, Pos.y + Pos.h + 2 ,'uname')"></td>
 					</tr>
 				</table>
 			</td>
@@ -1532,7 +1532,7 @@
 				<td valign="middle"><input type="image" src="frontcolor.gif" style="border:1px solid #FFFFFF" onMouseOver="this.style.border='1px solid #81a9ce'" onMouseOut="this.style.border='1px solid #FFFFFF'"  onclick="popforeDiv()"></td>
 				<td valign="middle"><input type="image" src="backcolor.gif" style="border:1px solid #FFFFFF" onMouseOver="this.style.border='1px solid #81a9ce'" onMouseOut="this.style.border='1px solid #FFFFFF'"  onclick="popbackDiv()"></td>
 				<td valign="middle">
-					<select class='sel1' onclick="$('foreColorTbl').style.display='none';$('backColorTbl').style.display='none'; "onChange="sizeCmd(this.value); this.value='0'">
+					<select class='sel1' onclick="_$_('foreColorTbl').style.display='none';_$_('backColorTbl').style.display='none'; "onChange="sizeCmd(this.value); this.value='0'">
 						<option value="0" selected>字号</option>
 						<option value="1">1</option>
 						<option value="2">2</option>

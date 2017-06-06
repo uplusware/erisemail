@@ -1,4 +1,4 @@
-function $(obj) 
+function _$_(obj) 
 { 
 	return document.getElementById(obj); 
 } 

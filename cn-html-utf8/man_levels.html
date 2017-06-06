@@ -12,21 +12,21 @@
 
 	function ontimer(trid)
 	{
-		if($(trid))
+		if(_$_(trid))
 		{
-			if($(trid).getAttribute("isOver") == "true")
+			if(_$_(trid).getAttribute("isOver") == "true")
 			{
-				$('LEVEL_DESCRIPTION').innerHTML = "<table border=\"0\" height=\"100%\" width=\"100%\" cellpadding=\"2\" cellspacing=\"2\" bgcolor=\"#FFFFEE\"><tr><td align=\"left\" valign=\"middle\">" + $(trid).getAttribute("description") + "</td></tr></table>";
+				_$_('LEVEL_DESCRIPTION').innerHTML = "<table border=\"0\" height=\"100%\" width=\"100%\" cellpadding=\"2\" cellspacing=\"2\" bgcolor=\"#FFFFEE\"><tr><td align=\"left\" valign=\"middle\">" + _$_(trid).getAttribute("description") + "</td></tr></table>";
 
-				var pos = GetObjPos($(trid));
+				var pos = GetObjPos(_$_(trid));
 				
-				$('LEVEL_DESCRIPTION').style.left = pos.x - 1;
-				$('LEVEL_DESCRIPTION').style.top = pos.y + pos.h + 1;
+				_$_('LEVEL_DESCRIPTION').style.left = pos.x - 1;
+				_$_('LEVEL_DESCRIPTION').style.top = pos.y + pos.h + 1;
 				
-				$('LEVEL_DESCRIPTION').style.height= 25;
-				$('LEVEL_DESCRIPTION').style.width = $('LEVELTBL').offsetWidth;
+				_$_('LEVEL_DESCRIPTION').style.height= 25;
+				_$_('LEVEL_DESCRIPTION').style.width = _$_('LEVELTBL').offsetWidth;
 
-				$('LEVEL_DESCRIPTION').style.display = "block";
+				_$_('LEVEL_DESCRIPTION').style.display = "block";
 			}
 		}
 	}
@@ -57,7 +57,7 @@
 							{
 								if(levelList.item(i).tagName == "level")
 								{
-									tr = $('LEVELTBL').insertRow($('LEVELTBL').rows.length);
+									tr = _$_('LEVELTBL').insertRow(_$_('LEVELTBL').rows.length);
 									tr.setAttribute("id", "LEVEL_ID_" + levelList.item(i).getAttribute("lid"));
 									tr.setAttribute("lid", levelList.item(i).getAttribute("lid"));
 									tr.setAttribute("name", levelList.item(i).getAttribute("name"));
@@ -82,7 +82,7 @@
 									{
 										this.style.backgroundImage = this.getAttribute("imagesrc");
 
-										$('LEVEL_DESCRIPTION').style.display = "none";
+										_$_('LEVEL_DESCRIPTION').style.display = "none";
 
 										this.setAttribute("isOver", "false");
 									}
@@ -186,7 +186,7 @@
 
 									td7.onclick = function()
 									{
-										$('LEVEL_DESCRIPTION').style.display = "none";										
+										_$_('LEVEL_DESCRIPTION').style.display = "none";										
 										show_editlevel_div(this.parentNode);
 									}
 									
@@ -244,15 +244,15 @@
 									
 								}
 							}
-							$("STATUS").innerHTML = "";
-							$("STATUS").style.display = "none";
+							_$_("STATUS").innerHTML = "";
+							_$_("STATUS").style.display = "none";
 						}
 					}
 				}
 			}
 			else
 			{
-				$("STATUS").innerHTML = "<center><img src=\"waiting.gif\"></center>";
+				_$_("STATUS").innerHTML = "<center><img src=\"waiting.gif\"></center>";
 			}
 		}
 		xmlHttp.open("GET", qUrl , true);
@@ -282,7 +282,7 @@
 					var errno = responseNode.getAttribute("errno")
 					if(errno == "0" || errno == 0)
 					{ 
-						clear_table_without_header($('LEVELTBL'));
+						clear_table_without_header(_$_('LEVELTBL'));
 						load_levels();
 					
 					}
@@ -299,92 +299,92 @@
 		
 	function show_newlevel_div()
 	{
-		$('NEW_LEVELNAME').value = "";
-		$('NEW_DESCRIPTION').value = "";
-		$('NEW_MAILMAXSIZE').value = "5000";
-		$('NEW_BOXMAXSIZE').value = "500000";
-		$('NEW_AUDIT').checked = false;
-		$('NEW_MAILSIZETHRESHOLD').value = "5000";
-		$('NEW_ATTACHSIZETHRESHOLD').value = "5000";
-		$('NEW_DEFAULT').checked = false;
+		_$_('NEW_LEVELNAME').value = "";
+		_$_('NEW_DESCRIPTION').value = "";
+		_$_('NEW_MAILMAXSIZE').value = "5000";
+		_$_('NEW_BOXMAXSIZE').value = "500000";
+		_$_('NEW_AUDIT').checked = false;
+		_$_('NEW_MAILSIZETHRESHOLD').value = "5000";
+		_$_('NEW_ATTACHSIZETHRESHOLD').value = "5000";
+		_$_('NEW_DEFAULT').checked = false;
 		
-		$('NEW_LEVEL_DIV').style.display = 'none';
+		_$_('NEW_LEVEL_DIV').style.display = 'none';
 			
-		var Pos = GetObjPos($('TITLE_BAR'));
+		var Pos = GetObjPos(_$_('TITLE_BAR'));
 											
-		$('NEW_LEVEL_DIV').style.left = Pos.x - 1;
-		$('NEW_LEVEL_DIV').style.top = Pos.y + Pos.h + 1;
+		_$_('NEW_LEVEL_DIV').style.left = Pos.x - 1;
+		_$_('NEW_LEVEL_DIV').style.top = Pos.y + Pos.h + 1;
 
-		$('NEW_LEVEL_DIV').style.display = "block";
+		_$_('NEW_LEVEL_DIV').style.display = "block";
 		
-		$('NEW_LEVEL_DIV').style.height= 300;
-		$('NEW_LEVEL_DIV').style.width = 500;
+		_$_('NEW_LEVEL_DIV').style.height= "auto";
+		_$_('NEW_LEVEL_DIV').style.width = "auto";
 
-		$('NEW_LEVEL_DIV').style.height= $('NEW_LEVEL_SIZE').offsetHeight + 2;
-		$('NEW_LEVEL_DIV').style.width = $('NEW_LEVEL_SIZE').offsetWidth + 2;
+		_$_('NEW_LEVEL_DIV').style.height= _$_('NEW_LEVEL_SIZE').offsetHeight;
+		_$_('NEW_LEVEL_DIV').style.width = _$_('NEW_LEVEL_SIZE').offsetWidth;
 	}
 	
 	function show_editlevel_div(obj)
 	{
-		$('EDIT_LEVEL_DIV').style.display = 'none';
+		_$_('EDIT_LEVEL_DIV').style.display = 'none';
 
-		$('EDIT_LEVEL_DIV').setAttribute("lid", obj.getAttribute("lid"));
+		_$_('EDIT_LEVEL_DIV').setAttribute("lid", obj.getAttribute("lid"));
 		
 		var Pos = GetObjPos(obj);
 
-		$('EDIT_LEVELNAME').value = obj.getAttribute("name");
-		$('EDIT_DESCRIPTION').value = obj.getAttribute("description");
-		$('EDIT_MAILMAXSIZE').value = Math.round(obj.getAttribute("mailmaxsize")/1024);
-		$('EDIT_BOXMAXSIZE').value = Math.round(obj.getAttribute("boxmaxsize")/1024);
-		$('EDIT_AUDIT').checked = obj.getAttribute("enableaudit") == "true" ? true : false;
-		$('EDIT_MAILSIZETHRESHOLD').value = Math.round(obj.getAttribute("mailsizethreshold")/1024);
-		$('EDIT_ATTACHSIZETHRESHOLD').value = Math.round(obj.getAttribute("attachsizethreshold")/1024);
-		$('EDIT_DEFAULT').checked = obj.getAttribute("default") == "true" ? true : false;
+		_$_('EDIT_LEVELNAME').value = obj.getAttribute("name");
+		_$_('EDIT_DESCRIPTION').value = obj.getAttribute("description");
+		_$_('EDIT_MAILMAXSIZE').value = Math.round(obj.getAttribute("mailmaxsize")/1024);
+		_$_('EDIT_BOXMAXSIZE').value = Math.round(obj.getAttribute("boxmaxsize")/1024);
+		_$_('EDIT_AUDIT').checked = obj.getAttribute("enableaudit") == "true" ? true : false;
+		_$_('EDIT_MAILSIZETHRESHOLD').value = Math.round(obj.getAttribute("mailsizethreshold")/1024);
+		_$_('EDIT_ATTACHSIZETHRESHOLD').value = Math.round(obj.getAttribute("attachsizethreshold")/1024);
+		_$_('EDIT_DEFAULT').checked = obj.getAttribute("default") == "true" ? true : false;
 									
-		$('EDIT_LEVEL_DIV').style.left = Pos.x - 1;
-		$('EDIT_LEVEL_DIV').style.top = Pos.y + Pos.h + 1;
+		_$_('EDIT_LEVEL_DIV').style.left = Pos.x - 1;
+		_$_('EDIT_LEVEL_DIV').style.top = Pos.y + Pos.h + 1;
 
-		$('EDIT_LEVEL_DIV').style.display = "block";
+		_$_('EDIT_LEVEL_DIV').style.display = "block";
 		
-		$('EDIT_LEVEL_DIV').style.height= 300;
-		$('EDIT_LEVEL_DIV').style.width = 500;
+		_$_('EDIT_LEVEL_DIV').style.height= "auto";
+		_$_('EDIT_LEVEL_DIV').style.width = "auto";
 
-		$('EDIT_LEVEL_DIV').style.height= $('EDIT_LEVEL_SIZE').offsetHeight + 2;
-		$('EDIT_LEVEL_DIV').style.width = $('EDIT_LEVEL_SIZE').offsetWidth + 2;
+		_$_('EDIT_LEVEL_DIV').style.height= _$_('EDIT_LEVEL_SIZE').offsetHeight;
+		_$_('EDIT_LEVEL_DIV').style.width = _$_('EDIT_LEVEL_SIZE').offsetWidth;
 	}
 	
 	function do_create_level()
 	{
-		if(!isLegalID($('NEW_LEVELNAME').value) 
-			|| !isNumber($('NEW_MAILMAXSIZE').value)
-			|| !isNumber($('NEW_BOXMAXSIZE').value)
-			|| !isNumber($('NEW_MAILSIZETHRESHOLD').value)
-			|| !isNumber($('NEW_ATTACHSIZETHRESHOLD').value))
+		if(!isLegalID(_$_('NEW_LEVELNAME').value) 
+			|| !isNumber(_$_('NEW_MAILMAXSIZE').value)
+			|| !isNumber(_$_('NEW_BOXMAXSIZE').value)
+			|| !isNumber(_$_('NEW_MAILSIZETHRESHOLD').value)
+			|| !isNumber(_$_('NEW_ATTACHSIZETHRESHOLD').value))
 		{
 			alert("输入字符不合法");
 			return false;
 		}
 
-		if(parseInt($('NEW_MAILMAXSIZE').value) > 1024*1024*2)
+		if(parseInt(_$_('NEW_MAILMAXSIZE').value) > 1024*1024*2)
 		{
 			alert("邮件最大值不能大于 "+ 1024*1024*2 + " KB");
 			return false;
 		}
 		
-		if(parseInt($('NEW_BOXMAXSIZE').value) > 1024*1024*4)
+		if(parseInt(_$_('NEW_BOXMAXSIZE').value) > 1024*1024*4)
 		{
 			alert("邮箱容量不能大于 "+ 1024*1024*4 + " KB");
 			return false;
 		}
 		var qUrl = "/api/createlevel.xml";
-		var strPostData = "NEW_LEVELNAME=" + encodeURIComponent($('NEW_LEVELNAME').value);
-		strPostData += "&NEW_DESCRIPTION=" + encodeURIComponent($('NEW_DESCRIPTION').value);
-		strPostData += "&NEW_MAILMAXSIZE=" + encodeURIComponent($('NEW_MAILMAXSIZE').value);
-		strPostData += "&NEW_BOXMAXSIZE=" + encodeURIComponent($('NEW_BOXMAXSIZE').value);
-		strPostData += "&NEW_AUDIT=" + (($('NEW_AUDIT').checked == true) ? encodeURIComponent("true") : encodeURIComponent("false")) ;
-		strPostData += "&NEW_MAILSIZETHRESHOLD=" + encodeURIComponent($('NEW_MAILSIZETHRESHOLD').value);
-		strPostData += "&NEW_ATTACHSIZETHRESHOLD=" + encodeURIComponent($('NEW_ATTACHSIZETHRESHOLD').value);
-		strPostData += "&NEW_DEFAULT=" + (($('NEW_DEFAULT').checked == true) ? encodeURIComponent("true") : encodeURIComponent("false")) ;
+		var strPostData = "NEW_LEVELNAME=" + encodeURIComponent(_$_('NEW_LEVELNAME').value);
+		strPostData += "&NEW_DESCRIPTION=" + encodeURIComponent(_$_('NEW_DESCRIPTION').value);
+		strPostData += "&NEW_MAILMAXSIZE=" + encodeURIComponent(_$_('NEW_MAILMAXSIZE').value);
+		strPostData += "&NEW_BOXMAXSIZE=" + encodeURIComponent(_$_('NEW_BOXMAXSIZE').value);
+		strPostData += "&NEW_AUDIT=" + ((_$_('NEW_AUDIT').checked == true) ? encodeURIComponent("true") : encodeURIComponent("false")) ;
+		strPostData += "&NEW_MAILSIZETHRESHOLD=" + encodeURIComponent(_$_('NEW_MAILSIZETHRESHOLD').value);
+		strPostData += "&NEW_ATTACHSIZETHRESHOLD=" + encodeURIComponent(_$_('NEW_ATTACHSIZETHRESHOLD').value);
+		strPostData += "&NEW_DEFAULT=" + ((_$_('NEW_DEFAULT').checked == true) ? encodeURIComponent("true") : encodeURIComponent("false")) ;
 		var xmlHttp = initxmlhttp();
 	    xmlHttp.onreadystatechange = function()
 		{
@@ -398,7 +398,7 @@
 					var errno = responseNode.getAttribute("errno")
 					if(errno == "0" || errno == 0)
 					{ 
-						clear_table_without_header($('LEVELTBL'));
+						clear_table_without_header(_$_('LEVELTBL'));
 						load_levels();
 					
 					}
@@ -417,38 +417,38 @@
 
 	function do_edit_level()
 	{		
-		if(!isLegalID($('EDIT_LEVELNAME').value) 
-			|| !isNumber($('EDIT_MAILMAXSIZE').value)
-			|| !isNumber($('EDIT_BOXMAXSIZE').value)
-			|| !isNumber($('EDIT_MAILSIZETHRESHOLD').value)
-			|| !isNumber($('EDIT_ATTACHSIZETHRESHOLD').value))
+		if(!isLegalID(_$_('EDIT_LEVELNAME').value) 
+			|| !isNumber(_$_('EDIT_MAILMAXSIZE').value)
+			|| !isNumber(_$_('EDIT_BOXMAXSIZE').value)
+			|| !isNumber(_$_('EDIT_MAILSIZETHRESHOLD').value)
+			|| !isNumber(_$_('EDIT_ATTACHSIZETHRESHOLD').value))
 		{
 			alert("输入字符不合法");
 			return false;
 		}
 
-		if(parseInt($('EDIT_MAILMAXSIZE').value) > 1024*1024*2)
+		if(parseInt(_$_('EDIT_MAILMAXSIZE').value) > 1024*1024*2)
 		{
 			alert("邮件最大值不能大于 "+ 1024*1024*2 + " KB");
 			return false;
 		}
 		
-		if(parseInt($('EDIT_BOXMAXSIZE').value) > 1024*1024*4)
+		if(parseInt(_$_('EDIT_BOXMAXSIZE').value) > 1024*1024*4)
 		{
 			alert("邮箱容量不能大于 "+ 1024*1024*4 + " KB");
 			return false;
 		}
 		
 		var qUrl = "/api/updatelevel.xml";
-		var strPostData = "EDIT_LEVELID=" + encodeURIComponent($('EDIT_LEVEL_DIV').getAttribute("lid"));
-		strPostData += "&EDIT_LEVELNAME=" + encodeURIComponent($('EDIT_LEVELNAME').value);
-		strPostData += "&EDIT_DESCRIPTION=" + encodeURIComponent($('EDIT_DESCRIPTION').value);
-		strPostData += "&EDIT_MAILMAXSIZE=" + encodeURIComponent($('EDIT_MAILMAXSIZE').value);
-		strPostData += "&EDIT_BOXMAXSIZE=" + encodeURIComponent($('EDIT_BOXMAXSIZE').value);
-		strPostData += "&EDIT_AUDIT=" + (($('EDIT_AUDIT').checked == true) ? encodeURIComponent("true") : encodeURIComponent("false")) ;
-		strPostData += "&EDIT_MAILSIZETHRESHOLD=" + encodeURIComponent($('EDIT_MAILSIZETHRESHOLD').value);
-		strPostData += "&EDIT_ATTACHSIZETHRESHOLD=" + encodeURIComponent($('EDIT_ATTACHSIZETHRESHOLD').value);
-		strPostData += "&EDIT_DEFAULT=" + (($('EDIT_DEFAULT').checked == true) ? encodeURIComponent("true") : encodeURIComponent("false")) ;
+		var strPostData = "EDIT_LEVELID=" + encodeURIComponent(_$_('EDIT_LEVEL_DIV').getAttribute("lid"));
+		strPostData += "&EDIT_LEVELNAME=" + encodeURIComponent(_$_('EDIT_LEVELNAME').value);
+		strPostData += "&EDIT_DESCRIPTION=" + encodeURIComponent(_$_('EDIT_DESCRIPTION').value);
+		strPostData += "&EDIT_MAILMAXSIZE=" + encodeURIComponent(_$_('EDIT_MAILMAXSIZE').value);
+		strPostData += "&EDIT_BOXMAXSIZE=" + encodeURIComponent(_$_('EDIT_BOXMAXSIZE').value);
+		strPostData += "&EDIT_AUDIT=" + ((_$_('EDIT_AUDIT').checked == true) ? encodeURIComponent("true") : encodeURIComponent("false")) ;
+		strPostData += "&EDIT_MAILSIZETHRESHOLD=" + encodeURIComponent(_$_('EDIT_MAILSIZETHRESHOLD').value);
+		strPostData += "&EDIT_ATTACHSIZETHRESHOLD=" + encodeURIComponent(_$_('EDIT_ATTACHSIZETHRESHOLD').value);
+		strPostData += "&EDIT_DEFAULT=" + ((_$_('EDIT_DEFAULT').checked == true) ? encodeURIComponent("true") : encodeURIComponent("false")) ;
 		
 		var xmlHttp = initxmlhttp();
 	    xmlHttp.onreadystatechange = function()
@@ -463,7 +463,7 @@
 					var errno = responseNode.getAttribute("errno")
 					if(errno == "0" || errno == 0)
 					{ 
-						clear_table_without_header($('LEVELTBL'));
+						clear_table_without_header(_$_('LEVELTBL'));
 						load_levels();
 					
 					}
@@ -497,7 +497,7 @@
 					var errno = responseNode.getAttribute("errno")
 					if(errno == "0" || errno == 0)
 					{ 
-						clear_table_without_header($('LEVELTBL'));
+						clear_table_without_header(_$_('LEVELTBL'));
 						load_levels();
 					}
 					else
@@ -524,7 +524,7 @@
 		<table id="NEW_LEVEL_TBL" border="0" backcolor="#FFFFFF" bordercolorlight="#C0C0C0" cellspacing="0" cellpadding="1" bordercolordark="#FFFFFF" class="gray" bgcolor="#FFFFFF">
 		<tr height="25">
 			<td class="blue" colspan="2">
-			<table border="0" width="100%" cellpadding="2" cellspacing="2" onMouseOver="this.mousepoint = 99;this.style.cursor = 'move';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';"  onMouseDown="return drag($('NEW_LEVEL_DIV'), (event ? event : window.event));"><tr>
+			<table border="0" width="100%" cellpadding="2" cellspacing="2" onMouseOver="this.mousepoint = 99;this.style.cursor = 'move';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';"  onMouseDown="return drag(_$_('NEW_LEVEL_DIV'), (event ? event : window.event));"><tr>
 				<td align="left" width="16"><img src="append.gif"></td><td align="left"><b><font color="#FFFFFF"><b>创建策略</b></font></b></td>
 			</tr></table>
 			</td>
@@ -565,8 +565,8 @@
 	</td><tr>
 	<tr><td>	
 		<table border="0" cellpadding="2" cellspacing="2" width="100%"><tr>
-		<td align="center"><input type="image" src="ok.gif" onMouseOver="this.src='ok2.gif'" onMouseOut="this.src='ok.gif'" onClick="if(do_create_level())$('NEW_LEVEL_DIV').style.display='none';"></td>
-		<td align="center"><input type="image" src="cancel.gif" onMouseOver="this.src='cancel2.gif'" onMouseOut="this.src='cancel.gif'" onClick="$('NEW_LEVEL_DIV').style.display='none'"></td>
+		<td align="center"><input type="image" src="ok.gif" onMouseOver="this.src='ok2.gif'" onMouseOut="this.src='ok.gif'" onClick="if(do_create_level())_$_('NEW_LEVEL_DIV').style.display='none';"></td>
+		<td align="center"><input type="image" src="cancel.gif" onMouseOver="this.src='cancel2.gif'" onMouseOut="this.src='cancel.gif'" onClick="_$_('NEW_LEVEL_DIV').style.display='none'"></td>
 		</tr></table>
 	</td></tr>
 	</table>
@@ -578,7 +578,7 @@
 		<table id="EDIT_LEVEL_TBL" border="0" backcolor="#FFFFFF" bordercolorlight="#C0C0C0" cellspacing="0" cellpadding="1" bordercolordark="#FFFFFF" class="gray"  bgcolor="#FFFFFF">
 		<tr height="25">
 			<td class="blue" colspan="2">
-			<table border="0" width="100%" cellpadding="2" cellspacing="2" onMouseOver="this.mousepoint = 99;this.style.cursor = 'move';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onMouseDown="return drag($('EDIT_LEVEL_DIV'), (event ? event : window.event));"><tr>
+			<table border="0" width="100%" cellpadding="2" cellspacing="2" onMouseOver="this.mousepoint = 99;this.style.cursor = 'move';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onMouseDown="return drag(_$_('EDIT_LEVEL_DIV'), (event ? event : window.event));"><tr>
 				<td align="left" width="16"><img src="edit.gif"></td><td align="left"><b><font color="#FFFFFF"><b>编辑策略</b></font></b></td>
 			</tr></table>
 			</td>
@@ -619,8 +619,8 @@
 	</td><tr>
 	<tr><td>
 		<table border="0" cellpadding="2" cellspacing="2" width="100%"><tr>
-			<td align="center"><input type="image" src="ok.gif" onMouseOver="this.src='ok2.gif'" onMouseOut="this.src='ok.gif'" onClick="if(do_edit_level())$('EDIT_LEVEL_DIV').style.display='none';"></td>
-			<td align="center"><input type="image" src="cancel.gif" onMouseOver="this.src='cancel2.gif'" onMouseOut="this.src='cancel.gif'" onClick="$('EDIT_LEVEL_DIV').style.display='none'"></td>
+			<td align="center"><input type="image" src="ok.gif" onMouseOver="this.src='ok2.gif'" onMouseOut="this.src='ok.gif'" onClick="if(do_edit_level())_$_('EDIT_LEVEL_DIV').style.display='none';"></td>
+			<td align="center"><input type="image" src="cancel.gif" onMouseOver="this.src='cancel2.gif'" onMouseOut="this.src='cancel.gif'" onClick="_$_('EDIT_LEVEL_DIV').style.display='none'"></td>
 		</tr></table>
 	</td></tr>
 	</table>

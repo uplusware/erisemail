@@ -1,4 +1,4 @@
-td 
+TD 
 {
 	font-family: "Arial";
 	font-size: 10pt;
@@ -8,7 +8,7 @@ td
 TABLE.blue
 {
 	color:#FFFFFF;
-	background-color:#0099cc;
+	background-color:#007fff;
 	border-top:1px solid #99ffff;
 	border-left:1px solid #99ffff;
 	border-right:1px solid #003366;
@@ -18,7 +18,7 @@ TABLE.blue
 
 TD.blue
 {
-	background-color:#0099cc;
+	background-color:#007fff;
 	border-left:1px solid #00ccff;
 	border-top:1px solid #00ccff;
 	border-right:1px solid #006699;
@@ -43,7 +43,7 @@ TD.title
 TABLE.gray
 {
 	border-collapse: collapse;
-	padding:1px;
+	padding:0px;
 }
 
 TR.gray

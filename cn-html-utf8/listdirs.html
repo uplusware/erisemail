@@ -75,10 +75,10 @@
 					var errno = responseNode.getAttribute("errno")
 					if(errno == "0" || errno == 0)
 					{
-						clear_table(window.parent.leftmenuframe.$('DIRTBL'));
+						clear_table(window.parent.leftmenuframe._$_('DIRTBL'));
 						window.parent.leftmenuframe.load_dirs(-1, '', 'common', -1, 0);
 
-						clear_table($('DIRTBL'));
+						clear_table(_$_('DIRTBL'));
 						travel_dirs(-1, '', -1);
 					}
 					else
@@ -94,21 +94,21 @@
 
 	function do_create_label()
 	{		
-		create_label($('NEW_LABEL').value, $('NEW_LABEL_DIV').getAttribute("dirid"));
-		$('NEW_LABEL').value = "";
+		create_label(_$_('NEW_LABEL').value, _$_('NEW_LABEL_DIV').getAttribute("dirid"));
+		_$_('NEW_LABEL').value = "";
 	}
 		
 	function show_inputlabel_div(dirid, x, y)
 	{
-		$('NEW_LABEL_DIV').style.left = x - 1;
-		$('NEW_LABEL_DIV').style.top = y + 1;
+		_$_('NEW_LABEL_DIV').style.left = x - 1;
+		_$_('NEW_LABEL_DIV').style.top = y + 1;
 		
-		$('NEW_LABEL_DIV').style.height= 39;
-		$('NEW_LABEL_DIV').style.width = 398;
+		_$_('NEW_LABEL_DIV').style.height= 39;
+		_$_('NEW_LABEL_DIV').style.width = 398;
 		
-		$('NEW_LABEL_DIV').style.display = "block";
+		_$_('NEW_LABEL_DIV').style.display = "block";
 
-		$('NEW_LABEL_DIV').setAttribute("dirid", dirid);
+		_$_('NEW_LABEL_DIV').setAttribute("dirid", dirid);
 	}
 	
 	function output_dir(tblobj, pid, path, nodeObj, layer)
@@ -331,7 +331,7 @@
 						{
 							var dirList = responseNode.childNodes;
 							
-							output_dir($('DIRTBL'), pid, "", dirList, layer);
+							output_dir(_$_('DIRTBL'), pid, "", dirList, layer);
 						}
 					}
 				}
@@ -361,10 +361,10 @@
 					var errno = responseNode.getAttribute("errno")
 					if(errno == "0" || errno == 0)
 					{
-						clear_table(window.parent.leftmenuframe.$('DIRTBL'));
+						clear_table(window.parent.leftmenuframe._$_('DIRTBL'));
 						window.parent.leftmenuframe.load_dirs(-1, '', 'common', -1, 0);
 
-						clear_table($('DIRTBL'));
+						clear_table(_$_('DIRTBL'));
 						travel_dirs(-1, '', -1);
 					
 					}
@@ -381,11 +381,11 @@
 	
 	function init()
 	{		
-		window.parent.$('MAILBAR').style.display = "none";
-		window.parent.$('DIRBAR').style.display = "block";
-		window.parent.$('CALBAR').style.display = "none";
-		window.parent.$('READCALBAR').style.display = "none";
-		window.parent.$('NULLBAR').style.display = "none";
+		window.parent._$_('MAILBAR').style.display = "none";
+		window.parent._$_('DIRBAR').style.display = "block";
+		window.parent._$_('CALBAR').style.display = "none";
+		window.parent._$_('READCALBAR').style.display = "none";
+		window.parent._$_('NULLBAR').style.display = "none";
 	}
 
 	function uninit()
@@ -419,7 +419,7 @@
 							}
 						}
 							
-						$('LOGIN_USERNAME').innerHTML = "<font color=\"#FFFFFF\"><b>[" + strTmp + "]</b>的文件夹</font>";
+						_$_('LOGIN_USERNAME').innerHTML = "<font color=\"#FFFFFF\"><b>[" + strTmp + "]</b>的文件夹</font>";
 					}
 				}
 			}
@@ -430,7 +430,7 @@
 
 	function create_root_dir()
 	{
-		Pos = GetObjPos($('DIRS_TITLE')); 
+		Pos = GetObjPos(_$_('DIRS_TITLE')); 
 		show_inputlabel_div("-1", Pos.x, Pos.y + Pos.h)		
 	}
 	
@@ -445,8 +445,8 @@
 	<td align="right"><img src="tosub.gif"></td>
 	<td align="right">文件夹:</td>
 	<td align="left"><input type="text" name="NEW_LABEL" id="NEW_LABEL" size="16"></td>
-	<td align="center"><input type="image" src="ok.gif" onMouseOver="this.src='ok2.gif'" onMouseOut="this.src='ok.gif'" onClick="do_create_label(); $('NEW_LABEL_DIV').style.display='none';"></td>
-	<td align="center"><input type="image" src="cancel.gif" onMouseOver="this.src='cancel2.gif'" onMouseOut="this.src='cancel.gif'" onClick="$('NEW_LABEL_DIV').style.display='none'"></td>
+	<td align="center"><input type="image" src="ok.gif" onMouseOver="this.src='ok2.gif'" onMouseOut="this.src='ok.gif'" onClick="do_create_label(); _$_('NEW_LABEL_DIV').style.display='none';"></td>
+	<td align="center"><input type="image" src="cancel.gif" onMouseOver="this.src='cancel2.gif'" onMouseOut="this.src='cancel.gif'" onClick="_$_('NEW_LABEL_DIV').style.display='none'"></td>
 	</tr>
 	</table>
 </div>

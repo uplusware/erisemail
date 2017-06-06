@@ -195,7 +195,7 @@
 								}
 							}
 							this.setAttribute("extended", "true");
-							$('extend' + this.getAttribute("did")).src = "extended.gif";
+							_$_('extend' + this.getAttribute("did")).src = "extended.gif";
 						}
 						else
 						{
@@ -210,7 +210,7 @@
 								tblobj.rows[y].style.display = "none";
 							}
 							this.setAttribute("extended", "false");
-							$('extend' + this.getAttribute("did")).src = "unextended.gif";
+							_$_('extend' + this.getAttribute("did")).src = "unextended.gif";
 						}
 					}
 	
@@ -331,7 +331,7 @@
 						if(errno == "0" || errno == 0)
 						{
 							var dirList = responseNode.childNodes;
-							output_dir($('DIRTBL'), pid, gpath, topusage, dirList, layer, begtr);
+							output_dir(_$_('DIRTBL'), pid, gpath, topusage, dirList, layer, begtr);
 						}
 					}
 				}

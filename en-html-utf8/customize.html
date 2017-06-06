@@ -110,13 +110,13 @@
 								else
 									strRole = "Unknown";
 								
-								$('userrole').innerHTML = strRole;
+								_$_('userrole').innerHTML = strRole;
 								
-								$('mailsize').innerHTML = Math.round(userList.item(i).getAttribute("mailsize")/1024);
-								$('boxsize').innerHTML = Math.round(userList.item(i).getAttribute("boxsize")/1024);
-								$('audit').innerHTML = userList.item(i).getAttribute("audit") == "yes" ? "Yes" : "No";
+								_$_('mailsize').innerHTML = Math.round(userList.item(i).getAttribute("mailsize")/1024);
+								_$_('boxsize').innerHTML = Math.round(userList.item(i).getAttribute("boxsize")/1024);
+								_$_('audit').innerHTML = userList.item(i).getAttribute("audit") == "yes" ? "Yes" : "No";
 								
-								$('ALIAS').value = userList.item(i).getAttribute("alias");
+								_$_('ALIAS').value = userList.item(i).getAttribute("alias");
 							}
 						}
 					}
@@ -129,11 +129,11 @@
 	
 	function init()
 	{		
-		window.parent.$('MAILBAR').style.display = "none";
-		window.parent.$('DIRBAR').style.display = "none";
-		window.parent.$('CALBAR').style.display = "none";
-		window.parent.$('READCALBAR').style.display = "none";
-		window.parent.$('NULLBAR').style.display = "block";	
+		window.parent._$_('MAILBAR').style.display = "none";
+		window.parent._$_('DIRBAR').style.display = "none";
+		window.parent._$_('CALBAR').style.display = "none";
+		window.parent._$_('READCALBAR').style.display = "none";
+		window.parent._$_('NULLBAR').style.display = "block";	
 	}
 
 	function uninit()

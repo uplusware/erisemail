@@ -12,24 +12,24 @@
 
 	function add_user_to_group(obj, groupname)
 	{
-		$('ADDRS').setAttribute("groupname", groupname);
+		_$_('ADDRS').setAttribute("groupname", groupname);
 		
 		var Pos = GetObjPos(obj);
 		
 		load_members();
 
-		$('selalluser').checked = false; 
+		_$_('selalluser').checked = false; 
 
-		$('ADDRS').style.left = Pos.x - 1;
-		$('ADDRS').style.top = Pos.y + Pos.h + 1;
+		_$_('ADDRS').style.left = Pos.x - 1;
+		_$_('ADDRS').style.top = Pos.y + Pos.h + 1;
 
-		$('ADDRS').style.display = "block";
+		_$_('ADDRS').style.display = "block";
 		
-		$('ADDRS').style.height= 200;
-		$('ADDRS').style.width = 500;
+		_$_('ADDRS').style.height= "auto";
+		_$_('ADDRS').style.width = "auto";
 
-		$('ADDRS').style.height= ($('USERTBL').offsetHeight + 32) > 600 ? 600 : ($('USERTBL').offsetHeight + 32); 
-		$('ADDRS').style.width = $('USERTBL').offsetWidth + 2;
+		_$_('ADDRS').style.height= (_$_('USERTBL').offsetHeight + 32) > 600 ? 600 : (_$_('USERTBL').offsetHeight + 32); 
+		_$_('ADDRS').style.width = _$_('USERTBL').offsetWidth;
 	}
 
 	function do_del_user_from_group(groupname, userlist)
@@ -50,12 +50,12 @@
 					var errno = responseNode.getAttribute("errno")
 					if(errno == "0" || errno == 0)
 					{ 
-						$("GROUP_MEMBER_LIST_TR_" + groupname).setAttribute("loaded", "false");
-						while($("GROUP_MEMBER_LIST_TR_" + groupname).cells[0].firstChild != null)
+						_$_("GROUP_MEMBER_LIST_TR_" + groupname).setAttribute("loaded", "false");
+						while(_$_("GROUP_MEMBER_LIST_TR_" + groupname).cells[0].firstChild != null)
 						{
-							$("GROUP_MEMBER_LIST_TR_" + groupname).cells[0].firstChild.parentNode.removeChild($("GROUP_MEMBER_LIST_TR_" + groupname).cells[0].firstChild);
+							_$_("GROUP_MEMBER_LIST_TR_" + groupname).cells[0].firstChild.parentNode.removeChild(_$_("GROUP_MEMBER_LIST_TR_" + groupname).cells[0].firstChild);
 						}
-						list_members_in_group($("GROUP_MEMBER_LIST_TR_" + groupname), groupname);
+						list_members_in_group(_$_("GROUP_MEMBER_LIST_TR_" + groupname), groupname);
 					
 					}
 					else
@@ -82,7 +82,7 @@
 
 		var qUrl = "/api/addusertogroup.xml";
 		var strPostData = "USER_LIST=" + encodeURIComponent(strUsers);
-		strPostData += "&GROUP_NAME=" + encodeURIComponent($('ADDRS').getAttribute("groupname"));
+		strPostData += "&GROUP_NAME=" + encodeURIComponent(_$_('ADDRS').getAttribute("groupname"));
 		var xmlHttp = initxmlhttp();
 	    xmlHttp.onreadystatechange = function()
 		{
@@ -96,12 +96,12 @@
 					var errno = responseNode.getAttribute("errno")
 					if(errno == "0" || errno == 0)
 					{ 
-						$("GROUP_MEMBER_LIST_TR_" + $('ADDRS').getAttribute("groupname")).setAttribute("loaded", "false");
-						while($("GROUP_MEMBER_LIST_TR_" + $('ADDRS').getAttribute("groupname")).cells[0].firstChild != null)
+						_$_("GROUP_MEMBER_LIST_TR_" + _$_('ADDRS').getAttribute("groupname")).setAttribute("loaded", "false");
+						while(_$_("GROUP_MEMBER_LIST_TR_" + _$_('ADDRS').getAttribute("groupname")).cells[0].firstChild != null)
 						{
-							$("GROUP_MEMBER_LIST_TR_" + $('ADDRS').getAttribute("groupname")).cells[0].firstChild.parentNode.removeChild($("GROUP_MEMBER_LIST_TR_" + $('ADDRS').getAttribute("groupname")).cells[0].firstChild);
+							_$_("GROUP_MEMBER_LIST_TR_" + _$_('ADDRS').getAttribute("groupname")).cells[0].firstChild.parentNode.removeChild(_$_("GROUP_MEMBER_LIST_TR_" + _$_('ADDRS').getAttribute("groupname")).cells[0].firstChild);
 						}
-						list_members_in_group($("GROUP_MEMBER_LIST_TR_" + $('ADDRS').getAttribute("groupname")), $('ADDRS').getAttribute("groupname"));
+						list_members_in_group(_$_("GROUP_MEMBER_LIST_TR_" + _$_('ADDRS').getAttribute("groupname")), _$_('ADDRS').getAttribute("groupname"));
 					
 					}
 					else
@@ -269,7 +269,7 @@
 							{
 								if(userList.item(i).tagName == "user")
 								{
-									var tr1= $('GROUPTBL').insertRow($('GROUPTBL').rows.length);
+									var tr1= _$_('GROUPTBL').insertRow(_$_('GROUPTBL').rows.length);
 									tr1.setAttribute("height", "22");
 									var td10 = tr1.insertCell(0);
 									setStyle(td10, "TD.blue");
@@ -405,7 +405,7 @@
 									
 									td10.appendChild(newtbl);
 									
-									var tr2 = $('GROUPTBL').insertRow($('GROUPTBL').rows.length);
+									var tr2 = _$_('GROUPTBL').insertRow(_$_('GROUPTBL').rows.length);
 									tr2.setAttribute("id", "GROUP_MEMBER_LIST_TR_" + userList.item(i).getAttribute("name"));
 									tr2.style.display = "none";
 									
@@ -415,15 +415,15 @@
 									td20.style.backgroundColor = "#FFFFFF";
 								}
 							}
-							$("STATUS").innerHTML = "";
-							$("STATUS").style.display = "none";
+							_$_("STATUS").innerHTML = "";
+							_$_("STATUS").style.display = "none";
 						}
 					}
 				}
 			}
 			else
 			{
-				$("STATUS").innerHTML = "<center><img src=\"waiting.gif\"></center>";
+				_$_("STATUS").innerHTML = "<center><img src=\"waiting.gif\"></center>";
 			}
 		}
 		xmlHttp.open("GET", qUrl , true);
@@ -451,7 +451,7 @@
 							var strTmp;
 							var userList = responseNode.childNodes;
 
-							clear_table_without_header($('USERTBL'));
+							clear_table_without_header(_$_('USERTBL'));
 								
 							for(var i = 0; i < userList.length; i++)
 							{
@@ -478,7 +478,7 @@
 											image = "inactive_member.gif";
 									}
 
-									tr = $('USERTBL').insertRow($('USERTBL').rows.length);
+									tr = _$_('USERTBL').insertRow(_$_('USERTBL').rows.length);
 
 									
 									var td0 = tr.insertCell(0);
@@ -511,7 +511,7 @@
 								}
 							}
 
-							$('ADDRS').style.height = $('USERTBL_SIZE').offsetHeight + 2;
+							_$_('ADDRS').style.height = _$_('USERTBL_SIZE').offsetHeight;
 						}
 					}
 				}
@@ -546,17 +546,17 @@
 		<table id="USERTBL" border="0" width="100%" bordercolorlight="#C0C0C0" cellpadding="0" cellspacing="0" bordercolordark="#FFFFFF" class="gray" bgcolor="#FFFFFF">
 		<tr height="25">
 			<td class="blue" width="22" align="left"><input type="checkbox" name="selalluser" id="selalluser" onClick="sel_alluser(this.checked)"></td>
-			<td class="blue" width="22" align="left" onMouseOver="this.mousepoint = 99;this.style.cursor = 'move';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onMouseDown="return drag($('ADDRS'), (event ? event : window.event));"><img src="pad.gif"></td>
-			<td class="blue" height="22" align="center" onMouseOver="this.mousepoint = 99;this.style.cursor = 'move';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onMouseDown="return drag($('ADDRS'), (event ? event : window.event));"><font color="#FFFFFF"><b>ID</b></font></td>
-			<td class="blue" height="22" align="center" onMouseOver="this.mousepoint = 99;this.style.cursor = 'move';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onMouseDown="return drag($('ADDRS'), (event ? event : window.event));"><font color="#FFFFFF"><b>Alias</b></font></td>
+			<td class="blue" width="22" align="left" onMouseOver="this.mousepoint = 99;this.style.cursor = 'move';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onMouseDown="return drag(_$_('ADDRS'), (event ? event : window.event));"><img src="pad.gif"></td>
+			<td class="blue" height="22" align="center" onMouseOver="this.mousepoint = 99;this.style.cursor = 'move';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onMouseDown="return drag(_$_('ADDRS'), (event ? event : window.event));"><font color="#FFFFFF"><b>ID</b></font></td>
+			<td class="blue" height="22" align="center" onMouseOver="this.mousepoint = 99;this.style.cursor = 'move';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onMouseDown="return drag(_$_('ADDRS'), (event ? event : window.event));"><font color="#FFFFFF"><b>Alias</b></font></td>
 	</tr>
 	</table>
 	</td><tr>
 	<tr><td>
 	<table border="0" width="100%" cellspacing="3" cellpadding="3">
 	<tr align="center">
-		<td align="center"><input type="image" src="ok.gif" onMouseOver="this.src='ok2.gif'" onMouseOut="this.src='ok.gif'" onClick="do_add_user_to_group();$('ADDRS').style.display='none';"></td>
-		<td align="center"><input type="image" src="cancel.gif" onMouseOver="this.src='cancel2.gif'" onMouseOut="this.src='cancel.gif'" onClick="$('ADDRS').style.display='none'"></td>
+		<td align="center"><input type="image" src="ok.gif" onMouseOver="this.src='ok2.gif'" onMouseOut="this.src='ok.gif'" onClick="do_add_user_to_group();_$_('ADDRS').style.display='none';"></td>
+		<td align="center"><input type="image" src="cancel.gif" onMouseOver="this.src='cancel2.gif'" onMouseOut="this.src='cancel.gif'" onClick="_$_('ADDRS').style.display='none'"></td>
 	</tr>
 	</table>				
 	</td></tr>

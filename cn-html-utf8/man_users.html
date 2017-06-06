@@ -37,15 +37,15 @@
 							var varItem = new Option(levelList.item(i).getAttribute("name"), levelList.item(i).getAttribute("lid"));
 							if(levelList.item(i).getAttribute("default") == "true")
 							{
-								$('NEW_USER_DIV').setAttribute("defaultlevel", levelList.item(i).getAttribute("lid"));
+								_$_('NEW_USER_DIV').setAttribute("defaultlevel", levelList.item(i).getAttribute("lid"));
 								varItem.selected = true;
 							}
 					        selobj.options.add(varItem);
 					    }
 					}
 
-					$("STATUS").innerHTML = "";
-					$("STATUS").style.display = "none";
+					_$_("STATUS").innerHTML = "";
+					_$_("STATUS").style.display = "none";
 				}
 			}
 		}
@@ -53,22 +53,22 @@
 	
 	function show_edituser_div(username, obj)
 	{
-		if($('EDIT_USER_DIV').getAttribute("loaded") != "true")
+		if(_$_('EDIT_USER_DIV').getAttribute("loaded") != "true")
 		{
-			load_levels_to_option($('EDIT_LEVEL'));
-			$('EDIT_USER_DIV').setAttribute("loaded", "true")
+			load_levels_to_option(_$_('EDIT_LEVEL'));
+			_$_('EDIT_USER_DIV').setAttribute("loaded", "true")
 		}
 
-		$('NEW_USER_DIV').style.display='none';
+		_$_('NEW_USER_DIV').style.display='none';
 		
-		$('EDIT_USERNAME').value = obj.getAttribute("username");
-		$('EDIT_ALIAS').value = obj.getAttribute("alias");
+		_$_('EDIT_USERNAME').value = obj.getAttribute("username");
+		_$_('EDIT_ALIAS').value = obj.getAttribute("alias");
 		
-		for (var i = 0; i < $('EDIT_LEVEL').options.length; i++) 
+		for (var i = 0; i < _$_('EDIT_LEVEL').options.length; i++) 
 		{
-			if ($('EDIT_LEVEL').options[i].value == obj.getAttribute("level"))
+			if (_$_('EDIT_LEVEL').options[i].value == obj.getAttribute("level"))
 			{
-				$('EDIT_LEVEL').options[i].selected = true;            
+				_$_('EDIT_LEVEL').options[i].selected = true;            
             	break;        
         	}        
 
@@ -76,72 +76,72 @@
 
 		if(obj.getAttribute("type") == "Group" || obj.getAttribute("type") == "group")
 		{
-			$('EDIT_LEVEL').disabled = true;
+			_$_('EDIT_LEVEL').disabled = true;
 		}
 		else
 		{
-			$('EDIT_LEVEL').disabled = false;
+			_$_('EDIT_LEVEL').disabled = false;
 		}
 		
-		$('EDIT_USER_STATUS').checked = (obj.getAttribute("status") == "Active") ? false : true;
+		_$_('EDIT_USER_STATUS').checked = (obj.getAttribute("status") == "Active") ? false : true;
 									
 		
 		Pos = GetObjPos(obj); 
 											
-		$('NEW_USER_DIV').style.display= 'none';
+		_$_('NEW_USER_DIV').style.display= 'none';
 		
-		$('EDIT_USER_DIV').style.left = Pos.x - 1;
-		$('EDIT_USER_DIV').style.top = Pos.y + Pos.h + 1;
+		_$_('EDIT_USER_DIV').style.left = Pos.x - 1;
+		_$_('EDIT_USER_DIV').style.top = Pos.y + Pos.h + 1;
 		
-		$('EDIT_USER_DIV').style.display = "block";
+		_$_('EDIT_USER_DIV').style.display = "block";
 
-		$('EDIT_USER_DIV').style.height= 300;
-		$('EDIT_USER_DIV').style.width = 300;
+		_$_('EDIT_USER_DIV').style.height= "auto";
+		_$_('EDIT_USER_DIV').style.width = "auto";
 
-		$('EDIT_USER_DIV').style.height = $('EDIT_USER_SIZE').offsetHeight + 2;
-		$('EDIT_USER_DIV').style.width = $('EDIT_USER_SIZE').offsetWidth + 2;
+		_$_('EDIT_USER_DIV').style.height = _$_('EDIT_USER_SIZE').offsetHeight;
+		_$_('EDIT_USER_DIV').style.width = _$_('EDIT_USER_SIZE').offsetWidth;
 		
-		$('EDIT_USER_DIV').setAttribute("username", username);
+		_$_('EDIT_USER_DIV').setAttribute("username", username);
 	}
 
 	function show_newuser_div()
 	{
 		document.getElementsByName('NEW_TYPE')[0].checked = true;
 
-		$('NEW_USERNAME').value = "";
+		_$_('NEW_USERNAME').value = "";
 		
-		$('NEW_USERPWD').disabled = false;
-		$('NEW_USERPWD2').disabled = false;
+		_$_('NEW_USERPWD').disabled = false;
+		_$_('NEW_USERPWD2').disabled = false;
 
-		$('NEW_LEVEL').disabled = false;
+		_$_('NEW_LEVEL').disabled = false;
 
-		$('NEW_USERPWD').value = "";
-		$('NEW_USERPWD2').value = "";
+		_$_('NEW_USERPWD').value = "";
+		_$_('NEW_USERPWD2').value = "";
 
-		$('NEW_ALIAS').value = "";
+		_$_('NEW_ALIAS').value = "";
 	
-		if($('NEW_USER_DIV').getAttribute("loaded") != "true")
+		if(_$_('NEW_USER_DIV').getAttribute("loaded") != "true")
 		{
-			load_levels_to_option($('NEW_LEVEL'));
-			$('NEW_USER_DIV').setAttribute("loaded", "true")
+			load_levels_to_option(_$_('NEW_LEVEL'));
+			_$_('NEW_USER_DIV').setAttribute("loaded", "true")
 		}
 
-		$('NEW_LEVEL').value = $('NEW_USER_DIV').getAttribute("defaultlevel");
+		_$_('NEW_LEVEL').value = _$_('NEW_USER_DIV').getAttribute("defaultlevel");
 		
-		$('EDIT_USER_DIV').style.display='none';
+		_$_('EDIT_USER_DIV').style.display='none';
 			
-		var Pos = GetObjPos($('TITLE_BAR'));
+		var Pos = GetObjPos(_$_('TITLE_BAR'));
 											
-		$('NEW_USER_DIV').style.left = Pos.x - 1;
-		$('NEW_USER_DIV').style.top = Pos.y + Pos.h + 1;
+		_$_('NEW_USER_DIV').style.left = Pos.x - 1;
+		_$_('NEW_USER_DIV').style.top = Pos.y + Pos.h + 1;
 		
-		$('NEW_USER_DIV').style.display = "block";
+		_$_('NEW_USER_DIV').style.display = "block";
 
-		$('NEW_USER_DIV').style.height= 300;
-		$('NEW_USER_DIV').style.width = 300;
+		_$_('NEW_USER_DIV').style.height= "auto";
+		_$_('NEW_USER_DIV').style.width = "auto";
 
-		$('NEW_USER_DIV').style.height = $('NEW_USER_SIZE').offsetHeight + 2;
-		$('NEW_USER_DIV').style.width = $('NEW_USER_SIZE').offsetWidth + 2;
+		_$_('NEW_USER_DIV').style.height = _$_('NEW_USER_SIZE').offsetHeight;
+		_$_('NEW_USER_DIV').style.width = _$_('NEW_USER_SIZE').offsetWidth;
 	}
 
 	function do_delete_user(uname)
@@ -160,8 +160,8 @@
 					var errno = responseNode.getAttribute("errno")
 					if(errno == "0" || errno == 0)
 					{ 
-						clear_table_without_header($('USERTBL'));
-						load_users($('USERTBL').getAttribute('orderby'), $('USERTBL').getAttribute($('USERTBL').getAttribute('orderby')));
+						clear_table_without_header(_$_('USERTBL'));
+						load_users(_$_('USERTBL').getAttribute('orderby'), _$_('USERTBL').getAttribute(_$_('USERTBL').getAttribute('orderby')));
 					
 					}
 					else
@@ -221,7 +221,7 @@
 											image = "inactive_member.gif";
 									}
 
-									tr = $('USERTBL').insertRow($('USERTBL').rows.length);
+									tr = _$_('USERTBL').insertRow(_$_('USERTBL').rows.length);
 									if(userList.item(i).getAttribute("type") == "Group")
 									{
 										tr.style.backgroundColor = "#FFFFEE";
@@ -357,15 +357,15 @@
 									}
 								}
 							}
-							$("STATUS").innerHTML = "";
-							$("STATUS").style.display = "none";
+							_$_("STATUS").innerHTML = "";
+							_$_("STATUS").style.display = "none";
 						}
 					}
 				}
 			}
 			else
 			{
-				$("STATUS").innerHTML = "<center><img src=\"waiting.gif\"></center>";
+				_$_("STATUS").innerHTML = "<center><img src=\"waiting.gif\"></center>";
 			}
 		}
 		xmlHttp.open("GET", qUrl , true);
@@ -375,13 +375,13 @@
 	function init()
 	{
 		window.parent.change_tab("user");
-		$('USERTBL').setAttribute('orderby', 'utime');
-		load_users($('USERTBL').getAttribute('orderby'), $('USERTBL').getAttribute($('USERTBL').getAttribute('orderby')));
+		_$_('USERTBL').setAttribute('orderby', 'utime');
+		load_users(_$_('USERTBL').getAttribute('orderby'), _$_('USERTBL').getAttribute(_$_('USERTBL').getAttribute('orderby')));
 	}
 
 	function do_add_user()
 	{
-		if($('NEW_USERPWD').value != $('NEW_USERPWD2').value)
+		if(_$_('NEW_USERPWD').value != _$_('NEW_USERPWD2').value)
 		{
 			alert("两次输入的密码不一样.");
 			return;
@@ -394,11 +394,11 @@
 			strType = "group";
 		
 		var qUrl = "/api/adduser.xml";
-		var strPostData = "NEW_USERNAME=" + encodeURIComponent($('NEW_USERNAME').value);
-		strPostData += "&NEW_USERPWD=" + encodeURIComponent($('NEW_USERPWD').value);
-		strPostData += "&NEW_ALIAS=" + encodeURIComponent($('NEW_ALIAS').value);
+		var strPostData = "NEW_USERNAME=" + encodeURIComponent(_$_('NEW_USERNAME').value);
+		strPostData += "&NEW_USERPWD=" + encodeURIComponent(_$_('NEW_USERPWD').value);
+		strPostData += "&NEW_ALIAS=" + encodeURIComponent(_$_('NEW_ALIAS').value);
 		strPostData += "&NEW_TYPE=" + encodeURIComponent(strType);
-		strPostData += "&NEW_LEVEL=" + encodeURIComponent($('NEW_LEVEL').value);
+		strPostData += "&NEW_LEVEL=" + encodeURIComponent(_$_('NEW_LEVEL').value);
 		var xmlHttp = initxmlhttp();
 	    xmlHttp.onreadystatechange = function()
 		{
@@ -412,8 +412,8 @@
 					var errno = responseNode.getAttribute("errno")
 					if(errno == "0" || errno == 0)
 					{ 
-						clear_table_without_header($('USERTBL'));
-						load_users($('USERTBL').getAttribute('orderby'), $('USERTBL').getAttribute($('USERTBL').getAttribute('orderby')));
+						clear_table_without_header(_$_('USERTBL'));
+						load_users(_$_('USERTBL').getAttribute('orderby'), _$_('USERTBL').getAttribute(_$_('USERTBL').getAttribute('orderby')));
 					
 					}
 					else
@@ -427,19 +427,19 @@
 		xmlHttp.setRequestHeader("Content-Type","text/html;application/x-www-form-urlencoded");
 		xmlHttp.send(strPostData);
 
-		$('NEW_USERNAME').value = "";
-		$('NEW_USERPWD').value = "";
-		$('NEW_USERPWD2').value = "";
-		$('NEW_ALIAS').value = "";
+		_$_('NEW_USERNAME').value = "";
+		_$_('NEW_USERPWD').value = "";
+		_$_('NEW_USERPWD2').value = "";
+		_$_('NEW_ALIAS').value = "";
 	}
 
 	function do_edit_user()
 	{
 		var qUrl = "/api/edituser.xml";
-		var strPostData = "EDIT_USERNAME=" + encodeURIComponent($('EDIT_USERNAME').value);
-		strPostData += "&EDIT_ALIAS=" + encodeURIComponent($('EDIT_ALIAS').value);
-		strPostData += "&EDIT_LEVEL=" + encodeURIComponent($('EDIT_LEVEL').value);
-		strPostData += "&EDIT_USER_STATUS=" + encodeURIComponent($('EDIT_USER_STATUS').checked == true ? "Disable" : "Active");
+		var strPostData = "EDIT_USERNAME=" + encodeURIComponent(_$_('EDIT_USERNAME').value);
+		strPostData += "&EDIT_ALIAS=" + encodeURIComponent(_$_('EDIT_ALIAS').value);
+		strPostData += "&EDIT_LEVEL=" + encodeURIComponent(_$_('EDIT_LEVEL').value);
+		strPostData += "&EDIT_USER_STATUS=" + encodeURIComponent(_$_('EDIT_USER_STATUS').checked == true ? "Disable" : "Active");
 		var xmlHttp = initxmlhttp();
 		
 	    xmlHttp.onreadystatechange = function()
@@ -454,8 +454,8 @@
 					var errno = responseNode.getAttribute("errno")
 					if(errno == "0" || errno == 0)
 					{ 
-						clear_table_without_header($('USERTBL'));
-						load_users($('USERTBL').getAttribute('orderby'), $('USERTBL').getAttribute($('USERTBL').getAttribute('orderby')));
+						clear_table_without_header(_$_('USERTBL'));
+						load_users(_$_('USERTBL').getAttribute('orderby'), _$_('USERTBL').getAttribute(_$_('USERTBL').getAttribute('orderby')));
 					
 					}
 					else
@@ -472,16 +472,16 @@
 
 	function sort_users(orderby)
 	{
-		$('USERTBL').setAttribute('orderby', orderby);
+		_$_('USERTBL').setAttribute('orderby', orderby);
 
-		clear_table_without_header($('USERTBL'));
+		clear_table_without_header(_$_('USERTBL'));
 
-		if($('USERTBL').getAttribute(orderby) == 'true')
-			$('USERTBL').setAttribute(orderby, 'false');
+		if(_$_('USERTBL').getAttribute(orderby) == 'true')
+			_$_('USERTBL').setAttribute(orderby, 'false');
 		else
-			$('USERTBL').setAttribute(orderby, 'true');
+			_$_('USERTBL').setAttribute(orderby, 'true');
 
-		load_users($('USERTBL').getAttribute('orderby'), $('USERTBL').getAttribute($('USERTBL').getAttribute('orderby')))
+		load_users(_$_('USERTBL').getAttribute('orderby'), _$_('USERTBL').getAttribute(_$_('USERTBL').getAttribute('orderby')))
 	}
 
 	function switch_id_type()
@@ -489,27 +489,27 @@
 
 		if(document.getElementsByName('NEW_TYPE')[0].checked)
 		{
-			$('NEW_USERPWD').disabled = false;
-			$('NEW_USERPWD2').disabled = false;
+			_$_('NEW_USERPWD').disabled = false;
+			_$_('NEW_USERPWD2').disabled = false;
 
-			$('NEW_LEVEL').disabled = false;
+			_$_('NEW_LEVEL').disabled = false;
 
-			$('NEW_USERPWD').value = "";
-			$('NEW_USERPWD2').value = "";
+			_$_('NEW_USERPWD').value = "";
+			_$_('NEW_USERPWD2').value = "";
 
 			
 		}
 		else if(document.getElementsByName('NEW_TYPE')[1].checked)
 		{
-			$('NEW_USERPWD').disabled = true;
-			$('NEW_USERPWD2').disabled = true;
+			_$_('NEW_USERPWD').disabled = true;
+			_$_('NEW_USERPWD2').disabled = true;
 
-			$('NEW_LEVEL').disabled = true;
+			_$_('NEW_LEVEL').disabled = true;
 
-			$('NEW_USERPWD').value = randpwd();
-			$('NEW_USERPWD2').value = $('NEW_USERPWD').value;
+			_$_('NEW_USERPWD').value = randpwd();
+			_$_('NEW_USERPWD2').value = _$_('NEW_USERPWD').value;
 
-			$('NEW_LEVEL').value = $('NEW_USER_DIV').getAttribute("defaultlevel");
+			_$_('NEW_LEVEL').value = _$_('NEW_USER_DIV').getAttribute("defaultlevel");
 		}
 	}
 </script>
@@ -523,7 +523,7 @@
 		<table id="NEW_USER_TBL" border="0" bordercolorlight="#C0C0C0" cellspacing="0" cellpadding="1" bordercolordark="#FFFFFF" class="gray" bgcolor="#FFFFFF">
 		<tr height="28">
 			<td colspan="2" class="blue">
-			<table border="0" width="100%" cellpadding="2" cellspacing="2" onMouseOver="this.mousepoint = 99;this.style.cursor = 'move';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onMouseDown="return drag($('NEW_USER_DIV'), (event ? event : window.event));"><tr>
+			<table border="0" width="100%" cellpadding="2" cellspacing="2" onMouseOver="this.mousepoint = 99;this.style.cursor = 'move';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onMouseDown="return drag(_$_('NEW_USER_DIV'), (event ? event : window.event));"><tr>
 				<td align="left" width="16"><img src="append.gif"></td><td align="left"><b><font color="#FFFFFF"><b>创建账号</b></font></b></td>
 			</tr></table>
 			</td>
@@ -556,8 +556,8 @@
 	</td><tr>
 	<tr><td>
 		<table border="0" cellpadding="2" cellspacing="2" width="100%" bgcolor="#EDF1F8"><tr>
-		<td align="center"><input type="image" src="ok.gif" onMouseOver="this.src='ok2.gif'" onMouseOut="this.src='ok.gif'" onClick="do_add_user(); $('NEW_USER_DIV').style.display='none';"></td>
-		<td align="center"><input type="image" src="cancel.gif" onMouseOver="this.src='cancel2.gif'" onMouseOut="this.src='cancel.gif'" onClick="$('NEW_USER_DIV').style.display='none'"></td>
+		<td align="center"><input type="image" src="ok.gif" onMouseOver="this.src='ok2.gif'" onMouseOut="this.src='ok.gif'" onClick="do_add_user(); _$_('NEW_USER_DIV').style.display='none';"></td>
+		<td align="center"><input type="image" src="cancel.gif" onMouseOver="this.src='cancel2.gif'" onMouseOut="this.src='cancel.gif'" onClick="_$_('NEW_USER_DIV').style.display='none'"></td>
 		</tr></table>
 	</td></tr>
 	</table>
@@ -569,7 +569,7 @@
 		<table id="EDIT_USER_TBL" border="0" bordercolorlight="#C0C0C0" cellspacing="0" cellpadding="1" bordercolordark="#FFFFFF" class="gray" bgcolor="#FFFFFF">
 		<tr height="28">
 			<td colspan="2" class="blue">
-			<table border="0" width="100%" cellpadding="2" cellspacing="2" onMouseOver="this.mousepoint = 99;this.style.cursor = 'move';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onMouseDown="return drag($('EDIT_USER_DIV'), (event ? event : window.event));"><tr>
+			<table border="0" width="100%" cellpadding="2" cellspacing="2" onMouseOver="this.mousepoint = 99;this.style.cursor = 'move';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onMouseDown="return drag(_$_('EDIT_USER_DIV'), (event ? event : window.event));"><tr>
 				<td align="left" width="16"><img src="edit.gif"></td><td align="left"><b><font color="#FFFFFF"><b>编辑账号</b></font></b></td>
 			</tr></table>
 			</td>
@@ -595,8 +595,8 @@
 	</td><tr>
 	<tr><td>
 		<table border="0" cellpadding="2" cellspacing="2" width="100%">
-			<td align="center"><input type="image" src="ok.gif" onMouseOver="this.src='ok2.gif'" onMouseOut="this.src='ok.gif'" onClick="do_edit_user(); $('EDIT_USER_DIV').style.display='none';"></td>
-			<td align="center"><input type="image" src="cancel.gif" onMouseOver="this.src='cancel2.gif'" onMouseOut="this.src='cancel.gif'" onClick="$('EDIT_USER_DIV').style.display='none'"></td>
+			<td align="center"><input type="image" src="ok.gif" onMouseOver="this.src='ok2.gif'" onMouseOut="this.src='ok.gif'" onClick="do_edit_user(); _$_('EDIT_USER_DIV').style.display='none';"></td>
+			<td align="center"><input type="image" src="cancel.gif" onMouseOver="this.src='cancel2.gif'" onMouseOut="this.src='cancel.gif'" onClick="_$_('EDIT_USER_DIV').style.display='none'"></td>
 		</table>
 	</td></tr>
 	</table>

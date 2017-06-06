@@ -62,7 +62,7 @@
 	{
 		var qUrl = "/api/saveconfigfile.xml";
 		var strPostData = "CONFIG_NAME=" + encodeURIComponent(cfgname);
-		strPostData += "&" + cfgname + "=" + encodeURIComponent($(cfgname).value);
+		strPostData += "&" + cfgname + "=" + encodeURIComponent(_$_(cfgname).value);
 		var xmlHttp = initxmlhttp();
 	    xmlHttp.onreadystatechange = function()
 		{
@@ -134,7 +134,7 @@
 <table border="0" width="100%" bordercolorlight="#C0C0C0" cellpadding="0" cellspacing="0" bordercolordark="#FFFFFF" class="gray">
 <tr><td class="blue">
 <table border="0" width="100%" bordercolorlight="#C0C0C0" cellpadding="2" cellspacing="0" bordercolordark="#FFFFFF">
-  <tr align="center" valign="middle" height="25" onMouseOver="this.mousepoint = 99;this.style.cursor = 'pointer';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onClick="click_div('GLOBAL_REJECT_LIST',$('GLOBAL_REJECT_LIST_DIV'), $('GLOBAL_REJECT_LIST_BTN'), $('GLOBAL_REJECT_LIST'), $('GLOBAL_REJECT_LIST_STATUS'))">
+  <tr align="center" valign="middle" height="25" onMouseOver="this.mousepoint = 99;this.style.cursor = 'pointer';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onClick="click_div('GLOBAL_REJECT_LIST',_$_('GLOBAL_REJECT_LIST_DIV'), _$_('GLOBAL_REJECT_LIST_BTN'), _$_('GLOBAL_REJECT_LIST'), _$_('GLOBAL_REJECT_LIST_STATUS'))">
     <td width="22"><img src="list.gif"></td>
     <td align="left"><font color="#FFFFFF">Global Reject List</font></td>
     <td align="right" width="20"><img id="GLOBAL_REJECT_LIST_BTN" src="opendiv.gif"></td>
@@ -152,7 +152,7 @@
 
 		<tr>
 			<td class="gray" valign="bottom">
-				<input type="image" src="mansave.gif" onMouseOver="this.src='mansave2.gif'" onMouseOut="this.src='mansave.gif'" onClick="save_config_file('GLOBAL_REJECT_LIST', $('GLOBAL_REJECT_LIST'), $('GLOBAL_REJECT_LIST_STATUS'));" tabindex="0"/>
+				<input type="image" src="mansave.gif" onMouseOver="this.src='mansave2.gif'" onMouseOut="this.src='mansave.gif'" onClick="save_config_file('GLOBAL_REJECT_LIST', _$_('GLOBAL_REJECT_LIST'), _$_('GLOBAL_REJECT_LIST_STATUS'));" tabindex="0"/>
 			</td>
 		</tr>
 	</table>
@@ -161,7 +161,7 @@
 <table border="0" width="100%" bordercolorlight="#C0C0C0" cellpadding="0" cellspacing="0" bordercolordark="#FFFFFF" class="gray">
 <tr><td class="blue">
 <table border="0" width="100%" bordercolorlight="#C0C0C0" cellpadding="2" cellspacing="0" bordercolordark="#FFFFFF">
-  <tr align="center" valign="middle" height="25" onMouseOver="this.mousepoint = 99;this.style.cursor = 'pointer';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onClick="click_div('GLOBAL_PERMIT_LIST',$('GLOBAL_PERMIT_LIST_DIV'), $('GLOBAL_PERMIT_LIST_BTN'), $('GLOBAL_PERMIT_LIST'), $('GLOBAL_PERMIT_LIST_STATUS'))">
+  <tr align="center" valign="middle" height="25" onMouseOver="this.mousepoint = 99;this.style.cursor = 'pointer';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onClick="click_div('GLOBAL_PERMIT_LIST',_$_('GLOBAL_PERMIT_LIST_DIV'), _$_('GLOBAL_PERMIT_LIST_BTN'), _$_('GLOBAL_PERMIT_LIST'), _$_('GLOBAL_PERMIT_LIST_STATUS'))">
     <td width="22"><img src="list.gif"></td>
     <td align="left"><font color="#FFFFFF">Global Permit List</font></td>
     <td align="right" width="20"><img id="GLOBAL_PERMIT_LIST_BTN" src="opendiv.gif"></td>
@@ -179,7 +179,7 @@
 
 		<tr>
 			<td class="gray" valign="bottom">
-				<input type="image" src="mansave.gif" onMouseOver="this.src='mansave2.gif'" onMouseOut="this.src='mansave.gif'" onClick="save_config_file('GLOBAL_PERMIT_LIST', $('GLOBAL_PERMIT_LIST'), $('GLOBAL_PERMIT_LIST_STATUS'));" tabindex="0"/>
+				<input type="image" src="mansave.gif" onMouseOver="this.src='mansave2.gif'" onMouseOut="this.src='mansave.gif'" onClick="save_config_file('GLOBAL_PERMIT_LIST', _$_('GLOBAL_PERMIT_LIST'), _$_('GLOBAL_PERMIT_LIST_STATUS'));" tabindex="0"/>
 			</td>
 		</tr>
 	</table>
@@ -188,7 +188,7 @@
 <table border="0" width="100%" bordercolorlight="#C0C0C0" cellpadding="0" cellspacing="0" bordercolordark="#FFFFFF" class="gray">
 <tr><td class="blue">
 <table border="0" width="100%" bordercolorlight="#C0C0C0" cellpadding="2" cellspacing="0" bordercolordark="#FFFFFF">
-  <tr align="center" valign="middle" height="25" onMouseOver="this.mousepoint = 99;this.style.cursor = 'pointer';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onClick="click_div('DOMAIN_PERMIT_LIST',$('DOMAIN_PERMIT_LIST_DIV'), $('DOMAIN_PERMIT_LIST_BTN'), $('DOMAIN_PERMIT_LIST'), $('DOMAIN_PERMIT_LIST_STATUS'))">
+  <tr align="center" valign="middle" height="25" onMouseOver="this.mousepoint = 99;this.style.cursor = 'pointer';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onClick="click_div('DOMAIN_PERMIT_LIST',_$_('DOMAIN_PERMIT_LIST_DIV'), _$_('DOMAIN_PERMIT_LIST_BTN'), _$_('DOMAIN_PERMIT_LIST'), _$_('DOMAIN_PERMIT_LIST_STATUS'))">
     <td width="22"><img src="list.gif"></td>
     <td align="left"><font color="#FFFFFF">Additional Domain List</font></td>
     <td align="right" width="20"><img id="DOMAIN_PERMIT_LIST_BTN" src="opendiv.gif" ></td>
@@ -206,7 +206,7 @@
 
 		<tr>
 			<td class="gray" valign="bottom">
-				<input type="image" src="mansave.gif" onMouseOver="this.src='mansave2.gif'" onMouseOut="this.src='mansave.gif'" onClick="save_config_file('DOMAIN_PERMIT_LIST', $('DOMAIN_PERMIT_LIST'), $('DOMAIN_PERMIT_LIST_STATUS'));" tabindex="0"/>
+				<input type="image" src="mansave.gif" onMouseOver="this.src='mansave2.gif'" onMouseOut="this.src='mansave.gif'" onClick="save_config_file('DOMAIN_PERMIT_LIST', _$_('DOMAIN_PERMIT_LIST'), _$_('DOMAIN_PERMIT_LIST_STATUS'));" tabindex="0"/>
 			</td>
 		</tr>
 	</table>
@@ -215,7 +215,7 @@
 <table border="0" width="100%" bordercolorlight="#C0C0C0" cellpadding="0" cellspacing="0" bordercolordark="#FFFFFF" class="gray">
 <tr><td class="blue">
 <table border="0" width="100%" bordercolorlight="#C0C0C0" cellpadding="2" cellspacing="0" bordercolordark="#FFFFFF">
-  <tr align="center" valign="middle" height="25" onMouseOver="this.mousepoint = 99;this.style.cursor = 'pointer';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onClick="click_div('WEBADMIN_PERMIT_LIST',$('WEBADMIN_PERMIT_LIST_DIV'), $('WEBADMIN_PERMIT_LIST_BTN'), $('WEBADMIN_PERMIT_LIST'), $('WEBADMIN_PERMIT_LIST_STATUS'))">
+  <tr align="center" valign="middle" height="25" onMouseOver="this.mousepoint = 99;this.style.cursor = 'pointer';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onClick="click_div('WEBADMIN_PERMIT_LIST',_$_('WEBADMIN_PERMIT_LIST_DIV'), _$_('WEBADMIN_PERMIT_LIST_BTN'), _$_('WEBADMIN_PERMIT_LIST'), _$_('WEBADMIN_PERMIT_LIST_STATUS'))">
     <td width="22"><img src="list.gif"></td>
     <td align="left"><font color="#FFFFFF">Web Management Permit List</font></td>
     <td align="right" width="20"><img id="WEBADMIN_PERMIT_LIST_BTN" src="opendiv.gif" ></td>
@@ -233,7 +233,7 @@
 
 		<tr>
 			<td class="gray" valign="bottom">
-				<input type="image" src="mansave.gif" onMouseOver="this.src='mansave2.gif'" onMouseOut="this.src='mansave.gif'" onClick="save_config_file('WEBADMIN_PERMIT_LIST', $('WEBADMIN_PERMIT_LIST'), $('WEBADMIN_PERMIT_LIST_STATUS'));" tabindex="0"/>
+				<input type="image" src="mansave.gif" onMouseOver="this.src='mansave2.gif'" onMouseOut="this.src='mansave.gif'" onClick="save_config_file('WEBADMIN_PERMIT_LIST', _$_('WEBADMIN_PERMIT_LIST'), _$_('WEBADMIN_PERMIT_LIST_STATUS'));" tabindex="0"/>
 			</td>
 		</tr>
 	</table>

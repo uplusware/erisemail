@@ -55,7 +55,7 @@
 					var errno = responseNode.getAttribute("errno")
 					if(errno == "0" || errno == 0)
 					{
-						clear_table(window.parent.leftmenuframe.$('DIRTBL'));
+						clear_table(window.parent.leftmenuframe._$_('DIRTBL'));
 						window.parent.leftmenuframe.load_dirs(-1, '', 'common', -1, 0);
 					}
 					else
@@ -95,7 +95,7 @@
 							}
 						}
 							
-						$('LOGIN_USERNAME').innerHTML = "<b>" + strTmp + "</b>'s Folders";
+						_$_('LOGIN_USERNAME').innerHTML = "<b>" + strTmp + "</b>'s Folders";
 					}
 				}
 			}
@@ -113,7 +113,7 @@
 
 	function refresh_dir()
 	{
-		clear_table(window.parent.leftmenuframe.$('DIRTBL'));
+		clear_table(window.parent.leftmenuframe._$_('DIRTBL'));
 		window.parent.leftmenuframe.load_dirs(-1, '', 'common', -1, 0);
 	}
 
@@ -205,9 +205,9 @@
 		}
 		if(c <= 1)
 		{
-			need_reload($('DIRS_DIV3'));
-			create_label($('NEW_LABEL').value, strDirs);
-			$('NEW_LABEL').value = "";
+			need_reload(_$_('DIRS_DIV3'));
+			create_label(_$_('NEW_LABEL').value, strDirs);
+			_$_('NEW_LABEL').value = "";
 		}
 		else
 		{
@@ -217,19 +217,19 @@
 	
 	function show_copy_mail_dir_div()
 	{
-		$('DIRS_DIV2').style.display = "none";
-		$('DIRS_DIV3').style.display = "none";
-		var Pos = GetObjPos($('COPYMAIL'))
-		show_dirs($('DIRS_DIV1'), $('DIRTBL1'), Pos.x, Pos.y + Pos.h + 2, "seldir1");
+		_$_('DIRS_DIV2').style.display = "none";
+		_$_('DIRS_DIV3').style.display = "none";
+		var Pos = GetObjPos(_$_('COPYMAIL'))
+		show_dirs(_$_('DIRS_DIV1'), _$_('DIRTBL1'), Pos.x, Pos.y + Pos.h + 2, "seldir1");
 	}
 
 	function show_move_mail_dir_div()
 	{
-		$('DIRS_DIV1').style.display = "none";
-		$('DIRS_DIV3').style.display = "none";
+		_$_('DIRS_DIV1').style.display = "none";
+		_$_('DIRS_DIV3').style.display = "none";
 		
-		var Pos = GetObjPos($('MOVEMAIL'))
-		show_dirs($('DIRS_DIV2'), $('DIRTBL2'), Pos.x, Pos.y + Pos.h + 2, "seldir2");
+		var Pos = GetObjPos(_$_('MOVEMAIL'))
+		show_dirs(_$_('DIRS_DIV2'), _$_('DIRTBL2'), Pos.x, Pos.y + Pos.h + 2, "seldir2");
 	}
 
 	function newmail()
@@ -239,10 +239,10 @@
 	
 	function show_add_dir_div()
 	{
-		$('DIRS_DIV1').style.display = "none";
-		$('DIRS_DIV2').style.display = "none";
-		var Pos = GetObjPos($('NEW_LABEL'))
-		show_dirs($('DIRS_DIV3'), $('DIRTBL3'), Pos.x, Pos.y + Pos.h + 2, "seldir3");
+		_$_('DIRS_DIV1').style.display = "none";
+		_$_('DIRS_DIV2').style.display = "none";
+		var Pos = GetObjPos(_$_('NEW_LABEL'))
+		show_dirs(_$_('DIRS_DIV3'), _$_('DIRTBL3'), Pos.x, Pos.y + Pos.h + 2, "seldir3");
 	}
 
 	function show_frame1_view(url)
@@ -269,8 +269,8 @@
     <tr><td bgcolor="#EDF1F8" height="32">
     	<table width="100%" border="0" cellspacing="1" cellpadding="1">
           <tr>
-            <td align="center" valign="middle"><input type="image" src="ok.gif" onMouseOver="this.src='ok2.gif'" onMouseOut="this.src='ok.gif'" onClick="ok_copy_mail();$('DIRS_DIV1').style.display = 'none';"></td>
-            <td align="center" valign="middle"><input type="image" src="cancel.gif" onMouseOver="this.src='cancel2.gif'" onMouseOut="this.src='cancel.gif'" onClick="$('DIRS_DIV1').style.display = 'none';"></td>
+            <td align="center" valign="middle"><input type="image" src="ok.gif" onMouseOver="this.src='ok2.gif'" onMouseOut="this.src='ok.gif'" onClick="ok_copy_mail();_$_('DIRS_DIV1').style.display = 'none';"></td>
+            <td align="center" valign="middle"><input type="image" src="cancel.gif" onMouseOver="this.src='cancel2.gif'" onMouseOut="this.src='cancel.gif'" onClick="_$_('DIRS_DIV1').style.display = 'none';"></td>
           </tr>
         </table>
      </td></tr>
@@ -286,8 +286,8 @@
     <tr><td bgcolor="#EDF1F8" height="32">
     	 <table width="100%" border="0" cellspacing="1" cellpadding="1">
           <tr>
-            <td align="center" valign="middle"><input type="image" src="ok.gif" onMouseOver="this.src='ok2.gif'" onMouseOut="this.src='ok.gif'" onClick="ok_move_mail();$('DIRS_DIV2').style.display = 'none';"></td>
-            <td align="center" valign="middle"><input type="image" src="cancel.gif" onMouseOver="this.src='cancel2.gif'" onMouseOut="this.src='cancel.gif'" onClick="$('DIRS_DIV2').style.display = 'none';"></td>
+            <td align="center" valign="middle"><input type="image" src="ok.gif" onMouseOver="this.src='ok2.gif'" onMouseOut="this.src='ok.gif'" onClick="ok_move_mail();_$_('DIRS_DIV2').style.display = 'none';"></td>
+            <td align="center" valign="middle"><input type="image" src="cancel.gif" onMouseOver="this.src='cancel2.gif'" onMouseOut="this.src='cancel.gif'" onClick="_$_('DIRS_DIV2').style.display = 'none';"></td>
           </tr>
         </table>
     </td></tr>
@@ -303,8 +303,8 @@
     <tr><td bgcolor="#EDF1F8" height="32">
     	 <table width="100%" border="0" cellspacing="1" cellpadding="1">
           <tr>
-            <td align="center" valign="middle"><input type="image" src="ok.gif" onMouseOver="this.src='ok2.gif'" onMouseOut="this.src='ok.gif'" onClick="ok_create_label();$('DIRS_DIV3').style.display = 'none';"></td>
-            <td align="center" valign="middle"><input type="image" src="cancel.gif" onMouseOver="this.src='cancel2.gif'" onMouseOut="this.src='cancel.gif'" onClick="$('DIRS_DIV3').style.display = 'none';"></td>
+            <td align="center" valign="middle"><input type="image" src="ok.gif" onMouseOver="this.src='ok2.gif'" onMouseOut="this.src='ok.gif'" onClick="ok_create_label();_$_('DIRS_DIV3').style.display = 'none';"></td>
+            <td align="center" valign="middle"><input type="image" src="cancel.gif" onMouseOver="this.src='cancel2.gif'" onMouseOut="this.src='cancel.gif'" onClick="_$_('DIRS_DIV3').style.display = 'none';"></td>
           </tr>
         </table>
     </td></tr>
