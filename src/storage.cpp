@@ -246,7 +246,29 @@ int MailStorage::Install(const char* database)
 		show_error(&m_hMySQL, sqlcmd, "Install: ", TRUE);
 		return -1;
 	}
-		
+	
+    //Create index dir table
+	sprintf(sqlcmd, "CREATE INDEX dirtbl3a ON %s.dirtbl (downer, dname, dparent)", database);
+	if( Query(sqlcmd, strlen(sqlcmd)) != 0)
+	{
+		show_error(&m_hMySQL, sqlcmd, "Install: ", TRUE);
+		return -1;
+	}
+    
+    sprintf(sqlcmd, "CREATE INDEX dirtbl2a ON %s.dirtbl (downer, did)", database);
+	if( Query(sqlcmd, strlen(sqlcmd)) != 0)
+	{
+		show_error(&m_hMySQL, sqlcmd, "Install: ", TRUE);
+		return -1;
+	}
+    
+    sprintf(sqlcmd, "CREATE INDEX dirtbl1a ON %s.dirtbl (downer)", database);
+	if( Query(sqlcmd, strlen(sqlcmd)) != 0)
+	{
+		show_error(&m_hMySQL, sqlcmd, "Install: ", TRUE);
+		return -1;
+	}
+    
 	//Crate User table
 	sprintf(sqlcmd,
 		"CREATE TABLE IF NOT EXISTS `%s`.`usertbl` ("
@@ -267,7 +289,28 @@ int MailStorage::Install(const char* database)
 		show_error(&m_hMySQL, sqlcmd, "Install: ", TRUE);
 		return -1;
 	}
-			
+	
+    sprintf(sqlcmd, "CREATE INDEX usertbl2a ON %s.usertbl (ustatus, utype)", database);
+	if( Query(sqlcmd, strlen(sqlcmd)) != 0)
+	{
+		show_error(&m_hMySQL, sqlcmd, "Install: ", TRUE);
+		return -1;
+	}
+    
+    sprintf(sqlcmd, "CREATE INDEX usertbl2b ON %s.usertbl (uname, utype)", database);
+	if( Query(sqlcmd, strlen(sqlcmd)) != 0)
+	{
+		show_error(&m_hMySQL, sqlcmd, "Install: ", TRUE);
+		return -1;
+	}
+    
+    sprintf(sqlcmd, "CREATE INDEX usertbl1a ON %s.usertbl (uname)", database);
+	if( Query(sqlcmd, strlen(sqlcmd)) != 0)
+	{
+		show_error(&m_hMySQL, sqlcmd, "Install: ", TRUE);
+		return -1;
+	}
+    
 	//Create group table
 	sprintf(sqlcmd,
 		"CREATE TABLE IF NOT EXISTS `%s`.`grouptbl` ("
