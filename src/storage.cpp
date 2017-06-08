@@ -228,7 +228,14 @@ int MailStorage::Install(const char* database)
 		show_error(&m_hMySQL, sqlcmd, "Install: ", TRUE);
 		return -1;
 	}
-
+    
+    sprintf(sqlcmd, "CREATE INDEX leveltbl1a ON %s.leveltbl (ldefault)", database);
+	if( Query(sqlcmd, strlen(sqlcmd)) != 0)
+	{
+		show_error(&m_hMySQL, sqlcmd, "Install: ", TRUE);
+		return -1;
+	}
+    
 	//Create dir table
 	sprintf(sqlcmd, 
 		"CREATE TABLE IF NOT EXISTS `%s`.`dirtbl` ("
@@ -325,7 +332,14 @@ int MailStorage::Install(const char* database)
 		show_error(&m_hMySQL, sqlcmd, "Install: ", TRUE);
 		return -1;
 	}
-			
+    
+    sprintf(sqlcmd, "CREATE INDEX grouptbl1a ON %s.grouptbl (groupname)", database);
+	if( Query(sqlcmd, strlen(sqlcmd)) != 0)
+	{
+		show_error(&m_hMySQL, sqlcmd, "Install: ", TRUE);
+		return -1;
+	}
+    
 	//Create mail table
 	sprintf(sqlcmd, 
 		"CREATE TABLE IF NOT EXISTS `%s`.`mailtbl` ("
