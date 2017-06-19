@@ -1,4 +1,4 @@
-# eRisemail - Free email server for Linux
+# eRisemail - Scalable distributed mail server based on the Linux and MySQL/MariaDB 
 * Support SMTP, POP3, IMAP4, HTTP and SSL/TLS
 * Support WebMail and WebAdmin based on built-in web server
 * Support multiple authentication methods(CRAM-MD5 DIGEST-MD5 APOP and GSSAPI/Kerberos)
