@@ -7,6 +7,7 @@
 * Support iCalendar and Mozilla Thunderbird Lightning Plugin
 * Support the mail with huge size attachment( Maximum size is 2G )
 * Support Apache SpamAssassin and [How to use Anti-spam Engine in eRisemail](https://github.com/uplusware/erisemail/wiki/How-to-use-Anti-spam-Engine-in-eRisemail)
+* Support IM feature based on XMPP
 * Recommend Ubuntu or CentOS as host OS [Installation](https://github.com/uplusware/erisemail/wiki/Installation)
 
 ![erisemail](https://raw.githubusercontent.com/uplusware/erisemail/master/doc/erisemail.gif)
