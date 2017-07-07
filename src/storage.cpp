@@ -587,7 +587,9 @@ int MailStorage::CheckLogin(const char* username, const char* password)
                 
                 m_userpwd_cache_update_time = time(NULL);
                 m_userpwd_cache_updated = FALSE;
-                pthread_rwlock_unlock(&m_userpwd_cache_lock);
+                pthread_rwlock_unlock(&m_userpwd_cache_lock); //release write
+                pthread_rwlock_rdlock(&m_userpwd_cache_lock); //acquire read
+        
             }
             else
             {
