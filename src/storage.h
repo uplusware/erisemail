@@ -330,6 +330,10 @@ public:
     
     int GetMTAIndex(const char* mta, unsigned int live_sec, unsigned int& mta_index, unsigned int& mta_count);
     
+    int ListMyMessage(const char* to, string & message_text, vector<int>& xids);
+    int RemoveMyMessage(int xid);
+    int InsertMyMessage(const char* xfrom, const char* xto, const char* xmessage);
+    
 protected:
 	MYSQL m_hMySQL;
     memcached_st * m_memcached;

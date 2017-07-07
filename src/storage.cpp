@@ -412,6 +412,22 @@ int MailStorage::Install(const char* database)
 		return -1;
 	}
     
+    //Create xmpp table
+	sprintf(sqlcmd,
+		"CREATE TABLE IF NOT EXISTS `%s`.`xmpptbl` ("
+		"`xid` INT UNSIGNED NOT NULL AUTO_INCREMENT ,"
+		"`xfrom` VARCHAR( 256 ) NOT NULL ,"
+		"`xto` VARCHAR( 256 ) NOT NULL ,"
+		"`xmessage` LONGTEXT NOT NULL,"
+        "`xtime` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,"
+		"PRIMARY KEY ( `xid` ) ) ENGINE = MyISAM",
+		database);
+	if( Query(sqlcmd, strlen(sqlcmd)) != 0)
+	{
+		show_error(&m_hMySQL, sqlcmd, "Install: ", TRUE);
+		return -1;
+	}
+    
     unsigned int lid;
 	if(AddLevel("default", "The system's default level", 5000*1024, 500000*1024, eaFalse, 5000*1024, 5000*1024, lid) == 0)
 	{
@@ -572,7 +588,6 @@ int MailStorage::CheckLogin(const char* username, const char* password)
                 m_userpwd_cache_update_time = time(NULL);
                 m_userpwd_cache_updated = FALSE;
                 pthread_rwlock_unlock(&m_userpwd_cache_lock);
-                return 0;
             }
             else
             {
@@ -4760,4 +4775,102 @@ int MailStorage::GetMTAIndex(const char* mta, unsigned int live_sec, unsigned in
 		}
     }
     return 0;
+}
+
+int MailStorage::ListMyMessage(const char* to, string & message_text, vector<int>& xids)
+{    
+	char sqlcmd[1024];
+	sprintf(sqlcmd, "SELECT xid, xmessage FROM xmpptbl WHERE xto = '%s' OR xto like '%s/%%' order by xtime", to, to);
+	if( Query(sqlcmd, strlen(sqlcmd)) == 0)
+	{
+		MYSQL_RES *query_result;
+		MYSQL_ROW row;
+		
+		query_result = mysql_store_result(&m_hMySQL);
+		
+		if(query_result)
+		{
+			while((row = mysql_fetch_row(query_result)))
+			{
+                xids.push_back(atoi(row[0]));
+                
+                message_text += row[1];
+                message_text += "\r\n";
+				
+			}
+			mysql_free_result(query_result);
+            
+			return 0;
+		}
+		else
+		{
+			return -1;
+		}
+	}
+	else
+	{
+	    show_error(&m_hMySQL, sqlcmd);
+		return -1;
+	}
+}
+
+int MailStorage::RemoveMyMessage(int xid)
+{
+	char sqlcmd[1024];
+	sprintf(sqlcmd, "DELETE FROM xmpptbl WHERE xid=%d", xid);
+	
+	if( Query(sqlcmd, strlen(sqlcmd)) == 0)
+	{
+		MYSQL_RES *query_result;		
+		query_result = mysql_store_result(&m_hMySQL);
+		
+		if(query_result)
+		{
+			mysql_free_result(query_result);
+		}
+		else
+		{
+			return -1;
+		}
+
+		return 0;
+	}
+	else
+	{
+	    
+		show_error(&m_hMySQL, sqlcmd);
+		return -1;
+	}
+}
+
+int MailStorage::InsertMyMessage(const char* xfrom, const char* xto, const char* xmessage)
+{
+	string strSafetyFrom = xfrom;
+	SqlSafetyString(strSafetyFrom);
+	
+	string strSafetyTo = xto;
+	SqlSafetyString(strSafetyTo);
+
+	string strSafetyMessage = xmessage;
+	SqlSafetyString(strSafetyMessage);
+	
+	char* sqlcmd = (char*)malloc(strSafetyMessage.length() + strSafetyTo.length() + strSafetyFrom.length() + 1024);
+	if(sqlcmd)
+	{
+		sprintf(sqlcmd, "INSERT INTO xmpptbl(xfrom, xto, xmessage) VALUES('%s','%s', '%s')",
+			strSafetyFrom.c_str(), strSafetyTo.c_str(), strSafetyMessage.c_str());
+		if( Query(sqlcmd, strlen(sqlcmd)) == 0)
+		{
+			free(sqlcmd);
+			return 0;
+		}
+		else
+		{
+			free(sqlcmd);
+			show_error(&m_hMySQL, sqlcmd);
+			return -1;
+		}
+	}
+	else
+		return -1;
 }

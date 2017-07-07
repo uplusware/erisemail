@@ -27,6 +27,7 @@
 #define MTA_SERVICE_NAME        "MTA"
 #define MDA_SERVICE_NAME        "MDA"
 #define WATCHER_SERVICE_NAME    "WATCHER"
+#define XMPP_SERVICE_NAME       "XMPP"
 
 void push_reject_list(const char* service_name, const char* ip);
 
@@ -45,6 +46,7 @@ class Service
 {
 public:
 	Service();
+    Service(const char* service_name);
 	virtual ~Service();
 	int Run(int fd, vector<service_param_t> & server_params);
 	void Stop();
@@ -73,7 +75,7 @@ class Watcher
 public:
 	Watcher();
 	virtual ~Watcher();
-	int Run(int fd, vector<service_param_t> & server_params);
+	int Run(int fd, vector<service_param_t> & server_params, vector<service_param_t> & xmpp_params);
 	void Stop();
 protected:
 	mqd_t m_watcher_qid;

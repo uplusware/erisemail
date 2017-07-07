@@ -220,6 +220,11 @@ public:
 		return rlen;
 	}
 	
+    int drecv_timed(char* pbuf, int blen)
+    {
+        return RecvTimed(sockfd, pbuf, blen);
+    }
+    
 	int lrecv(char* pbuf, int blen)
 	{
 		int taketime = 0;
@@ -404,6 +409,11 @@ public:
 		return rlen;
 	}
 	
+    int drecv_timed(char* pbuf, int blen)
+    {
+        return SSLReadTimed(sockfd, sslhd, pbuf, blen);
+    }
+    
 	int lrecv(char* pbuf, int blen)
 	{
 		int taketime = 0;
@@ -620,6 +630,9 @@ public:
 	static BOOL		m_enablehttps;
 	static unsigned short	m_httpsport;
 	
+    static BOOL		m_enablexmpp;
+	static unsigned short	m_xmppport;
+    
 	static BOOL 	m_enableclientcacheck;
 	static string	m_ca_crt_root;
 	static string	m_ca_crt_server;

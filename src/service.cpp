@@ -183,8 +183,16 @@ void push_reject_list(const char* service_name, const char* ip)
 
 Service::Service()
 {
-	
 	m_service_name = MDA_SERVICE_NAME;
+    
+	m_cache = NULL;
+	m_memcached = NULL;
+}
+
+Service::Service(const char* service_name)
+{
+	
+	m_service_name = service_name;
     
 	m_cache = NULL;
 	m_memcached = NULL;
@@ -198,6 +206,7 @@ Service::~Service()
 
 void Service::Stop()
 {
+    
 	string strqueue = ERISEMAIL_POSIX_PREFIX;
 	strqueue += m_service_name;
 	strqueue += ERISEMAIL_POSIX_QUEUE_SUFFIX;
@@ -205,7 +214,7 @@ void Service::Stop()
 	string strsem = ERISEMAIL_POSIX_PREFIX;
 	strsem += m_service_name;
 	strsem += ERISEMAIL_POSIX_SEMAPHORE_SUFFIX;
-	
+	    
 	m_service_qid = mq_open(strqueue.c_str(), O_RDWR);
 	m_service_sid = sem_open(strsem.c_str(), O_RDWR);
 
@@ -227,7 +236,7 @@ void Service::Stop()
 	if(m_memcached)
 	  memcached_free(m_memcached);
 	m_memcached = NULL;
-	printf("Stop %s Service OK\n", MDA_SERVICE_NAME);
+	printf("Stop %s Service OK\n", m_service_name.c_str());
 }
 
 void Service::ReloadConfig()
@@ -257,7 +266,7 @@ void Service::ReloadConfig()
 	if(m_service_sid != SEM_FAILED)
 		sem_close(m_service_sid);
 
-	printf("Reload %s Service OK\n", MDA_SERVICE_NAME);
+	printf("Reload %s Service OK\n", m_service_name.c_str());
 }
 
 void Service::ReloadList()
@@ -305,7 +314,7 @@ int Service::create_server_service(CUplusTrace& uTrace, const char* hostip, unsi
     
     char sz_port[32];
     sprintf(sz_port, "%u", hostport);
-
+    
     int s = getaddrinfo((hostip && hostip[0] != '\0') ? hostip : NULL, sz_port, &hints, &server_addr);
     if (s != 0)
     {
@@ -469,7 +478,7 @@ int Service::create_client_session(CUplusTrace& uTrace, int& clt_sockfd, Service
 }
 
 int Service::Run(int fd, vector<service_param_t> & server_params)
-{
+{    
     CUplusTrace uTrace(ERISEMAIL_SERVICE_LOGNAME, ERISEMAIL_SERVICE_LCKNAME);
     memcached_server_st * memcached_servers = NULL;
 	memcached_return rc;
@@ -502,7 +511,7 @@ int Service::Run(int fd, vector<service_param_t> & server_params)
 	string strsem = ERISEMAIL_POSIX_PREFIX;
 	strsem += m_service_name;
 	strsem += ERISEMAIL_POSIX_SEMAPHORE_SUFFIX;
-	
+    
 	mq_attr attr;
 	attr.mq_maxmsg = 8;
 	attr.mq_msgsize = 1448; 
@@ -757,7 +766,7 @@ void Watcher::Stop()
 	printf("Stop Service Watcher OK\n");
 }
 
-int Watcher::Run(int fd, vector<service_param_t> & server_params)
+int Watcher::Run(int fd, vector<service_param_t> & server_params, vector<service_param_t> & xmpp_params)
 {	
 	string strqueue = ERISEMAIL_POSIX_PREFIX;
 	strqueue += m_watcher_name;
@@ -876,9 +885,7 @@ int Watcher::Run(int fd, vector<service_param_t> & server_params)
                     close(pfd[0]);
                 }                  
             }
-            
-            
-            
+
             sprintf(szFlag, "/tmp/erisemail/%s.pid", MTA_SERVICE_NAME);
             if(!try_single_on(szFlag) && CMailBase::m_enablemta)   
             {
@@ -911,6 +918,44 @@ int Watcher::Run(int fd, vector<service_param_t> & server_params)
                     }
                     close(pfd[0]);
                 } 
+            }
+            
+            sprintf(szFlag, "/tmp/erisemail/%s.pid", XMPP_SERVICE_NAME);
+            if(!try_single_on(szFlag) && xmpp_params.size() > 0)   
+            {
+                printf("%s Service stopped.\n", XMPP_SERVICE_NAME);
+                pipe(pfd);
+                int xmpp_pid = fork();
+                if(xmpp_pid == 0)
+                {                      
+                    close(pfd[0]);
+                    if(check_single_on(szFlag)) 
+                    {
+                        printf("%s Service is aready runing.\n", XMPP_SERVICE_NAME);   
+                        exit(-1);
+                    }
+                    Service xmpp_svr(XMPP_SERVICE_NAME);
+                    if(check_single_on(szFlag)) 
+                    {
+                        printf("%s Service is aready runing.\n", XMPP_SERVICE_NAME);   
+                        exit(-1);
+                    }
+                    xmpp_svr.Run(pfd[1], xmpp_params);
+                    exit(0);
+                }
+                else if(xmpp_pid > 0)
+                {
+                    unsigned int result;
+                    close(pfd[1]);
+                    read(pfd[0], &result, sizeof(unsigned int));
+                    if(result == 0)
+                        printf("Start %s Service OK \t\t\t[%u]\n", XMPP_SERVICE_NAME, xmpp_pid);
+                    else
+                    {
+                        printf("Start %s Service Failed. \t\t\t[Error]\n", XMPP_SERVICE_NAME);
+                    }
+                    close(pfd[0]);
+                }                  
             }
 		}
 	}

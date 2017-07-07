@@ -56,7 +56,10 @@ unsigned short	CMailBase::m_httpport = 8081;
 
 BOOL		CMailBase::m_enablehttps = TRUE;
 unsigned short	CMailBase::m_httpsport = 8082;
-	
+
+BOOL		CMailBase::m_enablexmpp = TRUE;
+unsigned short	CMailBase::m_xmppport = 5222;
+
 BOOL   CMailBase::m_enableclientcacheck = FALSE;
 string CMailBase::m_ca_crt_root = "/var/erisemail/cert/ca.crt";
 string CMailBase::m_ca_crt_server = "/var/erisemail/cert/server.crt";
@@ -344,6 +347,20 @@ BOOL CMailBase::LoadConfig()
 				strcut(strline.c_str(), "=", NULL, httpsport );
 				strtrim(httpsport);
 				m_httpsport = atoi(httpsport.c_str());
+			}
+            else if(strncasecmp(strline.c_str(), "XMPPEnable", sizeof("XMPPEnable") - 1) == 0)
+			{
+				string XMPPEnable;
+				strcut(strline.c_str(), "=", NULL, XMPPEnable );
+				strtrim(XMPPEnable);
+				m_enablexmpp= (strcasecmp(XMPPEnable.c_str(), "yes")) == 0 ? TRUE : FALSE;
+			}
+			else if(strncasecmp(strline.c_str(), "XMPPPort", sizeof("XMPPPort") - 1) == 0)
+			{
+				string xmppport;
+				strcut(strline.c_str(), "=", NULL, xmppport );
+				strtrim(xmppport);
+				m_xmppport = atoi(xmppport.c_str());
 			}
 			else if(strncasecmp(strline.c_str(), "CheckClientCA", sizeof("CheckClientCA") - 1) == 0)
 			{

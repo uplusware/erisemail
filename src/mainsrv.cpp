@@ -62,8 +62,7 @@ char PIDFILE[256] = "/tmp/erisemail/erisemaild.pid";
 int Run()
 {
 	int retVal = 0;
-	int mda_pid = -1;
-    
+	
     vector<service_param_t> server_params;
     
     if(CMailBase::m_enablesmtp)
@@ -155,6 +154,7 @@ int Run()
     
 	do
 	{
+        int mda_pid = -1;
 		int pfd[2];
 		pipe(pfd);
 		mda_pid = fork();
@@ -197,7 +197,7 @@ int Run()
 			retVal = -1;
 			break;
 		}
-		
+        
         if(CMailBase::m_enablemta)
         {
             //Relay service
@@ -241,6 +241,67 @@ int Run()
                 break;
             }     
         }
+
+        //XMPP
+        vector<service_param_t> xmpp_params;
+        
+        if(CMailBase::m_enablexmpp)
+        {
+            service_param_t service_param;
+            service_param.st = stXMPP;
+            service_param.host_ip = CMailBase::m_hostip.c_str();
+            service_param.host_port = CMailBase::m_xmppport;
+            service_param.is_ssl = TRUE;
+            service_param.sockfd = -1;
+            xmpp_params.push_back(service_param);
+        }
+        
+        if(CMailBase::m_enablexmpp)
+        {
+            int xmpp_pid = -1;
+            pipe(pfd);
+            xmpp_pid = fork();
+            if(xmpp_pid == 0)
+            {
+                char szFlag[128];
+                sprintf(szFlag, "/tmp/erisemail/%s.pid", XMPP_SERVICE_NAME);
+                if(check_single_on(szFlag)) 
+                {
+                    printf("%s is aready runing.\n", XMPP_SERVICE_NAME);   
+                    exit(-1);
+                }
+                    
+                close(pfd[0]);
+                daemon_init();
+                Service xmpp_svr(XMPP_SERVICE_NAME);
+                xmpp_svr.Run(pfd[1], xmpp_params);
+                close(pfd[1]);
+                exit(0);
+                
+            }
+            else if(xmpp_pid > 0)
+            {
+                unsigned int result;
+                close(pfd[1]);
+                read(pfd[0], &result, sizeof(unsigned int));
+                if(result == 0)
+                    printf("Start %s Service OK \t\t\t[%u]\n", XMPP_SERVICE_NAME, xmpp_pid);
+                else
+                {
+                    
+                    printf("Start %s Service Failed. \t\t\t[Error]\n", XMPP_SERVICE_NAME);
+                }
+                close(pfd[0]);
+            }
+            else
+            {
+                close(pfd[0]);
+                close(pfd[1]);
+                retVal = -1;
+                break;
+            }
+        }
+
 		//Watcher
 		int watcher_pids;
 		pipe(pfd);
@@ -258,7 +319,7 @@ int Run()
 			close(pfd[0]);	
 			daemon_init();
 			Watcher watcher;
-			watcher.Run(pfd[1], server_params);
+			watcher.Run(pfd[1], server_params, xmpp_params);
             close(pfd[1]);
 			exit(0);
 		}
@@ -296,6 +357,9 @@ static int Stop()
 	Watcher watcher;
 	watcher.Stop();
 	
+    Service xmpp_svr(XMPP_SERVICE_NAME);
+	xmpp_svr.Stop();	
+    
 	Service mda_svr;
 	mda_svr.Stop();	
 	
@@ -312,6 +376,9 @@ static int Reload()
 {
 	printf("Reload eRisemail configuration ...\n");
 	
+    Service xmpp_svr(XMPP_SERVICE_NAME);
+	xmpp_svr.Stop();
+    
 	Service mda_svr;
 	mda_svr.ReloadConfig();
 	

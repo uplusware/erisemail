@@ -47,6 +47,8 @@ typedef unsigned int DWORD;
 
 typedef void* HANDLE;
 
+#define _CSL_(s)   (sizeof(s)/sizeof(char) - 1)
+
 #define MAX(a,b) ((a)>(b)?(a):(b))
 #define HICH(c) (( (c) >= 'a' )&&((c) <= 'z')) ? ((c)+'A'-'a'):(c)
 #define LOCH(c) (( (c) >= 'A' )&&((c) <= 'Z')) ? ((c)-'A'+'a'):(c)
@@ -273,6 +275,53 @@ int __inline__ Recv(int sockfd, char* buf, unsigned int buf_len)
 	return nRecv;
 }
 	
+int __inline__ RecvTimed(int sockfd, char* buf, unsigned int buf_len)
+{
+	int taketime = 0;
+	int res;
+	fd_set mask; 
+	struct timeval timeout; 
+	
+	int len = 0;
+
+    timeout.tv_sec = 1; 
+    timeout.tv_usec = 0;
+
+    FD_ZERO(&mask);
+    FD_SET(sockfd, &mask);
+    res = select(sockfd + 1, &mask, NULL, NULL, &timeout);
+    
+    if( res == 1) 
+    {
+        taketime = 0;
+        len = recv(sockfd, buf, buf_len, 0);
+        if(len == 0)
+        {
+            close(sockfd);
+            return -1; 
+        }
+        else if(len < 0)
+        {
+            if( errno == EAGAIN)
+                return 0;
+            close(sockfd);
+            return -1;
+        }
+        return len;
+    }
+    else if(res == 0)
+    {
+        return 0;
+    }
+    else
+    {
+        close(sockfd);
+        return -1;
+    }
+		
+	return len;
+}
+
 int __inline__ Send(int sockfd, const char * buf, unsigned int buf_len)
 {	
 	if(buf_len == 0)
@@ -444,6 +493,66 @@ int __inline__ SSLRead(int sockfd, SSL* ssl, char * buf, unsigned int buf_len)
 	}
 #endif
 	return nRecv;
+}
+
+int __inline__ SSLReadTimed(int sockfd, SSL* ssl, char * buf, unsigned int buf_len)
+{
+	if(buf_len == 0)
+		return 0;
+	
+	int taketime = 0;
+	int res;
+	int ret;
+	fd_set mask; 
+	struct timeval timeout; 
+	
+	int len;
+	FD_ZERO(&mask);
+	
+    len = SSL_read(ssl, buf, buf_len);
+    //printf("SSL_read, %d %d %d\n", sockfd, len, buf_len);
+    if(len == 0)
+    {
+        ret = SSL_get_error(ssl, len);
+        if(ret == SSL_ERROR_ZERO_RETURN)
+        {
+            printf("SSL_read: shutdown by the peer\n");
+        }
+        shutdown(sockfd, 2);
+        return -1;
+    }
+    else if(len < 0)
+    {
+        ret = SSL_get_error(ssl, len);
+        if(ret == SSL_ERROR_WANT_READ || ret == SSL_ERROR_WANT_WRITE)
+        {
+            while(1)
+            {
+                timeout.tv_sec = 1;
+                timeout.tv_usec = 0;
+
+                FD_SET(sockfd, &mask);
+                res = select(sockfd + 1, &mask, NULL, NULL, &timeout);
+                
+                if( res == 1 || res == 0) 
+                {
+                    return 0;
+                }
+                else
+                {
+                    shutdown(sockfd, 2);
+                    return -1;
+                }
+            }
+        }
+        else
+        {
+            shutdown(sockfd, 2);
+            return -1;
+        }
+    }
+    
+	return len;
 }
 
 int __inline__ SSLWrite(int sockfd, SSL* ssl, const char * buf, unsigned int buf_len)

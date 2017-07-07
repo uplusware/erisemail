@@ -51,6 +51,10 @@ void Session::Process()
             {
                 pProtocol = new CHttp(m_sockfd, m_ssl, m_ssl_ctx, m_clientip.c_str(), m_storageEngine, m_cache, m_memcached, m_is_ssl);
             }
+            else if(m_st == stXMPP)
+            {
+                pProtocol = new CXmpp(m_sockfd, m_ssl, m_ssl_ctx, m_clientip.c_str(), m_storageEngine, m_memcached, m_is_ssl);
+            }
             else
             {
                 return;
@@ -73,7 +77,7 @@ void Session::Process()
         {
             try
             {
-                result = pProtocol->ProtRecv(szmsg, 4095);
+                result = pProtocol->ProtRecv(szmsg, m_st == stXMPP ? 1 : 4095);
                 if(result <= 0)
                 {
                     break;
@@ -81,8 +85,17 @@ void Session::Process()
                 else
                 {
                     szmsg[result] = '\0';
+                    
                     str_line += szmsg;
-                    new_line = str_line.find('\n');
+                    
+                    if(m_st == stXMPP)
+                    {
+                        new_line = str_line.find(">");
+                    }
+                    else
+                    {
+                        new_line = str_line.find('\n');
+                    }
                     if(new_line != std::string::npos)
                     {
                         if(!pProtocol->Parse((char*)str_line.c_str()))

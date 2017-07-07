@@ -16,6 +16,7 @@
 #include "pop.h"
 #include "imap.h"
 #include "http.h"
+#include "xmpp.h"
 #include "cache.h"
 
 typedef enum
@@ -24,6 +25,7 @@ typedef enum
 	stPOP3,
 	stIMAP,
 	stHTTP,
+    stXMPP,
 	stMTA
 } Service_Type;
 
