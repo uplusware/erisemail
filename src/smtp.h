@@ -101,7 +101,8 @@ public:
 	void On_STARTTLS_Handler();
 	
 	int SmtpSend(const char* buf, int len);
-
+    
+    virtual BOOL IsEnabledKeepAlive() { return FALSE; }
 	
 private:
 	vector<FilterHandle> m_filterHandle;

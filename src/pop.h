@@ -51,7 +51,8 @@ public:
     void On_Auth_Handler(char* text);
 	int PopSend(const char* buf, int len);
 	
-	
+	virtual BOOL IsEnabledKeepAlive() { return FALSE; }
+    
 protected:
 	int m_sockfd;
 	linesock* m_lsockfd;

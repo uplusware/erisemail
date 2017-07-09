@@ -88,6 +88,12 @@ protected:
     
     string m_resource;
     BOOL m_auth_success;
+    
+    static map<string, CXmpp* > m_online_list;
+    static pthread_rwlock_t m_online_list_lock;
+    static BOOL m_online_list_inited;
+    
+    pthread_mutex_t m_send_lock;
 };
 #endif /* _XMPP_H_ */
 

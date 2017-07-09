@@ -87,6 +87,8 @@ public:
 	int ImapSend(const char* buf, int len);
 	int ImapRecv(char* buf, int len);
 	
+    virtual BOOL IsEnabledKeepAlive() { return FALSE; }
+    
 protected:
 	vector<Mail_Info> m_maillisttbl;
 	BOOL m_isSSL;

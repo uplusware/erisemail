@@ -96,6 +96,7 @@ void Session::Process()
                     {
                         new_line = str_line.find('\n');
                     }
+                    
                     if(new_line != std::string::npos)
                     {
                         if(!pProtocol->Parse((char*)str_line.c_str()))

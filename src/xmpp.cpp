@@ -13,9 +13,21 @@
 #include "util/md5.h"
 #include "service.h"
 
+map<string, CXmpp* > CXmpp::m_online_list;
+pthread_rwlock_t CXmpp::m_online_list_lock;
+BOOL CXmpp::m_online_list_inited = FALSE;
+    
 CXmpp::CXmpp(int sockfd, SSL * ssl, SSL_CTX * ssl_ctx, const char* clientip,
     StorageEngine* storage_engine, memcached_st * memcached, BOOL isSSL)
-{		
+{
+    if(!m_online_list_inited)
+    {
+        pthread_rwlock_init(&m_online_list_lock, NULL);
+        m_online_list_inited = TRUE;
+    }
+    
+    pthread_mutex_init(&m_send_lock, NULL);
+    
     m_status = STATUS_ORIGINAL;
 	m_sockfd = sockfd;
 	m_clientip = clientip;
@@ -67,78 +79,49 @@ CXmpp::~CXmpp()
     m_lsockfd = NULL;
     m_lssl = NULL;
 
+    pthread_rwlock_wrlock(&m_online_list_lock); //acquire write
+    m_online_list.erase(m_username);
+    
+    if(m_online_list.size() == 0)
+    {
+        m_online_list_inited = FALSE;
+        pthread_rwlock_destroy(&m_online_list_lock);
+    }
+    else
+    {
+        pthread_rwlock_unlock(&m_online_list_lock); //release write
+    }
+    
+    pthread_mutex_destroy(&m_send_lock);
+                
 }
 
 int CXmpp::XmppSend(const char* buf, int len)
 {
-	//printf("<<<< %s\n", buf);
+	printf("<<<< %s\n", buf);
     
     int ret;
-    
+    pthread_mutex_lock(&m_send_lock);
     if(m_ssl)
         ret = SSLWrite(m_sockfd, m_ssl, buf, len);
     else
         ret = Send(m_sockfd, buf, len);
-    
+    pthread_mutex_unlock(&m_send_lock);
     return ret;
 }
 
 int CXmpp::ProtRecv(char* buf, int len)
 {
-    int recv_len;
-    while(1)
-    {
-        if(m_ssl)
-        {
-            recv_len = m_lssl->drecv_timed(buf, len);
-        }
-        else
-        {
-            recv_len = m_lsockfd->drecv_timed(buf, len);
-        }
-        if(recv_len == 0 && m_auth_success)
-        {
-            MailStorage* mailStg;
-            StorageEngineInstance stgengine_instance(GetStg(), &mailStg);
-            if(!mailStg)
-            {
-                fprintf(stderr, "%s::%s Get Storage Engine Failed!\n", __FILE__, __FUNCTION__);
-                return FALSE;
-            }
-            
-            string myAddr = GetUsername();
-            myAddr += "@";
-            myAddr += CMailBase::m_email_domain;
-            
-            vector<int> xids;
-            string strMessage;
-            mailStg->ListMyMessage(myAddr.c_str(), strMessage, xids);
-            stgengine_instance.Release();
-            
-            if(xids.size() > 0)
-            {
-                if(XmppSend(strMessage.c_str(), strMessage.length()) >= 0)
-                {
-                    for(int v = 0; v < xids.size(); v++)
-                    {
-                        mailStg->RemoveMyMessage(xids[v]);
-                    }
-                }
-                else
-                    break;
-            } 
-        }
-        if(recv_len != 0)
-            break;
-    }
-    
-    return recv_len;
+    if(m_ssl)
+		return m_lssl->drecv(buf, len);
+	else
+		return m_lsockfd->drecv(buf, len);
 }
 
 BOOL CXmpp::Parse(char* text)
 {
     BOOL result = TRUE;
-    //printf(">>>> %s\n", text);
+    printf(">>>> %s\n", text);
     if(m_xml_declare == "")
     {
         m_xml_declare = text;
@@ -239,15 +222,6 @@ BOOL CXmpp::Parse(char* text)
                 {
                     sprintf(xmpp_buf, "<success xmlns='urn:ietf:params:xml:ns:xmpp-sasl'></success>");
                     m_auth_success = TRUE;
-                    
-                    /*pthread_attr_init(&m_recv_pthread_attr);
-                    pthread_attr_setdetachstate (&m_recv_pthread_attr, PTHREAD_CREATE_DETACHED);
-            
-                    if(pthread_create(&m_recv_pthread, &m_recv_pthread_attr, CXmpp::xmpp_recv_main, this) != 0)
-                    {
-                        result = FALSE;
-                        fprintf(stderr, "Create xmpp recv thread failed\n");
-                    }*/
                 }
                 else
                 {
@@ -260,6 +234,41 @@ BOOL CXmpp::Parse(char* text)
                 stgengine_instance.Release();
                 
                 XmppSend(xmpp_buf, strlen(xmpp_buf));
+                
+                pthread_rwlock_wrlock(&m_online_list_lock); //acquire write
+                m_online_list.insert(make_pair<string, CXmpp*>(m_username, this));
+                pthread_rwlock_unlock(&m_online_list_lock); //release write
+                
+                if(m_auth_success)
+                {
+                    MailStorage* mailStg;
+                    StorageEngineInstance stgengine_instance(GetStg(), &mailStg);
+                    if(!mailStg)
+                    {
+                        fprintf(stderr, "%s::%s Get Storage Engine Failed!\n", __FILE__, __FUNCTION__);
+                        return FALSE;
+                    }
+                    
+                    string myAddr = GetUsername();
+                    myAddr += "@";
+                    myAddr += CMailBase::m_email_domain;
+                    
+                    vector<int> xids;
+                    string strMessage;
+                    mailStg->ListMyMessage(myAddr.c_str(), strMessage, xids);
+                    stgengine_instance.Release();
+                    
+                    if(xids.size() > 0)
+                    {
+                        if(XmppSend(strMessage.c_str(), strMessage.length()) >= 0)
+                        {
+                            for(int v = 0; v < xids.size(); v++)
+                            {
+                                mailStg->RemoveMyMessage(xids[v]);
+                            }
+                        }
+                    }
+                }
             }
             
         }
@@ -372,7 +381,6 @@ BOOL CXmpp::Parse(char* text)
                                     "<query xmlns='%s'/>"
                                     "</iq>",
                                     iq_id.c_str(), CMailBase::m_email_domain.c_str(), m_username.c_str(), m_stream_id, xmlns.c_str());
-
                             }
                             else
                             {
@@ -506,18 +514,31 @@ BOOL CXmpp::Parse(char* text)
                     TiXmlPrinter xml_printer;
                     pReponseElement.Accept( &xml_printer );
                     
-                    MailStorage* mailStg;
-                    StorageEngineInstance stgengine_instance(m_storageEngine, &mailStg);
-                    if(!mailStg)
-                    {
-                        fprintf(stderr, "%s::%s Get Storage Engine Failed!\n", __FILE__, __FUNCTION__);
-                        return FALSE;
-                    }
-                        
-                    mailStg->InsertMyMessage(xmpp_from, xmpp_to.c_str(), xml_printer.CStr());
+                    string strid;
+                    strcut(xmpp_to.c_str(), NULL, "@", strid);
                     
-                    stgengine_instance.Release();
-                
+                    
+                    map<string, CXmpp*>::iterator it = m_online_list.find(strid);
+                    
+                    if(it != m_online_list.end())
+                    {
+                        CXmpp* pXmpp = it->second;
+                        pXmpp->XmppSend(xml_printer.CStr(), xml_printer.Size());
+                    }
+                    else
+                    {
+                        MailStorage* mailStg;
+                        StorageEngineInstance stgengine_instance(m_storageEngine, &mailStg);
+                        if(!mailStg)
+                        {
+                            fprintf(stderr, "%s::%s Get Storage Engine Failed!\n", __FILE__, __FUNCTION__);
+                            return FALSE;
+                        }
+                            
+                        mailStg->InsertMyMessage(xmpp_from, xmpp_to.c_str(), xml_printer.CStr());
+                        
+                        stgengine_instance.Release();
+                    }
                     
                 }
                 
