@@ -428,6 +428,21 @@ int MailStorage::Install(const char* database)
 		return -1;
 	}
     
+    //Create xmpp susbcribe table
+	sprintf(sqlcmd,
+		"CREATE TABLE IF NOT EXISTS `%s`.`xmppbuddytbl` ("
+		"`xid` INT UNSIGNED NOT NULL AUTO_INCREMENT ,"
+		"`xusr1` VARCHAR( 256 ) NOT NULL ,"
+		"`xusr2` VARCHAR( 256 ) NOT NULL ,"
+        "`xtime` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,"
+		"PRIMARY KEY ( `xid` ) ) ENGINE = MyISAM",
+		database);
+	if( Query(sqlcmd, strlen(sqlcmd)) != 0)
+	{
+		show_error(&m_hMySQL, sqlcmd, "Install: ", TRUE);
+		return -1;
+	}
+    
     unsigned int lid;
 	if(AddLevel("default", "The system's default level", 5000*1024, 500000*1024, eaFalse, 5000*1024, 5000*1024, lid) == 0)
 	{
@@ -1172,12 +1187,16 @@ int MailStorage::AddID(const char* username, const char* password, const char* a
 			}
             m_userpwd_cache_update_time = 0;
             m_userpwd_cache_updated = TRUE;
+            
+            return 0;
 		}
 	}
 	else
 	{
 		return -1;
 	}
+    
+    return -1;
 }
 
 int MailStorage::UpdateID(const char* username, const char* alias, UserStatus status, int level)
@@ -1587,7 +1606,7 @@ int MailStorage::InsertMailIndex(const char* mfrom, const char* mto, unsigned in
 		}
 		else
 		{
-            printf("%s\n", sqlcmd);
+            // printf("%s\n", sqlcmd);
 			free(sqlcmd);
 			show_error(&m_hMySQL, sqlcmd);
 			return -1;
@@ -4875,4 +4894,109 @@ int MailStorage::InsertMyMessage(const char* xfrom, const char* xto, const char*
 	}
 	else
 		return -1;
+}
+
+int MailStorage::InsertBuddy(const char* usr1, const char* usr2)
+{
+	string strSafetyUser1 = usr1;
+	SqlSafetyString(strSafetyUser1);
+	
+	string strSafetyUser2 = usr2;
+	SqlSafetyString(strSafetyUser2);
+
+	
+	char* sqlcmd = (char*)malloc(strSafetyUser1.length() + strSafetyUser2.length() + 1024);
+	if(sqlcmd)
+	{
+		sprintf(sqlcmd, "INSERT INTO xmppbuddytbl(xusr1, xusr2) VALUES('%s','%s')",
+			strSafetyUser1.c_str(), strSafetyUser2.c_str());
+            
+            // printf("%s\n", sqlcmd);
+            
+		if( Query(sqlcmd, strlen(sqlcmd)) == 0)
+		{
+			free(sqlcmd);
+			return 0;
+		}
+		else
+		{
+			free(sqlcmd);
+			show_error(&m_hMySQL, sqlcmd);
+			return -1;
+		}
+	}
+	else
+		return -1;
+}
+
+int MailStorage::RemoveBuddy(const char* usr1, const char* usr2)
+{
+	string strSafetyUser1 = usr1;
+	SqlSafetyString(strSafetyUser1);
+	
+	string strSafetyUser2 = usr2;
+	SqlSafetyString(strSafetyUser2);
+
+	
+	char* sqlcmd = (char*)malloc(strSafetyUser1.length() + strSafetyUser2.length() + 1024);
+	if(sqlcmd)
+	{
+		sprintf(sqlcmd, "DELETE FROM xmppbuddytbl WHERE (xusr1 = '%s' AND xusr2 = '%s') OR (xusr1 = '%s' AND xusr2 = '%s') ",
+			strSafetyUser1.c_str(), strSafetyUser2.c_str(), strSafetyUser2.c_str(), strSafetyUser1.c_str());
+            
+            // printf("%s\n", sqlcmd);
+		if( Query(sqlcmd, strlen(sqlcmd)) == 0)
+		{
+			free(sqlcmd);
+			return 0;
+		}
+		else
+		{
+			free(sqlcmd);
+			show_error(&m_hMySQL, sqlcmd);
+			return -1;
+		}
+	}
+	else
+		return -1;
+}
+
+int MailStorage::ListBuddys(const char* selfid, vector<string>& buddys)
+{    
+	char sqlcmd[1024];
+	sprintf(sqlcmd, "SELECT xusr1, xusr2 FROM xmppbuddytbl WHERE xusr1 = '%s' OR xusr2 = '%s'", selfid, selfid);
+	if( Query(sqlcmd, strlen(sqlcmd)) == 0)
+	{
+		MYSQL_RES *query_result;
+		MYSQL_ROW row;
+		
+		query_result = mysql_store_result(&m_hMySQL);
+		
+		if(query_result)
+		{
+			while((row = mysql_fetch_row(query_result)))
+			{
+                if(strcmp(row[0], selfid) != 0 )
+                {
+                    buddys.push_back(row[0]);
+                }
+                else if(strcmp(row[1], selfid) != 0 )
+                {
+                    buddys.push_back(row[1]);
+                }
+			}
+			mysql_free_result(query_result);
+            
+			return 0;
+		}
+		else
+		{
+			return -1;
+		}
+	}
+	else
+	{
+	    show_error(&m_hMySQL, sqlcmd);
+		return -1;
+	}
 }

@@ -32,29 +32,46 @@ enum iq_type
   IQ_UNKNOW
 };
 
+enum presence_type
+{
+  PRESENCE_AVAILABLE = 0,
+  PRESENCE_SBSCRIBE,
+  PRESENCE_SBSCRIBED,
+  PRESENCE_UNSBSCRIBE,
+  PRESENCE_UNSBSCRIBED,
+  PRESENCE_UNAVAILABLE,
+  PRESENCE_PROBE,
+  PRESENCE_UNKNOW
+};
+
 class CXmpp : public CMailBase
 {
 public:
 	CXmpp(int sockfd, SSL * ssl, SSL_CTX * ssl_ctx, const char* clientip,
         StorageEngine* storage_engine, memcached_st * memcached, BOOL isSSL = FALSE);
 	virtual ~CXmpp();
+    
+    //virtual function
+    virtual BOOL IsEnabledKeepAlive() { return FALSE; }
 	virtual BOOL Parse(char* text);
 	virtual int ProtRecv(char* buf, int len);
 	
 	int XmppSend(const char* buf, int len);
-	
-    volatile unsigned int m_recv_pthread_exit;
-    volatile unsigned int m_recv_pthread_running;
-    
-	static void* xmpp_recv_main(void* arg);
-    
+	    
     StorageEngine* GetStg() { return m_storageEngine; }
     
     const char* GetUsername() { return m_username.c_str(); }
     
-    virtual BOOL IsEnabledKeepAlive() { return FALSE; }
+    const char* GetResource() { return m_resource.c_str(); }
     
     const char* GetStreamID() { return m_stream_id; }
+    
+protected:
+    BOOL PresenceTag(const char* text);
+    BOOL IqTag(const char* text);
+    BOOL StreamTag(const char* text);
+    BOOL MessageTag(const char* text);
+    BOOL AuthTag(const char* text);
     
 protected:
 	int m_sockfd;

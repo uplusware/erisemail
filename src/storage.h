@@ -334,6 +334,10 @@ public:
     int RemoveMyMessage(int xid);
     int InsertMyMessage(const char* xfrom, const char* xto, const char* xmessage);
     
+    int InsertBuddy(const char* usr1, const char* usr2);
+    int RemoveBuddy(const char* usr1, const char* usr2);
+    int ListBuddys(const char* selfid, vector<string>& buddys);
+    
 protected:
 	MYSQL m_hMySQL;
     memcached_st * m_memcached;
