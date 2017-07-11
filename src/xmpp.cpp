@@ -150,7 +150,7 @@ CXmpp::~CXmpp()
 
 int CXmpp::XmppSend(const char* buf, int len)
 {
-	//printf("OUT: %s\n\n", buf);
+	//printf("OUT: %s\n", buf);
     
     int ret;
     pthread_mutex_lock(&m_send_lock);
@@ -173,7 +173,7 @@ int CXmpp::ProtRecv(char* buf, int len)
 BOOL CXmpp::Parse(char* text)
 {
     BOOL result = TRUE;
-    //printf(" IN: \r\n %s\n\n", text);
+    //printf(" IN: %s\n", text);
     if(m_xml_declare == "")
     {
         m_xml_declare = text;
@@ -535,6 +535,39 @@ BOOL CXmpp::IqTag(const char* text)
     TiXmlElement * pIqElement = xmlIq.RootElement();
     if(pIqElement)
     {
+        
+        TiXmlElement pReponseElement(*pIqElement);
+        TiXmlPrinter xml_printer;
+        
+        if(pIqElement->Attribute("to")
+            && strcmp(pIqElement->Attribute("to"), "") != 0 
+            && strcmp(pIqElement->Attribute("to"), CMailBase::m_email_domain.c_str()) != 0)
+        {
+            string strid;
+            strcut(pIqElement->Attribute("to"), NULL, "@", strid);
+
+            char xmpp_from[1024];
+            sprintf(xmpp_from, "%s@%s/%s",
+                m_username.c_str(), CMailBase::m_email_domain.c_str(), m_resource.c_str());
+                
+            pReponseElement.SetAttribute("from", xmpp_from);
+            
+            pReponseElement.Accept( &xml_printer );
+            
+            pthread_rwlock_rdlock(&m_online_list_lock); //acquire read
+            
+            map<string, CXmpp*>::iterator it = m_online_list.find(strid);
+            
+            if(it != m_online_list.end())
+            {
+                CXmpp* pXmpp = it->second;
+                pXmpp->XmppSend(xml_printer.CStr(), xml_printer.Size());
+            }
+            pthread_rwlock_unlock(&m_online_list_lock);
+            
+            return TRUE;
+        }
+        
         iq_type itype = IQ_UNKNOW;
         string iq_id = pIqElement->Attribute("id") ? pIqElement->Attribute("id") : "";
         if(pIqElement->Attribute("type"))
@@ -553,6 +586,16 @@ BOOL CXmpp::IqTag(const char* text)
             }
         }
         
+        if(itype == IQ_RESULT)
+            return TRUE;
+        
+        char xmpp_buf[2048];
+        sprintf(xmpp_buf,
+            "<iq type='result' id='%s' from='%s' to='%s/%s'>",
+                iq_id.c_str(), CMailBase::m_email_domain.c_str(), m_username.c_str(), m_stream_id);
+                        
+        XmppSend(xmpp_buf, strlen(xmpp_buf));
+        
         TiXmlNode* pChildNode = pIqElement->FirstChild();
         while(pChildNode)
         {
@@ -563,42 +606,22 @@ BOOL CXmpp::IqTag(const char* text)
                     TiXmlNode* pGrandChildNode = pChildNode->ToElement()->FirstChild();
                     if(pGrandChildNode->ToElement())
                     {
-                        if(strcasecmp(pGrandChildNode->Value(), "resource") == 0 && itype != IQ_RESULT)
+                        if(strcasecmp(pGrandChildNode->Value(), "resource") == 0)
                         {
                             if(itype == IQ_SET)
                                 m_resource = pGrandChildNode->ToElement()->GetText() ? pGrandChildNode->ToElement()->GetText() : "";
-                            char xmpp_buf[2048];
+                            
                             sprintf(xmpp_buf,
-                            "<iq type='result' id='%s' to='%s/%s'>"
                                 "<bind xmlns='urn:ietf:params:xml:ns:xmpp-bind'>"
                                     "<jid>%s@%s/%s</jid>"
-                                "</bind>"
-                            "</iq>", iq_id.c_str(), m_username.c_str(), m_stream_id, m_username.c_str(), CMailBase::m_email_domain.c_str(), m_resource.c_str());
+                                "</bind>",
+                                m_username.c_str(), CMailBase::m_email_domain.c_str(), m_resource.c_str());
                             XmppSend(xmpp_buf, strlen(xmpp_buf));
                         }
                         
                     }
                 }
-                else if(strcasecmp(pChildNode->Value(), "session") == 0 && itype != IQ_RESULT)
-                {
-                    char xmpp_buf[2048];
-                    sprintf(xmpp_buf,
-                    "<iq type='result' id='%s' to='%s/%s'/>",
-                        iq_id.c_str(), m_username.c_str(), m_stream_id);
-                    XmppSend(xmpp_buf, strlen(xmpp_buf));
-                }
-                else if(strcasecmp(pChildNode->Value(), "ping") == 0 && itype != IQ_RESULT)
-                {
-                   char xmpp_buf[2048];
-                   string xmlns = pChildNode->ToElement() && pChildNode->ToElement()->Attribute("xmlns") ? pChildNode->ToElement()->Attribute("xmlns") : "";
-                   sprintf(xmpp_buf,
-                        "<iq type='result' id='%s'>"
-                        "<ping xmlns='%s'/>"
-                        "</iq>",
-                        iq_id.c_str(), xmlns.c_str());
-                    XmppSend(xmpp_buf, strlen(xmpp_buf));
-                }
-                else if(strcasecmp(pChildNode->Value(), "query") == 0 && itype != IQ_RESULT)
+                else if(strcasecmp(pChildNode->Value(), "query") == 0)
                 {
                    
                     string xmlns = pChildNode->ToElement() && pChildNode->ToElement()->Attribute("xmlns") ? pChildNode->ToElement()->Attribute("xmlns") : "";
@@ -629,9 +652,7 @@ BOOL CXmpp::IqTag(const char* text)
                         
                         xmpp_buddys = (char*)malloc(str_items.length() + 1024);
                         sprintf(xmpp_buddys,
-                            "<iq type='result' id='%s' from='%s' to='%s/%s'>"
-                            "<query xmlns='%s'>%s"
-                            "</query></iq>",
+                            "<query xmlns='%s'>%s</query>",
                             iq_id.c_str(), CMailBase::m_email_domain.c_str(), m_username.c_str(), m_stream_id, xmlns.c_str(), str_items.c_str());
                         
                         XmppSend(xmpp_buddys, strlen(xmpp_buddys));
@@ -653,7 +674,6 @@ BOOL CXmpp::IqTag(const char* text)
                             {
                                 TiXmlElement * pPresenceElement = xmlPresence.RootElement();
                                 
-                                char xmpp_buf[1024];
                                 sprintf(xmpp_buf, "%s@%s/%s",
                                     m_username.c_str(), CMailBase::m_email_domain.c_str(), m_resource.c_str());
                                     
@@ -678,51 +698,56 @@ BOOL CXmpp::IqTag(const char* text)
                     }
                     else if(strcasecmp(xmlns.c_str(), "http://jabber.org/protocol/disco#items") == 0)
                     {
-                       char xmpp_buf[2048];
                        sprintf(xmpp_buf,
-                            "<iq type='result' id='%s' from='%s' to='%s/%s'>"
-                            "<query xmlns='%s'/>"
-                            "</iq>",
-                            iq_id.c_str(), CMailBase::m_email_domain.c_str(), m_username.c_str(), m_stream_id, xmlns.c_str());
+                            "<query xmlns='%s'/>", xmlns.c_str());
                        XmppSend(xmpp_buf, strlen(xmpp_buf));
 
                     }
                     else if(strcasecmp(xmlns.c_str(), "http://jabber.org/protocol/disco#info") == 0)
                     {
-                       char xmpp_buf[2048];
                        sprintf(xmpp_buf,
-                            "<iq type='result' id='%s' from='%s' to='%s/%s'>"
-                            "<query xmlns='%s'/>"
-                            "</iq>",
-                            iq_id.c_str(), CMailBase::m_email_domain.c_str(), m_username.c_str(), m_stream_id, xmlns.c_str());
+                            "<query xmlns='%s'/>", xmlns.c_str());
                         XmppSend(xmpp_buf, strlen(xmpp_buf));
                     }
                     else
                     {
-                        char xmpp_buf[2048];
                         sprintf(xmpp_buf,
-                            "<iq type='result' id='%s' to='%s/%s'>"
-                            "<query xmlns='%s'/>"
-                            "</iq>",
-                            iq_id.c_str(), m_username.c_str(), m_stream_id, xmlns.c_str());
+                            "<query xmlns='%s'/>",xmlns.c_str());
                         XmppSend(xmpp_buf, strlen(xmpp_buf));
                     }
                     
                 }
-                else if(strcasecmp(pChildNode->Value(), "vCard") == 0  && itype != IQ_RESULT)
+                else if(strcasecmp(pChildNode->Value(), "session") == 0)
+                {
+                    
+                }
+                else if(strcasecmp(pChildNode->Value(), "ping") == 0)
+                {
+                   string xmlns = pChildNode->ToElement() && pChildNode->ToElement()->Attribute("xmlns") ? pChildNode->ToElement()->Attribute("xmlns") : "";
+                   sprintf(xmpp_buf,
+                        "<ping xmlns='%s'/>",xmlns.c_str());
+                    XmppSend(xmpp_buf, strlen(xmpp_buf));
+                }
+                else if(strcasecmp(pChildNode->Value(), "vCard") == 0 )
                 {
                     string xmlns = pChildNode->ToElement() && pChildNode->ToElement()->Attribute("xmlns") ? pChildNode->ToElement()->Attribute("xmlns") : "";
-                    char xmpp_buf[2048];
                     sprintf(xmpp_buf,
-                            "<iq type='result' id='%s' to='%s/%s'>"
-                            "<vCard xmlns='%s'/>"
-                            "</iq>",
-                            iq_id.c_str(), m_username.c_str(), m_stream_id, xmlns.c_str());
+                            "<vCard xmlns='%s'/>", xmlns.c_str());
                     XmppSend(xmpp_buf, strlen(xmpp_buf));
+                }
+                else
+                {
+                    TiXmlPrinter xml_printer;
+                    pChildNode->Accept( &xml_printer );
+                    
+                    XmppSend(xml_printer.CStr(), xml_printer.Size());
                 }
             }
             pChildNode = pChildNode->NextSibling();
         }
+        
+        XmppSend("</iq>", strlen("</iq>"));
+                       
     }
     
     return TRUE;
