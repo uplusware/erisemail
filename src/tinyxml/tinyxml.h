@@ -1778,7 +1778,7 @@ public:
 	/// Return the result.
 	const std::string& Str()						{ return buffer; }
 	#endif
-
+    
 private:
 	void DoIndent()	{
 		for( int i=0; i<depth; ++i )

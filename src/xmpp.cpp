@@ -80,20 +80,9 @@ CXmpp::~CXmpp()
         pthread_rwlock_unlock(&m_online_list_lock); //release write
     }
     
-    //send the logout presence
+    //send the unavailable presence
     if(m_auth_success)
-    {
-        TiXmlDocument xmlPresence;
-        xmlPresence.LoadString("<presence type='unavailable' />", strlen("<presence type='unavailable' />"));
-        
-        TiXmlElement * pPresenceElement = xmlPresence.RootElement();
-        
-        char xmpp_buf[1024];
-        sprintf(xmpp_buf, "%s@%s/%s",
-            m_username.c_str(), CMailBase::m_email_domain.c_str(), m_resource.c_str());
-            
-        pPresenceElement->SetAttribute("from", xmpp_buf);
-            
+    {   
         MailStorage* mailStg;
         StorageEngineInstance stgengine_instance(GetStg(), &mailStg);
         if(mailStg)
@@ -102,6 +91,9 @@ CXmpp::~CXmpp()
             vector<string> buddys;
             mailStg->ListBuddys(GetUsername(), buddys);
             stgengine_instance.Release();
+            
+            TiXmlDocument xmlPresence;
+            xmlPresence.LoadString("<presence type='unavailable' />", strlen("<presence type='unavailable' />"));
             
             pthread_rwlock_rdlock(&m_online_list_lock); //acquire read
             
@@ -113,9 +105,20 @@ CXmpp::~CXmpp()
                 {
                     CXmpp* pXmpp = it->second;
                     
+                    
+                    
+                    TiXmlElement * pPresenceElement = xmlPresence.RootElement();
+                    
+                    char xmpp_buf[1024];
+                    sprintf(xmpp_buf, "%s@%s/%s",
+                        m_username.c_str(), CMailBase::m_email_domain.c_str(), m_resource.c_str());
+                        
+                    pPresenceElement->SetAttribute("from", xmpp_buf);
+        
                     sprintf(xmpp_buf, "%s@%s/%s",
                         buddys[x].c_str(), CMailBase::m_email_domain.c_str(), pXmpp->GetResource());
                     pPresenceElement->SetAttribute("to", xmpp_buf);
+
                     pPresenceElement->Accept( &xml_printer );
                     
                     pXmpp->XmppSend(xml_printer.CStr(), xml_printer.Size());
@@ -147,7 +150,7 @@ CXmpp::~CXmpp()
 
 int CXmpp::XmppSend(const char* buf, int len)
 {
-	//printf("\r\n<<<< %s\n\n", buf);
+	//printf("OUT: %s\n\n", buf);
     
     int ret;
     pthread_mutex_lock(&m_send_lock);
@@ -170,7 +173,7 @@ int CXmpp::ProtRecv(char* buf, int len)
 BOOL CXmpp::Parse(char* text)
 {
     BOOL result = TRUE;
-    // printf(">>>>\r\n %s\n\n", text);
+    //printf(" IN: \r\n %s\n\n", text);
     if(m_xml_declare == "")
     {
         m_xml_declare = text;
@@ -338,6 +341,7 @@ BOOL CXmpp::PresenceTag(const char* text)
             
     TiXmlDocument xmlPresence;
     xmlPresence.LoadString(m_xml_stanza.c_str(), m_xml_stanza.length());
+    
     TiXmlElement * pPresenceElement = xmlPresence.RootElement();
     
     if(pPresenceElement)
@@ -511,7 +515,7 @@ BOOL CXmpp::PresenceTag(const char* text)
                         
                         pXmpp->XmppSend(xml_printer.CStr(), xml_printer.Size());
                         
-                        // printf("%s: %s\n", buddys[x].c_str(), xml_printer.CStr());
+                        //printf("%s: %s\n", buddys[x].c_str(), xml_printer.CStr());
                     }
                 }
                 pthread_rwlock_unlock(&m_online_list_lock);
@@ -527,6 +531,7 @@ BOOL CXmpp::IqTag(const char* text)
 {
     TiXmlDocument xmlIq;
     xmlIq.LoadString(m_xml_stanza.c_str(), m_xml_stanza.length());
+    
     TiXmlElement * pIqElement = xmlIq.RootElement();
     if(pIqElement)
     {
@@ -632,6 +637,43 @@ BOOL CXmpp::IqTag(const char* text)
                         XmppSend(xmpp_buddys, strlen(xmpp_buddys));
                         
                         free(xmpp_buddys);
+                        
+                        //send the probe presence  
+                        TiXmlDocument xmlPresence;
+                        xmlPresence.LoadString("<presence type='available' />", strlen("<presence type='available' />"));
+                        
+                        pthread_rwlock_rdlock(&m_online_list_lock); //acquire read
+
+                                
+                        for(int x = 0; x < buddys.size(); x++)
+                        {
+                            map<string, CXmpp*>::iterator it = m_online_list.find(buddys[x]);
+
+                            if(it != m_online_list.end())
+                            {
+                                TiXmlElement * pPresenceElement = xmlPresence.RootElement();
+                                
+                                char xmpp_buf[1024];
+                                sprintf(xmpp_buf, "%s@%s/%s",
+                                    m_username.c_str(), CMailBase::m_email_domain.c_str(), m_resource.c_str());
+                                    
+                                pPresenceElement->SetAttribute("to", xmpp_buf);
+                    
+                                CXmpp* pXmpp = it->second;
+                                
+                                sprintf(xmpp_buf, "%s@%s/%s",
+                                    buddys[x].c_str(), CMailBase::m_email_domain.c_str(), pXmpp->GetResource());
+                                pPresenceElement->SetAttribute("from", xmpp_buf);
+                                
+                                TiXmlPrinter xml_printer;
+                                pPresenceElement->Accept( &xml_printer );
+                                
+                                XmppSend(xml_printer.CStr(), xml_printer.Size());
+                                
+                                //printf("%s: %s\n", buddys[x].c_str(), xml_printer.CStr());
+                            }
+                        }
+                        pthread_rwlock_unlock(&m_online_list_lock); //relase lock
                             
                     }
                     else if(strcasecmp(xmlns.c_str(), "http://jabber.org/protocol/disco#items") == 0)
@@ -692,6 +734,7 @@ BOOL CXmpp::MessageTag(const char* text)
             
     TiXmlDocument xmlPresence;
     xmlPresence.LoadString(m_xml_stanza.c_str(), m_xml_stanza.length());
+    
     TiXmlElement * pMessageElement = xmlPresence.RootElement();
     
     if(pMessageElement)
@@ -751,6 +794,7 @@ BOOL CXmpp::AuthTag(const char* text)
 {
     TiXmlDocument xmlAuth;
     xmlAuth.LoadString(m_xml_stanza.c_str(), m_xml_stanza.length());
+    
     TiXmlElement * pAuthElement = xmlAuth.RootElement();
     if(pAuthElement)
     {
@@ -809,8 +853,10 @@ BOOL CXmpp::AuthTag(const char* text)
         m_online_list.insert(make_pair<string, CXmpp*>(m_username, this));
         pthread_rwlock_unlock(&m_online_list_lock); //release write
         
+        //recieve all the offline message
         if(m_auth_success)
         {
+            
             MailStorage* mailStg;
             StorageEngineInstance stgengine_instance(GetStg(), &mailStg);
             if(!mailStg)
