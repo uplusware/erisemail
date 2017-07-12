@@ -50,6 +50,7 @@ static void daemon_init()
 	setsid();
 	chdir("/");
 	umask(0);
+    
  	close(STDIN_FILENO);
 	close(STDOUT_FILENO);
     if(CMailBase::m_close_stderr)
