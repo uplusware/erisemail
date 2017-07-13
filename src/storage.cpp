@@ -390,6 +390,7 @@ int MailStorage::Install(const char* database)
 		"`mid` INT UNSIGNED NOT NULL AUTO_INCREMENT ,"
 		"`mbody` VARCHAR( 256 ) NOT NULL ,"
 		"`mfragment` LONGTEXT NOT NULL ,"
+        "`mtime` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,"
 		"PRIMARY KEY ( `mid` ) ) ENGINE = MyISAM",
 		database);
     if( Query(sqlcmd, strlen(sqlcmd)) != 0)
@@ -4642,7 +4643,7 @@ int MailStorage::LoadMailBodyToFile(const char* emlfile, const char* fullpath)
     string strSafetyEmlfile= emlfile;
 	SqlSafetyString(strSafetyEmlfile);
     
-	sprintf(sqlcmd, "SELECT mfragment FROM mbodytbl WHERE mbody='%s' ORDER BY mid", strSafetyEmlfile.c_str());
+	sprintf(sqlcmd, "SELECT mfragment FROM mbodytbl WHERE mbody='%s' ORDER BY mtime", strSafetyEmlfile.c_str());
 	
 	if( Query(sqlcmd, strlen(sqlcmd)) == 0)
 	{		
