@@ -7,7 +7,12 @@
 
 #include <libmemcached/memcached.h>
 #include "base.h"
+#include "util/general.h"
+#include "util/md5.h"
+#include "service.h"
 #include <string>
+
+
 using namespace std;
 
 enum xmpp_state_machine
@@ -42,6 +47,139 @@ enum presence_type
   PRESENCE_UNAVAILABLE,
   PRESENCE_PROBE,
   PRESENCE_UNKNOW
+};
+
+class xmpp_stanza
+{
+public:
+    xmpp_stanza()
+    {
+        
+    }
+    virtual ~xmpp_stanza()
+    {
+        
+    }
+    
+    bool Parse(const char* text);
+    
+private:
+    string m_id;
+    
+    string m_from;
+    string m_to;
+    
+    string m_lang;
+    string m_xmlns; /* namespace */
+    
+    TiXmlDocument m_xml;
+    string m_xml_text;
+};
+
+class xmpp_iq : public xmpp_stanza
+{
+public:
+    xmpp_iq()
+    {
+        
+    }
+    virtual ~xmpp_iq()
+    {
+        
+    }
+private:
+    iq_type m_type;
+};
+
+class xmpp_presence : public xmpp_stanza
+{
+public:
+    xmpp_presence()
+    {
+        
+    }
+    virtual ~xmpp_presence()
+    {
+        
+    }
+private:
+    presence_type m_type;
+};
+
+class xmpp_message : public xmpp_stanza
+{
+public:
+    xmpp_message()
+    {
+        
+    }
+    virtual ~xmpp_message()
+    {
+        
+    }
+private:
+    
+};
+
+class xmpp_auth : public xmpp_stanza
+{
+public:
+    xmpp_auth()
+    {
+        
+    }
+    virtual ~xmpp_auth()
+    {
+        
+    }
+private:
+    
+};
+
+
+class xmpp_stream_stream : public xmpp_stanza
+{
+public:
+    xmpp_stream_stream()
+    {
+        
+    }
+    virtual ~xmpp_stream_stream()
+    {
+        
+    }
+private:
+    
+};
+
+class xmpp_stream_features : public xmpp_stanza
+{
+public:
+    xmpp_stream_features()
+    {
+        
+    }
+    virtual ~xmpp_stream_features()
+    {
+        
+    }
+private:
+    
+};
+
+class xmpp_stream_error : public xmpp_stanza
+{
+public:
+    xmpp_stream_error()
+    {
+        
+    }
+    virtual ~xmpp_stream_error()
+    {
+        
+    }
+private:
+    
 };
 
 class CXmpp : public CMailBase
@@ -96,6 +234,7 @@ protected:
 	memcached_st * m_memcached;
     
     //xmpp
+    xmpp_stanza * m_xmpp_stanza;
     string m_xml_declare;
     string m_xml_stream;
     string m_xml_stanza;

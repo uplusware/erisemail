@@ -826,5 +826,20 @@ int inline try_single_on(const char* pflag)
 	return 0;   
 }
 
+typedef enum
+{
+	stSMTP = 1,
+	stPOP3,
+	stIMAP,
+	stHTTP,
+    stXMPP,
+	stMTA
+} Service_Type;
+
+#define MTA_SERVICE_NAME        "MTA"
+#define MDA_SERVICE_NAME        "MDA"
+#define WATCHER_SERVICE_NAME    "WATCHER"
+#define XMPP_SERVICE_NAME       "XMPP"
+
 #endif /* _MAILSYS_H_ */
 

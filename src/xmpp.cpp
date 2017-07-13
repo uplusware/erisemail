@@ -2,16 +2,45 @@
 	Copyright (c) openheap, uplusware
 	uplusware@gmail.com
 */
-#include "util/general.h"
-#include "xmpp.h"
+
 #include <sys/types.h>          /* See NOTES */
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include "util/md5.h"
-#include "service.h"
+#include "xmpp.h"
+
+bool xmpp_stanza::Parse(const char* text)
+{
+    m_xml_text += text;
+    
+    bool ret = m_xml.LoadString(m_xml_text.c_str(), m_xml_text.length());
+    if(ret)
+    {
+        TiXmlElement * pStanzaElement = m_xml.RootElement();
+        if(pStanzaElement)
+        {
+            if(pStanzaElement->Attribute("to")
+                && strcmp(pStanzaElement->Attribute("to"), "") != 0)
+            {
+                m_to = pStanzaElement->Attribute("to");
+            }
+            else if(pStanzaElement->Attribute("from")
+                && strcmp(pStanzaElement->Attribute("from"), "") != 0)
+            {
+                m_from = pStanzaElement->Attribute("from");
+            }
+            else if(pStanzaElement->Attribute("id")
+                && strcmp(pStanzaElement->Attribute("id"), "") != 0)
+            {
+                m_id = pStanzaElement->Attribute("id");
+            }
+        }
+    }
+    
+    return ret;
+}
 
 map<string, CXmpp* > CXmpp::m_online_list;
 pthread_rwlock_t CXmpp::m_online_list_lock;
@@ -25,7 +54,9 @@ CXmpp::CXmpp(int sockfd, SSL * ssl, SSL_CTX * ssl_ctx, const char* clientip,
         pthread_rwlock_init(&m_online_list_lock, NULL);
         m_online_list_inited = TRUE;
     }
-
+    
+    m_xmpp_stanza = NULL;
+    
     pthread_mutex_init(&m_send_lock, NULL);
 
     m_status = STATUS_ORIGINAL;
@@ -120,8 +151,6 @@ CXmpp::~CXmpp()
                     pPresenceElement->Accept( &xml_printer );
 
                     pXmpp->XmppSend(xml_printer.CStr(), xml_printer.Size());
-
-                    //printf("%s: %s\n", buddys[x].c_str(), xml_printer.CStr());
                 }
             }
             pthread_rwlock_unlock(&m_online_list_lock); //acquire write
@@ -146,8 +175,6 @@ CXmpp::~CXmpp()
 
 int CXmpp::XmppSend(const char* buf, int len)
 {
-	// printf("[%s]: %s\n", m_username.c_str(), buf);
-
     int ret;
     
     pthread_mutex_lock(&m_send_lock);
@@ -171,120 +198,115 @@ int CXmpp::ProtRecv(char* buf, int len)
 }
 
 BOOL CXmpp::Parse(char* text)
-{
+{    
     BOOL result = TRUE;
-    //printf(" IN: %s\n", text);
-    if(m_xml_declare == "")
+    //printf("%s\n", text);
+    if(strncasecmp(text, "<?xml ", strlen("<?xml ")) != 0)
     {
         m_xml_declare = text;
+    }
+    else if(strcasecmp(text, "</stream:stream>") == 0)
+    {
+        result = FALSE;
+    }
+    else if(strncasecmp(text, "<stream:stream>", _CSL_("<stream:stream>")) == 0
+         || strncasecmp(text, "<stream:stream ", _CSL_("<stream:stream ")) == 0)
+    {
+        if(!StreamTag(text))
+            return FALSE;
+    }
+    else if(strncasecmp(text, "<auth>", _CSL_("<auth>")) == 0
+        || strncasecmp(text, "<auth ", _CSL_("<auth ")) == 0)
+    {
+        m_state_machine = S_XMPP_AUTHING;
+        m_xml_stanza = text;
+    }
+    else if(m_state_machine == S_XMPP_AUTHING
+        && strlen(text) >= _CSL_("</auth>")
+        && strcasecmp(text + strlen(text) - _CSL_("</auth>"), "</auth>") == 0)
+    {
+        m_xml_stanza += text;
+        m_state_machine = S_XMPP_AUTHED;
+
+        if(!AuthTag(m_xml_stanza.c_str()))
+            return FALSE;
 
     }
-    else
+    else if(strncasecmp(text, "<iq>", _CSL_("<iq>")) == 0
+        || strncasecmp(text, "<iq ", _CSL_("<iq ")) == 0)
     {
-        if(strcasecmp(text, "</stream:stream>") == 0)
-        {
-            result = FALSE;
-        }
-        else if(strncasecmp(text, "<stream:stream>", _CSL_("<stream:stream>")) == 0
-            || strncasecmp(text, "<stream:stream ", _CSL_("<stream:stream ")) == 0)
-        {
+        m_state_machine = S_XMPP_IQING;
+        m_xml_stanza = text;
+    }
+    else if(m_state_machine == S_XMPP_IQING
+        && strlen(text) >= _CSL_("</iq>")
+        && strcasecmp(text + strlen(text) - _CSL_("</iq>"), "</iq>") == 0)
+    {
+        m_xml_stanza += text;
+        m_state_machine = S_XMPP_IQED;
 
-            if(!StreamTag(text))
-                return FALSE;
-        }
-        else if(strncasecmp(text, "<auth>", _CSL_("<auth>")) == 0
-            || strncasecmp(text, "<auth ", _CSL_("<auth ")) == 0)
-        {
-            m_state_machine = S_XMPP_AUTHING;
-            m_xml_stanza = text;
-        }
-        else if(m_state_machine == S_XMPP_AUTHING
-            && strlen(text) >= _CSL_("</auth>")
-            && strcasecmp(text + strlen(text) - _CSL_("</auth>"), "</auth>") == 0)
-        {
-            m_xml_stanza += text;
-            m_state_machine = S_XMPP_AUTHED;
+        if(!IqTag(m_xml_stanza.c_str()))
+            return FALSE;
+    }
+    else if(strncasecmp(text, "<presence>", _CSL_("<presence>")) == 0
+        || strncasecmp(text, "<presence ", _CSL_("<presence ")) == 0)
+    {
+        m_state_machine = S_XMPP_PRESENCEING;
+        m_xml_stanza = text;
 
-            if(!AuthTag(m_xml_stanza.c_str()))
-                return FALSE;
-
-        }
-        else if(strncasecmp(text, "<iq>", _CSL_("<iq>")) == 0
-            || strncasecmp(text, "<iq ", _CSL_("<iq ")) == 0)
+        if(strcasecmp(text + strlen(text) - _CSL_("/>"), "/>") == 0)
         {
-            m_state_machine = S_XMPP_IQING;
-            m_xml_stanza = text;
-        }
-        else if(m_state_machine == S_XMPP_IQING
-            && strlen(text) >= _CSL_("</iq>")
-            && strcasecmp(text + strlen(text) - _CSL_("</iq>"), "</iq>") == 0)
-        {
-            m_xml_stanza += text;
-            m_state_machine = S_XMPP_IQED;
-
-            if(!IqTag(m_xml_stanza.c_str()))
-                return FALSE;
-        }
-        else if(strncasecmp(text, "<presence>", _CSL_("<presence>")) == 0
-            || strncasecmp(text, "<presence ", _CSL_("<presence ")) == 0)
-        {
-            m_state_machine = S_XMPP_PRESENCEING;
-            m_xml_stanza = text;
-
-            if(strcasecmp(text + strlen(text) - _CSL_("/>"), "/>") == 0)
-            {
-                m_state_machine = S_XMPP_PRESENCED;
-
-                if(!PresenceTag(m_xml_stanza.c_str()))
-                    return FALSE;
-            }
-        }
-        else if(m_state_machine == S_XMPP_PRESENCEING
-            && strlen(text) >= _CSL_("</presence>")
-            && strcasecmp(text + strlen(text) - _CSL_("</presence>"), "</presence>") == 0)
-        {
-
-            m_xml_stanza += text;
             m_state_machine = S_XMPP_PRESENCED;
 
             if(!PresenceTag(m_xml_stanza.c_str()))
                 return FALSE;
+        }
+    }
+    else if(m_state_machine == S_XMPP_PRESENCEING
+        && strlen(text) >= _CSL_("</presence>")
+        && strcasecmp(text + strlen(text) - _CSL_("</presence>"), "</presence>") == 0)
+    {
 
-        }
-        else if(strncasecmp(text, "<message>", _CSL_("<message>")) == 0
-            || strncasecmp(text, "<message ", _CSL_("<message ")) == 0)
-        {
-            m_state_machine = S_XMPP_MESSAGEING;
-            m_xml_stanza = text;
-        }
-        else if(m_state_machine == S_XMPP_MESSAGEING
-            && strlen(text) >= _CSL_("</message>")
-            && strcasecmp(text + strlen(text) - _CSL_("</message>"), "</message>") == 0)
+        m_xml_stanza += text;
+        m_state_machine = S_XMPP_PRESENCED;
+
+        if(!PresenceTag(m_xml_stanza.c_str()))
+            return FALSE;
+
+    }
+    else if(strncasecmp(text, "<message>", _CSL_("<message>")) == 0
+        || strncasecmp(text, "<message ", _CSL_("<message ")) == 0)
+    {
+        m_state_machine = S_XMPP_MESSAGEING;
+        m_xml_stanza = text;
+    }
+    else if(m_state_machine == S_XMPP_MESSAGEING
+        && strlen(text) >= _CSL_("</message>")
+        && strcasecmp(text + strlen(text) - _CSL_("</message>"), "</message>") == 0)
+    {
+        m_xml_stanza += text;
+        m_state_machine = S_XMPP_MESSAGED;
+
+        if(!MessageTag(m_xml_stanza.c_str()))
+            return FALSE;
+    }
+    else
+    {
+        if(m_state_machine == S_XMPP_AUTHING)
         {
             m_xml_stanza += text;
-            m_state_machine = S_XMPP_MESSAGED;
-
-            if(!MessageTag(m_xml_stanza.c_str()))
-                return FALSE;
         }
-        else
+        else if(m_state_machine == S_XMPP_IQING)
         {
-            if(m_state_machine == S_XMPP_AUTHING)
-            {
-                m_xml_stanza += text;
-            }
-            else if(m_state_machine == S_XMPP_IQING)
-            {
-                m_xml_stanza += text;
-            }
-            else if(m_state_machine == S_XMPP_PRESENCEING)
-            {
-                m_xml_stanza += text;
-            }
-            else if(m_state_machine == S_XMPP_MESSAGEING)
-            {
-                m_xml_stanza += text;
-            }
+            m_xml_stanza += text;
+        }
+        else if(m_state_machine == S_XMPP_PRESENCEING)
+        {
+            m_xml_stanza += text;
+        }
+        else if(m_state_machine == S_XMPP_MESSAGEING)
+        {
+            m_xml_stanza += text;
         }
     }
 
@@ -337,7 +359,6 @@ BOOL CXmpp::StreamTag(const char* text)
         "</stream:features>");
         if(XmppSend(xmpp_buf, strlen(xmpp_buf)) != 0)
             return FALSE;
-
     }
 
     return TRUE;

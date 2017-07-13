@@ -24,11 +24,6 @@
 #include "cache.h"
 #include "posixname.h"
 
-#define MTA_SERVICE_NAME        "MTA"
-#define MDA_SERVICE_NAME        "MDA"
-#define WATCHER_SERVICE_NAME    "WATCHER"
-#define XMPP_SERVICE_NAME       "XMPP"
-
 void push_reject_list(const char* service_name, const char* ip);
 
 typedef struct

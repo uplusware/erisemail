@@ -19,16 +19,6 @@
 #include "xmpp.h"
 #include "cache.h"
 
-typedef enum
-{
-	stSMTP = 1,
-	stPOP3,
-	stIMAP,
-	stHTTP,
-    stXMPP,
-	stMTA
-} Service_Type;
-
 class Session
 {
 protected:
