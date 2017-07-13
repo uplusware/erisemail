@@ -151,6 +151,8 @@ CXmpp::~CXmpp()
                     pPresenceElement->Accept( &xml_printer );
 
                     pXmpp->XmppSend(xml_printer.CStr(), xml_printer.Size());
+
+                    //printf("%s: %s\n", buddys[x].c_str(), xml_printer.CStr());
                 }
             }
             pthread_rwlock_unlock(&m_online_list_lock); //acquire write
@@ -175,7 +177,7 @@ CXmpp::~CXmpp()
 
 int CXmpp::XmppSend(const char* buf, int len)
 {
-    int ret;
+	int ret;
     
     pthread_mutex_lock(&m_send_lock);
     
@@ -200,8 +202,8 @@ int CXmpp::ProtRecv(char* buf, int len)
 BOOL CXmpp::Parse(char* text)
 {    
     BOOL result = TRUE;
-    //printf("%s\n", text);
-    if(strncasecmp(text, "<?xml ", strlen("<?xml ")) != 0)
+    
+    if(strncasecmp(text, "<?xml ", strlen("<?xml ")) == 0)
     {
         m_xml_declare = text;
     }
