@@ -14,7 +14,7 @@
 bool xmpp_stanza::Parse(const char* text)
 {
     m_xml_text += text;
-    
+
     bool ret = m_xml.LoadString(m_xml_text.c_str(), m_xml_text.length());
     if(ret)
     {
@@ -38,7 +38,7 @@ bool xmpp_stanza::Parse(const char* text)
             }
         }
     }
-    
+
     return ret;
 }
 
@@ -54,44 +54,41 @@ CXmpp::CXmpp(int sockfd, SSL * ssl, SSL_CTX * ssl_ctx, const char* clientip,
         pthread_rwlock_init(&m_online_list_lock, NULL);
         m_online_list_inited = TRUE;
     }
-    
+
     m_xmpp_stanza = NULL;
-    
+
     pthread_mutex_init(&m_send_lock, NULL);
 
     m_status = STATUS_ORIGINAL;
-	m_sockfd = sockfd;
-	m_clientip = clientip;
+	  m_sockfd = sockfd;
+  	m_clientip = clientip;
 
     m_bSTARTTLS = FALSE;
 
-	m_lsockfd = NULL;
-	m_lssl = NULL;
+	  m_lsockfd = NULL;
+	  m_lssl = NULL;
 
-	m_storageEngine = storage_engine;
-	m_memcached = memcached;
+	  m_storageEngine = storage_engine;
+	  m_memcached = memcached;
 
     m_ssl = ssl;
     m_ssl_ctx = ssl_ctx;
 
-	m_isSSL = isSSL;
-	if(m_isSSL && m_ssl)
-	{
-		int flags = fcntl(m_sockfd, F_GETFL, 0);
-		fcntl(m_sockfd, F_SETFL, flags | O_NONBLOCK);
-
-		m_lssl = new linessl(m_sockfd, m_ssl);
-
-	}
-	else
-	{
-		int flags = fcntl(m_sockfd, F_GETFL, 0);
-		fcntl(m_sockfd, F_SETFL, flags | O_NONBLOCK);
-		m_lsockfd = new linesock(m_sockfd);
-	}
+  	m_isSSL = isSSL;
+  	if(m_isSSL && m_ssl)
+  	{
+  		int flags = fcntl(m_sockfd, F_GETFL, 0);
+  		fcntl(m_sockfd, F_SETFL, flags | O_NONBLOCK);
+  		m_lssl = new linessl(m_sockfd, m_ssl);
+  	}
+  	else
+  	{
+  		int flags = fcntl(m_sockfd, F_GETFL, 0);
+  		fcntl(m_sockfd, F_SETFL, flags | O_NONBLOCK);
+  		m_lsockfd = new linesock(m_sockfd);
+  	}
 
     m_stream_count = 0;
-    m_state_machine = S_XMPP_INIT;
     m_auth_success = FALSE;
 
 }
@@ -162,11 +159,11 @@ CXmpp::~CXmpp()
     //release the resource
     if(m_bSTARTTLS)
 	    close_ssl(m_ssl, m_ssl_ctx);
-	if(m_lsockfd)
-		delete m_lsockfd;
+	  if(m_lsockfd)
+		  delete m_lsockfd;
 
-	if(m_lssl)
-		delete m_lssl;
+	  if(m_lssl)
+		  delete m_lssl;
 
     m_lsockfd = NULL;
     m_lssl = NULL;
@@ -177,17 +174,17 @@ CXmpp::~CXmpp()
 
 int CXmpp::XmppSend(const char* buf, int len)
 {
-	int ret;
-    
+    int ret;
+
     pthread_mutex_lock(&m_send_lock);
-    
+
     if(m_ssl)
         ret = SSLWrite(m_sockfd, m_ssl, buf, len);
     else
         ret = Send(m_sockfd, buf, len);
-    
+
     pthread_mutex_unlock(&m_send_lock);
-    
+
     return ret;
 }
 
@@ -200,124 +197,137 @@ int CXmpp::ProtRecv(char* buf, int len)
 }
 
 BOOL CXmpp::Parse(char* text)
-{    
+{
     BOOL result = TRUE;
-    
-    if(strncasecmp(text, "<?xml ", strlen("<?xml ")) == 0)
+
+    if(strstr(text, "<?xml ") != 0)
     {
         m_xml_declare = text;
     }
-    else if(strcasecmp(text, "</stream:stream>") == 0)
+    else if(strstr(text, "<stream:stream>") != NULL
+         || strstr(text, "<stream:stream ") != NULL)
     {
-        result = FALSE;
-    }
-    else if(strncasecmp(text, "<stream:stream>", _CSL_("<stream:stream>")) == 0
-         || strncasecmp(text, "<stream:stream ", _CSL_("<stream:stream ")) == 0)
-    {
-        if(!StreamTag(text))
-            return FALSE;
-    }
-    else if(strncasecmp(text, "<auth>", _CSL_("<auth>")) == 0
-        || strncasecmp(text, "<auth ", _CSL_("<auth ")) == 0)
-    {
-        m_state_machine = S_XMPP_AUTHING;
-        m_xml_stanza = text;
-    }
-    else if(m_state_machine == S_XMPP_AUTHING
-        && strlen(text) >= _CSL_("</auth>")
-        && strcasecmp(text + strlen(text) - _CSL_("</auth>"), "</auth>") == 0)
-    {
-        m_xml_stanza += text;
-        m_state_machine = S_XMPP_AUTHED;
-
-        if(!AuthTag(m_xml_stanza.c_str()))
-            return FALSE;
-
-    }
-    else if(strncasecmp(text, "<iq>", _CSL_("<iq>")) == 0
-        || strncasecmp(text, "<iq ", _CSL_("<iq ")) == 0)
-    {
-        m_state_machine = S_XMPP_IQING;
-        m_xml_stanza = text;
-    }
-    else if(m_state_machine == S_XMPP_IQING
-        && strlen(text) >= _CSL_("</iq>")
-        && strcasecmp(text + strlen(text) - _CSL_("</iq>"), "</iq>") == 0)
-    {
-        m_xml_stanza += text;
-        m_state_machine = S_XMPP_IQED;
-
-        if(!IqTag(m_xml_stanza.c_str()))
-            return FALSE;
-    }
-    else if(strncasecmp(text, "<presence>", _CSL_("<presence>")) == 0
-        || strncasecmp(text, "<presence ", _CSL_("<presence ")) == 0)
-    {
-        m_state_machine = S_XMPP_PRESENCEING;
-        m_xml_stanza = text;
-
-        if(strcasecmp(text + strlen(text) - _CSL_("/>"), "/>") == 0)
+        if(!m_xmpp_stanza)
+          m_xmpp_stanza = new xmpp_stanza(m_xml_declare.c_str());
+        string xml_padding = text;
+        xml_padding += "</stream:stream>";
+        if(m_xmpp_stanza->Parse(xml_padding.c_str()) && strcmp(m_xmpp_stanza->GetTag(), "stream:stream") == 0)
         {
-            m_state_machine = S_XMPP_PRESENCED;
-
-            if(!PresenceTag(m_xml_stanza.c_str()))
-                return FALSE;
+          if(!StreamTag(m_xmpp_stanza->GetXml()))
+              result = FALSE;
         }
-    }
-    else if(m_state_machine == S_XMPP_PRESENCEING
-        && strlen(text) >= _CSL_("</presence>")
-        && strcasecmp(text + strlen(text) - _CSL_("</presence>"), "</presence>") == 0)
-    {
-
-        m_xml_stanza += text;
-        m_state_machine = S_XMPP_PRESENCED;
-
-        if(!PresenceTag(m_xml_stanza.c_str()))
-            return FALSE;
+        else
+        {
+          result = FALSE;
+        }
+        delete m_xmpp_stanza;
+        m_xmpp_stanza = NULL;
 
     }
-    else if(strncasecmp(text, "<message>", _CSL_("<message>")) == 0
-        || strncasecmp(text, "<message ", _CSL_("<message ")) == 0)
+    else if(strstr(text, "</stream:stream>") != NULL)
     {
-        m_state_machine = S_XMPP_MESSAGEING;
-        m_xml_stanza = text;
-    }
-    else if(m_state_machine == S_XMPP_MESSAGEING
-        && strlen(text) >= _CSL_("</message>")
-        && strcasecmp(text + strlen(text) - _CSL_("</message>"), "</message>") == 0)
-    {
-        m_xml_stanza += text;
-        m_state_machine = S_XMPP_MESSAGED;
+        if(!m_xmpp_stanza)
+          m_xmpp_stanza = new xmpp_stanza(m_xml_declare.c_str());
 
-        if(!MessageTag(m_xml_stanza.c_str()))
-            return FALSE;
+        string xml_padding = "<stream:stream>";
+        xml_padding += text;
+        if(m_xmpp_stanza->Parse(xml_padding.c_str()) && strcmp(m_xmpp_stanza->GetTag(), "stream:stream") == 0)
+        {
+          if(!StreamTag(m_xmpp_stanza->GetXml()))
+              result = FALSE;
+        }
+        else
+        {
+          result = FALSE;
+        }
+        delete m_xmpp_stanza;
+        m_xmpp_stanza = NULL;
+
+        result = FALSE;
     }
     else
     {
-        if(m_state_machine == S_XMPP_AUTHING)
-        {
-            m_xml_stanza += text;
-        }
-        else if(m_state_machine == S_XMPP_IQING)
-        {
-            m_xml_stanza += text;
-        }
-        else if(m_state_machine == S_XMPP_PRESENCEING)
-        {
-            m_xml_stanza += text;
-        }
-        else if(m_state_machine == S_XMPP_MESSAGEING)
-        {
-            m_xml_stanza += text;
-        }
-    }
+      if(!m_xmpp_stanza)
+          m_xmpp_stanza = new xmpp_stanza(m_xml_declare.c_str());
 
+      if(m_xmpp_stanza->Parse(text))
+      {
+        if(strcasecmp(m_xmpp_stanza->GetTag(), "auth") == 0)
+        {
+          if(!AuthTag(m_xmpp_stanza->GetXml()))
+              result = FALSE;
+        }
+        else if(strcasecmp(m_xmpp_stanza->GetTag(), "iq") == 0)
+        {
+          if(!IqTag(m_xmpp_stanza->GetXml()))
+              result = FALSE;
+        }
+        else if(strcasecmp(m_xmpp_stanza->GetTag(), "presence") == 0)
+        {
+          if(!PresenceTag(m_xmpp_stanza->GetXml()))
+              result = FALSE;
+        }
+        else if(strcasecmp(m_xmpp_stanza->GetTag(), "message") == 0)
+        {
+          if(!MessageTag(m_xmpp_stanza->GetXml()))
+              result = FALSE;
+        }
+        else
+        {
+          if(m_auth_success)
+          {
+            char xmpp_buf[1024];
+            const char* sz_from = m_xmpp_stanza->GetFrom();
+            if(!sz_from || sz_from[0] == '\0')
+            {
+              sprintf(xmpp_buf, "%s@%s/%s",
+                  m_username.c_str(), CMailBase::m_email_domain.c_str(), m_resource.c_str());
+              m_xmpp_stanza->SetFrom(xmpp_buf);
+              sz_from = xmpp_buf;
+            }
+
+            const char* sz_to = m_xmpp_stanza->GetTo();
+            string strid;
+            strcut(sz_to, NULL, "@", strid);
+
+            TiXmlPrinter xml_printer;
+            m_xmpp_stanza->GetXml()->Accept( &xml_printer );
+
+            pthread_rwlock_rdlock(&m_online_list_lock); //acquire read
+            map<string, CXmpp*>::iterator it = m_online_list.find(strid);
+
+            if(it != m_online_list.end())
+            {
+                CXmpp* pXmpp = it->second;
+                pXmpp->XmppSend(xml_printer.CStr(), xml_printer.Size());
+            }
+            else
+            {
+                MailStorage* mailStg;
+                StorageEngineInstance stgengine_instance(m_storageEngine, &mailStg);
+                if(!mailStg)
+                {
+                    fprintf(stderr, "%s::%s Get Storage Engine Failed!\n", __FILE__, __FUNCTION__);
+                    pthread_rwlock_unlock(&m_online_list_lock);
+                    return FALSE;
+                }
+
+                mailStg->InsertMyMessage(sz_from, sz_to, xml_printer.CStr());
+
+                stgengine_instance.Release();
+            }
+            pthread_rwlock_unlock(&m_online_list_lock);
+          }
+        }
+        delete m_xmpp_stanza;
+        m_xmpp_stanza = NULL;
+      }
+    }
 	return result;
 }
 
-BOOL CXmpp::StreamTag(const char* text)
+BOOL CXmpp::StreamTag(TiXmlDocument* xmlDoc)
 {
-    m_xml_stream = text;
     if(XmppSend(m_xml_declare.c_str(), m_xml_declare.length()) != 0)
         return FALSE;
 
@@ -334,31 +344,33 @@ BOOL CXmpp::StreamTag(const char* text)
         digest[8], digest[9], digest[10], digest[11], digest[12], digest[13], digest[14], digest[15]);
 
     char xmpp_buf[2048];
-    sprintf(xmpp_buf, "<stream:stream from='%s' id='%s' xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams' version='1.0'>", CMailBase::m_email_domain.c_str(), m_stream_id);
+    sprintf(xmpp_buf, "<stream:stream from='%s' id='%s' xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams' version='1.0'>",
+      CMailBase::m_email_domain.c_str(), m_stream_id);
     if(XmppSend(xmpp_buf, strlen(xmpp_buf)) != 0)
         return FALSE;
 
-    if(m_state_machine == S_XMPP_AUTHED)
+    if(m_auth_success == TRUE)
     {
         sprintf(xmpp_buf,
-        "<stream:features>"
-            "<compression xmlns='http://jabber.org/features/compress'>"
-                "<method>zlib</method>"
-            "</compression>"
-            "<bind xmlns='urn:ietf:params:xml:ns:xmpp-bind'/>"
-            "<session xmlns='urn:ietf:params:xml:ns:xmpp-session'/>"
-        "</stream:features>");
+          "<stream:features>"
+              "<compression xmlns='http://jabber.org/features/compress'>"
+                  "<method>zlib</method>"
+              "</compression>"
+              "<bind xmlns='urn:ietf:params:xml:ns:xmpp-bind'/>"
+              "<session xmlns='urn:ietf:params:xml:ns:xmpp-session'/>"
+          "</stream:features>");
 
         if(XmppSend(xmpp_buf, strlen(xmpp_buf)) != 0)
             return FALSE;
     }
     else
     {
-        sprintf(xmpp_buf, "<stream:features>"
+        sprintf(xmpp_buf,
+          "<stream:features>"
             "<mechanisms xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>"
                 "<mechanism>PLAIN</mechanism>"
             "</mechanisms>"
-        "</stream:features>");
+          "</stream:features>");
         if(XmppSend(xmpp_buf, strlen(xmpp_buf)) != 0)
             return FALSE;
     }
@@ -366,17 +378,14 @@ BOOL CXmpp::StreamTag(const char* text)
     return TRUE;
 }
 
-BOOL CXmpp::PresenceTag(const char* text)
+BOOL CXmpp::PresenceTag(TiXmlDocument* xmlDoc)
 {
     char xmpp_buf[2048];
 
-    TiXmlDocument xmlPresence;
-    xmlPresence.LoadString(text, strlen(text));
-
-    TiXmlElement * pPresenceElement = xmlPresence.RootElement();
+    TiXmlElement * pPresenceElement = xmlDoc->RootElement();
 
     if(pPresenceElement)
-    {        
+    {
         presence_type p_type = PRESENCE_AVAILABLE;
 
         string str_p_type = pPresenceElement->Attribute("type") ? pPresenceElement->Attribute("type") : "";
@@ -409,18 +418,18 @@ BOOL CXmpp::PresenceTag(const char* text)
         {
             p_type = PRESENCE_PROBE;
         }
-        
+
         string str_to;
-        
+
         if(pPresenceElement->Attribute("to")
             && strcmp(pPresenceElement->Attribute("to"), "") != 0
             && strcmp(pPresenceElement->Attribute("to"), CMailBase::m_email_domain.c_str()) != 0)
         {
              str_to = pPresenceElement->Attribute("to");
-        }       
+        }
 
         string strid;
-        
+
         strcut(str_to.c_str(), NULL, "@", strid);
 
         if(p_type== PRESENCE_SBSCRIBED)
@@ -531,12 +540,9 @@ BOOL CXmpp::PresenceTag(const char* text)
     return TRUE;
 }
 
-BOOL CXmpp::IqTag(const char* text)
+BOOL CXmpp::IqTag(TiXmlDocument* xmlDoc)
 {
-    TiXmlDocument xmlIq;
-    xmlIq.LoadString(text, strlen(text));
-
-    TiXmlElement * pIqElement = xmlIq.RootElement();
+    TiXmlElement * pIqElement = xmlDoc->RootElement();
     if(pIqElement)
     {
 
@@ -774,14 +780,11 @@ BOOL CXmpp::IqTag(const char* text)
     return TRUE;
 }
 
-BOOL CXmpp::MessageTag(const char* text)
+BOOL CXmpp::MessageTag(TiXmlDocument* xmlDoc)
 {
     char xmpp_buf[2048];
 
-    TiXmlDocument xmlPresence;
-    xmlPresence.LoadString(text, strlen(text));
-
-    TiXmlElement * pMessageElement = xmlPresence.RootElement();
+    TiXmlElement * pMessageElement = xmlDoc->RootElement();
 
     if(pMessageElement)
     {
@@ -836,15 +839,11 @@ BOOL CXmpp::MessageTag(const char* text)
     return TRUE;
 }
 
-BOOL CXmpp::AuthTag(const char* text)
+BOOL CXmpp::AuthTag(TiXmlDocument* xmlDoc)
 {
-    TiXmlDocument xmlAuth;
-    xmlAuth.LoadString(text, strlen(text));
-
-    TiXmlElement * pAuthElement = xmlAuth.RootElement();
+    TiXmlElement * pAuthElement = xmlDoc->RootElement();
     if(pAuthElement)
     {
-
         string strEnoded = pAuthElement->GetText();
         int outlen = BASE64_DECODE_OUTPUT_MAX_LEN(strEnoded.length());//strEnoded.length()*4+1;
         char* tmp1 = (char*)malloc(outlen);
@@ -855,7 +854,6 @@ BOOL CXmpp::AuthTag(const char* text)
         m_username = tmp1 + 1;
         m_password = tmp1 + 1 + strlen(tmp1 + 1) + 1;
         free(tmp1);
-
         MailStorage* mailStg;
         StorageEngineInstance stgengine_instance(m_storageEngine, &mailStg);
         if(!mailStg)

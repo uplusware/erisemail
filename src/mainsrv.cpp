@@ -22,8 +22,8 @@
 #include "dns.h"
 #include <libgen.h>
 #include <errno.h>
-#include <sys/param.h> 
-#include <sys/stat.h> 
+#include <sys/param.h>
+#include <sys/stat.h>
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -50,7 +50,7 @@ static void daemon_init()
 	setsid();
 	chdir("/");
 	umask(0);
-    
+
  	close(STDIN_FILENO);
 	close(STDOUT_FILENO);
     if(CMailBase::m_close_stderr)
@@ -63,9 +63,9 @@ char PIDFILE[256] = "/tmp/erisemail/erisemaild.pid";
 int Run()
 {
 	int retVal = 0;
-	
+
     vector<service_param_t> server_params;
-    
+
     if(CMailBase::m_enablesmtp)
     {
         service_param_t service_param;
@@ -86,7 +86,7 @@ int Run()
         service_param.sockfd = -1;
         server_params.push_back(service_param);
     }
-    
+
     if(CMailBase::m_enablepop3)
     {
         service_param_t service_param;
@@ -97,7 +97,7 @@ int Run()
         service_param.sockfd = -1;
         server_params.push_back(service_param);
     }
-    
+
     if(CMailBase::m_enablepop3s)
     {
         service_param_t service_param;
@@ -108,7 +108,7 @@ int Run()
         service_param.sockfd = -1;
         server_params.push_back(service_param);
     }
-    
+
     if(CMailBase::m_enableimap)
     {
         service_param_t service_param;
@@ -119,7 +119,7 @@ int Run()
         service_param.sockfd = -1;
         server_params.push_back(service_param);
     }
-    
+
     if(CMailBase::m_enableimaps)
     {
         service_param_t service_param;
@@ -130,7 +130,7 @@ int Run()
         service_param.sockfd = -1;
         server_params.push_back(service_param);
     }
-    
+
     if(CMailBase::m_enablehttp)
     {
         service_param_t service_param;
@@ -141,7 +141,7 @@ int Run()
         service_param.sockfd = -1;
         server_params.push_back(service_param);
     }
-    
+
     if(CMailBase::m_enablehttps)
     {
         service_param_t service_param;
@@ -152,7 +152,7 @@ int Run()
         service_param.sockfd = -1;
         server_params.push_back(service_param);
     }
-    
+
 	do
 	{
         int mda_pid = -1;
@@ -163,19 +163,19 @@ int Run()
 		{
 			char szFlag[128];
 			sprintf(szFlag, "/tmp/erisemail/%s.pid", MDA_SERVICE_NAME);
-			if(check_single_on(szFlag)) 
+			if(check_single_on(szFlag))
 			{
-				printf("%s is aready runing.\n", MDA_SERVICE_NAME);   
+				printf("%s is aready runing.\n", MDA_SERVICE_NAME);
 				exit(-1);
 			}
-				
+
 			close(pfd[0]);
 			daemon_init();
 			Service mda_svr;
 			mda_svr.Run(pfd[1], server_params);
             close(pfd[1]);
 			exit(0);
-			
+
 		}
 		else if(mda_pid > 0)
 		{
@@ -186,7 +186,7 @@ int Run()
 				printf("Start %s Service OK \t\t\t[%u]\n", MDA_SERVICE_NAME, mda_pid);
 			else
 			{
-				
+
 				printf("Start %s Service Failed. \t\t\t[Error]\n", MDA_SERVICE_NAME);
 			}
 			close(pfd[0]);
@@ -198,7 +198,7 @@ int Run()
 			retVal = -1;
 			break;
 		}
-        
+
         if(CMailBase::m_enablemta)
         {
             //Relay service
@@ -209,13 +209,13 @@ int Run()
             {
                 char szFlag[128];
                 sprintf(szFlag, "/tmp/erisemail/%s.pid", MTA_SERVICE_NAME);
-                if(check_single_on(szFlag) )   
-                {   
-                    printf("%s is aready runing.\n", MTA_SERVICE_NAME);   
-                    exit(-1);  
+                if(check_single_on(szFlag) )
+                {
+                    printf("%s is aready runing.\n", MTA_SERVICE_NAME);
+                    exit(-1);
                 }
-                
-                close(pfd[0]);	
+
+                close(pfd[0]);
                 daemon_init();
                 MTA mta;
                 mta.Run(pfd[1]);
@@ -231,7 +231,7 @@ int Run()
                     printf("Start %s Service OK \t\t\t[%u]\n", MTA_SERVICE_NAME, mta_pids);
                 else
                 {
-                    
+
                     printf("Start %s Service Failed \t\t\t[Error]\n", MTA_SERVICE_NAME);
                 }
                 close(pfd[0]);
@@ -240,12 +240,12 @@ int Run()
             {
                 retVal = -1;
                 break;
-            }     
+            }
         }
 
         //XMPP
         vector<service_param_t> xmpp_params;
-        
+
         if(CMailBase::m_enablexmpp)
         {
             service_param_t service_param;
@@ -256,7 +256,7 @@ int Run()
             service_param.sockfd = -1;
             xmpp_params.push_back(service_param);
         }
-        
+
         if(CMailBase::m_enablexmpp)
         {
             int xmpp_pid = -1;
@@ -266,19 +266,19 @@ int Run()
             {
                 char szFlag[128];
                 sprintf(szFlag, "/tmp/erisemail/%s.pid", XMPP_SERVICE_NAME);
-                if(check_single_on(szFlag)) 
+                if(check_single_on(szFlag))
                 {
-                    printf("%s is aready runing.\n", XMPP_SERVICE_NAME);   
+                    printf("%s is aready runing.\n", XMPP_SERVICE_NAME);
                     exit(-1);
                 }
-                    
+
                 close(pfd[0]);
                 daemon_init();
                 Service xmpp_svr(XMPP_SERVICE_NAME);
                 xmpp_svr.Run(pfd[1], xmpp_params);
                 close(pfd[1]);
                 exit(0);
-                
+
             }
             else if(xmpp_pid > 0)
             {
@@ -289,7 +289,7 @@ int Run()
                     printf("Start %s Service OK \t\t\t[%u]\n", XMPP_SERVICE_NAME, xmpp_pid);
                 else
                 {
-                    
+
                     printf("Start %s Service Failed. \t\t\t[Error]\n", XMPP_SERVICE_NAME);
                 }
                 close(pfd[0]);
@@ -311,13 +311,13 @@ int Run()
 		{
 			char szFlag[128];
 			sprintf(szFlag, "/tmp/erisemail/%s.pid", WATCHER_SERVICE_NAME);
-			if(check_single_on(szFlag) )   
-			{   
-				printf("Service %s is aready runing.\n", "Watcher");   
-				exit(-1);  
+			if(check_single_on(szFlag) )
+			{
+				printf("Service %s is aready runing.\n", "Watcher");
+				exit(-1);
 			}
-			
-			close(pfd[0]);	
+
+			close(pfd[0]);
 			daemon_init();
 			Watcher watcher;
 			watcher.Run(pfd[1], server_params, xmpp_params);
@@ -345,25 +345,25 @@ int Run()
 			break;
 		}
 	}while(0);
-	
+
 	CMailBase::UnLoadConfig();
-	
+
 	return retVal;
 }
 
 static int Stop()
 {
 	printf("Stop eRisemail service ...\n");
-	
+
 	Watcher watcher;
 	watcher.Stop();
-	
+
     Service xmpp_svr(XMPP_SERVICE_NAME);
-	xmpp_svr.Stop();	
-    
+	xmpp_svr.Stop();
+
 	Service mda_svr;
-	mda_svr.Stop();	
-	
+	mda_svr.Stop();
+
 	MTA mta_svr;
 	mta_svr.Stop();
 }
@@ -376,13 +376,13 @@ static void Version()
 static int Reload()
 {
 	printf("Reload eRisemail configuration ...\n");
-	
+
     Service xmpp_svr(XMPP_SERVICE_NAME);
 	xmpp_svr.Stop();
-    
+
 	Service mda_svr;
 	mda_svr.ReloadConfig();
-	
+
 	MTA mta_svr;
 	mta_svr.ReloadConfig();
 }
@@ -395,7 +395,7 @@ static int processcmd(const char* cmd, const char* conf, const char* permit, con
 		printf("Load Configure File Failed.\n");
 		return -1;
 	}
-	
+
 	if(strcasecmp(cmd, "stop") == 0)
 	{
 		Stop();
@@ -412,25 +412,25 @@ static int processcmd(const char* cmd, const char* conf, const char* permit, con
 	{
 		char szFlag[128];
 		sprintf(szFlag, "/tmp/erisemail/%s.pid", MDA_SERVICE_NAME);
-		if(check_single_on(szFlag) )   
-		{   
-			printf("%s Service is runing.\n", MDA_SERVICE_NAME);   
+		if(check_single_on(szFlag) )
+		{
+			printf("%s Service is runing.\n", MDA_SERVICE_NAME);
 		}
 		else
 		{
-			printf("%s Service stopped.\n", MTA_SERVICE_NAME);   
+			printf("%s Service stopped.\n", MTA_SERVICE_NAME);
 		}
 
 		sprintf(szFlag, "/tmp/erisemail/%s.pid", MTA_SERVICE_NAME);
-		if(check_single_on(szFlag) )   
-		{   
-			printf("%s Service is runing.\n", MTA_SERVICE_NAME);   
+		if(check_single_on(szFlag) )
+		{
+			printf("%s Service is runing.\n", MTA_SERVICE_NAME);
 		}
 		else
 		{
-			printf("%s Service stopped.\n", MTA_SERVICE_NAME);   
+			printf("%s Service stopped.\n", MTA_SERVICE_NAME);
 		}
-		
+
 	}
 	else if(strcasecmp(cmd, "version") == 0)
 	{
@@ -441,17 +441,17 @@ static int processcmd(const char* cmd, const char* conf, const char* permit, con
 		usage();
 	}
 	CMailBase::UnLoadConfig();
-	return 0;	
+	return 0;
 
 }
 
-static void handle_signal(int sid) 
-{ 
+static void handle_signal(int sid)
+{
 	signal(SIGPIPE, handle_signal);
 }
 
 int main(int argc, char* argv[])
-{	    
+{
 	if(getgid() != 0)
 	{
 		printf("You need root privileges to run this program\n");
@@ -463,7 +463,7 @@ int main(int argc, char* argv[])
 		chmod("/tmp/erisemail", 0777);
 
 		mkdir("/var/log/erisemail/", 0744);
-		
+
 		// Set up the signal handler
 		signal(SIGPIPE, SIG_IGN);
 		sigset_t signals;
@@ -490,4 +490,3 @@ int main(int argc, char* argv[])
 		return 0;
 	}
 }
-
