@@ -6,13 +6,15 @@
 #include "util/security.h"
 #include "posixname.h"
 
+#define ERISEMAIL_VERSION "1.6.09"
+
 static char CHAR_TBL[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890-=~!@#$%^&*()_+[]\\{}|;':\",./<>?";
 
 //////////////////////////////////////////////////////////////////////////
 //CMailBase
 //
 //Software Version
-string CMailBase::m_sw_version = "1.6.08";
+string CMailBase::m_sw_version = ERISEMAIL_VERSION;
 
 //Global
 BOOL CMailBase::m_close_stderr = TRUE;

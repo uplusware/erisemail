@@ -27,7 +27,7 @@
 #include "posixname.h"
 #include "postnotify.h"
 
-#define ERISEMAIL_WEB_SERVER_NAME        "Server: eRisemail Web Server/1.6.08 (*NIX)"
+#define ERISEMAIL_WEB_SERVER_NAME        "Server: eRisemail Web Server/1.6.09 (*NIX)"
 
 #define RSP_200_OK_CACHE			"HTTP/1.1 200 OK\r\n"   \
                                     ERISEMAIL_WEB_SERVER_NAME "\r\n"

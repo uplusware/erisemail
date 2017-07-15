@@ -148,8 +148,6 @@ CXmpp::~CXmpp()
                     pPresenceElement->Accept( &xml_printer );
 
                     pXmpp->XmppSend(xml_printer.CStr(), xml_printer.Size());
-
-                    //printf("%s: %s\n", buddys[x].c_str(), xml_printer.CStr());
                 }
             }
             pthread_rwlock_unlock(&m_online_list_lock); //acquire write
