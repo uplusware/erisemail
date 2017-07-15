@@ -10743,7 +10743,15 @@ public:
 			strResp += szTmp;
 			strResp += "</HTTPPort>";
 			
+			strResp += "<XMPPEnable>";
+			strResp += CMailBase::m_enablexmpp ? "yes" : "no";;
+			strResp += "</XMPPEnable>";
 			
+			sprintf(szTmp, "%d", CMailBase::m_xmppport);
+			strResp += "<XMPPPort>";
+			strResp += szTmp;
+			strResp += "</XMPPPort>";
+            
 			strResp += "<SMTPSEnable>";
 			strResp += CMailBase::m_enablesmtps ? "yes" : "no";;
 			strResp += "</SMTPSEnable>";
