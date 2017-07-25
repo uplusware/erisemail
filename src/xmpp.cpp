@@ -189,9 +189,9 @@ int CXmpp::XmppSend(const char* buf, int len)
 int CXmpp::ProtRecv(char* buf, int len)
 {
     if(m_ssl)
-		return m_lssl->drecv(buf, len);
+		return m_lssl->xrecv(buf, len);
 	else
-		return m_lsockfd->drecv(buf, len);
+		return m_lsockfd->xrecv(buf, len);
 }
 
 BOOL CXmpp::Parse(char* text)

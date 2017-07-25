@@ -30,7 +30,7 @@ Session::~Session()
 void Session::Process()
 {
     BOOL keep_alive = FALSE;
-    
+
     while(1)
     {
         CMailBase * pProtocol;
@@ -77,7 +77,7 @@ void Session::Process()
         {
             try
             {
-                result = pProtocol->ProtRecv(szmsg, m_st == stXMPP ? 1 : 4095);
+                result = pProtocol->ProtRecv(szmsg, 4095);
                 if(result <= 0)
                 {
                     break;
@@ -85,9 +85,9 @@ void Session::Process()
                 else
                 {
                     szmsg[result] = '\0';
-                    
+
                     str_line += szmsg;
-                    
+
                     if(m_st == stXMPP)
                     {
                         new_line = str_line.find(">");
@@ -96,7 +96,7 @@ void Session::Process()
                     {
                         new_line = str_line.find('\n');
                     }
-                    
+
                     if(new_line != std::string::npos)
                     {
                         if(!pProtocol->Parse((char*)str_line.c_str()))
@@ -115,9 +115,8 @@ void Session::Process()
         }
         keep_alive = (pProtocol->IsKeepAlive() && pProtocol->IsEnabledKeepAlive()) ? TRUE : FALSE;
         delete pProtocol;
-        
+
         if(!keep_alive)
             break;
     }
 }
-
