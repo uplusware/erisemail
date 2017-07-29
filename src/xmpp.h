@@ -248,7 +248,7 @@ protected:
 	string m_password;
 	string m_strDigest;
 	string m_strToken;
-  string m_strTokenVerify;
+    string m_strTokenVerify;
 	StorageEngine* m_storageEngine;
 	memcached_st * m_memcached;
 

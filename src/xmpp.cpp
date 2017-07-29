@@ -285,38 +285,45 @@ BOOL CXmpp::Parse(char* text)
             }
 
             const char* sz_to = m_xmpp_stanza->GetTo();
-            string strid;
-            strcut(sz_to, NULL, "@", strid);
-
-            TiXmlPrinter xml_printer;
-            m_xmpp_stanza->GetXml()->Accept( &xml_printer );
-
-            pthread_rwlock_rdlock(&m_online_list_lock); //acquire read
-            map<string, CXmpp*>::iterator it = m_online_list.find(strid);
-
-            if(it != m_online_list.end())
+            string strid = "";
+            if(strstr(sz_to, "@") != NULL)
             {
-                CXmpp* pXmpp = it->second;
-                pXmpp->XmppSend(xml_printer.CStr(), xml_printer.Size());
+                strcut(sz_to, NULL, "@", strid);
+                strtrim(strid);
             }
-            else
+            if(strid != "")
             {
-                MailStorage* mailStg;
-                StorageEngineInstance stgengine_instance(m_storageEngine, &mailStg);
-                if(!mailStg)
+                TiXmlPrinter xml_printer;
+                m_xmpp_stanza->GetXml()->Accept( &xml_printer );
+
+                pthread_rwlock_rdlock(&m_online_list_lock); //acquire read
+                map<string, CXmpp*>::iterator it = m_online_list.find(strid);
+
+                if(it != m_online_list.end())
                 {
-                    fprintf(stderr, "%s::%s Get Storage Engine Failed!\n", __FILE__, __FUNCTION__);
-                    pthread_rwlock_unlock(&m_online_list_lock);
-                    return FALSE;
+                    CXmpp* pXmpp = it->second;
+                    pXmpp->XmppSend(xml_printer.CStr(), xml_printer.Size());
                 }
+                else
+                {
+                    MailStorage* mailStg;
+                    StorageEngineInstance stgengine_instance(m_storageEngine, &mailStg);
+                    if(!mailStg)
+                    {
+                        fprintf(stderr, "%s::%s Get Storage Engine Failed!\n", __FILE__, __FUNCTION__);
+                        pthread_rwlock_unlock(&m_online_list_lock);
+                        return FALSE;
+                    }
 
-                mailStg->InsertMyMessage(sz_from, sz_to, xml_printer.CStr());
+                    mailStg->InsertMyMessage(sz_from, sz_to, xml_printer.CStr());
 
-                stgengine_instance.Release();
+                    stgengine_instance.Release();
+                }
+                pthread_rwlock_unlock(&m_online_list_lock);
             }
-            pthread_rwlock_unlock(&m_online_list_lock);
           }
         }
+              
         delete m_xmpp_stanza;
         m_xmpp_stanza = NULL;
       }
@@ -426,39 +433,43 @@ BOOL CXmpp::PresenceTag(TiXmlDocument* xmlDoc)
              str_to = pPresenceElement->Attribute("to");
         }
 
-        string strid;
-
-        strcut(str_to.c_str(), NULL, "@", strid);
-
-        if(p_type== PRESENCE_SBSCRIBED)
+        string strid = "";
+        if(strstr(str_to.c_str(), "@") != NULL)
         {
-            MailStorage* mailStg;
-            StorageEngineInstance stgengine_instance(m_storageEngine, &mailStg);
-            if(!mailStg)
-            {
-                fprintf(stderr, "%s::%s Get Storage Engine Failed!\n", __FILE__, __FUNCTION__);
-                return FALSE;
-            }
-
-            mailStg->InsertBuddy(m_username.c_str(), strid.c_str());
-
-            stgengine_instance.Release();
+            strcut(str_to.c_str(), NULL, "@", strid);
+            strtrim(strid);
         }
-        else if(p_type== PRESENCE_UNSBSCRIBED)
+        if(strid != "")
         {
-            MailStorage* mailStg;
-            StorageEngineInstance stgengine_instance(m_storageEngine, &mailStg);
-            if(!mailStg)
+            if(p_type== PRESENCE_SBSCRIBED)
             {
-                fprintf(stderr, "%s::%s Get Storage Engine Failed!\n", __FILE__, __FUNCTION__);
-                return FALSE;
+                MailStorage* mailStg;
+                StorageEngineInstance stgengine_instance(m_storageEngine, &mailStg);
+                if(!mailStg)
+                {
+                    fprintf(stderr, "%s::%s Get Storage Engine Failed!\n", __FILE__, __FUNCTION__);
+                    return FALSE;
+                }
+
+                mailStg->InsertBuddy(m_username.c_str(), strid.c_str());
+
+                stgengine_instance.Release();
             }
+            else if(p_type== PRESENCE_UNSBSCRIBED)
+            {
+                MailStorage* mailStg;
+                StorageEngineInstance stgengine_instance(m_storageEngine, &mailStg);
+                if(!mailStg)
+                {
+                    fprintf(stderr, "%s::%s Get Storage Engine Failed!\n", __FILE__, __FUNCTION__);
+                    return FALSE;
+                }
 
-            mailStg->RemoveBuddy(m_username.c_str(), strid.c_str());
+                mailStg->RemoveBuddy(m_username.c_str(), strid.c_str());
 
-            stgengine_instance.Release();
+                stgengine_instance.Release();
+            }
         }
-
         TiXmlElement pReponseElement(*pPresenceElement);
 
         char xmpp_buf[1024];
@@ -543,7 +554,6 @@ BOOL CXmpp::IqTag(TiXmlDocument* xmlDoc)
     TiXmlElement * pIqElement = xmlDoc->RootElement();
     if(pIqElement)
     {
-
         TiXmlElement pReponseElement(*pIqElement);
         TiXmlPrinter xml_printer;
 
@@ -551,28 +561,33 @@ BOOL CXmpp::IqTag(TiXmlDocument* xmlDoc)
             && strcmp(pIqElement->Attribute("to"), "") != 0
             && strcmp(pIqElement->Attribute("to"), CMailBase::m_email_domain.c_str()) != 0)
         {
-            string strid;
-            strcut(pIqElement->Attribute("to"), NULL, "@", strid);
-
-            char xmpp_from[1024];
-            sprintf(xmpp_from, "%s@%s/%s",
-                m_username.c_str(), CMailBase::m_email_domain.c_str(), m_resource.c_str());
-
-            pReponseElement.SetAttribute("from", xmpp_from);
-
-            pReponseElement.Accept( &xml_printer );
-
-            pthread_rwlock_rdlock(&m_online_list_lock); //acquire read
-
-            map<string, CXmpp*>::iterator it = m_online_list.find(strid);
-
-            if(it != m_online_list.end())
+            string strid = "";
+            if(strstr(pIqElement->Attribute("to"), "@") != NULL)
             {
-                CXmpp* pXmpp = it->second;
-                pXmpp->XmppSend(xml_printer.CStr(), xml_printer.Size());
+                strcut(pIqElement->Attribute("to"), NULL, "@", strid);
+                strtrim(strid);
             }
-            pthread_rwlock_unlock(&m_online_list_lock);
+            if(strid != "")
+            {
+                char xmpp_from[1024];
+                sprintf(xmpp_from, "%s@%s/%s",
+                    m_username.c_str(), CMailBase::m_email_domain.c_str(), m_resource.c_str());
 
+                pReponseElement.SetAttribute("from", xmpp_from);
+
+                pReponseElement.Accept( &xml_printer );
+
+                pthread_rwlock_rdlock(&m_online_list_lock); //acquire read
+
+                map<string, CXmpp*>::iterator it = m_online_list.find(strid);
+
+                if(it != m_online_list.end())
+                {
+                    CXmpp* pXmpp = it->second;
+                    pXmpp->XmppSend(xml_printer.CStr(), xml_printer.Size());
+                }
+                pthread_rwlock_unlock(&m_online_list_lock);
+            }
             return TRUE;
         }
 
@@ -802,34 +817,40 @@ BOOL CXmpp::MessageTag(TiXmlDocument* xmlDoc)
             TiXmlPrinter xml_printer;
             pReponseElement.Accept( &xml_printer );
 
-            string strid;
-            strcut(xmpp_to.c_str(), NULL, "@", strid);
-
-            pthread_rwlock_rdlock(&m_online_list_lock); //acquire read
-
-            map<string, CXmpp*>::iterator it = m_online_list.find(strid);
-
-            if(it != m_online_list.end())
+            string strid = "";
+            if(strstr(xmpp_to.c_str(), "@") != NULL)
             {
-                CXmpp* pXmpp = it->second;
-                pXmpp->XmppSend(xml_printer.CStr(), xml_printer.Size());
+                strcut(xmpp_to.c_str(), NULL, "@", strid);
+                strtrim(strid);
             }
-            else
+            if(strid != "")
             {
-                MailStorage* mailStg;
-                StorageEngineInstance stgengine_instance(m_storageEngine, &mailStg);
-                if(!mailStg)
+                pthread_rwlock_rdlock(&m_online_list_lock); //acquire read
+
+                map<string, CXmpp*>::iterator it = m_online_list.find(strid);
+
+                if(it != m_online_list.end())
                 {
-                    fprintf(stderr, "%s::%s Get Storage Engine Failed!\n", __FILE__, __FUNCTION__);
-                    pthread_rwlock_unlock(&m_online_list_lock);
-                    return FALSE;
+                    CXmpp* pXmpp = it->second;
+                    pXmpp->XmppSend(xml_printer.CStr(), xml_printer.Size());
                 }
+                else
+                {
+                    MailStorage* mailStg;
+                    StorageEngineInstance stgengine_instance(m_storageEngine, &mailStg);
+                    if(!mailStg)
+                    {
+                        fprintf(stderr, "%s::%s Get Storage Engine Failed!\n", __FILE__, __FUNCTION__);
+                        pthread_rwlock_unlock(&m_online_list_lock);
+                        return FALSE;
+                    }
 
-                mailStg->InsertMyMessage(xmpp_from, xmpp_to.c_str(), xml_printer.CStr());
+                    mailStg->InsertMyMessage(xmpp_from, xmpp_to.c_str(), xml_printer.CStr());
 
-                stgengine_instance.Release();
+                    stgengine_instance.Release();
+                }
+                pthread_rwlock_unlock(&m_online_list_lock);
             }
-            pthread_rwlock_unlock(&m_online_list_lock);
         }
 
     }

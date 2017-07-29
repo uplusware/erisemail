@@ -55,7 +55,7 @@ static void daemon_init()
 	close(STDOUT_FILENO);
     if(CMailBase::m_close_stderr)
         close(STDERR_FILENO);
-	signal(SIGCHLD,SIG_IGN);
+	signal(SIGCHLD, SIG_IGN);
 }
 
 char PIDFILE[256] = "/tmp/erisemail/erisemaild.pid";
@@ -451,7 +451,7 @@ static void handle_signal(int sid)
 }
 
 int main(int argc, char* argv[])
-{
+{     
 	if(getgid() != 0)
 	{
 		printf("You need root privileges to run this program\n");
