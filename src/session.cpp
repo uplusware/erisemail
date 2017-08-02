@@ -85,7 +85,7 @@ void Session::Process()
                 else
                 {
                     szmsg[result] = '\0';
-
+                    
                     str_line += szmsg;
 
                     if(m_st == stXMPP)
