@@ -433,7 +433,7 @@ int __inline__ SSLRead(int sockfd, SSL* ssl, char * buf, unsigned int buf_len)
 	while(1)
 	{
         len = SSL_read(ssl, buf + nRecv, buf_len - nRecv);
-        //printf("SSL_read, %d %d %d\n", sockfd, len, buf_len);
+        
         if(len == 0)
         {
             ret = SSL_get_error(ssl, len);
@@ -510,7 +510,7 @@ int __inline__ SSLReadTimed(int sockfd, SSL* ssl, char * buf, unsigned int buf_l
 	FD_ZERO(&mask);
 	
     len = SSL_read(ssl, buf, buf_len);
-    //printf("SSL_read, %d %d %d\n", sockfd, len, buf_len);
+    
     if(len == 0)
     {
         ret = SSL_get_error(ssl, len);

@@ -116,6 +116,7 @@ CXmpp::~CXmpp()
         if(mailStg)
         {
             TiXmlPrinter xml_printer;
+            xml_printer.SetIndent("");
             vector<string> buddys;
             mailStg->ListBuddys(GetUsername(), buddys);
             stgengine_instance.Release();
@@ -173,7 +174,7 @@ CXmpp::~CXmpp()
 int CXmpp::XmppSend(const char* buf, int len)
 {
     int ret;
-
+    
     pthread_mutex_lock(&m_send_lock);
 
     if(m_ssl)
@@ -294,6 +295,7 @@ BOOL CXmpp::Parse(char* text)
             if(strid != "")
             {
                 TiXmlPrinter xml_printer;
+                xml_printer.SetIndent("");
                 m_xmpp_stanza->GetXml()->Accept( &xml_printer );
 
                 pthread_rwlock_rdlock(&m_online_list_lock); //acquire read
@@ -479,6 +481,7 @@ BOOL CXmpp::PresenceTag(TiXmlDocument* xmlDoc)
         pReponseElement.SetAttribute("from", xmpp_buf);
 
         TiXmlPrinter xml_printer;
+        xml_printer.SetIndent("");
         if(strid != "")
         {
             pReponseElement.Accept( &xml_printer );
@@ -556,6 +559,7 @@ BOOL CXmpp::IqTag(TiXmlDocument* xmlDoc)
     {
         TiXmlElement pReponseElement(*pIqElement);
         TiXmlPrinter xml_printer;
+        xml_printer.SetIndent("");
 
         if(pIqElement->Attribute("to")
             && strcmp(pIqElement->Attribute("to"), "") != 0
@@ -739,6 +743,7 @@ BOOL CXmpp::IqTag(TiXmlDocument* xmlDoc)
                 else
                 {
                     TiXmlPrinter xml_printer;
+                    xml_printer.SetIndent("");
                     pChildNode->Accept( &xml_printer );
 
                     if(XmppSend(xml_printer.CStr(), xml_printer.Size()) != 0)
@@ -780,6 +785,7 @@ BOOL CXmpp::IqTag(TiXmlDocument* xmlDoc)
                     pPresenceElement->SetAttribute("from", xmpp_buf);
 
                     TiXmlPrinter xml_printer;
+                    xml_printer.SetIndent("");
                     pPresenceElement->Accept( &xml_printer );
 
                     if(XmppSend(xml_printer.CStr(), xml_printer.Size()) != 0)
@@ -815,6 +821,7 @@ BOOL CXmpp::MessageTag(TiXmlDocument* xmlDoc)
             string xmpp_to = pReponseElement.Attribute("to") ? pReponseElement.Attribute("to") : "";
 
             TiXmlPrinter xml_printer;
+            xml_printer.SetIndent("");
             pReponseElement.Accept( &xml_printer );
 
             string strid = "";

@@ -413,7 +413,7 @@ public:
 			FD_SET(sockfd, &mask);
 			res = select(sockfd + 1, &mask, NULL, NULL, &timeout);
 
-			if( res == 1)
+			if( res > 0)
 			{
 				taketime = 0;
 				len = recv(sockfd, pbuf + nRecv, blen - nRecv, 0);
@@ -740,7 +740,7 @@ public:
                     
                     res = select(sockfd + 1, &mask, NULL, NULL, &timeout);
 
-                    if( res == 1)
+                    if( res > 0)
                     {
                         continue;
                     }
@@ -757,7 +757,7 @@ public:
                 }
                 else
                 {
-                    printf("SSL_get_error %d\n", ret);
+                    perror("SSL_get_error");
                     close(sockfd);
                     return -1;
                 }

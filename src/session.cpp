@@ -100,7 +100,10 @@ void Session::Process()
                     if(new_line != std::string::npos)
                     {
                         if(!pProtocol->Parse((char*)str_line.c_str()))
+                        {
                             break;
+                        }
+                        
                         str_line = "";
                     }
                 }
