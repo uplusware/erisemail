@@ -331,7 +331,7 @@ public:
 			{
 
 				taketime = taketime + 1;
-				if(taketime > MAX_TRY_TIMEOUT)
+				if(taketime > MAX_SOCKET_TIMEOUT)
 				{
 					close(sockfd);
 					return -1;
@@ -454,7 +454,7 @@ public:
 			{
 
 				taketime = taketime + 1;
-				if(taketime > MAX_TRY_TIMEOUT)
+				if(taketime > MAX_SOCKET_TIMEOUT)
 				{
 					close(sockfd);
 					return -1;
@@ -597,6 +597,20 @@ public:
             len = SSL_read(sslhd, pbuf + nRecv, blen - nRecv);
             if(len == 0)
             {
+                ret = SSL_get_error(sslhd, len);
+                if(ret == SSL_ERROR_ZERO_RETURN)
+                {
+                    printf("SSL_read: shutdown by the peer\n");
+                }
+                else if(ret == SSL_ERROR_SYSCALL)
+                {
+                    if(ERR_get_error() == 0)
+                    {
+                        printf("SSL_read: shutdown by the peer\n");
+                    }
+                    else
+                        printf("SSL_read: %s\n", ERR_error_string(ERR_get_error(),NULL));
+                }
                 close(sockfd);
                 return -1;
             }
@@ -605,7 +619,7 @@ public:
                 ret = SSL_get_error(sslhd, len);
                 if(ret == SSL_ERROR_WANT_READ || ret == SSL_ERROR_WANT_WRITE)
                 {
-                    timeout.tv_sec = MAX_TRY_TIMEOUT;
+                    timeout.tv_sec = MAX_SOCKET_TIMEOUT;
                     timeout.tv_usec = 0;
 
                     FD_ZERO(&mask);
@@ -630,7 +644,19 @@ public:
                 }
                 else
                 {
-                    printf("SSL_get_error %d\n", ret);
+                    if(ret == SSL_ERROR_ZERO_RETURN)
+                    {
+                        printf("SSL_read: shutdown by the peer\n");
+                    }
+                    else if(ret == SSL_ERROR_SYSCALL)
+                    {
+                        if(ERR_get_error() == 0)
+                        {
+                            printf("SSL_read: shutdown by the peer\n");
+                        }
+                        else
+                            printf("SSL_read: %s\n", ERR_error_string(ERR_get_error(),NULL));
+                    }
                     close(sockfd);
                     return -1;
                 }
@@ -724,6 +750,20 @@ public:
             len = SSL_read(sslhd, pbuf + nRecv, blen - nRecv);
             if(len == 0)
             {
+                ret = SSL_get_error(sslhd, len);
+                if(ret == SSL_ERROR_ZERO_RETURN)
+                {
+                    printf("SSL_read: shutdown by the peer\n");
+                }
+                else if(ret == SSL_ERROR_SYSCALL)
+                {
+                    if(ERR_get_error() == 0)
+                    {
+                        printf("SSL_read: shutdown by the peer\n");
+                    }
+                    else
+                        printf("SSL_read: %s\n", ERR_error_string(ERR_get_error(),NULL));
+                }
                 close(sockfd);
                 return -1;
             }
@@ -732,7 +772,7 @@ public:
                 ret = SSL_get_error(sslhd, len);
                 if(ret == SSL_ERROR_WANT_READ || ret == SSL_ERROR_WANT_WRITE)
                 {
-                    timeout.tv_sec = MAX_TRY_TIMEOUT;
+                    timeout.tv_sec = MAX_SOCKET_TIMEOUT;
                     timeout.tv_usec = 0;
 
                     FD_ZERO(&mask);
@@ -757,7 +797,19 @@ public:
                 }
                 else
                 {
-                    perror("SSL_get_error");
+                    if(ret == SSL_ERROR_ZERO_RETURN)
+                    {
+                        printf("SSL_read: shutdown by the peer\n");
+                    }
+                    else if(ret == SSL_ERROR_SYSCALL)
+                    {
+                        if(ERR_get_error() == 0)
+                        {
+                            printf("SSL_read: shutdown by the peer\n");
+                        }
+                        else
+                            printf("SSL_read: %s\n", ERR_error_string(ERR_get_error(),NULL));
+                    }
                     close(sockfd);
                     return -1;
                 }
