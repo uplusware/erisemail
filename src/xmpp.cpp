@@ -65,11 +65,11 @@ CXmpp::CXmpp(int sockfd, SSL * ssl, SSL_CTX * ssl_ctx, const char* clientip,
 
     m_bSTARTTLS = FALSE;
 
-	  m_lsockfd = NULL;
-	  m_lssl = NULL;
+    m_lsockfd = NULL;
+    m_lssl = NULL;
 
-	  m_storageEngine = storage_engine;
-	  m_memcached = memcached;
+    m_storageEngine = storage_engine;
+    m_memcached = memcached;
 
     m_ssl = ssl;
     m_ssl_ctx = ssl_ctx;
@@ -95,6 +95,11 @@ CXmpp::CXmpp(int sockfd, SSL * ssl, SSL_CTX * ssl_ctx, const char* clientip,
 
 CXmpp::~CXmpp()
 {
+    if(m_xmpp_stanza)
+        delete m_xmpp_stanza;
+    
+    m_xmpp_stanza = NULL;
+    
     pthread_rwlock_wrlock(&m_online_list_lock); //acquire write
     m_online_list.erase(m_username);
 
@@ -158,11 +163,12 @@ CXmpp::~CXmpp()
     //release the resource
     if(m_bSTARTTLS)
 	    close_ssl(m_ssl, m_ssl_ctx);
-	  if(m_lsockfd)
-		  delete m_lsockfd;
-
-	  if(m_lssl)
-		  delete m_lssl;
+    
+    if(m_lsockfd)
+        delete m_lsockfd;
+    
+    if(m_lssl)
+        delete m_lssl;
 
     m_lsockfd = NULL;
     m_lssl = NULL;
@@ -176,12 +182,12 @@ int CXmpp::XmppSend(const char* buf, int len)
     int ret;
     
     pthread_mutex_lock(&m_send_lock);
-
+    
     if(m_ssl)
         ret = SSLWrite(m_sockfd, m_ssl, buf, len);
     else
         ret = Send(m_sockfd, buf, len);
-
+    
     pthread_mutex_unlock(&m_send_lock);
 
     return ret;
@@ -248,13 +254,13 @@ BOOL CXmpp::Parse(char* text)
     {
       if(!m_xmpp_stanza)
           m_xmpp_stanza = new xmpp_stanza(m_xml_declare.c_str());
-
+      
       if(m_xmpp_stanza->Parse(text))
       {
         if(strcasecmp(m_xmpp_stanza->GetTag(), "auth") == 0)
         {
           if(!AuthTag(m_xmpp_stanza->GetXml()))
-              result = FALSE;
+              result = FALSE;          
         }
         else if(strcasecmp(m_xmpp_stanza->GetTag(), "iq") == 0)
         {

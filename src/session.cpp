@@ -69,7 +69,7 @@ void Session::Process()
             return;
         }
 
-        char szmsg[4096];
+        char szmsg[4096*2];
         string str_line = "";
         std::size_t new_line;
         int result;
@@ -77,7 +77,7 @@ void Session::Process()
         {
             try
             {
-                result = pProtocol->ProtRecv(szmsg, 4095);
+                result = pProtocol->ProtRecv(szmsg, 4096*2 - 1);
                 if(result <= 0)
                 {
                     break;
@@ -90,7 +90,7 @@ void Session::Process()
 
                     if(m_st == stXMPP)
                     {
-                        new_line = str_line.find(">");
+                        new_line = str_line.find('>');
                     }
                     else
                     {
