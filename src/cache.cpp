@@ -295,6 +295,7 @@ void memory_cache::load(const char* szdir)
                                 cache_size += fdata.flen;
                                 
                                 /* printf("Load file to cache: %s\n", strfilename.c_str()); */
+                                
                                 fdata.pbuf = (char*)malloc(fdata.flen);
                                 int nRead = 0;
                                 while(1)
@@ -346,10 +347,11 @@ void memory_cache::unload()
 	map<string, filedata>::iterator iter;
 	for(iter = m_htdoc.begin(); iter != m_htdoc.end(); iter++)
 	{
+        /* printf("Unload file from cache: %s\n", iter->first.c_str()); */
 		free(iter->second.pbuf);
 	}
 	m_htdoc.clear();
-
+    
 	m_language.clear();
 }
 

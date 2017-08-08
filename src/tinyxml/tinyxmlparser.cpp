@@ -1100,7 +1100,7 @@ const char* TiXmlElement::Parse( const char* p, TiXmlParsingData* data, TiXmlEnc
 		{
 			++p;
 			// Empty tag.
-			if ( *p  != '>' )
+			if ( !p || !*p || *p  != '>' )
 			{
 				if ( document ) document->SetError( TIXML_ERROR_PARSING_EMPTY, p, data, encoding );		
 				return 0;

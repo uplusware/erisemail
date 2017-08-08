@@ -720,6 +720,11 @@ int Service::Run(int fd, vector<service_param_t> & server_params)
     if(memcached_servers)
         memcached_server_list_free(memcached_servers);
 	
+    if(m_cache)
+        delete m_cache;
+    
+    m_cache = NULL;
+    
     CMailBase::UnLoadConfig();
 	
 	return 0;
