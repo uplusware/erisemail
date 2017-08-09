@@ -54,7 +54,9 @@ CXmpp::CXmpp(int sockfd, SSL * ssl, SSL_CTX * ssl_ctx, const char* clientip,
         pthread_rwlock_init(&m_online_list_lock, NULL);
         m_online_list_inited = TRUE;
     }
-
+    
+    m_indent = 0;
+    
     m_xmpp_stanza = NULL;
 
     pthread_mutex_init(&m_send_lock, NULL);
@@ -204,16 +206,26 @@ int CXmpp::ProtRecv(char* buf, int len)
 BOOL CXmpp::Parse(char* text)
 {
     BOOL result = TRUE;
-
-    if(strstr(text, "<?xml ") != 0)
+    
+    char szTag[256] = "";
+    char szEnd[3] = "";
+    
+    sscanf(strstr(text, "<"), "<%[^ >]%*[^>]>", &szTag);
+    if(strlen(text) > 2)
+    {
+        memcpy(szEnd, text + strlen(text) - 2, 2);
+        szEnd[2] = '\0';
+    }
+    
+    if(strcasecmp(szTag, "?xml") == 0)
     {
         m_xml_declare = text;
     }
-    else if(strstr(text, "<stream:stream>") != NULL
-         || strstr(text, "<stream:stream ") != NULL)
+    else if(strcasecmp(szTag, "stream:stream") == 0)
     {
         if(!m_xmpp_stanza)
           m_xmpp_stanza = new xmpp_stanza(m_xml_declare.c_str());
+      
         string xml_padding = text;
         xml_padding += "</stream:stream>";
         if(m_xmpp_stanza->Parse(xml_padding.c_str()) && strcmp(m_xmpp_stanza->GetTag(), "stream:stream") == 0)
@@ -227,52 +239,42 @@ BOOL CXmpp::Parse(char* text)
         }
         delete m_xmpp_stanza;
         m_xmpp_stanza = NULL;
-
+        
+        //reset the indent
+        m_indent = 0;
     }
-    else if(strstr(text, "</stream:stream>") != NULL)
+    else if(strcasecmp(szTag, "/stream:stream") == 0)
     {
-        if(!m_xmpp_stanza)
-          m_xmpp_stanza = new xmpp_stanza(m_xml_declare.c_str());
-
-        string xml_padding = "<stream:stream>";
-        xml_padding += text;
-        if(m_xmpp_stanza->Parse(xml_padding.c_str()) && strcmp(m_xmpp_stanza->GetTag(), "stream:stream") == 0)
-        {
-          if(!StreamTag(m_xmpp_stanza->GetXml()))
-              result = FALSE;
-        }
-        else
-        {
-          result = FALSE;
-        }
-        delete m_xmpp_stanza;
-        m_xmpp_stanza = NULL;
-
+        m_indent = 0;
         result = FALSE;
     }
-    else
+    else if(szTag[0] == '/' || szEnd[0] == '/')
     {
+      if(szTag[0] == '/')
+        m_indent--;
+    
       if(!m_xmpp_stanza)
           m_xmpp_stanza = new xmpp_stanza(m_xml_declare.c_str());
       
-      if(m_xmpp_stanza->Parse(text))
+      if(m_indent == 0 && m_xmpp_stanza->Parse(text))
       {
-        if(strcasecmp(m_xmpp_stanza->GetTag(), "auth") == 0)
+        const char* szTagName = m_xmpp_stanza->GetTag();
+        if(szTagName && strcasecmp(szTagName, "auth") == 0)
         {
           if(!AuthTag(m_xmpp_stanza->GetXml()))
               result = FALSE;          
         }
-        else if(strcasecmp(m_xmpp_stanza->GetTag(), "iq") == 0)
+        else if(szTagName && strcasecmp(szTagName, "iq") == 0)
         {
           if(!IqTag(m_xmpp_stanza->GetXml()))
               result = FALSE;
         }
-        else if(strcasecmp(m_xmpp_stanza->GetTag(), "presence") == 0)
+        else if(szTagName && strcasecmp(szTagName, "presence") == 0)
         {
           if(!PresenceTag(m_xmpp_stanza->GetXml()))
               result = FALSE;
         }
-        else if(strcasecmp(m_xmpp_stanza->GetTag(), "message") == 0)
+        else if(szTagName && strcasecmp(szTagName, "message") == 0)
         {
           if(!MessageTag(m_xmpp_stanza->GetXml()))
               result = FALSE;
@@ -282,52 +284,53 @@ BOOL CXmpp::Parse(char* text)
           if(m_auth_success)
           {
             char xmpp_buf[1024];
-            const char* sz_from = m_xmpp_stanza->GetFrom();
-            if(!sz_from || sz_from[0] == '\0')
+            const char* szFrom = m_xmpp_stanza->GetFrom();
+            if(!szFrom || szFrom[0] == '\0')
             {
               sprintf(xmpp_buf, "%s@%s/%s",
                   m_username.c_str(), CMailBase::m_email_domain.c_str(), m_resource.c_str());
               m_xmpp_stanza->SetFrom(xmpp_buf);
-              sz_from = xmpp_buf;
+              szFrom = xmpp_buf;
             }
 
-            const char* sz_to = m_xmpp_stanza->GetTo();
-            string strid = "";
-            if(strstr(sz_to, "@") != NULL)
+            const char* szTo = m_xmpp_stanza->GetTo();
+            string str_username;
+            if(szTo && szTo[0] != '\0' && strstr(szTo, "@") != NULL)
             {
-                strcut(sz_to, NULL, "@", strid);
-                strtrim(strid);
-            }
-            if(strid != "")
-            {
-                TiXmlPrinter xml_printer;
-                xml_printer.SetIndent("");
-                m_xmpp_stanza->GetXml()->Accept( &xml_printer );
-
-                pthread_rwlock_rdlock(&m_online_list_lock); //acquire read
-                map<string, CXmpp*>::iterator it = m_online_list.find(strid);
-
-                if(it != m_online_list.end())
+                strcut(szTo, NULL, "@", str_username);
+                strtrim(str_username);
+                
+                if(str_username != "")
                 {
-                    CXmpp* pXmpp = it->second;
-                    pXmpp->XmppSend(xml_printer.CStr(), xml_printer.Size());
-                }
-                else
-                {
-                    MailStorage* mailStg;
-                    StorageEngineInstance stgengine_instance(m_storageEngine, &mailStg);
-                    if(!mailStg)
+                    TiXmlPrinter xml_printer;
+                    xml_printer.SetIndent("");
+                    m_xmpp_stanza->GetXml()->Accept( &xml_printer );
+
+                    pthread_rwlock_rdlock(&m_online_list_lock); //acquire read
+                    map<string, CXmpp*>::iterator it = m_online_list.find(str_username);
+
+                    if(it != m_online_list.end())
                     {
-                        fprintf(stderr, "%s::%s Get Storage Engine Failed!\n", __FILE__, __FUNCTION__);
-                        pthread_rwlock_unlock(&m_online_list_lock);
-                        return FALSE;
+                        CXmpp* pXmpp = it->second;
+                        pXmpp->XmppSend(xml_printer.CStr(), xml_printer.Size());
                     }
+                    else
+                    {
+                        MailStorage* mailStg;
+                        StorageEngineInstance stgengine_instance(m_storageEngine, &mailStg);
+                        if(!mailStg)
+                        {
+                            fprintf(stderr, "%s::%s Get Storage Engine Failed!\n", __FILE__, __FUNCTION__);
+                            pthread_rwlock_unlock(&m_online_list_lock);
+                            return FALSE;
+                        }
 
-                    mailStg->InsertMyMessage(sz_from, sz_to, xml_printer.CStr());
+                        mailStg->InsertMyMessage(szFrom, szTo, xml_printer.CStr());
 
-                    stgengine_instance.Release();
+                        stgengine_instance.Release();
+                    }
+                    pthread_rwlock_unlock(&m_online_list_lock);
                 }
-                pthread_rwlock_unlock(&m_online_list_lock);
             }
           }
         }
@@ -335,6 +338,21 @@ BOOL CXmpp::Parse(char* text)
         delete m_xmpp_stanza;
         m_xmpp_stanza = NULL;
       }
+      else
+      {
+          if(!m_xmpp_stanza)
+            m_xmpp_stanza = new xmpp_stanza(m_xml_declare.c_str());
+        
+          m_xmpp_stanza->Append(text);
+      }
+    }
+    else
+    {
+        m_indent++;
+        if(!m_xmpp_stanza)
+          m_xmpp_stanza = new xmpp_stanza(m_xml_declare.c_str());
+        
+        m_xmpp_stanza->Append(text);
     }
 	return result;
 }

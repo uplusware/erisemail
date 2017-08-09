@@ -69,7 +69,7 @@ void Session::Process()
             return;
         }
 
-        char szmsg[4096*2];
+        char szmsg[4096 + 1024 + 1];
         string str_line = "";
         std::size_t new_line;
         int result;
@@ -77,7 +77,7 @@ void Session::Process()
         {
             try
             {
-                result = pProtocol->ProtRecv(szmsg, 4096*2 - 1);
+                result = pProtocol->ProtRecv(szmsg, 4096 + 1024);
                 if(result <= 0)
                 {
                     break;

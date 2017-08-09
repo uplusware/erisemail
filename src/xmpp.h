@@ -53,6 +53,8 @@ public:
     }
 
     bool Parse(const char* text);
+    
+    void Append(const char* text) { m_xml_text += text; }
 
     const char* GetTag()
     {
@@ -258,7 +260,8 @@ protected:
     string m_xml_stream;
     char m_stream_id[33];
     unsigned int m_stream_count;
-
+    int m_indent;
+        
     string m_resource;
     BOOL m_auth_success;
 
