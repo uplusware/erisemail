@@ -226,6 +226,7 @@ public:
     const char* GetStreamID() { return m_stream_id; }
 
 protected:
+    BOOL StarttlsTag(TiXmlDocument* xmlDoc);
     BOOL PresenceTag(TiXmlDocument* xmlDoc);
     BOOL IqTag(TiXmlDocument* xmlDoc);
     BOOL StreamTag(TiXmlDocument* xmlDoc);

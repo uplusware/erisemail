@@ -61,6 +61,7 @@ unsigned short	CMailBase::m_httpsport = 8082;
 
 BOOL		CMailBase::m_enablexmpp = TRUE;
 unsigned short	CMailBase::m_xmppport = 5222;
+unsigned int	CMailBase::m_encryptxmpp = 2; /* 0: Non-encrypt; 1: startTLS; 2: SSL-based */
 
 BOOL   CMailBase::m_enableclientcacheck = FALSE;
 string CMailBase::m_ca_crt_root = "/var/erisemail/cert/ca.crt";
@@ -363,6 +364,13 @@ BOOL CMailBase::LoadConfig()
 				strcut(strline.c_str(), "=", NULL, xmppport );
 				strtrim(xmppport);
 				m_xmppport = atoi(xmppport.c_str());
+			}
+            else if(strncasecmp(strline.c_str(), "EncryptXMPP", sizeof("EncryptXMPP") - 1) == 0)
+			{
+				string encryptxmpp;
+				strcut(strline.c_str(), "=", NULL, encryptxmpp );
+				strtrim(encryptxmpp);
+				m_encryptxmpp = atoi(encryptxmpp.c_str());
 			}
 			else if(strncasecmp(strline.c_str(), "CheckClientCA", sizeof("CheckClientCA") - 1) == 0)
 			{

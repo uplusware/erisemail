@@ -279,6 +279,11 @@ BOOL CXmpp::Parse(char* text)
           if(!MessageTag(m_xmpp_stanza->GetXml()))
               result = FALSE;
         }
+        else if(szTagName && strcasecmp(szTagName, "starttls") == 0)
+        {
+            if(!StarttlsTag(m_xmpp_stanza->GetXml()))
+              result = FALSE;
+        }
         else
         {
           if(m_auth_success)
@@ -357,6 +362,35 @@ BOOL CXmpp::Parse(char* text)
 	return result;
 }
 
+BOOL CXmpp::StarttlsTag(TiXmlDocument* xmlDoc)
+{
+    int flags = fcntl(m_sockfd, F_GETFL, 0); 
+    fcntl(m_sockfd, F_SETFL, flags & (~O_NONBLOCK)); 
+    
+    if(!create_ssl(m_sockfd, 
+        m_ca_crt_root.c_str(),
+        m_ca_crt_server.c_str(),
+        m_ca_password.c_str(),
+        m_ca_key_server.c_str(),
+        FALSE,
+        &m_ssl, &m_ssl_ctx))
+    {
+        throw new string(ERR_error_string(ERR_get_error(), NULL));
+        return FALSE;
+    }
+    
+    flags = fcntl(m_sockfd, F_GETFL, 0); 
+    fcntl(m_sockfd, F_SETFL, flags | O_NONBLOCK);
+
+    m_lssl = new linessl(m_sockfd, m_ssl);
+    
+    if(!m_lssl)
+        return FALSE;
+    
+    m_bSTARTTLS = TRUE;
+    return TRUE;
+}
+
 BOOL CXmpp::StreamTag(TiXmlDocument* xmlDoc)
 {
     if(XmppSend(m_xml_declare.c_str(), m_xml_declare.length()) != 0)
@@ -396,12 +430,25 @@ BOOL CXmpp::StreamTag(TiXmlDocument* xmlDoc)
     }
     else
     {
-        sprintf(xmpp_buf,
-          "<stream:features>"
-            "<mechanisms xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>"
-                "<mechanism>PLAIN</mechanism>"
-            "</mechanisms>"
-          "</stream:features>");
+        if(m_encryptxmpp == 1)
+        {
+            sprintf(xmpp_buf,
+              "<stream:features>"
+                "<starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls' />"
+                "<mechanisms xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>"
+                    "<mechanism>PLAIN</mechanism>"
+                "</mechanisms>"
+              "</stream:features>");
+        }
+        else
+        {
+            sprintf(xmpp_buf,
+              "<stream:features>"
+                "<mechanisms xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>"
+                    "<mechanism>PLAIN</mechanism>"
+                "</mechanisms>"
+              "</stream:features>");
+        }
         if(XmppSend(xmpp_buf, strlen(xmpp_buf)) != 0)
             return FALSE;
     }

@@ -253,7 +253,7 @@ int Run()
             service_param.st = stXMPP;
             service_param.host_ip = CMailBase::m_hostip.c_str();
             service_param.host_port = CMailBase::m_xmppport;
-            service_param.is_ssl = TRUE;
+            service_param.is_ssl = CMailBase::m_encryptxmpp == 2 ? TRUE : FALSE;
             service_param.sockfd = -1;
             xmpp_params.push_back(service_param);
         }

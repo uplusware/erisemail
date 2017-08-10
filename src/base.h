@@ -219,12 +219,7 @@ public:
 
 		return rlen;
 	}
-
-    int drecv_timed(char* pbuf, int blen)
-    {
-        return RecvTimed(sockfd, pbuf, blen);
-    }
-
+    
 	int lrecv(char* pbuf, int blen)
 	{
 		int taketime = 0;
@@ -283,7 +278,7 @@ public:
 			if(nRecv >= blen)
 				break;
 
-			timeout.tv_sec = 1;
+			timeout.tv_sec = MAX_SOCKET_TIMEOUT;
 			timeout.tv_usec = 0;
 
 			FD_ZERO(&mask);
@@ -327,19 +322,9 @@ public:
 					break;
 				}
 			}
-			else if(res == 0)
-			{
-
-				taketime = taketime + 1;
-				if(taketime > MAX_SOCKET_TIMEOUT)
-				{
-					close(sockfd);
-					return -1;
-				}
-				continue;
-			}
 			else
 			{
+                close(sockfd);
 				return -1;
 			}
 
@@ -529,11 +514,6 @@ public:
 
 		return rlen;
 	}
-
-    int drecv_timed(char* pbuf, int blen)
-    {
-        return SSLReadTimed(sockfd, sslhd, pbuf, blen);
-    }
 
 	int lrecv(char* pbuf, int blen)
 	{
@@ -780,16 +760,11 @@ public:
                     
                     res = select(sockfd + 1, &mask, NULL, NULL, &timeout);
 
-                    if( res > 0)
+                    if( res == 1)
                     {
                         continue;
                     }
-                    else if(res == 0)
-                    {
-                        close(sockfd);
-                        return -1;
-                    }
-                    else
+                    else /* timeout or error */
                     {
                         close(sockfd);
                         return -1;
@@ -896,6 +871,7 @@ public:
 
     static BOOL		m_enablexmpp;
 	static unsigned short	m_xmppport;
+    static unsigned int		m_encryptxmpp;
 
 	static BOOL 	m_enableclientcacheck;
 	static string	m_ca_crt_root;
