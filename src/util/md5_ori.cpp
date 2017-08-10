@@ -104,16 +104,16 @@ Rotation is separate from addition to prevent recomputation.
 /* MD5 initialization. Begins an MD5 operation, writing a new context.
 */
 
-MD5_CTX_OBJ::MD5_CTX_OBJ()
+MD5_CTX::MD5_CTX()
 {
 	MD5Init ();
 }
 
-MD5_CTX_OBJ::~MD5_CTX_OBJ()
+MD5_CTX::~MD5_CTX()
 {
 }
 
-void MD5_CTX_OBJ::MD5Init ()
+void MD5_CTX::MD5Init ()
 {
 	this->count[0] = this->count[1] = 0;
 	/* Load magic initialization constants.*/
@@ -134,7 +134,7 @@ void MD5_CTX_OBJ::MD5Init ()
 operation, processing another message block, and updating the
 context.
 */
-void MD5_CTX_OBJ::MD5Update (unsigned char *input,unsigned int inputLen)
+void MD5_CTX::MD5Update (unsigned char *input,unsigned int inputLen)
 {
 	unsigned int i, index, partLen;
 	
@@ -171,7 +171,7 @@ void MD5_CTX_OBJ::MD5Update (unsigned char *input,unsigned int inputLen)
 /* MD5 finalization. Ends an MD5 message-digest operation, writing the
 the message digest and zeroizing the context.
 */
-void MD5_CTX_OBJ::MD5Final (unsigned char digest[16])
+void MD5_CTX::MD5Final (unsigned char digest[16])
 {
 	unsigned char bits[8];
 	unsigned int index, padLen;
@@ -198,7 +198,7 @@ void MD5_CTX_OBJ::MD5Final (unsigned char digest[16])
 
 /* MD5 basic transformation. Transforms state based on block.
 */
-void MD5_CTX_OBJ::MD5Transform (unsigned int state[4], unsigned char block[64])
+void MD5_CTX::MD5Transform (unsigned int state[4], unsigned char block[64])
 {
 	unsigned int a = state[0], b = state[1], c = state[2], d = state[3], x[16];
 	
@@ -289,7 +289,7 @@ void MD5_CTX_OBJ::MD5Transform (unsigned int state[4], unsigned char block[64])
 /* Encodes input (unsigned int) into output (unsigned char). Assumes len is
 a multiple of 4.
 */
-void MD5_CTX_OBJ::Encode (unsigned char *output, unsigned int *input,unsigned int len)
+void MD5_CTX::Encode (unsigned char *output, unsigned int *input,unsigned int len)
 {
 	unsigned int i, j;
 	
@@ -304,7 +304,7 @@ void MD5_CTX_OBJ::Encode (unsigned char *output, unsigned int *input,unsigned in
 /* Decodes input (unsigned char) into output (unsigned int). Assumes len is
 a multiple of 4.
 */
-void MD5_CTX_OBJ::Decode (unsigned int *output, unsigned char *input, unsigned int len)
+void MD5_CTX::Decode (unsigned int *output, unsigned char *input, unsigned int len)
 {
 	unsigned int i, j;
 	
@@ -316,7 +316,7 @@ void MD5_CTX_OBJ::Decode (unsigned int *output, unsigned char *input, unsigned i
 /* Note: Replace "for loop" with standard memcpy if possible.
 */
 
-void MD5_CTX_OBJ::MD5_memcpy (unsigned char* output, unsigned char* input,unsigned int len)
+void MD5_CTX::MD5_memcpy (unsigned char* output, unsigned char* input,unsigned int len)
 {
 	unsigned int i;
 	
@@ -326,7 +326,7 @@ void MD5_CTX_OBJ::MD5_memcpy (unsigned char* output, unsigned char* input,unsign
 
 /* Note: Replace "for loop" with standard memset if possible.
 */
-void MD5_CTX_OBJ::MD5_memset (unsigned char* output,int value,unsigned int len)
+void MD5_CTX::MD5_memset (unsigned char* output,int value,unsigned int len)
 {
 	unsigned int i;
 	
@@ -343,7 +343,7 @@ void         digest              caller digest to be filled in
 */
 void HMAC_MD5(unsigned char*  text, int text_len, unsigned char*  key, int key_len, unsigned char digest[16])
 {
-	MD5_CTX_OBJ context;
+	MD5_CTX context;
 	unsigned char k_ipad[65];    /* inner padding - key XORd with ipad */
 	unsigned char k_opad[65];    /* outer padding - key XORd with opad */
 	unsigned char tk[16];
@@ -351,7 +351,7 @@ void HMAC_MD5(unsigned char*  text, int text_len, unsigned char*  key, int key_l
 	/* if key is longer than 64 bytes reset it to key=MD5(key) */
 	if (key_len > 64)
 	{
-		MD5_CTX_OBJ tctx;
+		MD5_CTX tctx;
 		tctx.MD5Update(key, key_len);
 		tctx.MD5Final(tk);
 		key = tk;

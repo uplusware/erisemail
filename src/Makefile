@@ -13,6 +13,7 @@ OBJSVR = mainsrv.o sslapi.o service.o session.o base.o smtp.o pop.o imap.o xmpp.
 	util/DES.o	\
 	util/escape.o	\
     util/trace.o    \
+    util/digcalc.o  \
 	tinyxml/tinyxmlparser.o	\
 	tinyxml/tinyxmlerror.o \
 	tinyxml/tinyxml.o \

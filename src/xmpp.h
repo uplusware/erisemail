@@ -226,6 +226,7 @@ public:
     const char* GetStreamID() { return m_stream_id; }
 
 protected:
+    BOOL ResponseTag(TiXmlDocument* xmlDoc);
     BOOL StarttlsTag(TiXmlDocument* xmlDoc);
     BOOL PresenceTag(TiXmlDocument* xmlDoc);
     BOOL IqTag(TiXmlDocument* xmlDoc);
@@ -249,9 +250,8 @@ protected:
 	string m_client;
 	string m_username;
 	string m_password;
-	string m_strDigest;
-	string m_strToken;
-    string m_strTokenVerify;
+	string m_strDigitalMD5Nonce;
+    string m_strDigitalMD5Response;
 	StorageEngine* m_storageEngine;
 	memcached_st * m_memcached;
 

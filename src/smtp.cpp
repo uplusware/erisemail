@@ -506,8 +506,7 @@ void CMailSmtp::On_Auth_Handler(char* text)
 	{
 		m_authType = SMTP_AUTH_DIGEST_MD5;
 		
-		string strChallenge;
-		char cmd[512];
+		char cmd[1024];
 		char nonce[15];
 		
 		sprintf(nonce, "%c%c%c%08x%c%c%c",
@@ -906,7 +905,7 @@ BOOL CMailSmtp::On_Supose_Username_Handler(char* text)
 		unsigned char digest1[16];
 		string strMD5src1;
 		strMD5src1 = m_username + ":" + strRealm + ":" + strpwd;
-		MD5_CTX md5;
+		MD5_CTX_OBJ md5;
 		md5.MD5Update((unsigned char*)strMD5src1.c_str(), strMD5src1.length());
 		md5.MD5Final(digest1);
 

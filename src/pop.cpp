@@ -159,7 +159,7 @@ void CMailPop::On_Apop_Handler(char* text)
 		string strMD5src = m_strDigest;
 		strMD5src += strpwd;
 
-		MD5_CTX context;
+		MD5_CTX_OBJ context;
 		context.MD5Update ((unsigned char*)strMD5src.c_str(), strMD5src.length());
 		unsigned char digest[16];
 		context.MD5Final (digest);
@@ -320,7 +320,7 @@ BOOL CMailPop::On_Supose_Username_Handler(char* text)
 		unsigned char digest1[16];
 		string strMD5src1;
 		strMD5src1 = m_username + ":" + strRealm + ":" + strpwd;
-		MD5_CTX md5;
+		MD5_CTX_OBJ md5;
 		md5.MD5Update((unsigned char*)strMD5src1.c_str(), strMD5src1.length());
 		md5.MD5Final(digest1);
 
