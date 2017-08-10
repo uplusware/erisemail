@@ -871,7 +871,7 @@ public:
 
     static BOOL		m_enablexmpp;
 	static unsigned short	m_xmppport;
-    static unsigned int		m_encryptxmpp;
+    static unsigned int		m_encryptxmpp; //0: Non-encrypt or TLS optional; 1: TLS required; 2: SSL-based
 
 	static BOOL 	m_enableclientcacheck;
 	static string	m_ca_crt_root;

@@ -61,7 +61,7 @@ unsigned short	CMailBase::m_httpsport = 8082;
 
 BOOL		CMailBase::m_enablexmpp = TRUE;
 unsigned short	CMailBase::m_xmppport = 5222;
-unsigned int	CMailBase::m_encryptxmpp = 2; /* 0: Non-encrypt; 1: startTLS; 2: SSL-based */
+unsigned int	CMailBase::m_encryptxmpp = 2; /* 0: Non-encrypt or TLS optional; 1: TLS required; 2: SSL-based */
 
 BOOL   CMailBase::m_enableclientcacheck = FALSE;
 string CMailBase::m_ca_crt_root = "/var/erisemail/cert/ca.crt";

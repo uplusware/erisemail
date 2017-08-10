@@ -116,6 +116,7 @@ bool xmpp_stanza::Parse(const char* text)
     bool ret = m_xml.LoadString(m_xml_text.c_str(), m_xml_text.length());
     if(ret)
     {
+        /* printf("%s\n", m_xml_text.c_str()); */
         TiXmlElement * pStanzaElement = m_xml.RootElement();
         if(pStanzaElement)
         {
@@ -289,7 +290,8 @@ int CXmpp::XmppSend(const char* buf, int len)
         ret = Send(m_sockfd, buf, len);
     
     pthread_mutex_unlock(&m_send_lock);
-
+    
+    /* printf("%s\n", buf); */
     return ret;
 }
 
@@ -468,6 +470,11 @@ BOOL CXmpp::Parse(char* text)
 
 BOOL CXmpp::StarttlsTag(TiXmlDocument* xmlDoc)
 {
+    char xmpp_buf[1024];
+    sprintf(xmpp_buf, "<proceed xmlns='urn:ietf:params:xml:ns:xmpp-tls'/>");
+    if(XmppSend(xmpp_buf, strlen(xmpp_buf)) != 0)
+        return FALSE;
+    
     int flags = fcntl(m_sockfd, F_GETFL, 0); 
     fcntl(m_sockfd, F_SETFL, flags & (~O_NONBLOCK)); 
     
@@ -476,7 +483,7 @@ BOOL CXmpp::StarttlsTag(TiXmlDocument* xmlDoc)
         m_ca_crt_server.c_str(),
         m_ca_password.c_str(),
         m_ca_key_server.c_str(),
-        FALSE,
+        m_enableclientcacheck,
         &m_ssl, &m_ssl_ctx))
     {
         throw new string(ERR_error_string(ERR_get_error(), NULL));
@@ -538,7 +545,9 @@ BOOL CXmpp::StreamTag(TiXmlDocument* xmlDoc)
         {
             sprintf(xmpp_buf,
               "<stream:features>"
-                "<starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls' />"
+                "<starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls'>"
+                    "<required/>"
+                "</starttls>"
                 "<mechanisms xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>"
                     "<mechanism>DIGEST-MD5</mechanism>"
                     "<mechanism>PLAIN</mechanism>"
@@ -549,6 +558,7 @@ BOOL CXmpp::StreamTag(TiXmlDocument* xmlDoc)
         {
             sprintf(xmpp_buf,
               "<stream:features>"
+                "<starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls' />"
                 "<mechanisms xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>"
                     "<mechanism>DIGEST-MD5</mechanism>"
                     "<mechanism>PLAIN</mechanism>"
