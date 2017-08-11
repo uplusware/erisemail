@@ -116,7 +116,8 @@ bool xmpp_stanza::Parse(const char* text)
     bool ret = m_xml.LoadString(m_xml_text.c_str(), m_xml_text.length());
     if(ret)
     {
-        /* printf("%s\n", m_xml_text.c_str()); */
+        /* printf("\n\n%s\n", m_xml_text.c_str()); */
+        
         TiXmlElement * pStanzaElement = m_xml.RootElement();
         if(pStanzaElement)
         {
@@ -243,8 +244,12 @@ CXmpp::~CXmpp()
                     TiXmlElement * pPresenceElement = xmlPresence.RootElement();
 
                     char xmpp_buf[1024];
-                    sprintf(xmpp_buf, "%s@%s/%s",
-                        m_username.c_str(), CMailBase::m_email_domain.c_str(), m_resource.c_str());
+                    if(m_resource == "")
+                        sprintf(xmpp_buf, "%s@%s",
+                            m_username.c_str(), CMailBase::m_email_domain.c_str());
+                    else
+                        sprintf(xmpp_buf, "%s@%s/%s",
+                            m_username.c_str(), CMailBase::m_email_domain.c_str(), m_resource.c_str());
 
                     pPresenceElement->SetAttribute("from", xmpp_buf);
 
@@ -289,9 +294,10 @@ int CXmpp::XmppSend(const char* buf, int len)
     else
         ret = Send(m_sockfd, buf, len);
     
+    /* printf("%s", buf); */
+    
     pthread_mutex_unlock(&m_send_lock);
     
-    /* printf("%s\n", buf); */
     return ret;
 }
 
@@ -358,32 +364,67 @@ BOOL CXmpp::Parse(char* text)
       
       if(m_indent == 0 && m_xmpp_stanza->Parse(text))
       {
-       
         const char* szTagName = m_xmpp_stanza->GetTag();
-        if(szTagName && strcasecmp(szTagName, "auth") == 0)
+        
+        if(szTagName && strcasecmp(szTagName, "message") == 0)
         {
-          if(!AuthTag(m_xmpp_stanza->GetXml()))
-              result = FALSE;          
-        }
-        else if(szTagName && strcasecmp(szTagName, "response") == 0)
-        {
-            if(!ResponseTag(m_xmpp_stanza->GetXml()))
+          if(m_encryptxmpp == XMPP_TLS_REQUIRED && !m_bSTARTTLS)
+          {
               result = FALSE;
+          }
+          else
+          {
+            if(!MessageTag(m_xmpp_stanza->GetXml()))
+                result = FALSE;
+          }
         }
         else if(szTagName && strcasecmp(szTagName, "iq") == 0)
         {
-          if(!IqTag(m_xmpp_stanza->GetXml()))
+          if(m_encryptxmpp == XMPP_TLS_REQUIRED && !m_bSTARTTLS)
+          {
               result = FALSE;
+          }
+          else
+          {
+            if(!IqTag(m_xmpp_stanza->GetXml()))
+                result = FALSE;
+          }
         }
         else if(szTagName && strcasecmp(szTagName, "presence") == 0)
         {
-          if(!PresenceTag(m_xmpp_stanza->GetXml()))
+          if(m_encryptxmpp == XMPP_TLS_REQUIRED && !m_bSTARTTLS)
+          {
               result = FALSE;
+          }
+          else
+          {
+            if(!PresenceTag(m_xmpp_stanza->GetXml()))
+                result = FALSE;
+          }
         }
-        else if(szTagName && strcasecmp(szTagName, "message") == 0)
+        else if(szTagName && strcasecmp(szTagName, "auth") == 0)
         {
-          if(!MessageTag(m_xmpp_stanza->GetXml()))
+          if(m_encryptxmpp == XMPP_TLS_REQUIRED && !m_bSTARTTLS)
+          {
               result = FALSE;
+          }
+          else
+          {
+            if(!AuthTag(m_xmpp_stanza->GetXml()))
+                result = FALSE;          
+          }
+        }
+        else if(szTagName && strcasecmp(szTagName, "response") == 0)
+        {
+          if(m_encryptxmpp == XMPP_TLS_REQUIRED && !m_bSTARTTLS)
+          {
+              result = FALSE;
+          }
+          else
+          {
+            if(!ResponseTag(m_xmpp_stanza->GetXml()))
+              result = FALSE;
+          }
         }
         else if(szTagName && strcasecmp(szTagName, "starttls") == 0)
         {
@@ -398,8 +439,12 @@ BOOL CXmpp::Parse(char* text)
             const char* szFrom = m_xmpp_stanza->GetFrom();
             if(!szFrom || szFrom[0] == '\0')
             {
-              sprintf(xmpp_buf, "%s@%s/%s",
-                  m_username.c_str(), CMailBase::m_email_domain.c_str(), m_resource.c_str());
+              if(m_resource == "")
+                sprintf(xmpp_buf, "%s@%s",
+                    m_username.c_str(), CMailBase::m_email_domain.c_str());
+              else
+                sprintf(xmpp_buf, "%s@%s/%s",
+                    m_username.c_str(), CMailBase::m_email_domain.c_str(), m_resource.c_str());
               m_xmpp_stanza->SetFrom(xmpp_buf);
               szFrom = xmpp_buf;
             }
@@ -541,7 +586,17 @@ BOOL CXmpp::StreamTag(TiXmlDocument* xmlDoc)
     }
     else
     {
-        if(m_encryptxmpp == 1)
+        if(m_encryptxmpp == XMPP_OLDSSL_BASED)
+        {
+            sprintf(xmpp_buf,
+              "<stream:features>"
+                "<mechanisms xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>"
+                    "<mechanism>DIGEST-MD5</mechanism>"
+                    "<mechanism>PLAIN</mechanism>"
+                "</mechanisms>"
+              "</stream:features>");
+        }
+        else if(m_encryptxmpp == XMPP_TLS_REQUIRED && !m_bSTARTTLS)
         {
             sprintf(xmpp_buf,
               "<stream:features>"
@@ -556,14 +611,27 @@ BOOL CXmpp::StreamTag(TiXmlDocument* xmlDoc)
         }
         else
         {
-            sprintf(xmpp_buf,
-              "<stream:features>"
-                "<starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls' />"
-                "<mechanisms xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>"
-                    "<mechanism>DIGEST-MD5</mechanism>"
-                    "<mechanism>PLAIN</mechanism>"
-                "</mechanisms>"
-              "</stream:features>");
+            if(!m_bSTARTTLS)
+            {
+                sprintf(xmpp_buf,
+                  "<stream:features>"
+                    "<starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls' />"
+                    "<mechanisms xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>"
+                        "<mechanism>DIGEST-MD5</mechanism>"
+                        "<mechanism>PLAIN</mechanism>"
+                    "</mechanisms>"
+                  "</stream:features>");
+            }
+            else
+            {
+                sprintf(xmpp_buf,
+                  "<stream:features>"
+                    "<mechanisms xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>"
+                        "<mechanism>DIGEST-MD5</mechanism>"
+                        "<mechanism>PLAIN</mechanism>"
+                    "</mechanisms>"
+                  "</stream:features>");
+            }
         }
         if(XmppSend(xmpp_buf, strlen(xmpp_buf)) != 0)
             return FALSE;
@@ -662,8 +730,12 @@ BOOL CXmpp::PresenceTag(TiXmlDocument* xmlDoc)
         TiXmlElement pReponseElement(*pPresenceElement);
 
         char xmpp_buf[1024];
-        sprintf(xmpp_buf, "%s@%s/%s",
-            m_username.c_str(), CMailBase::m_email_domain.c_str(), m_resource.c_str());
+        if(m_resource == "")
+            sprintf(xmpp_buf, "%s@%s",
+                m_username.c_str(), CMailBase::m_email_domain.c_str());
+        else
+            sprintf(xmpp_buf, "%s@%s/%s",
+                m_username.c_str(), CMailBase::m_email_domain.c_str(), m_resource.c_str());
 
         pReponseElement.SetAttribute("from", xmpp_buf);
 
@@ -761,8 +833,12 @@ BOOL CXmpp::IqTag(TiXmlDocument* xmlDoc)
             if(strid != "")
             {
                 char xmpp_from[1024];
-                sprintf(xmpp_from, "%s@%s/%s",
-                    m_username.c_str(), CMailBase::m_email_domain.c_str(), m_resource.c_str());
+                if(m_resource == "")
+                    sprintf(xmpp_from, "%s@%s",
+                    m_username.c_str(), CMailBase::m_email_domain.c_str());
+                else
+                    sprintf(xmpp_from, "%s@%s/%s",
+                        m_username.c_str(), CMailBase::m_email_domain.c_str(), m_resource.c_str());
 
                 pReponseElement.SetAttribute("from", xmpp_from);
 
@@ -786,15 +862,15 @@ BOOL CXmpp::IqTag(TiXmlDocument* xmlDoc)
         string iq_id = pIqElement->Attribute("id") ? pIqElement->Attribute("id") : "";
         if(pIqElement->Attribute("type"))
         {
-            if(strcasecmp(pIqElement->Attribute("type"), "set") == 0)
+            if(pIqElement->Attribute("type") && strcasecmp(pIqElement->Attribute("type"), "set") == 0)
             {
                 itype = IQ_SET;
             }
-            else if(strcasecmp(pIqElement->Attribute("type"), "get") == 0)
+            else if(pIqElement->Attribute("type") && strcasecmp(pIqElement->Attribute("type"), "get") == 0)
             {
                 itype = IQ_GET;
             }
-            else if(strcasecmp(pIqElement->Attribute("type"), "result") == 0)
+            else if(pIqElement->Attribute("type") && strcasecmp(pIqElement->Attribute("type"), "result") == 0)
             {
                 itype = IQ_RESULT;
             }
@@ -819,28 +895,35 @@ BOOL CXmpp::IqTag(TiXmlDocument* xmlDoc)
         {
             if(pChildNode && pChildNode->ToElement())
             {
-                if(strcasecmp(pChildNode->Value(), "bind") == 0)
+                if(pChildNode->Value() && strcasecmp(pChildNode->Value(), "bind") == 0)
                 {
                     TiXmlNode* pGrandChildNode = pChildNode->ToElement()->FirstChild();
-                    if(pGrandChildNode->ToElement())
+                    if(pGrandChildNode && pGrandChildNode->ToElement())
                     {
-                        if(strcasecmp(pGrandChildNode->Value(), "resource") == 0)
+                        if(pGrandChildNode->Value() && strcasecmp(pGrandChildNode->Value(), "resource") == 0)
                         {
-                            if(itype == IQ_SET)
-                                m_resource = pGrandChildNode->ToElement()->GetText() ? pGrandChildNode->ToElement()->GetText() : "";
-
-                            sprintf(xmpp_buf,
-                                "<bind xmlns='urn:ietf:params:xml:ns:xmpp-bind'>"
-                                    "<jid>%s@%s/%s</jid>"
-                                "</bind>",
-                                m_username.c_str(), CMailBase::m_email_domain.c_str(), m_resource.c_str());
-                            if(XmppSend(xmpp_buf, strlen(xmpp_buf)) != 0)
-                                return FALSE;
+                            if(itype == IQ_SET && pGrandChildNode->ToElement() && pGrandChildNode->ToElement()->GetText())
+                                m_resource = pGrandChildNode->ToElement()->GetText();
                         }
 
                     }
+                    if(m_resource == "")
+                        sprintf(xmpp_buf,
+                        "<bind xmlns='urn:ietf:params:xml:ns:xmpp-bind'>"
+                            "<jid>%s@%s</jid>"
+                        "</bind>",
+                        m_username.c_str(), CMailBase::m_email_domain.c_str());
+                    else         
+                        sprintf(xmpp_buf,
+                            "<bind xmlns='urn:ietf:params:xml:ns:xmpp-bind'>"
+                                "<jid>%s@%s/%s</jid>"
+                            "</bind>",
+                            m_username.c_str(), CMailBase::m_email_domain.c_str(), m_resource.c_str());
+                            
+                    if(XmppSend(xmpp_buf, strlen(xmpp_buf)) != 0)
+                        return FALSE;
                 }
-                else if(strcasecmp(pChildNode->Value(), "query") == 0)
+                else if(pChildNode->Value() && strcasecmp(pChildNode->Value(), "query") == 0)
                 {
 
                     string xmlns = pChildNode->ToElement() && pChildNode->ToElement()->Attribute("xmlns") ? pChildNode->ToElement()->Attribute("xmlns") : "";
@@ -907,11 +990,11 @@ BOOL CXmpp::IqTag(TiXmlDocument* xmlDoc)
                     }
 
                 }
-                else if(strcasecmp(pChildNode->Value(), "session") == 0)
+                else if(pChildNode->Value() && strcasecmp(pChildNode->Value(), "session") == 0)
                 {
 
                 }
-                else if(strcasecmp(pChildNode->Value(), "ping") == 0)
+                else if(pChildNode->Value() && strcasecmp(pChildNode->Value(), "ping") == 0)
                 {
                    string xmlns = pChildNode->ToElement() && pChildNode->ToElement()->Attribute("xmlns") ? pChildNode->ToElement()->Attribute("xmlns") : "";
                    sprintf(xmpp_buf,
@@ -919,7 +1002,7 @@ BOOL CXmpp::IqTag(TiXmlDocument* xmlDoc)
                     if(XmppSend(xmpp_buf, strlen(xmpp_buf)) != 0)
                         return FALSE;
                 }
-                else if(strcasecmp(pChildNode->Value(), "vCard") == 0 )
+                else if(pChildNode->Value() && strcasecmp(pChildNode->Value(), "vCard") == 0 )
                 {
                     string xmlns = pChildNode->ToElement() && pChildNode->ToElement()->Attribute("xmlns") ? pChildNode->ToElement()->Attribute("xmlns") : "";
                     sprintf(xmpp_buf,
@@ -959,9 +1042,13 @@ BOOL CXmpp::IqTag(TiXmlDocument* xmlDoc)
                 if(it != m_online_list.end())
                 {
                     TiXmlElement * pPresenceElement = xmlPresence.RootElement();
-
-                    sprintf(xmpp_buf, "%s@%s/%s",
-                        m_username.c_str(), CMailBase::m_email_domain.c_str(), m_resource.c_str());
+                    
+                    if(m_resource == "")
+                        sprintf(xmpp_buf, "%s@%s",
+                            m_username.c_str(), CMailBase::m_email_domain.c_str());
+                    else
+                        sprintf(xmpp_buf, "%s@%s/%s",
+                            m_username.c_str(), CMailBase::m_email_domain.c_str(), m_resource.c_str());
 
                     pPresenceElement->SetAttribute("to", xmpp_buf);
 
@@ -1000,8 +1087,12 @@ BOOL CXmpp::MessageTag(TiXmlDocument* xmlDoc)
             TiXmlElement pReponseElement(*pMessageElement);
 
             char xmpp_from[1024];
-            sprintf(xmpp_from, "%s@%s/%s",
-                m_username.c_str(), CMailBase::m_email_domain.c_str(), m_resource.c_str());
+            if(m_resource == "")
+                sprintf(xmpp_from, "%s@%s",
+                    m_username.c_str(), CMailBase::m_email_domain.c_str());
+            else
+                sprintf(xmpp_from, "%s@%s/%s",
+                    m_username.c_str(), CMailBase::m_email_domain.c_str(), m_resource.c_str());
 
             pReponseElement.SetAttribute("from", xmpp_from);
 
@@ -1213,7 +1304,8 @@ BOOL CXmpp::ResponseTag(TiXmlDocument* xmlDoc)
     {
         char xmpp_buf[2048];
         const char* szXmlns = pResponseElement->Attribute("xmlns");
-        if(szXmlns && strcmp(szXmlns, "urn:ietf:params:xml:ns:xmpp-sasl") == 0  && !m_auth_success && m_strDigitalMD5Nonce != "" && m_strDigitalMD5Response == "")
+        if(szXmlns && strcmp(szXmlns, "urn:ietf:params:xml:ns:xmpp-sasl") == 0 &&
+            !m_auth_success && m_strDigitalMD5Nonce != "" && m_strDigitalMD5Response == "")
         {
             string strEnoded = pResponseElement->GetText();
             int outlen = BASE64_DECODE_OUTPUT_MAX_LEN(strEnoded.length());//strEnoded.length()*4+1;
@@ -1292,9 +1384,7 @@ BOOL CXmpp::ResponseTag(TiXmlDocument* xmlDoc)
                 char * pszRealm = (char*)DigestMap["realm"].c_str();
                 char * pszPass = (char*)real_password.c_str();
                 char * pszAuthzid = (char*)DigestMap["authzid"].c_str();
-                char * pszAlg = "md5-sess";
                 char * szNonceCount = (char*)DigestMap["nc"].c_str();
-                char * pszMethod = (char*)"AUTHENTICATE";
                 char * pszQop = (char*)DigestMap["qop"].c_str();
                 char * pszURI = (char*)DigestMap["digest-uri"].c_str();        
                 HASHHEX HA1;
@@ -1302,14 +1392,14 @@ BOOL CXmpp::ResponseTag(TiXmlDocument* xmlDoc)
                 HASHHEX Response;
                 HASHHEX ResponseAuth;
                 
-                DigestCalcHA1(pszAlg, pszUser, pszRealm, pszPass, pszNonce, pszCNonce, pszAuthzid, HA1);
-                DigestCalcResponse(HA1, pszNonce, szNonceCount, pszCNonce, pszQop, pszMethod, pszURI, HA2, Response);
+                DigestCalcHA1("md5-sess", pszUser, pszRealm, pszPass, pszNonce, pszCNonce, pszAuthzid, HA1);
+                DigestCalcResponse(HA1, pszNonce, szNonceCount, pszCNonce, pszQop, "AUTHENTICATE", pszURI, HA2, Response);
                 if(strncmp(Response, DigestMap["response"].c_str(), 32) == 0)
                 {
                     m_strDigitalMD5Response = Response;
                     m_username = DigestMap["username"].c_str();
-                    DigestCalcResponse(HA1, pszNonce, szNonceCount, pszCNonce, pszQop, "" /* at server site, no need "AUTHENTICATE" */,
-                        pszURI, HA2, ResponseAuth);
+                    DigestCalcResponse(HA1, pszNonce, szNonceCount, pszCNonce, pszQop,
+                        "" /* at server site, no need "AUTHENTICATE" */, pszURI, HA2, ResponseAuth);
                     
                     char rspauth[64];
                     
@@ -1349,10 +1439,10 @@ BOOL CXmpp::ResponseTag(TiXmlDocument* xmlDoc)
                 }
             }            
         }
-        else if(szXmlns && strcmp(szXmlns, "urn:ietf:params:xml:ns:xmpp-sasl") == 0 && !m_auth_success && m_strDigitalMD5Nonce != "" && m_strDigitalMD5Response != "")
+        else if(szXmlns && strcmp(szXmlns, "urn:ietf:params:xml:ns:xmpp-sasl") == 0 &&
+            !m_auth_success && m_strDigitalMD5Nonce != "" && m_strDigitalMD5Response != "")
         {
-            sprintf(xmpp_buf,
-                     "<success xmlns='urn:ietf:params:xml:ns:xmpp-sasl'/>");
+            sprintf(xmpp_buf, "<success xmlns='urn:ietf:params:xml:ns:xmpp-sasl'/>");
                      
             if(XmppSend(xmpp_buf, strlen(xmpp_buf)) != 0)
                 return FALSE;

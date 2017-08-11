@@ -826,6 +826,12 @@ public:
 	int dbufsize;
 };
 
+
+/* 0: Non-encrypt or TLS optional; 1: TLS required; 2: Old-SSL-based */
+#define XMPP_TLS_OPTIONAL   0
+#define XMPP_TLS_REQUIRED   1
+#define XMPP_OLDSSL_BASED   2
+
 class CMailBase
 {
 public:
@@ -871,7 +877,7 @@ public:
 
     static BOOL		m_enablexmpp;
 	static unsigned short	m_xmppport;
-    static unsigned int		m_encryptxmpp; //0: Non-encrypt or TLS optional; 1: TLS required; 2: SSL-based
+    static unsigned int		m_encryptxmpp; //0: Non-encrypted or TLS optional; 1: TLS required; 2: SSL-based
 
 	static BOOL 	m_enableclientcacheck;
 	static string	m_ca_crt_root;
