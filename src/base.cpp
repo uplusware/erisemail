@@ -17,6 +17,8 @@ static char CHAR_TBL[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ12
 string CMailBase::m_sw_version = ERISEMAIL_VERSION;
 
 //Global
+BOOL CMailBase::m_prod_type = PROD_EMAIL;
+
 BOOL CMailBase::m_close_stderr = TRUE;
 string CMailBase::m_encoding = "UTF-8";
 
@@ -62,6 +64,7 @@ unsigned short	CMailBase::m_httpsport = 8082;
 BOOL		CMailBase::m_enablexmpp = TRUE;
 unsigned short	CMailBase::m_xmppport = 5222;
 unsigned int	CMailBase::m_encryptxmpp = XMPP_TLS_OPTIONAL; /* 0: Non-encrypted or TLS optional; 1: TLS required; 2: Old-SSL-based */
+unsigned int	CMailBase::m_xmpp_worker_thread_num = 8;
 
 BOOL   CMailBase::m_enableclientcacheck = FALSE;
 string CMailBase::m_ca_crt_root = "/var/erisemail/cert/ca.crt";
@@ -371,6 +374,13 @@ BOOL CMailBase::LoadConfig()
 				strcut(strline.c_str(), "=", NULL, encryptxmpp );
 				strtrim(encryptxmpp);
 				m_encryptxmpp = atoi(encryptxmpp.c_str());
+			}
+            else if(strncasecmp(strline.c_str(), "XMPPWorkerThreadNum", sizeof("XMPPWorkerThreadNum") - 1) == 0)
+			{
+				string XMPPWorkerThreadNum;
+				strcut(strline.c_str(), "=", NULL, XMPPWorkerThreadNum );
+				strtrim(XMPPWorkerThreadNum);
+				m_xmpp_worker_thread_num = atoi(XMPPWorkerThreadNum.c_str());
 			}
 			else if(strncasecmp(strline.c_str(), "CheckClientCA", sizeof("CheckClientCA") - 1) == 0)
 			{

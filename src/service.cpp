@@ -18,122 +18,9 @@
 #include <queue>
 #include "letter.h"
 #include "mta.h"
+#include "session_group.h"
 
 //extern int Run();
-
-typedef struct _session_arg_
-{
-	int sockfd;
-	string client_ip;
-	Service_Type svr_type;
-    BOOL is_ssl;
-    SSL * ssl;
-    SSL_CTX * ssl_ctx;
-	memory_cache* cache;
-	StorageEngine* storage_engine;
-	memcached_st * memcached;
-} Session_Arg;
-
-static std::queue<Session_Arg*> s_thread_pool_arg_queue;
-
-static volatile BOOL s_thread_pool_exit = TRUE;
-static pthread_mutex_t s_thread_pool_mutex;
-static sem_t s_thread_pool_sem;
-static volatile unsigned int s_thread_pool_size = 0;
-
-static void session_handler(Session_Arg* session_arg)
-{
-	Session* pSession = NULL;
-	pSession = new Session(session_arg->sockfd, session_arg->ssl, session_arg->ssl_ctx, session_arg->client_ip.c_str(), session_arg->svr_type, session_arg->is_ssl,
-        session_arg->storage_engine, session_arg->cache, session_arg->memcached);
-	if(pSession != NULL)
-	{
-		pSession->Process();
-
-		delete pSession;
-	}
-    close_ssl(session_arg->ssl, session_arg->ssl_ctx);
-	close(session_arg->sockfd);
-}
-
-static void* new_session_handler(void * arg)
-{
-	Session_Arg* session_arg = (Session_Arg*)arg;
-
-	session_handler(session_arg);
-
-	if(session_arg)
-		delete session_arg;
-	pthread_exit(0);
-}
-
-static void init_thread_pool_handler()
-{
-	s_thread_pool_exit = TRUE;
-	s_thread_pool_size = 0;
-	while(!s_thread_pool_arg_queue.empty())
-	{
-		s_thread_pool_arg_queue.pop();
-	}
-
-	pthread_mutex_init(&s_thread_pool_mutex, NULL);
-	sem_init(&s_thread_pool_sem, 0, 0);
-}
-
-static void* begin_thread_pool_handler(void* arg)
-{
-	s_thread_pool_size++;
-	struct timespec ts;
-    srandom(time(NULL));
-	while(s_thread_pool_exit)
-	{
-		
-		clock_gettime(CLOCK_REALTIME, &ts);
-		ts.tv_sec += 1;
-		if(sem_timedwait(&s_thread_pool_sem, &ts) == 0)
-		{
-			Session_Arg* session_arg = NULL;
-		
-			pthread_mutex_lock(&s_thread_pool_mutex);
-
-			if(!s_thread_pool_arg_queue.empty())
-			{
-				session_arg = s_thread_pool_arg_queue.front();
-				s_thread_pool_arg_queue.pop();
-			}
-
-			pthread_mutex_unlock(&s_thread_pool_mutex);
-
-			if(session_arg)
-			{
-				session_handler(session_arg);
-				delete session_arg;
-			}
-		}
-	}
-	s_thread_pool_size--;
-	
-	if(arg != NULL)
-		delete arg;
-	
-	pthread_exit(0);
-}
-
-static void exit_thread_pool_handler()
-{
-	s_thread_pool_exit = FALSE;
-
-	pthread_mutex_destroy(&s_thread_pool_mutex);
-	sem_close(&s_thread_pool_sem);
-
-	unsigned long timeout = 200;
-	while(s_thread_pool_size > 0 && timeout > 0)
-	{
-		usleep(1000*10);
-		timeout--;
-	}
-	
-}
 
 static void clear_queue(mqd_t qid)
 {
@@ -179,6 +66,127 @@ void push_reject_list(const char* service_name, const char* ip)
 		mq_close(service_qid);
 	if(service_sid != SEM_FAILED)
 		sem_close(service_sid);
+}
+
+std::queue<Session_Arg*> Service::m_static_thread_pool_arg_queue;
+volatile BOOL Service::m_static_thread_pool_exit = TRUE;
+pthread_mutex_t Service::m_static_thread_pool_mutex;
+sem_t Service::m_static_thread_pool_sem;
+volatile unsigned int Service::m_static_thread_pool_size = 0;
+
+void Service::session_handler(Session_Arg* session_arg)
+{
+	Session* pSession = NULL;
+	pSession = new Session(session_arg->sockfd, session_arg->ssl, session_arg->ssl_ctx, session_arg->client_ip.c_str(), session_arg->svr_type, session_arg->is_ssl,
+        session_arg->storage_engine, session_arg->cache, session_arg->memcached);
+	if(pSession != NULL)
+	{
+		pSession->Process();
+
+		delete pSession;
+	}
+    close_ssl(session_arg->ssl, session_arg->ssl_ctx);
+	close(session_arg->sockfd);
+}
+
+void* Service::new_session_handler(void * arg)
+{
+	Session_Arg* session_arg = (Session_Arg*)arg;
+
+	session_handler(session_arg);
+
+	if(session_arg)
+		delete session_arg;
+	pthread_exit(0);
+}
+
+void Service::init_thread_pool_handler()
+{
+	m_static_thread_pool_exit = TRUE;
+	m_static_thread_pool_size = 0;
+	while(!m_static_thread_pool_arg_queue.empty())
+	{
+		m_static_thread_pool_arg_queue.pop();
+	}
+
+	pthread_mutex_init(&m_static_thread_pool_mutex, NULL);
+	sem_init(&m_static_thread_pool_sem, 0, 0);
+}
+
+void* Service::begin_thread_pool_handler(void* arg)
+{
+	m_static_thread_pool_size++;
+	struct timespec ts;
+    srandom(time(NULL));
+    Session_Group * p_session_group = NULL;
+    if(CMailBase::m_prod_type == PROD_IM)
+        p_session_group = new Session_Group();
+    
+	while(m_static_thread_pool_exit)
+	{
+		clock_gettime(CLOCK_REALTIME, &ts);
+        if(CMailBase::m_prod_type != PROD_IM)
+            ts.tv_sec += 1;
+		if(sem_timedwait(&m_static_thread_pool_sem, &ts) == 0)
+		{
+			Session_Arg* session_arg = NULL;
+		
+			pthread_mutex_lock(&m_static_thread_pool_mutex);
+
+			if(!m_static_thread_pool_arg_queue.empty())
+			{
+				session_arg = m_static_thread_pool_arg_queue.front();
+				m_static_thread_pool_arg_queue.pop();
+			}
+
+			pthread_mutex_unlock(&m_static_thread_pool_mutex);
+
+			if(session_arg)
+			{
+                if(CMailBase::m_prod_type == PROD_IM)
+                {
+                    p_session_group->Accept(session_arg->sockfd, session_arg->ssl, session_arg->ssl_ctx, session_arg->client_ip.c_str(), session_arg->svr_type, session_arg->is_ssl,
+                        session_arg->storage_engine, session_arg->cache, session_arg->memcached);
+                }
+                else
+                {
+                    session_handler(session_arg);
+                    delete session_arg;
+                
+                }
+			}
+		}
+        else
+        {
+            if(CMailBase::m_prod_type == PROD_IM)
+                p_session_group->Poll();
+        }
+	}
+    if(CMailBase::m_prod_type == PROD_IM)
+        delete p_session_group;
+    
+	m_static_thread_pool_size--;
+	
+	if(arg != NULL)
+		delete arg;
+	
+	pthread_exit(0);
+}
+
+void Service::exit_thread_pool_handler()
+{
+	m_static_thread_pool_exit = FALSE;
+
+	pthread_mutex_destroy(&m_static_thread_pool_mutex);
+	sem_close(&m_static_thread_pool_sem);
+
+	unsigned long timeout = 200;
+	while(m_static_thread_pool_size > 0 && timeout > 0)
+	{
+		usleep(1000*10);
+		timeout--;
+	}
+	
 }
 
 Service::Service()
@@ -466,11 +474,11 @@ int Service::create_client_session(CUplusTrace& uTrace, int& clt_sockfd, Service
         session_arg->ssl = ssl;
         session_arg->ssl_ctx = ssl_ctx;
         
-        pthread_mutex_lock(&s_thread_pool_mutex);
-        s_thread_pool_arg_queue.push(session_arg);
-        pthread_mutex_unlock(&s_thread_pool_mutex);
+        pthread_mutex_lock(&m_static_thread_pool_mutex);
+        m_static_thread_pool_arg_queue.push(session_arg);
+        pthread_mutex_unlock(&m_static_thread_pool_mutex);
 
-        sem_post(&s_thread_pool_sem);
+        sem_post(&m_static_thread_pool_sem);
 
     }
     
@@ -545,12 +553,11 @@ int Service::Run(int fd, vector<service_param_t> & server_params)
 	BOOL svr_exit = FALSE;
 	int queue_buf_len = attr.mq_msgsize;
 	char* queue_buf_ptr = (char*)malloc(queue_buf_len);
-
-	ThreadPool worker_pool(CMailBase::m_max_conn, init_thread_pool_handler, begin_thread_pool_handler, NULL, exit_thread_pool_handler);
+    
+	ThreadPool worker_pool(CMailBase::m_prod_type == PROD_IM ? CMailBase::m_xmpp_worker_thread_num : CMailBase::m_max_conn, init_thread_pool_handler, begin_thread_pool_handler, NULL, exit_thread_pool_handler);
 	
 	while(!svr_exit)
 	{
-     
         int max_fd = -1;
         for(int x = 0; x < server_params.size(); x++)
         {
@@ -932,7 +939,9 @@ int Watcher::Run(int fd, vector<service_param_t> & server_params, vector<service
                 pipe(pfd);
                 int xmpp_pid = fork();
                 if(xmpp_pid == 0)
-                {                      
+                {
+                    CMailBase::m_prod_type = PROD_IM;
+                    
                     close(pfd[0]);
                     if(check_single_on(szFlag)) 
                     {

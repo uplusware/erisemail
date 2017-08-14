@@ -259,7 +259,7 @@ CXmpp::~CXmpp()
 
                     pPresenceElement->Accept( &xml_printer );
 
-                    pXmpp->XmppSend(xml_printer.CStr(), xml_printer.Size());
+                    pXmpp->ProtSend2(xml_printer.CStr(), xml_printer.Size());
                 }
             }
             pthread_rwlock_unlock(&m_online_list_lock); //acquire write
@@ -301,12 +301,64 @@ int CXmpp::XmppSend(const char* buf, int len)
     return ret;
 }
 
+int CXmpp::ProtSend2(const char* buf, int len)
+{
+    m_send_buf += buf;
+    
+    if(m_send_buf.length() == 0)
+        return 0;
+    
+    int sent_len = 0;
+    if(m_ssl)
+        sent_len = SSL_write(m_ssl, m_send_buf.c_str(), m_send_buf.length());
+    else
+        sent_len = send(m_sockfd, m_send_buf.c_str(), m_send_buf.length(), 0);
+    
+    if(sent_len > 0)
+    {
+        if(m_send_buf.length() == sent_len)
+            m_send_buf = "";
+        else
+            m_send_buf = m_send_buf.substr(sent_len, m_send_buf.length() - sent_len);
+    }
+    return sent_len >= 0 ? 0 : -1;
+}
+
+int CXmpp::ProtFlush()
+{
+    if(m_send_buf.length() == 0)
+        return 0;
+    
+    int sent_len = 0;
+    if(m_ssl)
+        sent_len = SSL_write(m_ssl, m_send_buf.c_str(), m_send_buf.length());
+    else
+        sent_len = send(m_sockfd, m_send_buf.c_str(), m_send_buf.length(), 0);
+    
+    if(sent_len > 0)
+    {
+        if(m_send_buf.length() == sent_len)
+            m_send_buf = "";
+        else
+            m_send_buf = m_send_buf.substr(sent_len, m_send_buf.length() - sent_len);
+    }
+    return sent_len >= 0 ? 0 : -1;
+}
+
 int CXmpp::ProtRecv(char* buf, int len)
 {
     if(m_ssl)
 		return m_lssl->xrecv(buf, len);
 	else
 		return m_lsockfd->xrecv(buf, len);
+}
+
+int CXmpp::ProtRecv2(char* buf, int len)
+{
+    if(m_ssl)
+		return m_lssl->xrecv_t(buf, len);
+	else
+		return m_lsockfd->xrecv_t(buf, len);
 }
 
 BOOL CXmpp::Parse(char* text)
@@ -468,7 +520,7 @@ BOOL CXmpp::Parse(char* text)
                     if(it != m_online_list.end())
                     {
                         CXmpp* pXmpp = it->second;
-                        pXmpp->XmppSend(xml_printer.CStr(), xml_printer.Size());
+                        pXmpp->ProtSend2(xml_printer.CStr(), xml_printer.Size());
                     }
                     else
                     {
@@ -517,7 +569,7 @@ BOOL CXmpp::StarttlsTag(TiXmlDocument* xmlDoc)
 {
     char xmpp_buf[1024];
     sprintf(xmpp_buf, "<proceed xmlns='urn:ietf:params:xml:ns:xmpp-tls'/>");
-    if(XmppSend(xmpp_buf, strlen(xmpp_buf)) != 0)
+    if(ProtSend2(xmpp_buf, strlen(xmpp_buf)) != 0)
         return FALSE;
     
     int flags = fcntl(m_sockfd, F_GETFL, 0); 
@@ -549,7 +601,7 @@ BOOL CXmpp::StarttlsTag(TiXmlDocument* xmlDoc)
 
 BOOL CXmpp::StreamTag(TiXmlDocument* xmlDoc)
 {
-    if(XmppSend(m_xml_declare.c_str(), m_xml_declare.length()) != 0)
+    if(ProtSend2(m_xml_declare.c_str(), m_xml_declare.length()) != 0)
         return FALSE;
 
     char stream_id[128];
@@ -567,7 +619,7 @@ BOOL CXmpp::StreamTag(TiXmlDocument* xmlDoc)
     char xmpp_buf[2048];
     sprintf(xmpp_buf, "<stream:stream from='%s' id='%s' xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams' version='1.0'>",
       CMailBase::m_email_domain.c_str(), m_stream_id);
-    if(XmppSend(xmpp_buf, strlen(xmpp_buf)) != 0)
+    if(ProtSend2(xmpp_buf, strlen(xmpp_buf)) != 0)
         return FALSE;
 
     if(m_auth_success == TRUE)
@@ -581,7 +633,7 @@ BOOL CXmpp::StreamTag(TiXmlDocument* xmlDoc)
               "<session xmlns='urn:ietf:params:xml:ns:xmpp-session'/>"
           "</stream:features>");
 
-        if(XmppSend(xmpp_buf, strlen(xmpp_buf)) != 0)
+        if(ProtSend2(xmpp_buf, strlen(xmpp_buf)) != 0)
             return FALSE;
     }
     else
@@ -633,7 +685,7 @@ BOOL CXmpp::StreamTag(TiXmlDocument* xmlDoc)
                   "</stream:features>");
             }
         }
-        if(XmppSend(xmpp_buf, strlen(xmpp_buf)) != 0)
+        if(ProtSend2(xmpp_buf, strlen(xmpp_buf)) != 0)
             return FALSE;
     }
 
@@ -751,7 +803,7 @@ BOOL CXmpp::PresenceTag(TiXmlDocument* xmlDoc)
             if(it != m_online_list.end())
             {
                 CXmpp* pXmpp = it->second;
-                pXmpp->XmppSend(xml_printer.CStr(), xml_printer.Size());
+                pXmpp->ProtSend2(xml_printer.CStr(), xml_printer.Size());
             }
             else
             {
@@ -799,7 +851,7 @@ BOOL CXmpp::PresenceTag(TiXmlDocument* xmlDoc)
                         pReponseElement.SetAttribute("to", xmpp_buf);
                         pReponseElement.Accept( &xml_printer );
 
-                        pXmpp->XmppSend(xml_printer.CStr(), xml_printer.Size());
+                        pXmpp->ProtSend2(xml_printer.CStr(), xml_printer.Size());
                     }
                 }
                 pthread_rwlock_unlock(&m_online_list_lock);
@@ -851,7 +903,7 @@ BOOL CXmpp::IqTag(TiXmlDocument* xmlDoc)
                 if(it != m_online_list.end())
                 {
                     CXmpp* pXmpp = it->second;
-                    pXmpp->XmppSend(xml_printer.CStr(), xml_printer.Size());
+                    pXmpp->ProtSend2(xml_printer.CStr(), xml_printer.Size());
                 }
                 pthread_rwlock_unlock(&m_online_list_lock);
             }
@@ -887,7 +939,7 @@ BOOL CXmpp::IqTag(TiXmlDocument* xmlDoc)
             "<iq type='result' id='%s' from='%s' to='%s/%s'>",
                 iq_id.c_str(), CMailBase::m_email_domain.c_str(), m_username.c_str(), m_stream_id);
 
-        if(XmppSend(xmpp_buf, strlen(xmpp_buf)) != 0)
+        if(ProtSend2(xmpp_buf, strlen(xmpp_buf)) != 0)
             return FALSE;
 
         TiXmlNode* pChildNode = pIqElement->FirstChild();
@@ -920,7 +972,7 @@ BOOL CXmpp::IqTag(TiXmlDocument* xmlDoc)
                             "</bind>",
                             m_username.c_str(), CMailBase::m_email_domain.c_str(), m_resource.c_str());
                             
-                    if(XmppSend(xmpp_buf, strlen(xmpp_buf)) != 0)
+                    if(ProtSend2(xmpp_buf, strlen(xmpp_buf)) != 0)
                         return FALSE;
                 }
                 else if(pChildNode->Value() && strcasecmp(pChildNode->Value(), "query") == 0)
@@ -957,7 +1009,7 @@ BOOL CXmpp::IqTag(TiXmlDocument* xmlDoc)
                             "<query xmlns='%s'>%s</query>",
                             iq_id.c_str(), CMailBase::m_email_domain.c_str(), m_username.c_str(), m_stream_id, xmlns.c_str(), str_items.c_str());
 
-                        if(XmppSend(xmpp_buddys, strlen(xmpp_buddys)) != 0)
+                        if(ProtSend2(xmpp_buddys, strlen(xmpp_buddys)) != 0)
                             return FALSE;
 
                         free(xmpp_buddys);
@@ -969,7 +1021,7 @@ BOOL CXmpp::IqTag(TiXmlDocument* xmlDoc)
                     {
                        sprintf(xmpp_buf,
                             "<query xmlns='%s'/>", xmlns.c_str());
-                       if(XmppSend(xmpp_buf, strlen(xmpp_buf)) != 0)
+                       if(ProtSend2(xmpp_buf, strlen(xmpp_buf)) != 0)
                            return FALSE;
 
                     }
@@ -978,14 +1030,14 @@ BOOL CXmpp::IqTag(TiXmlDocument* xmlDoc)
                        sprintf(xmpp_buf,
                             "<query xmlns='%s'>"
                             "</query>", xmlns.c_str());
-                        if(XmppSend(xmpp_buf, strlen(xmpp_buf)) != 0)
+                        if(ProtSend2(xmpp_buf, strlen(xmpp_buf)) != 0)
                             return FALSE;
                     }
                     else
                     {
                         sprintf(xmpp_buf,
                             "<query xmlns='%s'/>",xmlns.c_str());
-                        if(XmppSend(xmpp_buf, strlen(xmpp_buf)) != 0)
+                        if(ProtSend2(xmpp_buf, strlen(xmpp_buf)) != 0)
                             return FALSE;
                     }
 
@@ -999,7 +1051,7 @@ BOOL CXmpp::IqTag(TiXmlDocument* xmlDoc)
                    string xmlns = pChildNode->ToElement() && pChildNode->ToElement()->Attribute("xmlns") ? pChildNode->ToElement()->Attribute("xmlns") : "";
                    sprintf(xmpp_buf,
                         "<ping xmlns='%s'/>",xmlns.c_str());
-                    if(XmppSend(xmpp_buf, strlen(xmpp_buf)) != 0)
+                    if(ProtSend2(xmpp_buf, strlen(xmpp_buf)) != 0)
                         return FALSE;
                 }
                 else if(pChildNode->Value() && strcasecmp(pChildNode->Value(), "vCard") == 0 )
@@ -1007,7 +1059,7 @@ BOOL CXmpp::IqTag(TiXmlDocument* xmlDoc)
                     string xmlns = pChildNode->ToElement() && pChildNode->ToElement()->Attribute("xmlns") ? pChildNode->ToElement()->Attribute("xmlns") : "";
                     sprintf(xmpp_buf,
                             "<vCard xmlns='%s'/>", xmlns.c_str());
-                    if(XmppSend(xmpp_buf, strlen(xmpp_buf)) != 0)
+                    if(ProtSend2(xmpp_buf, strlen(xmpp_buf)) != 0)
                         return FALSE;
                 }
                 else
@@ -1016,14 +1068,14 @@ BOOL CXmpp::IqTag(TiXmlDocument* xmlDoc)
                     xml_printer.SetIndent("");
                     pChildNode->Accept( &xml_printer );
 
-                    if(XmppSend(xml_printer.CStr(), xml_printer.Size()) != 0)
+                    if(ProtSend2(xml_printer.CStr(), xml_printer.Size()) != 0)
                         return FALSE;
                 }
             }
             pChildNode = pChildNode->NextSibling();
         }
 
-        if(XmppSend("</iq>", strlen("</iq>")) != 0)
+        if(ProtSend2("</iq>", strlen("</iq>")) != 0)
             return FALSE;
 
         if(isPresenceProbe)
@@ -1062,7 +1114,7 @@ BOOL CXmpp::IqTag(TiXmlDocument* xmlDoc)
                     xml_printer.SetIndent("");
                     pPresenceElement->Accept( &xml_printer );
 
-                    if(XmppSend(xml_printer.CStr(), xml_printer.Size()) != 0)
+                    if(ProtSend2(xml_printer.CStr(), xml_printer.Size()) != 0)
                         return FALSE;
                 }
             }
@@ -1117,7 +1169,7 @@ BOOL CXmpp::MessageTag(TiXmlDocument* xmlDoc)
                 if(it != m_online_list.end())
                 {
                     CXmpp* pXmpp = it->second;
-                    pXmpp->XmppSend(xml_printer.CStr(), xml_printer.Size());
+                    pXmpp->ProtSend2(xml_printer.CStr(), xml_printer.Size());
                 }
                 else
                 {
@@ -1184,7 +1236,7 @@ BOOL CXmpp::AuthTag(TiXmlDocument* xmlDoc)
                 if(it != m_online_list.end())
                 {
                     CXmpp* pXmpp = it->second;
-                    pXmpp->XmppSend("</stream:stream>", _CSL_("</stream:stream>"));
+                    pXmpp->ProtSend2("</stream:stream>", _CSL_("</stream:stream>"));
                 }
 
                 pthread_rwlock_unlock(&m_online_list_lock);
@@ -1200,7 +1252,7 @@ BOOL CXmpp::AuthTag(TiXmlDocument* xmlDoc)
             }
             stgengine_instance.Release();
 
-            if(XmppSend(xmpp_buf, strlen(xmpp_buf)) != 0)
+            if(ProtSend2(xmpp_buf, strlen(xmpp_buf)) != 0)
                 return FALSE;
 
             pthread_rwlock_wrlock(&m_online_list_lock); //acquire write
@@ -1230,7 +1282,7 @@ BOOL CXmpp::AuthTag(TiXmlDocument* xmlDoc)
 
                 if(xids.size() > 0)
                 {
-                    if(XmppSend(strMessage.c_str(), strMessage.length()) >= 0)
+                    if(ProtSend2(strMessage.c_str(), strMessage.length()) >= 0)
                     {
                         for(int v = 0; v < xids.size(); v++)
                         {
@@ -1264,17 +1316,17 @@ BOOL CXmpp::AuthTag(TiXmlDocument* xmlDoc)
             memset(szEncoded, 0, outlen);
             
             CBase64::Encode(cmd, strlen(cmd), szEncoded, &outlen);
-            if(XmppSend("<challenge xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>", strlen("<challenge xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>")) != 0)
+            if(ProtSend2("<challenge xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>", strlen("<challenge xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>")) != 0)
             {
                 free(szEncoded);
                 return FALSE;
             }
-            if(XmppSend(szEncoded, strlen(szEncoded)) != 0)
+            if(ProtSend2(szEncoded, strlen(szEncoded)) != 0)
             {
                 free(szEncoded);
                 return FALSE;
             }
-            if(XmppSend("</challenge>", strlen("</challenge>")) != 0)
+            if(ProtSend2("</challenge>", strlen("</challenge>")) != 0)
             {
                 free(szEncoded);
                 return FALSE;
@@ -1289,7 +1341,7 @@ BOOL CXmpp::AuthTag(TiXmlDocument* xmlDoc)
                         "<not-authorized/>"
                      "</failure>");
             m_auth_success = FALSE;
-            if(XmppSend(xmpp_buf, strlen(xmpp_buf)) != 0)
+            if(ProtSend2(xmpp_buf, strlen(xmpp_buf)) != 0)
                 return FALSE;
         }
     }
@@ -1360,7 +1412,7 @@ BOOL CXmpp::ResponseTag(TiXmlDocument* xmlDoc)
                     "<response xmlns='urn:ietf:params:xml:ns:xmpp-sasl'/>");
                 m_auth_success = FALSE;
 
-                if(XmppSend(xmpp_buf, strlen(xmpp_buf)) != 0)
+                if(ProtSend2(xmpp_buf, strlen(xmpp_buf)) != 0)
                     return FALSE;
                 else
                     return TRUE;
@@ -1410,17 +1462,17 @@ BOOL CXmpp::ResponseTag(TiXmlDocument* xmlDoc)
                     memset(szEncoded, 0, outlen);
                     
                     CBase64::Encode(rspauth, strlen(rspauth), szEncoded, &outlen);
-                    if(XmppSend("<challenge xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>", strlen("<challenge xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>")) != 0)
+                    if(ProtSend2("<challenge xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>", strlen("<challenge xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>")) != 0)
                     {
                         free(szEncoded);
                         return FALSE;
                     }
-                    if(XmppSend(szEncoded, strlen(szEncoded)) != 0)
+                    if(ProtSend2(szEncoded, strlen(szEncoded)) != 0)
                     {
                         free(szEncoded);
                         return FALSE;
                     }
-                    if(XmppSend("</challenge>", strlen("</challenge>")) != 0)
+                    if(ProtSend2("</challenge>", strlen("</challenge>")) != 0)
                     {
                         free(szEncoded);
                         return FALSE;
@@ -1434,7 +1486,7 @@ BOOL CXmpp::ResponseTag(TiXmlDocument* xmlDoc)
                      "<response xmlns='urn:ietf:params:xml:ns:xmpp-sasl'/>");
                     m_auth_success = FALSE;
                     
-                    if(XmppSend(xmpp_buf, strlen(xmpp_buf)) != 0)
+                    if(ProtSend2(xmpp_buf, strlen(xmpp_buf)) != 0)
                         return FALSE;
                 }
             }            
@@ -1444,7 +1496,7 @@ BOOL CXmpp::ResponseTag(TiXmlDocument* xmlDoc)
         {
             sprintf(xmpp_buf, "<success xmlns='urn:ietf:params:xml:ns:xmpp-sasl'/>");
                      
-            if(XmppSend(xmpp_buf, strlen(xmpp_buf)) != 0)
+            if(ProtSend2(xmpp_buf, strlen(xmpp_buf)) != 0)
                 return FALSE;
             
             m_auth_success = TRUE;

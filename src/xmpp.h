@@ -214,7 +214,11 @@ public:
     virtual BOOL IsEnabledKeepAlive() { return FALSE; }
 	virtual BOOL Parse(char* text);
 	virtual int ProtRecv(char* buf, int len);
-
+    virtual int ProtSend(const char* buf, int len) { return XmppSend(buf, len); };
+    virtual int ProtRecv2(char* buf, int len);
+    virtual int ProtSend2(const char* buf, int len);
+    virtual int ProtFlush();
+    
 	int XmppSend(const char* buf, int len);
 
     StorageEngine* GetStg() { return m_storageEngine; }
@@ -238,7 +242,9 @@ protected:
 	int m_sockfd;
 	linesock* m_lsockfd;
 	linessl * m_lssl;
-
+    
+    string m_send_buf;
+    
 	string m_clientip;
 	DWORD m_status;
 

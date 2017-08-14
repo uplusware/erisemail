@@ -73,6 +73,8 @@ void Session::Process()
         string str_line = "";
         std::size_t new_line;
         int result;
+        
+        bool bQuitSession = false;
         while(1)
         {
             try
@@ -80,6 +82,7 @@ void Session::Process()
                 result = pProtocol->ProtRecv(szmsg, 4096 + 1024);
                 if(result <= 0)
                 {
+                    bQuitSession = true;
                     break;
                 }
                 else
@@ -87,25 +90,31 @@ void Session::Process()
                     szmsg[result] = '\0';
                     
                     str_line += szmsg;
-
-                    if(m_st == stXMPP)
+                    
+                    do 
                     {
-                        new_line = str_line.find('>');
-                    }
-                    else
-                    {
-                        new_line = str_line.find('\n');
-                    }
-
-                    if(new_line != std::string::npos)
-                    {
-                        if(!pProtocol->Parse((char*)str_line.c_str()))
+                        if(m_st == stXMPP)
                         {
-                            break;
+                            new_line = str_line.find('>');
+                        }
+                        else
+                        {
+                            new_line = str_line.find('\n');
                         }
                         
-                        str_line = "";
-                    }
+                        string str_left;
+        
+                        if(new_line != std::string::npos)
+                        {
+                            str_left = str_line.substr(0, new_line + 1);
+                            str_line = str_line.substr(new_line + 1, str_line.length() - 1 - new_line);
+                            if(!pProtocol->Parse((char*)str_left.c_str()))
+                            {
+                                bQuitSession = true;
+                                break;
+                            }
+                        }
+                    } while(new_line != std::string::npos);
                 }
             }
             catch(string* e)
@@ -114,7 +123,9 @@ void Session::Process()
                 delete e;
                 break;
             }
-
+            
+            if(bQuitSession)
+                break;
         }
         keep_alive = (pProtocol->IsKeepAlive() && pProtocol->IsEnabledKeepAlive()) ? TRUE : FALSE;
         delete pProtocol;

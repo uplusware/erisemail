@@ -332,7 +332,32 @@ public:
 
 		return nRecv;
 	}
-
+    
+  int xrecv_t(char* pbuf, int blen)
+	{
+        int len = recv(sockfd, pbuf, blen, 0);
+        if(len == 0)
+        {
+            close(sockfd);
+            return -1;
+        }
+        
+        else if(len < 0)
+        {
+            if( errno == EAGAIN)
+            {
+                return 0;
+            }
+            else
+            {
+                close(sockfd);
+                return -1;
+            }
+        }
+        else
+            return len;
+    }
+    
   int xrecv(char* pbuf, int blen)
 	{
 		int taketime = 0;
@@ -667,7 +692,33 @@ public:
 		}
 		return nRecv;
 	}
-
+    
+  int xrecv_t(char* pbuf, int blen)
+	{
+        int len = SSL_read(sslhd, pbuf, blen);
+        if(len == 0)
+        {
+            close(sockfd);
+            return -1;
+        }
+        
+        if(len < 0)
+        {
+            int ret = SSL_get_error(sslhd, len);
+            if(ret == SSL_ERROR_WANT_READ || ret == SSL_ERROR_WANT_WRITE)
+            {
+                return 0;
+            }
+            else
+            {
+                close(sockfd);
+                return -1;
+            }
+        }
+        else
+            return len;
+    }
+    
   int xrecv(char* pbuf, int blen)
 	{
 		int taketime = 0;
@@ -832,11 +883,16 @@ public:
 #define XMPP_TLS_REQUIRED   1
 #define XMPP_OLDSSL_BASED   2
 
+#define PROD_EMAIL  0
+#define PROD_IM     1
+
 class CMailBase
 {
 public:
 	static string	m_sw_version;
-
+    
+    static unsigned int m_prod_type;
+    
     static BOOL     m_close_stderr;
 	static string	m_private_path;
 	static string 	m_html_path;
@@ -878,7 +934,8 @@ public:
     static BOOL		m_enablexmpp;
 	static unsigned short	m_xmppport;
     static unsigned int		m_encryptxmpp; //0: Non-encrypted or TLS optional; 1: TLS required; 2: SSL-based
-
+    static unsigned int	m_xmpp_worker_thread_num;
+    
 	static BOOL 	m_enableclientcacheck;
 	static string	m_ca_crt_root;
 	static string	m_ca_crt_server;
@@ -942,7 +999,10 @@ public:
 	/* Pure virual function	*/
 	virtual BOOL Parse(char* text) = 0;
 	virtual int ProtRecv(char* buf, int len) = 0;
-
+    virtual int ProtSend(char* buf, int len) { };
+    virtual int ProtRecv2(char* buf, int len) { };
+    virtual int ProtSend2(char* buf, int len) { };
+    virtual int ProtFlush() { };
     //Non-pure virtual function
     virtual BOOL IsKeepAlive() { return FALSE; }
     virtual BOOL IsEnabledKeepAlive() { return FALSE; }
