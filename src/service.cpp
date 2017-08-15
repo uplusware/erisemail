@@ -554,7 +554,16 @@ int Service::Run(int fd, vector<service_param_t> & server_params)
 	int queue_buf_len = attr.mq_msgsize;
 	char* queue_buf_ptr = (char*)malloc(queue_buf_len);
     
-	ThreadPool worker_pool(CMailBase::m_prod_type == PROD_IM ? CMailBase::m_xmpp_worker_thread_num : CMailBase::m_max_conn, init_thread_pool_handler, begin_thread_pool_handler, NULL, exit_thread_pool_handler);
+    for(int x = 0; x < server_params.size(); x++)
+    {
+        if(server_params[x].st == stXMPP)
+        {
+            CMailBase::m_prod_type = PROD_IM;
+            break;
+        }
+    }
+    
+	ThreadPool worker_pool(CMailBase::m_prod_type == PROD_IM ? CMailBase::m_xmpp_worker_thread_num : CMailBase::m_mda_max_conn, init_thread_pool_handler, begin_thread_pool_handler, NULL, exit_thread_pool_handler);
 	
 	while(!svr_exit)
 	{
@@ -939,9 +948,7 @@ int Watcher::Run(int fd, vector<service_param_t> & server_params, vector<service
                 pipe(pfd);
                 int xmpp_pid = fork();
                 if(xmpp_pid == 0)
-                {
-                    CMailBase::m_prod_type = PROD_IM;
-                    
+                {                   
                     close(pfd[0]);
                     if(check_single_on(szFlag)) 
                     {

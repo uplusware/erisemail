@@ -87,12 +87,12 @@ string CMailBase::m_db_sock_file = "/var/run/mysqld/mysqld.sock";
 unsigned int CMailBase::m_db_max_conn = MAX_STORAGE_CONN;
 
 BOOL CMailBase::m_enablemta = TRUE;
-unsigned int CMailBase::m_mta_relaytasknum = 3;
+unsigned int CMailBase::m_mta_relaythreadnum = 3;
 unsigned int CMailBase::m_mta_relaycheckinterval = 5;
 
 BOOL   CMailBase::m_enablesmtphostnamecheck = FALSE;
 unsigned int CMailBase::m_connect_num = 0;
-unsigned int CMailBase::m_max_conn = MAX_STORAGE_CONN;
+unsigned int CMailBase::m_mda_max_conn = 4096;
 unsigned int CMailBase::m_runtime = 0;
 string	CMailBase::m_config_file = CONFIG_FILE_PATH;
 string	CMailBase::m_permit_list_file = PERMIT_FILE_PATH;
@@ -207,12 +207,12 @@ BOOL CMailBase::LoadConfig()
 				strcut(strline.c_str(), "=", NULL, m_dns_server );
 				strtrim(m_dns_server);
 			}
-			else if(strncasecmp(strline.c_str(), "MaxCocurrentConnNum", sizeof("MaxCocurrentConnNum") - 1) == 0)
+			else if(strncasecmp(strline.c_str(), "MDAMaxCocurrentConnNum", sizeof("MDAMaxCocurrentConnNum") - 1) == 0)
 			{
 				string maxconn;
 				strcut(strline.c_str(), "=", NULL, maxconn );
 				strtrim(maxconn);
-				m_max_conn= atoi(maxconn.c_str());
+				m_mda_max_conn= atoi(maxconn.c_str());
 			}
             else if(strncasecmp(strline.c_str(), "SMTPEnable", sizeof("SMTPEnable") - 1) == 0)
 			{
@@ -485,12 +485,12 @@ BOOL CMailBase::LoadConfig()
 				strtrim(enable_mta);
 				m_enablemta = (strcasecmp(enable_mta.c_str(), "yes")) == 0 ? TRUE : FALSE;
 			}
-			else if(strncasecmp(strline.c_str(), "MTARelayTaskNum", sizeof("MTARelayTaskNum") - 1) == 0)
+			else if(strncasecmp(strline.c_str(), "MTARelayThreadNum", sizeof("MTARelayThreadNum") - 1) == 0)
 			{
-				string mta_relaytasknum;
-				strcut(strline.c_str(), "=", NULL, mta_relaytasknum );
-				strtrim(mta_relaytasknum);
-				m_mta_relaytasknum = atoi(mta_relaytasknum.c_str());
+				string mta_relaythreadnum;
+				strcut(strline.c_str(), "=", NULL, mta_relaythreadnum );
+				strtrim(mta_relaythreadnum);
+				m_mta_relaythreadnum = atoi(mta_relaythreadnum.c_str());
 			}
 			else if(strncasecmp(strline.c_str(), "MTARelayCheckInterval", sizeof("MTARelayCheckInterval") - 1) == 0)
 			{

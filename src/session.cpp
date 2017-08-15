@@ -51,10 +51,6 @@ void Session::Process()
             {
                 pProtocol = new CHttp(m_sockfd, m_ssl, m_ssl_ctx, m_clientip.c_str(), m_storageEngine, m_cache, m_memcached, m_is_ssl);
             }
-            else if(m_st == stXMPP)
-            {
-                pProtocol = new CXmpp(m_sockfd, m_ssl, m_ssl_ctx, m_clientip.c_str(), m_storageEngine, m_memcached, m_is_ssl);
-            }
             else
             {
                 return;

@@ -955,12 +955,12 @@ public:
 	static unsigned int m_db_max_conn;
 
     static BOOL m_enablemta;
-	static unsigned int 	m_mta_relaytasknum;
+	static unsigned int 	m_mta_relaythreadnum;
 	static unsigned int     m_mta_relaycheckinterval;
 
 	static BOOL		m_enablesmtphostnamecheck;
 	static unsigned int	m_connect_num;
-	static unsigned int	m_max_conn;
+	static unsigned int	m_mda_max_conn;
 
 	static unsigned int	m_runtime;
 

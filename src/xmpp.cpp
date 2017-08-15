@@ -146,7 +146,7 @@ map<string, CXmpp* > CXmpp::m_online_list;
 pthread_rwlock_t CXmpp::m_online_list_lock;
 BOOL CXmpp::m_online_list_inited = FALSE;
 
-CXmpp::CXmpp(int sockfd, SSL * ssl, SSL_CTX * ssl_ctx, const char* clientip,
+CXmpp::CXmpp(int epoll_fd, int sockfd, SSL * ssl, SSL_CTX * ssl_ctx, const char* clientip,
     StorageEngine* storage_engine, memcached_st * memcached, BOOL isSSL)
 {
     if(!m_online_list_inited)
@@ -155,6 +155,8 @@ CXmpp::CXmpp(int sockfd, SSL * ssl, SSL_CTX * ssl_ctx, const char* clientip,
         m_online_list_inited = TRUE;
     }
     
+    m_epoll_fd = epoll_fd;
+    
     m_indent = 0;
     
     m_xmpp_stanza = NULL;
@@ -162,7 +164,7 @@ CXmpp::CXmpp(int sockfd, SSL * ssl, SSL_CTX * ssl_ctx, const char* clientip,
     pthread_mutex_init(&m_send_lock, NULL);
 
     m_status = STATUS_ORIGINAL;
-	  m_sockfd = sockfd;
+	m_sockfd = sockfd;
   	m_clientip = clientip;
 
     m_bSTARTTLS = FALSE;
@@ -317,9 +319,23 @@ int CXmpp::ProtSend2(const char* buf, int len)
     if(sent_len > 0)
     {
         if(m_send_buf.length() == sent_len)
-            m_send_buf = "";
+        {
+            m_send_buf.clear();
+            
+            struct epoll_event ev;
+            ev.events = EPOLLIN | EPOLLHUP | EPOLLERR;
+            ev.data.fd = m_sockfd;
+            epoll_ctl(m_epoll_fd, EPOLL_CTL_MOD, m_sockfd, &ev);
+        }
         else
+        {
             m_send_buf = m_send_buf.substr(sent_len, m_send_buf.length() - sent_len);
+            
+            struct epoll_event ev;
+            ev.events = EPOLLOUT |  EPOLLIN | EPOLLHUP | EPOLLERR;
+            ev.data.fd = m_sockfd;
+            epoll_ctl(m_epoll_fd, EPOLL_CTL_MOD, m_sockfd, &ev);
+        }
     }
     return sent_len >= 0 ? 0 : -1;
 }
@@ -335,12 +351,28 @@ int CXmpp::ProtFlush()
     else
         sent_len = send(m_sockfd, m_send_buf.c_str(), m_send_buf.length(), 0);
     
+    printf("%d\n", sent_len);
+    
     if(sent_len > 0)
     {
         if(m_send_buf.length() == sent_len)
-            m_send_buf = "";
+        {
+            m_send_buf.clear();
+            
+            struct epoll_event ev;
+            ev.events = EPOLLIN | EPOLLHUP | EPOLLERR;
+            ev.data.fd = m_sockfd;
+            epoll_ctl(m_epoll_fd, EPOLL_CTL_MOD, m_sockfd, &ev);
+        }
         else
+        {
             m_send_buf = m_send_buf.substr(sent_len, m_send_buf.length() - sent_len);
+            
+            struct epoll_event ev;
+            ev.events = EPOLLOUT | EPOLLIN | EPOLLHUP | EPOLLERR;
+            ev.data.fd = m_sockfd;
+            epoll_ctl(m_epoll_fd, EPOLL_CTL_MOD, m_sockfd, &ev);
+        }
     }
     return sent_len >= 0 ? 0 : -1;
 }

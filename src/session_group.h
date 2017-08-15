@@ -11,8 +11,8 @@
 
 using namespace std;
 
-#define MAX_EVENTS_NUM  655360
-#define MAX_SOCKFD_NUM  655360
+#define MAX_EVENTS_NUM  65536*2
+#define MAX_SOCKFD_NUM  65536*2
 
 
 typedef struct{

@@ -10686,12 +10686,12 @@ public:
 			strResp += CMailBase::m_dns_server;
 			strResp += "</DNSServer>";
 			
-			sprintf(szTmp, "%d", CMailBase::m_max_conn);
+			sprintf(szTmp, "%d", CMailBase::m_mda_max_conn);
 			strResp += "<MaxConnPerProtocal>";
 			strResp += szTmp;
 			strResp += "</MaxConnPerProtocal>";
 			
-			sprintf(szTmp, "%d", CMailBase::m_mta_relaytasknum);
+			sprintf(szTmp, "%d", CMailBase::m_mta_relaythreadnum);
 			strResp += "<RelayTaskNum>";
 			strResp += szTmp;
 			strResp += "</RelayTaskNum>";
@@ -10751,6 +10751,16 @@ public:
 			strResp += "<XMPPPort>";
 			strResp += szTmp;
 			strResp += "</XMPPPort>";
+            
+            sprintf(szTmp, "%d", CMailBase::m_encryptxmpp);
+			strResp += "<EncryptXMPP>";
+			strResp += szTmp;
+			strResp += "</EncryptXMPP>";
+            
+            sprintf(szTmp, "%d", CMailBase::m_xmpp_worker_thread_num);
+			strResp += "<XMPPWorkerThreadNum>";
+			strResp += szTmp;
+			strResp += "</XMPPWorkerThreadNum>";
             
 			strResp += "<SMTPSEnable>";
 			strResp += CMailBase::m_enablesmtps ? "yes" : "no";;

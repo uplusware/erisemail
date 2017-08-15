@@ -14,7 +14,7 @@ Session_Group::Session_Group()
         throw new string(strerror(errno));
     }
     
-    m_events = new struct epoll_event[CMailBase::m_max_conn > MAX_EVENTS_NUM ? MAX_EVENTS_NUM : CMailBase::m_max_conn]; 
+    m_events = new struct epoll_event[MAX_EVENTS_NUM]; 
     
 }
 
@@ -42,18 +42,19 @@ BOOL Session_Group::Accept(int sockfd, SSL *ssl, SSL_CTX * ssl_ctx, const char* 
     pSession->st = st;
     if(st == stXMPP) /* Currently only support XMPP*/
     {
-        pSession->protocol = new CXmpp(sockfd, ssl, ssl_ctx, clientip, storage_engine, memcached, is_ssl);
+        pSession->protocol = new CXmpp(m_epoll_fd, sockfd, ssl, ssl_ctx, clientip, storage_engine, memcached, is_ssl);
     }
     else
     {
         return FALSE;
     }
+    
     if(!pSession->protocol)
         return FALSE;
     
     struct epoll_event event;
     event.data.fd = sockfd;  
-    event.events = EPOLLIN | EPOLLOUT |  EPOLLHUP | EPOLLERR;  
+    event.events = EPOLLIN /* | EPOLLOUT */ |  EPOLLHUP | EPOLLERR;  
     if (epoll_ctl (m_epoll_fd, EPOLL_CTL_ADD, sockfd, &event) == -1)  
     {  
         fprintf(stderr, "%s %u# epoll_ctl: %s\n", __FILE__, __LINE__, strerror(errno));
@@ -63,7 +64,10 @@ BOOL Session_Group::Accept(int sockfd, SSL *ssl, SSL_CTX * ssl_ctx, const char* 
     }
     
     if(m_session_list.find(sockfd) != m_session_list.end() && m_session_list[sockfd])
+    {
+        delete m_session_list[sockfd]->protocol;
         delete m_session_list[sockfd];
+    }
     
     m_session_list[sockfd] = pSession;
     
@@ -74,7 +78,7 @@ BOOL Session_Group::Poll()
 {
     int n, i;  
   
-    n = epoll_wait (m_epoll_fd, m_events, CMailBase::m_max_conn > MAX_EVENTS_NUM ? MAX_EVENTS_NUM : CMailBase::m_max_conn, 1000);
+    n = epoll_wait (m_epoll_fd, m_events, MAX_EVENTS_NUM, 1000);
 
     for (i = 0; i < n; i++)  
     {
@@ -125,6 +129,7 @@ BOOL Session_Group::Poll()
                     ev.data.fd = m_events[i].data.fd;
                     epoll_ctl(m_epoll_fd, EPOLL_CTL_DEL, m_events[i].data.fd, &ev);
                                     
+                    delete m_session_list[m_events[i].data.fd]->protocol;
                     delete m_session_list[m_events[i].data.fd];
                     m_session_list.erase(m_events[i].data.fd);
                 }
@@ -147,6 +152,7 @@ BOOL Session_Group::Poll()
                             
             if(m_session_list.find(m_events[i].data.fd) != m_session_list.end() && m_session_list[m_events[i].data.fd])
             {
+                delete m_session_list[m_events[i].data.fd]->protocol;
                 delete m_session_list[m_events[i].data.fd];
                 m_session_list.erase(m_events[i].data.fd);
             }

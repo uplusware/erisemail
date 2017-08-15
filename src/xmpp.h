@@ -11,6 +11,7 @@
 #include "util/md5.h"
 #include "service.h"
 #include <string>
+#include <sys/epoll.h>  
 
 using namespace std;
 
@@ -206,7 +207,7 @@ private:
 class CXmpp : public CMailBase
 {
 public:
-	CXmpp(int sockfd, SSL * ssl, SSL_CTX * ssl_ctx, const char* clientip,
+	CXmpp(int epoll_fd, int sockfd, SSL * ssl, SSL_CTX * ssl_ctx, const char* clientip,
         StorageEngine* storage_engine, memcached_st * memcached, BOOL isSSL = FALSE);
 	virtual ~CXmpp();
 
@@ -239,6 +240,7 @@ protected:
     BOOL AuthTag(TiXmlDocument* xmlDoc);
 
 protected:
+    int m_epoll_fd;
 	int m_sockfd;
 	linesock* m_lsockfd;
 	linessl * m_lssl;

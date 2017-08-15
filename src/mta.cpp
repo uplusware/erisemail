@@ -726,7 +726,7 @@ int MTA::Run(int fd)
 		stQueueMsg* pQMsg;
 		int rc;
 
-		thd_pool = new ThreadPool(CMailBase::m_mta_relaytasknum, init_relay_handler, begin_relay_handler, NULL, exit_relay_handler);
+		thd_pool = new ThreadPool(CMailBase::m_mta_relaythreadnum, init_relay_handler, begin_relay_handler, NULL, exit_relay_handler);
 
 		while(1)
 		{
@@ -777,7 +777,7 @@ int MTA::Run(int fd)
                 
                 mailStg->GetMTAIndex(CMailBase::m_localhostname.c_str(), 4 * CMailBase::m_mta_relaycheckinterval, mta_index, mta_count);
                 
-				if(mta_count > 0 && mailStg->ListAvailableExternMail(mitbl, mta_index, mta_count, CMailBase::m_mta_relaytasknum) == 0)
+				if(mta_count > 0 && mailStg->ListAvailableExternMail(mitbl, mta_index, mta_count, CMailBase::m_mta_relaythreadnum) == 0)
 				{
                     for(int x = 0; x < mitbl.size(); x++)
                     {
