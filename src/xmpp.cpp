@@ -305,7 +305,8 @@ int CXmpp::XmppSend(const char* buf, int len)
 
 int CXmpp::ProtSend2(const char* buf, int len)
 {
-    m_send_buf += buf;
+    if(len > 0)
+        m_send_buf += buf;
     
     if(m_send_buf.length() == 0)
         return 0;
@@ -337,44 +338,45 @@ int CXmpp::ProtSend2(const char* buf, int len)
             epoll_ctl(m_epoll_fd, EPOLL_CTL_MOD, m_sockfd, &ev);
         }
     }
+    else if(sent_len < 0)
+    {
+        if(m_ssl)
+        {
+            int ret = SSL_get_error(m_ssl, sent_len);
+            if(ret == SSL_ERROR_WANT_READ || ret == SSL_ERROR_WANT_WRITE)
+            {
+                return 0;
+            }
+            else
+            {
+                close(m_sockfd);
+                return -1;
+            }
+        }
+        else
+        {
+            if( errno == EAGAIN)
+            {
+                return 0;
+            }
+            else
+            {
+                close(m_sockfd);
+                return -1;
+            }
+        }
+    }
+    else /* len == 0*/
+    {
+        close(m_sockfd);
+        return -1;
+    }
     return sent_len >= 0 ? 0 : -1;
 }
 
 int CXmpp::ProtFlush()
 {
-    if(m_send_buf.length() == 0)
-        return 0;
-    
-    int sent_len = 0;
-    if(m_ssl)
-        sent_len = SSL_write(m_ssl, m_send_buf.c_str(), m_send_buf.length());
-    else
-        sent_len = send(m_sockfd, m_send_buf.c_str(), m_send_buf.length(), 0);
-    
-    printf("%d\n", sent_len);
-    
-    if(sent_len > 0)
-    {
-        if(m_send_buf.length() == sent_len)
-        {
-            m_send_buf.clear();
-            
-            struct epoll_event ev;
-            ev.events = EPOLLIN | EPOLLHUP | EPOLLERR;
-            ev.data.fd = m_sockfd;
-            epoll_ctl(m_epoll_fd, EPOLL_CTL_MOD, m_sockfd, &ev);
-        }
-        else
-        {
-            m_send_buf = m_send_buf.substr(sent_len, m_send_buf.length() - sent_len);
-            
-            struct epoll_event ev;
-            ev.events = EPOLLOUT | EPOLLIN | EPOLLHUP | EPOLLERR;
-            ev.data.fd = m_sockfd;
-            epoll_ctl(m_epoll_fd, EPOLL_CTL_MOD, m_sockfd, &ev);
-        }
-    }
-    return sent_len >= 0 ? 0 : -1;
+    return ProtSend2("", 0);
 }
 
 int CXmpp::ProtRecv(char* buf, int len)

@@ -466,7 +466,7 @@ int __inline__ SSLRead(int sockfd, SSL* ssl, char * buf, unsigned int buf_len)
                 timeout.tv_usec = 0;
 
                 FD_SET(sockfd, &mask);
-                res = select(sockfd + 1, &mask, NULL, NULL, &timeout);
+                res = select(sockfd + 1, ret == SSL_ERROR_WANT_READ ? &mask : NULL, ret == SSL_ERROR_WANT_WRITE ? &mask : NULL, NULL, &timeout);
                 
                 if( res == 1) 
                 {
@@ -681,7 +681,7 @@ int __inline__ SSLWrite(int sockfd, SSL* ssl, const char * buf, unsigned int buf
 
                 FD_SET(sockfd, &mask);
                 
-                res = select(sockfd + 1, NULL, &mask, NULL, &timeout);
+                res = select(sockfd + 1, ret == SSL_ERROR_WANT_READ ? &mask : NULL, ret == SSL_ERROR_WANT_WRITE ? &mask : NULL, NULL, &timeout);
                 if( res == 1) 
                 {
                     continue;

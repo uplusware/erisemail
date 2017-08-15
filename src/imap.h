@@ -45,7 +45,8 @@ public:
 
 	virtual BOOL Parse(char* text);
 	virtual int ProtRecv(char* buf, int len);
-	
+	virtual int ProtSend(const char* buf, int len) { return ImapSend(buf, len); };
+    
 	void On_Unknown(char* text);
 	void On_Service_Ready();
 

@@ -33,23 +33,23 @@ void Session::Process()
 
     while(1)
     {
-        CMailBase * pProtocol;
+        CMailBase * pProtocolInstance;
         try{
             if(m_st == stSMTP)
             {
-                pProtocol = new CMailSmtp(m_sockfd, m_ssl, m_ssl_ctx, m_clientip.c_str(), m_storageEngine, m_memcached, m_is_ssl);
+                pProtocolInstance = new CMailSmtp(m_sockfd, m_ssl, m_ssl_ctx, m_clientip.c_str(), m_storageEngine, m_memcached, m_is_ssl);
             }
             else if(m_st == stPOP3)
             {
-                pProtocol = new CMailPop(m_sockfd, m_ssl, m_ssl_ctx, m_clientip.c_str(), m_storageEngine, m_memcached, m_is_ssl);
+                pProtocolInstance = new CMailPop(m_sockfd, m_ssl, m_ssl_ctx, m_clientip.c_str(), m_storageEngine, m_memcached, m_is_ssl);
             }
             else if(m_st == stIMAP)
             {
-                pProtocol = new CMailImap(m_sockfd, m_ssl, m_ssl_ctx, m_clientip.c_str(), m_storageEngine, m_memcached, m_is_ssl);
+                pProtocolInstance = new CMailImap(m_sockfd, m_ssl, m_ssl_ctx, m_clientip.c_str(), m_storageEngine, m_memcached, m_is_ssl);
             }
             else if(m_st == stHTTP)
             {
-                pProtocol = new CHttp(m_sockfd, m_ssl, m_ssl_ctx, m_clientip.c_str(), m_storageEngine, m_cache, m_memcached, m_is_ssl);
+                pProtocolInstance = new CHttp(m_sockfd, m_ssl, m_ssl_ctx, m_clientip.c_str(), m_storageEngine, m_cache, m_memcached, m_is_ssl);
             }
             else
             {
@@ -75,7 +75,7 @@ void Session::Process()
         {
             try
             {
-                result = pProtocol->ProtRecv(szmsg, 4096 + 1024);
+                result = pProtocolInstance->ProtRecv(szmsg, 4096 + 1024);
                 if(result <= 0)
                 {
                     bQuitSession = true;
@@ -89,14 +89,7 @@ void Session::Process()
                     
                     do 
                     {
-                        if(m_st == stXMPP)
-                        {
-                            new_line = str_line.find('>');
-                        }
-                        else
-                        {
-                            new_line = str_line.find('\n');
-                        }
+                        new_line = str_line.find(pProtocolInstance->ProtEndingChr());
                         
                         string str_left;
         
@@ -104,7 +97,7 @@ void Session::Process()
                         {
                             str_left = str_line.substr(0, new_line + 1);
                             str_line = str_line.substr(new_line + 1, str_line.length() - 1 - new_line);
-                            if(!pProtocol->Parse((char*)str_left.c_str()))
+                            if(!pProtocolInstance->Parse((char*)str_left.c_str()))
                             {
                                 bQuitSession = true;
                                 break;
@@ -123,8 +116,8 @@ void Session::Process()
             if(bQuitSession)
                 break;
         }
-        keep_alive = (pProtocol->IsKeepAlive() && pProtocol->IsEnabledKeepAlive()) ? TRUE : FALSE;
-        delete pProtocol;
+        keep_alive = (pProtocolInstance->IsKeepAlive() && pProtocolInstance->IsEnabledKeepAlive()) ? TRUE : FALSE;
+        delete pProtocolInstance;
 
         if(!keep_alive)
             break;

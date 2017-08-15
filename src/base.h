@@ -630,7 +630,7 @@ public:
                     FD_ZERO(&mask);
                     FD_SET(sockfd, &mask);
                     
-                    res = select(sockfd + 1, &mask, NULL, NULL, &timeout);
+                    res = select(sockfd + 1, ret == SSL_ERROR_WANT_READ ? &mask : NULL, ret == SSL_ERROR_WANT_WRITE ? &mask : NULL, NULL, &timeout);
 
                     if( res == 1)
                     {
@@ -809,7 +809,7 @@ public:
                     FD_ZERO(&mask);
                     FD_SET(sockfd, &mask);
                     
-                    res = select(sockfd + 1, &mask, NULL, NULL, &timeout);
+                    res = select(sockfd + 1, ret == SSL_ERROR_WANT_READ ? &mask : NULL, ret == SSL_ERROR_WANT_WRITE ? &mask : NULL, NULL, &timeout);
 
                     if( res == 1)
                     {
@@ -1003,6 +1003,7 @@ public:
     virtual int ProtRecv2(char* buf, int len) { };
     virtual int ProtSend2(char* buf, int len) { };
     virtual int ProtFlush() { };
+    virtual char ProtEndingChr() { return '\n'; };
     //Non-pure virtual function
     virtual BOOL IsKeepAlive() { return FALSE; }
     virtual BOOL IsEnabledKeepAlive() { return FALSE; }

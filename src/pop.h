@@ -29,7 +29,8 @@ public:
 	virtual ~CMailPop();
 	virtual BOOL Parse(char* text);
 	virtual int ProtRecv(char* buf, int len);
-	
+	virtual int ProtSend(const char* buf, int len) { return PopSend(buf, len); };
+    
 	void On_Service_Ready_Handler();
 	void On_Service_Error_Handler();
 	void On_Unrecognized_Command_Handler();

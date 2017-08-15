@@ -219,6 +219,7 @@ public:
     virtual int ProtRecv2(char* buf, int len);
     virtual int ProtSend2(const char* buf, int len);
     virtual int ProtFlush();
+    virtual char ProtEndingChr() { return '>'; };
     
 	int XmppSend(const char* buf, int len);
 

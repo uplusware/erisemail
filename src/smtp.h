@@ -57,7 +57,8 @@ public:
 	virtual ~CMailSmtp();
 	virtual BOOL Parse(char* text);
 	virtual int ProtRecv(char* buf, int len);
-	
+	virtual int ProtSend(const char* buf, int len) { return SmtpSend(buf, len); };
+    
 	void On_Cancel_Auth_Handler(char* text);
 	
 	void On_Auth_Handler(char* text);

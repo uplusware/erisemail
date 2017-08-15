@@ -25,7 +25,6 @@ Session_Group::~Session_Group()
     {
         if(iter_session->second)
         {
-            delete iter_session->second->protocol;
             delete iter_session->second;
         }
     }
@@ -36,20 +35,11 @@ Session_Group::~Session_Group()
 BOOL Session_Group::Accept(int sockfd, SSL *ssl, SSL_CTX * ssl_ctx, const char* clientip, Service_Type st, BOOL is_ssl,
         StorageEngine* storage_engine, memory_cache* ch, memcached_st * memcached)
 {
-    Session_Info * pSession = new Session_Info;
-    if(!pSession)
+    Session_Info * pSessionInstance = new Session_Info(st, m_epoll_fd, sockfd, ssl, ssl_ctx, clientip, storage_engine, memcached, is_ssl);
+    if(!pSessionInstance)
         return FALSE;
-    pSession->st = st;
-    if(st == stXMPP) /* Currently only support XMPP*/
-    {
-        pSession->protocol = new CXmpp(m_epoll_fd, sockfd, ssl, ssl_ctx, clientip, storage_engine, memcached, is_ssl);
-    }
-    else
-    {
-        return FALSE;
-    }
     
-    if(!pSession->protocol)
+    if(!pSessionInstance->GetProtocol())
         return FALSE;
     
     struct epoll_event event;
@@ -58,18 +48,16 @@ BOOL Session_Group::Accept(int sockfd, SSL *ssl, SSL_CTX * ssl_ctx, const char* 
     if (epoll_ctl (m_epoll_fd, EPOLL_CTL_ADD, sockfd, &event) == -1)  
     {  
         fprintf(stderr, "%s %u# epoll_ctl: %s\n", __FILE__, __LINE__, strerror(errno));
-        delete pSession->protocol;
-        delete pSession;
+        delete pSessionInstance;
         return FALSE;
     }
     
     if(m_session_list.find(sockfd) != m_session_list.end() && m_session_list[sockfd])
     {
-        delete m_session_list[sockfd]->protocol;
         delete m_session_list[sockfd];
     }
     
-    m_session_list[sockfd] = pSession;
+    m_session_list[sockfd] = pSessionInstance;
     
     return TRUE;
 }
@@ -86,36 +74,29 @@ BOOL Session_Group::Poll()
         {
             if(m_session_list.find(m_events[i].data.fd) != m_session_list.end() && m_session_list[m_events[i].data.fd])
             {
-                Session_Info * pSession = m_session_list[m_events[i].data.fd];
+                Session_Info * pSessionInstance = m_session_list[m_events[i].data.fd];
 
                 char szmsg[4096 + 1024 + 1];
                 
                 std::size_t new_line;
-                int len = pSession->protocol->ProtRecv2(szmsg, 4096 + 1024);
+                int len = pSessionInstance->GetProtocol()->ProtRecv2(szmsg, 4096 + 1024);
                 if( len > 0)
                 {
                     szmsg[len] = '\0';
                     
-                    pSession->recvbuf += szmsg;
+                    pSessionInstance->RecvBuf() += szmsg;
                     
                     do
                     {
-                        if(pSession->st == stXMPP)
-                        {
-                            new_line = pSession->recvbuf.find('>');
-                        }
-                        else
-                        {
-                            new_line = pSession->recvbuf.find('\n');
-                        }
+                        new_line = pSessionInstance->RecvBuf().find(pSessionInstance->GetProtocol()->ProtEndingChr());
                         
                         string str_left;
         
                         if(new_line != std::string::npos)
                         {
-                            str_left = pSession->recvbuf.substr(0, new_line + 1);
-                            pSession->recvbuf = pSession->recvbuf.substr(new_line + 1, pSession->recvbuf.length() - 1 - new_line);
-                            if(!pSession->protocol->Parse((char*)str_left.c_str()))
+                            str_left = pSessionInstance->RecvBuf().substr(0, new_line + 1);
+                            pSessionInstance->RecvBuf() = pSessionInstance->RecvBuf().substr(new_line + 1, pSessionInstance->RecvBuf().length() - 1 - new_line);
+                            if(!pSessionInstance->GetProtocol()->Parse((char*)str_left.c_str()))
                             {
                                 break;
                             }
@@ -129,7 +110,6 @@ BOOL Session_Group::Poll()
                     ev.data.fd = m_events[i].data.fd;
                     epoll_ctl(m_epoll_fd, EPOLL_CTL_DEL, m_events[i].data.fd, &ev);
                                     
-                    delete m_session_list[m_events[i].data.fd]->protocol;
                     delete m_session_list[m_events[i].data.fd];
                     m_session_list.erase(m_events[i].data.fd);
                 }
@@ -139,8 +119,8 @@ BOOL Session_Group::Poll()
         {
             if(m_session_list.find(m_events[i].data.fd) != m_session_list.end() && m_session_list[m_events[i].data.fd])
             {
-                Session_Info * pSession = m_session_list[m_events[i].data.fd];
-                pSession->protocol->ProtFlush();
+                Session_Info * pSessionInstance = m_session_list[m_events[i].data.fd];
+                pSessionInstance->GetProtocol()->ProtFlush();
             }
         }
         else if (m_events[i].events & EPOLLHUP || m_events[i].events & EPOLLERR)
@@ -152,7 +132,6 @@ BOOL Session_Group::Poll()
                             
             if(m_session_list.find(m_events[i].data.fd) != m_session_list.end() && m_session_list[m_events[i].data.fd])
             {
-                delete m_session_list[m_events[i].data.fd]->protocol;
                 delete m_session_list[m_events[i].data.fd];
                 m_session_list.erase(m_events[i].data.fd);
             }

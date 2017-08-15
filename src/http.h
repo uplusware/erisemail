@@ -146,7 +146,7 @@ public:
 
 	virtual BOOL Parse(char* text);
 	virtual int ProtRecv(char* buf, int len);
-		
+    virtual int ProtSend(const char* buf, int len) { return HttpSend(buf, len); };
 
 	int HttpSend(const char* buf, int len);
 	int HttpRecv(char* buf, int len);
