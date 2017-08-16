@@ -79,7 +79,7 @@ BOOL Session_Group::Poll()
                 char szmsg[4096 + 1024 + 1];
                 
                 std::size_t new_line;
-                int len = pSessionInstance->GetProtocol()->ProtRecv2(szmsg, 4096 + 1024);
+                int len = pSessionInstance->GetProtocol()->ProtRecvNoWait(szmsg, 4096 + 1024);
                 if( len > 0)
                 {
                     szmsg[len] = '\0';
@@ -88,7 +88,7 @@ BOOL Session_Group::Poll()
                     
                     do
                     {
-                        new_line = pSessionInstance->RecvBuf().find(pSessionInstance->GetProtocol()->ProtEndingChr());
+                        new_line = pSessionInstance->RecvBuf().find(pSessionInstance->GetProtocol()->GetProtEndingChar());
                         
                         string str_left;
         
@@ -120,7 +120,7 @@ BOOL Session_Group::Poll()
             if(m_session_list.find(m_events[i].data.fd) != m_session_list.end() && m_session_list[m_events[i].data.fd])
             {
                 Session_Info * pSessionInstance = m_session_list[m_events[i].data.fd];
-                pSessionInstance->GetProtocol()->ProtFlush();
+                pSessionInstance->GetProtocol()->ProtTryFlush();
             }
         }
         else if (m_events[i].events & EPOLLHUP || m_events[i].events & EPOLLERR)

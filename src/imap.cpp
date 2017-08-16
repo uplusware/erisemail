@@ -73,7 +73,7 @@ CMailImap::~CMailImap()
 
 int CMailImap::ImapSend(const char* buf, int len)
 {
-	//printf("%s %p\n", buf, m_ssl);
+	//printf("%s", buf);
 	if(m_ssl)
 		return SSLWrite(m_sockfd, m_ssl, buf, len);
 	else

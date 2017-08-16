@@ -36,6 +36,7 @@
 #include <pthread.h>
 #include <libmemcached/memcached.h>
 
+#ifndef __ERISEUTIL__ 
 #ifdef _WITH_GSSAPI_
     #include <gss.h>
     #define GSS_SEC_LAYER_NONE          0x1
@@ -116,7 +117,7 @@
       display_status_1 (msg, min_stat, GSS_C_MECH_CODE);
     }
 #endif /* _WITH_GSSAPI_ */
-
+#endif /* __ERISEUTIL__ */
 #include "util/trace.h"
 #include "util/general.h"
 #include "storage.h"
@@ -999,12 +1000,14 @@ public:
 	/* Pure virual function	*/
 	virtual BOOL Parse(char* text) = 0;
 	virtual int ProtRecv(char* buf, int len) = 0;
+    
+    /* Non-pure virtual function */
     virtual int ProtSend(char* buf, int len) { };
-    virtual int ProtRecv2(char* buf, int len) { };
-    virtual int ProtSend2(char* buf, int len) { };
-    virtual int ProtFlush() { };
-    virtual char ProtEndingChr() { return '\n'; };
-    //Non-pure virtual function
+    virtual int ProtRecvNoWait(char* buf, int len) { };
+    virtual int ProtSendNoWait(char* buf, int len) { };
+    virtual int ProtTryFlush() { };
+    virtual char GetProtEndingChar() { return '\n'; };
+    
     virtual BOOL IsKeepAlive() { return FALSE; }
     virtual BOOL IsEnabledKeepAlive() { return FALSE; }
 };

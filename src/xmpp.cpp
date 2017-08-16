@@ -116,7 +116,7 @@ bool xmpp_stanza::Parse(const char* text)
     bool ret = m_xml.LoadString(m_xml_text.c_str(), m_xml_text.length());
     if(ret)
     {
-        /* printf("\n\n%s\n", m_xml_text.c_str()); */
+        //printf("\n\n%s\n", m_xml_text.c_str());
         
         TiXmlElement * pStanzaElement = m_xml.RootElement();
         if(pStanzaElement)
@@ -193,7 +193,16 @@ CXmpp::CXmpp(int epoll_fd, int sockfd, SSL * ssl, SSL_CTX * ssl_ctx, const char*
   	}
 
     m_stream_count = 0;
-    m_auth_success = FALSE;
+    
+    m_auth_method = AUTH_METHOD_UNKNOWN;
+    m_auth_step = AUTH_STEP_INIT;
+    
+#ifdef _WITH_GSSAPI_
+    m_server_creds = GSS_C_NO_CREDENTIAL;
+    m_server_name = GSS_C_NO_NAME;
+    m_context_hdl = GSS_C_NO_CONTEXT;
+    m_client_name = GSS_C_NO_NAME;
+#endif /* _WITH_GSSAPI_ */
 
 }
 
@@ -218,7 +227,7 @@ CXmpp::~CXmpp()
     }
 
     //send the unavailable presence
-    if(m_auth_success)
+    if(m_auth_step == AUTH_STEP_SUCCESS)
     {
         MailStorage* mailStg;
         StorageEngineInstance stgengine_instance(GetStg(), &mailStg);
@@ -261,7 +270,7 @@ CXmpp::~CXmpp()
 
                     pPresenceElement->Accept( &xml_printer );
 
-                    pXmpp->ProtSend2(xml_printer.CStr(), xml_printer.Size());
+                    pXmpp->ProtSendNoWait(xml_printer.CStr(), xml_printer.Size());
                 }
             }
             pthread_rwlock_unlock(&m_online_list_lock); //acquire write
@@ -303,9 +312,9 @@ int CXmpp::XmppSend(const char* buf, int len)
     return ret;
 }
 
-int CXmpp::ProtSend2(const char* buf, int len)
+int CXmpp::ProtSendNoWait(const char* buf, int len)
 {
-    if(len > 0)
+    if(buf && len > 0)
         m_send_buf += buf;
     
     if(m_send_buf.length() == 0)
@@ -319,6 +328,9 @@ int CXmpp::ProtSend2(const char* buf, int len)
     
     if(sent_len > 0)
     {
+        /* for(int x = 0; x < sent_len; x++)
+            printf("%c", m_send_buf.c_str()[x]); */
+        
         if(m_send_buf.length() == sent_len)
         {
             m_send_buf.clear();
@@ -374,9 +386,9 @@ int CXmpp::ProtSend2(const char* buf, int len)
     return sent_len >= 0 ? 0 : -1;
 }
 
-int CXmpp::ProtFlush()
+int CXmpp::ProtTryFlush()
 {
-    return ProtSend2("", 0);
+    return ProtSendNoWait(NULL, 0);
 }
 
 int CXmpp::ProtRecv(char* buf, int len)
@@ -387,7 +399,7 @@ int CXmpp::ProtRecv(char* buf, int len)
 		return m_lsockfd->xrecv(buf, len);
 }
 
-int CXmpp::ProtRecv2(char* buf, int len)
+int CXmpp::ProtRecvNoWait(char* buf, int len)
 {
     if(m_ssl)
 		return m_lssl->xrecv_t(buf, len);
@@ -519,7 +531,7 @@ BOOL CXmpp::Parse(char* text)
         }
         else
         {
-          if(m_auth_success)
+          if(m_auth_step == AUTH_STEP_SUCCESS)
           {
             char xmpp_buf[1024];
             const char* szFrom = m_xmpp_stanza->GetFrom();
@@ -554,7 +566,7 @@ BOOL CXmpp::Parse(char* text)
                     if(it != m_online_list.end())
                     {
                         CXmpp* pXmpp = it->second;
-                        pXmpp->ProtSend2(xml_printer.CStr(), xml_printer.Size());
+                        pXmpp->ProtSendNoWait(xml_printer.CStr(), xml_printer.Size());
                     }
                     else
                     {
@@ -603,7 +615,7 @@ BOOL CXmpp::StarttlsTag(TiXmlDocument* xmlDoc)
 {
     char xmpp_buf[1024];
     sprintf(xmpp_buf, "<proceed xmlns='urn:ietf:params:xml:ns:xmpp-tls'/>");
-    if(ProtSend2(xmpp_buf, strlen(xmpp_buf)) != 0)
+    if(ProtSendNoWait(xmpp_buf, strlen(xmpp_buf)) != 0)
         return FALSE;
     
     int flags = fcntl(m_sockfd, F_GETFL, 0); 
@@ -635,7 +647,7 @@ BOOL CXmpp::StarttlsTag(TiXmlDocument* xmlDoc)
 
 BOOL CXmpp::StreamTag(TiXmlDocument* xmlDoc)
 {
-    if(ProtSend2(m_xml_declare.c_str(), m_xml_declare.length()) != 0)
+    if(ProtSendNoWait(m_xml_declare.c_str(), m_xml_declare.length()) != 0)
         return FALSE;
 
     char stream_id[128];
@@ -653,10 +665,10 @@ BOOL CXmpp::StreamTag(TiXmlDocument* xmlDoc)
     char xmpp_buf[2048];
     sprintf(xmpp_buf, "<stream:stream from='%s' id='%s' xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams' version='1.0'>",
       CMailBase::m_email_domain.c_str(), m_stream_id);
-    if(ProtSend2(xmpp_buf, strlen(xmpp_buf)) != 0)
+    if(ProtSendNoWait(xmpp_buf, strlen(xmpp_buf)) != 0)
         return FALSE;
 
-    if(m_auth_success == TRUE)
+    if(m_auth_step == AUTH_STEP_SUCCESS)
     {
         sprintf(xmpp_buf,
           "<stream:features>"
@@ -667,7 +679,7 @@ BOOL CXmpp::StreamTag(TiXmlDocument* xmlDoc)
               "<session xmlns='urn:ietf:params:xml:ns:xmpp-session'/>"
           "</stream:features>");
 
-        if(ProtSend2(xmpp_buf, strlen(xmpp_buf)) != 0)
+        if(ProtSendNoWait(xmpp_buf, strlen(xmpp_buf)) != 0)
             return FALSE;
     }
     else
@@ -677,10 +689,20 @@ BOOL CXmpp::StreamTag(TiXmlDocument* xmlDoc)
             sprintf(xmpp_buf,
               "<stream:features>"
                 "<mechanisms xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>"
+#ifdef _WITH_GSSAPI_
+                    "<mechanism>GSSAPI</mechanism>"
+#endif /* _WITH_GSSAPI_ */                
                     "<mechanism>DIGEST-MD5</mechanism>"
                     "<mechanism>PLAIN</mechanism>"
+#ifdef _WITH_GSSAPI_
+                    "<hostname xmlns='urn:xmpp:domain-based-name:1'>%s</hostname>"
+#endif /* _WITH_GSSAPI_ */
                 "</mechanisms>"
-              "</stream:features>");
+              "</stream:features>"
+#ifdef _WITH_GSSAPI_
+              , m_localhostname.c_str()
+#endif /* _WITH_GSSAPI_ */
+                );
         }
         else if(m_encryptxmpp == XMPP_TLS_REQUIRED && !m_bSTARTTLS)
         {
@@ -690,10 +712,20 @@ BOOL CXmpp::StreamTag(TiXmlDocument* xmlDoc)
                     "<required/>"
                 "</starttls>"
                 "<mechanisms xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>"
+#ifdef _WITH_GSSAPI_
+                    "<mechanism>GSSAPI</mechanism>"
+#endif /* _WITH_GSSAPI_ */
                     "<mechanism>DIGEST-MD5</mechanism>"
                     "<mechanism>PLAIN</mechanism>"
+#ifdef _WITH_GSSAPI_
+                    "<hostname xmlns='urn:xmpp:domain-based-name:1'>%s</hostname>"
+#endif /* _WITH_GSSAPI_ */
                 "</mechanisms>"
-              "</stream:features>");
+              "</stream:features>"
+#ifdef _WITH_GSSAPI_
+              , m_localhostname.c_str()
+#endif /* _WITH_GSSAPI_ */
+            );
         }
         else
         {
@@ -703,23 +735,43 @@ BOOL CXmpp::StreamTag(TiXmlDocument* xmlDoc)
                   "<stream:features>"
                     "<starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls' />"
                     "<mechanisms xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>"
+#ifdef _WITH_GSSAPI_
+                        "<mechanism>GSSAPI</mechanism>"
+#endif /* _WITH_GSSAPI_ */
                         "<mechanism>DIGEST-MD5</mechanism>"
                         "<mechanism>PLAIN</mechanism>"
+#ifdef _WITH_GSSAPI_
+                        "<hostname xmlns='urn:xmpp:domain-based-name:1'>%s</hostname>"
+#endif /* _WITH_GSSAPI_ */
                     "</mechanisms>"
-                  "</stream:features>");
+                  "</stream:features>"
+#ifdef _WITH_GSSAPI_
+                  , m_localhostname.c_str()
+#endif /* _WITH_GSSAPI_ */
+                );
             }
             else
             {
                 sprintf(xmpp_buf,
                   "<stream:features>"
                     "<mechanisms xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>"
+#ifdef _WITH_GSSAPI_
+                        "<mechanism>GSSAPI</mechanism>"
+#endif /* _WITH_GSSAPI_ */
                         "<mechanism>DIGEST-MD5</mechanism>"
                         "<mechanism>PLAIN</mechanism>"
+#ifdef _WITH_GSSAPI_
+                        "<hostname xmlns='urn:xmpp:domain-based-name:1'>%s</hostname>"
+#endif /* _WITH_GSSAPI_ */
                     "</mechanisms>"
-                  "</stream:features>");
+                  "</stream:features>"
+#ifdef _WITH_GSSAPI_
+                  , m_localhostname.c_str()
+#endif /* _WITH_GSSAPI_ */
+                  );
             }
         }
-        if(ProtSend2(xmpp_buf, strlen(xmpp_buf)) != 0)
+        if(ProtSendNoWait(xmpp_buf, strlen(xmpp_buf)) != 0)
             return FALSE;
     }
 
@@ -837,7 +889,7 @@ BOOL CXmpp::PresenceTag(TiXmlDocument* xmlDoc)
             if(it != m_online_list.end())
             {
                 CXmpp* pXmpp = it->second;
-                pXmpp->ProtSend2(xml_printer.CStr(), xml_printer.Size());
+                pXmpp->ProtSendNoWait(xml_printer.CStr(), xml_printer.Size());
             }
             else
             {
@@ -885,7 +937,7 @@ BOOL CXmpp::PresenceTag(TiXmlDocument* xmlDoc)
                         pReponseElement.SetAttribute("to", xmpp_buf);
                         pReponseElement.Accept( &xml_printer );
 
-                        pXmpp->ProtSend2(xml_printer.CStr(), xml_printer.Size());
+                        pXmpp->ProtSendNoWait(xml_printer.CStr(), xml_printer.Size());
                     }
                 }
                 pthread_rwlock_unlock(&m_online_list_lock);
@@ -937,7 +989,7 @@ BOOL CXmpp::IqTag(TiXmlDocument* xmlDoc)
                 if(it != m_online_list.end())
                 {
                     CXmpp* pXmpp = it->second;
-                    pXmpp->ProtSend2(xml_printer.CStr(), xml_printer.Size());
+                    pXmpp->ProtSendNoWait(xml_printer.CStr(), xml_printer.Size());
                 }
                 pthread_rwlock_unlock(&m_online_list_lock);
             }
@@ -973,7 +1025,7 @@ BOOL CXmpp::IqTag(TiXmlDocument* xmlDoc)
             "<iq type='result' id='%s' from='%s' to='%s/%s'>",
                 iq_id.c_str(), CMailBase::m_email_domain.c_str(), m_username.c_str(), m_stream_id);
 
-        if(ProtSend2(xmpp_buf, strlen(xmpp_buf)) != 0)
+        if(ProtSendNoWait(xmpp_buf, strlen(xmpp_buf)) != 0)
             return FALSE;
 
         TiXmlNode* pChildNode = pIqElement->FirstChild();
@@ -1006,7 +1058,7 @@ BOOL CXmpp::IqTag(TiXmlDocument* xmlDoc)
                             "</bind>",
                             m_username.c_str(), CMailBase::m_email_domain.c_str(), m_resource.c_str());
                             
-                    if(ProtSend2(xmpp_buf, strlen(xmpp_buf)) != 0)
+                    if(ProtSendNoWait(xmpp_buf, strlen(xmpp_buf)) != 0)
                         return FALSE;
                 }
                 else if(pChildNode->Value() && strcasecmp(pChildNode->Value(), "query") == 0)
@@ -1043,7 +1095,7 @@ BOOL CXmpp::IqTag(TiXmlDocument* xmlDoc)
                             "<query xmlns='%s'>%s</query>",
                             iq_id.c_str(), CMailBase::m_email_domain.c_str(), m_username.c_str(), m_stream_id, xmlns.c_str(), str_items.c_str());
 
-                        if(ProtSend2(xmpp_buddys, strlen(xmpp_buddys)) != 0)
+                        if(ProtSendNoWait(xmpp_buddys, strlen(xmpp_buddys)) != 0)
                             return FALSE;
 
                         free(xmpp_buddys);
@@ -1055,7 +1107,7 @@ BOOL CXmpp::IqTag(TiXmlDocument* xmlDoc)
                     {
                        sprintf(xmpp_buf,
                             "<query xmlns='%s'/>", xmlns.c_str());
-                       if(ProtSend2(xmpp_buf, strlen(xmpp_buf)) != 0)
+                       if(ProtSendNoWait(xmpp_buf, strlen(xmpp_buf)) != 0)
                            return FALSE;
 
                     }
@@ -1064,14 +1116,14 @@ BOOL CXmpp::IqTag(TiXmlDocument* xmlDoc)
                        sprintf(xmpp_buf,
                             "<query xmlns='%s'>"
                             "</query>", xmlns.c_str());
-                        if(ProtSend2(xmpp_buf, strlen(xmpp_buf)) != 0)
+                        if(ProtSendNoWait(xmpp_buf, strlen(xmpp_buf)) != 0)
                             return FALSE;
                     }
                     else
                     {
                         sprintf(xmpp_buf,
                             "<query xmlns='%s'/>",xmlns.c_str());
-                        if(ProtSend2(xmpp_buf, strlen(xmpp_buf)) != 0)
+                        if(ProtSendNoWait(xmpp_buf, strlen(xmpp_buf)) != 0)
                             return FALSE;
                     }
 
@@ -1085,7 +1137,7 @@ BOOL CXmpp::IqTag(TiXmlDocument* xmlDoc)
                    string xmlns = pChildNode->ToElement() && pChildNode->ToElement()->Attribute("xmlns") ? pChildNode->ToElement()->Attribute("xmlns") : "";
                    sprintf(xmpp_buf,
                         "<ping xmlns='%s'/>",xmlns.c_str());
-                    if(ProtSend2(xmpp_buf, strlen(xmpp_buf)) != 0)
+                    if(ProtSendNoWait(xmpp_buf, strlen(xmpp_buf)) != 0)
                         return FALSE;
                 }
                 else if(pChildNode->Value() && strcasecmp(pChildNode->Value(), "vCard") == 0 )
@@ -1093,7 +1145,7 @@ BOOL CXmpp::IqTag(TiXmlDocument* xmlDoc)
                     string xmlns = pChildNode->ToElement() && pChildNode->ToElement()->Attribute("xmlns") ? pChildNode->ToElement()->Attribute("xmlns") : "";
                     sprintf(xmpp_buf,
                             "<vCard xmlns='%s'/>", xmlns.c_str());
-                    if(ProtSend2(xmpp_buf, strlen(xmpp_buf)) != 0)
+                    if(ProtSendNoWait(xmpp_buf, strlen(xmpp_buf)) != 0)
                         return FALSE;
                 }
                 else
@@ -1102,14 +1154,14 @@ BOOL CXmpp::IqTag(TiXmlDocument* xmlDoc)
                     xml_printer.SetIndent("");
                     pChildNode->Accept( &xml_printer );
 
-                    if(ProtSend2(xml_printer.CStr(), xml_printer.Size()) != 0)
+                    if(ProtSendNoWait(xml_printer.CStr(), xml_printer.Size()) != 0)
                         return FALSE;
                 }
             }
             pChildNode = pChildNode->NextSibling();
         }
 
-        if(ProtSend2("</iq>", strlen("</iq>")) != 0)
+        if(ProtSendNoWait("</iq>", strlen("</iq>")) != 0)
             return FALSE;
 
         if(isPresenceProbe)
@@ -1148,7 +1200,7 @@ BOOL CXmpp::IqTag(TiXmlDocument* xmlDoc)
                     xml_printer.SetIndent("");
                     pPresenceElement->Accept( &xml_printer );
 
-                    if(ProtSend2(xml_printer.CStr(), xml_printer.Size()) != 0)
+                    if(ProtSendNoWait(xml_printer.CStr(), xml_printer.Size()) != 0)
                         return FALSE;
                 }
             }
@@ -1168,7 +1220,7 @@ BOOL CXmpp::MessageTag(TiXmlDocument* xmlDoc)
     if(pMessageElement)
     {
 
-        if(m_auth_success)
+        if(m_auth_step == AUTH_STEP_SUCCESS)
         {
             TiXmlElement pReponseElement(*pMessageElement);
 
@@ -1203,7 +1255,7 @@ BOOL CXmpp::MessageTag(TiXmlDocument* xmlDoc)
                 if(it != m_online_list.end())
                 {
                     CXmpp* pXmpp = it->second;
-                    pXmpp->ProtSend2(xml_printer.CStr(), xml_printer.Size());
+                    pXmpp->ProtSendNoWait(xml_printer.CStr(), xml_printer.Size());
                 }
                 else
                 {
@@ -1239,6 +1291,8 @@ BOOL CXmpp::AuthTag(TiXmlDocument* xmlDoc)
         const char* szMechanism = pAuthElement->Attribute("mechanism");
         if(szMechanism && strcmp(szMechanism, "PLAIN") == 0)
         {
+            m_auth_method = AUTH_METHOD_PLAIN;
+            
             string strEnoded = pAuthElement->GetText();
             int outlen = BASE64_DECODE_OUTPUT_MAX_LEN(strEnoded.length());//strEnoded.length()*4+1;
             char* tmp1 = (char*)malloc(outlen);
@@ -1261,8 +1315,9 @@ BOOL CXmpp::AuthTag(TiXmlDocument* xmlDoc)
             if(mailStg->GetPassword((char*)m_username.c_str(), password) == 0 && password == m_password)
             {
                 sprintf(xmpp_buf, "<success xmlns='urn:ietf:params:xml:ns:xmpp-sasl'></success>");
-                m_auth_success = TRUE;
-
+                
+                m_auth_step = AUTH_STEP_SUCCESS;
+                
                 pthread_rwlock_rdlock(&m_online_list_lock); //acquire read
 
                 map<string, CXmpp*>::iterator it = m_online_list.find(m_username);
@@ -1270,7 +1325,7 @@ BOOL CXmpp::AuthTag(TiXmlDocument* xmlDoc)
                 if(it != m_online_list.end())
                 {
                     CXmpp* pXmpp = it->second;
-                    pXmpp->ProtSend2("</stream:stream>", _CSL_("</stream:stream>"));
+                    pXmpp->ProtSendNoWait("</stream:stream>", _CSL_("</stream:stream>"));
                 }
 
                 pthread_rwlock_unlock(&m_online_list_lock);
@@ -1282,11 +1337,11 @@ BOOL CXmpp::AuthTag(TiXmlDocument* xmlDoc)
                      "<failure xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>"
                         "<not-authorized/>"
                      "</failure>");
-                 m_auth_success = FALSE;
+                 m_auth_step = AUTH_STEP_INIT;
             }
             stgengine_instance.Release();
 
-            if(ProtSend2(xmpp_buf, strlen(xmpp_buf)) != 0)
+            if(ProtSendNoWait(xmpp_buf, strlen(xmpp_buf)) != 0)
                 return FALSE;
 
             pthread_rwlock_wrlock(&m_online_list_lock); //acquire write
@@ -1294,9 +1349,8 @@ BOOL CXmpp::AuthTag(TiXmlDocument* xmlDoc)
             pthread_rwlock_unlock(&m_online_list_lock); //release write
 
             //recieve all the offline message
-            if(m_auth_success)
+            if(m_auth_step == AUTH_STEP_SUCCESS)
             {
-
                 MailStorage* mailStg;
                 StorageEngineInstance stgengine_instance(GetStg(), &mailStg);
                 if(!mailStg)
@@ -1316,7 +1370,7 @@ BOOL CXmpp::AuthTag(TiXmlDocument* xmlDoc)
 
                 if(xids.size() > 0)
                 {
-                    if(ProtSend2(strMessage.c_str(), strMessage.length()) >= 0)
+                    if(ProtSendNoWait(strMessage.c_str(), strMessage.length()) >= 0)
                     {
                         for(int v = 0; v < xids.size(); v++)
                         {
@@ -1328,6 +1382,8 @@ BOOL CXmpp::AuthTag(TiXmlDocument* xmlDoc)
         }
         else if(szMechanism && strcmp(szMechanism, "DIGEST-MD5") == 0)
         {
+            m_auth_method = AUTH_METHOD_DIGEST_MD5;
+            
             char cmd[1024];
             char nonce[15];
             
@@ -1350,32 +1406,113 @@ BOOL CXmpp::AuthTag(TiXmlDocument* xmlDoc)
             memset(szEncoded, 0, outlen);
             
             CBase64::Encode(cmd, strlen(cmd), szEncoded, &outlen);
-            if(ProtSend2("<challenge xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>", strlen("<challenge xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>")) != 0)
+            if(ProtSendNoWait("<challenge xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>", strlen("<challenge xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>")) != 0)
             {
                 free(szEncoded);
                 return FALSE;
             }
-            if(ProtSend2(szEncoded, strlen(szEncoded)) != 0)
+            if(ProtSendNoWait(szEncoded, strlen(szEncoded)) != 0)
             {
                 free(szEncoded);
                 return FALSE;
             }
-            if(ProtSend2("</challenge>", strlen("</challenge>")) != 0)
+            if(ProtSendNoWait("</challenge>", strlen("</challenge>")) != 0)
             {
                 free(szEncoded);
                 return FALSE;
             }
 
             free(szEncoded);
+            
+            m_auth_step = AUTH_STEP_1;
         }
-        else
+#ifdef _WITH_GSSAPI_
+        else if(szMechanism && strcmp(szMechanism, "GSSAPI") == 0)
         {
-            sprintf(xmpp_buf,
+            m_auth_method = AUTH_METHOD_GSSAPI;
+            //TODO
+            gss_buffer_desc buf_desc;
+            string str_buf_desc = "xmpp@";
+            str_buf_desc += m_localhostname.c_str();
+            
+            buf_desc.value = (char *) str_buf_desc.c_str();
+            buf_desc.length = str_buf_desc.length() + 1;
+            
+            m_maj_stat = gss_import_name (&m_min_stat, &buf_desc,
+                      GSS_C_NT_HOSTBASED_SERVICE, &m_server_name);
+            if (GSS_ERROR (m_maj_stat))
+            {
+                display_status ("gss_import_name", m_maj_stat, m_min_stat);
+                sprintf(xmpp_buf,
                      "<failure xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>"
                         "<not-authorized/>"
                      "</failure>");
-            m_auth_success = FALSE;
-            if(ProtSend2(xmpp_buf, strlen(xmpp_buf)) != 0)
+                ProtSendNoWait(xmpp_buf, strlen(xmpp_buf));
+                return FALSE;
+            }
+            
+            gss_OID_set oid_set = GSS_C_NO_OID_SET;
+            /*
+            m_maj_stat = gss_create_empty_oid_set(&m_min_stat, &oid_set);
+            if (GSS_ERROR (m_maj_stat))
+            {
+                display_status ("gss_create_empty_oid_set", m_maj_stat, m_min_stat);
+                sprintf(xmpp_buf,
+                     "<failure xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>"
+                        "<not-authorized/>"
+                     "</failure>");
+                ProtSendNoWait(xmpp_buf, strlen(xmpp_buf));
+                return FALSE;
+            }
+            
+            m_maj_stat = gss_add_oid_set_member (&m_min_stat, GSS_KRB5, &oid_set);
+            if (GSS_ERROR (m_maj_stat))
+            {
+                display_status ("gss_add_oid_set_member", m_maj_stat, m_min_stat);
+                m_maj_stat = gss_release_oid_set(&m_min_stat, &oid_set);
+                sprintf(xmpp_buf,
+                     "<failure xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>"
+                        "<not-authorized/>"
+                     "</failure>");
+                ProtSendNoWait(xmpp_buf, strlen(xmpp_buf));
+                return FALSE;
+            }
+            */
+            m_maj_stat = gss_acquire_cred (&m_min_stat, m_server_name, 0,
+                       oid_set, GSS_C_ACCEPT,
+                       &m_server_creds, NULL, NULL);
+            if (GSS_ERROR (m_maj_stat))
+            {
+                display_status ("gss_acquire_cred", m_maj_stat, m_min_stat);
+                m_maj_stat = gss_release_oid_set(&m_min_stat, &oid_set);
+                sprintf(xmpp_buf,
+                     "<failure xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>"
+                        "<not-authorized/>"
+                     "</failure>");
+                ProtSendNoWait(xmpp_buf, strlen(xmpp_buf));
+                return FALSE;
+            }
+            m_maj_stat = gss_release_oid_set(&m_min_stat, &oid_set);
+            
+            if (GSS_ERROR (m_maj_stat))
+            {
+                display_status ("gss_release_oid_set", m_maj_stat, m_min_stat);
+                sprintf(xmpp_buf,
+                     "<failure xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>"
+                        "<not-authorized/>"
+                     "</failure>");
+                ProtSendNoWait(xmpp_buf, strlen(xmpp_buf));
+                return FALSE;
+            }
+            m_auth_step = AUTH_STEP_1;
+        }
+#endif /* _WITH_GSSAPI_ */
+        else
+        {
+            sprintf(xmpp_buf,
+                     "<error code=\"401\" type=\"auth\"><not-authorized xmlns=\"urn:ietf:params:xml:ns:xmpp-stanzas\"/></error>");
+            m_auth_step = AUTH_STEP_INIT;
+            if(ProtSendNoWait(xmpp_buf, strlen(xmpp_buf)) != 0)
                 return FALSE;
         }
     }
@@ -1385,157 +1522,397 @@ BOOL CXmpp::AuthTag(TiXmlDocument* xmlDoc)
 
 BOOL CXmpp::ResponseTag(TiXmlDocument* xmlDoc)
 {
-    TiXmlElement * pResponseElement = xmlDoc->RootElement();
-    if(pResponseElement)
+    if(m_auth_method == AUTH_METHOD_DIGEST_MD5)
     {
-        char xmpp_buf[2048];
-        const char* szXmlns = pResponseElement->Attribute("xmlns");
-        if(szXmlns && strcmp(szXmlns, "urn:ietf:params:xml:ns:xmpp-sasl") == 0 &&
-            !m_auth_success && m_strDigitalMD5Nonce != "" && m_strDigitalMD5Response == "")
+        TiXmlElement * pResponseElement = xmlDoc->RootElement();
+        if(pResponseElement)
         {
-            string strEnoded = pResponseElement->GetText();
-            int outlen = BASE64_DECODE_OUTPUT_MAX_LEN(strEnoded.length());//strEnoded.length()*4+1;
-            char* tmp1 = (char*)malloc(outlen);
-            memset(tmp1, 0, outlen);
-
-            CBase64::Decode((char*)strEnoded.c_str(), strEnoded.length(), tmp1, &outlen);
-            
-            const char* authinfo = tmp1;
-        
-            map<string, string> DigestMap;
-            char where = 'K'; /* K is for key, V is for value*/
-            DigestMap.clear();
-            string key, value;
-            int x = 0;
-            while(1)
+            char xmpp_buf[2048];
+            const char* szXmlns = pResponseElement->Attribute("xmlns");
+            if(szXmlns && strcmp(szXmlns, "urn:ietf:params:xml:ns:xmpp-sasl") == 0 &&
+                m_auth_step == AUTH_STEP_1 && pResponseElement->GetText())
             {
-                if(authinfo[x] == ',' || authinfo[x] == '\0')
-                {
-                     _strtrim_dquote_(key);
-                    if(key != "")
-                    {
-                        _strtrim_dquote_(value);
-                        DigestMap[key] = value;
-                        key = "";
-                        value = "";
-                    }
-                    where = 'K';
-                    
-                }
-                else if(where == 'K' && authinfo[x] == '=')
-                {
-                    where = 'V';
-                }
-                else
-                {
-                    if( where == 'K' )
-                        key += (authinfo[x]);
-                    else if( where == 'V' )
-                        value += (authinfo[x]);
-                }
+                string strEnoded = pResponseElement->GetText();
+                int outlen = BASE64_DECODE_OUTPUT_MAX_LEN(strEnoded.length());//strEnoded.length()*4+1;
+                char* tmp1 = (char*)malloc(outlen);
+                memset(tmp1, 0, outlen);
+
+                CBase64::Decode((char*)strEnoded.c_str(), strEnoded.length(), tmp1, &outlen);
                 
-                if(authinfo[x] == '\0')
-                    break;
-                x++;
-            }
-            free(tmp1);
+                const char* authinfo = tmp1;
             
-            if(DigestMap["nonce"] != m_strDigitalMD5Nonce)
-            {
-                sprintf(xmpp_buf,
-                    "<response xmlns='urn:ietf:params:xml:ns:xmpp-sasl'/>");
-                m_auth_success = FALSE;
-
-                if(ProtSend2(xmpp_buf, strlen(xmpp_buf)) != 0)
-                    return FALSE;
-                else
-                    return TRUE;
-                    
-            }
-            
-            MailStorage* mailStg;
-            StorageEngineInstance stgengine_instance(m_storageEngine, &mailStg);
-            if(!mailStg)
-            {
-                fprintf(stderr, "%s::%s Get Storage Engine Failed!\n", __FILE__, __FUNCTION__);
-                return FALSE;
-            }
-            
-            string real_password;
-            if(mailStg->GetPassword(DigestMap["username"].c_str(), real_password) == 0)
-            {
-                char * pszNonce = (char*)DigestMap["nonce"].c_str();
-                char * pszCNonce = (char*)DigestMap["cnonce"].c_str();
-                char * pszUser = (char*)DigestMap["username"].c_str();
-                char * pszRealm = (char*)DigestMap["realm"].c_str();
-                char * pszPass = (char*)real_password.c_str();
-                char * pszAuthzid = (char*)DigestMap["authzid"].c_str();
-                char * szNonceCount = (char*)DigestMap["nc"].c_str();
-                char * pszQop = (char*)DigestMap["qop"].c_str();
-                char * pszURI = (char*)DigestMap["digest-uri"].c_str();        
-                HASHHEX HA1;
-                HASHHEX HA2 = "";
-                HASHHEX Response;
-                HASHHEX ResponseAuth;
-                
-                DigestCalcHA1("md5-sess", pszUser, pszRealm, pszPass, pszNonce, pszCNonce, pszAuthzid, HA1);
-                DigestCalcResponse(HA1, pszNonce, szNonceCount, pszCNonce, pszQop, "AUTHENTICATE", pszURI, HA2, Response);
-                if(strncmp(Response, DigestMap["response"].c_str(), 32) == 0)
+                map<string, string> DigestMap;
+                char where = 'K'; /* K is for key, V is for value*/
+                DigestMap.clear();
+                string key, value;
+                int x = 0;
+                while(1)
                 {
-                    m_strDigitalMD5Response = Response;
-                    m_username = DigestMap["username"].c_str();
-                    DigestCalcResponse(HA1, pszNonce, szNonceCount, pszCNonce, pszQop,
-                        "" /* at server site, no need "AUTHENTICATE" */, pszURI, HA2, ResponseAuth);
-                    
-                    char rspauth[64];
-                    
-                    sprintf(rspauth, "rspauth=%s",ResponseAuth);
-            
-                    int outlen  = BASE64_ENCODE_OUTPUT_MAX_LEN(strlen(rspauth));//strlen(rspauth) *4 + 1;
-                    char* szEncoded = (char*)malloc(outlen);
-                    memset(szEncoded, 0, outlen);
-                    
-                    CBase64::Encode(rspauth, strlen(rspauth), szEncoded, &outlen);
-                    if(ProtSend2("<challenge xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>", strlen("<challenge xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>")) != 0)
+                    if(authinfo[x] == ',' || authinfo[x] == '\0')
                     {
-                        free(szEncoded);
-                        return FALSE;
+                         _strtrim_dquote_(key);
+                        if(key != "")
+                        {
+                            _strtrim_dquote_(value);
+                            DigestMap[key] = value;
+                            key = "";
+                            value = "";
+                        }
+                        where = 'K';
+                        
                     }
-                    if(ProtSend2(szEncoded, strlen(szEncoded)) != 0)
+                    else if(where == 'K' && authinfo[x] == '=')
                     {
-                        free(szEncoded);
-                        return FALSE;
+                        where = 'V';
                     }
-                    if(ProtSend2("</challenge>", strlen("</challenge>")) != 0)
+                    else
                     {
-                        free(szEncoded);
-                        return FALSE;
+                        if( where == 'K' )
+                            key += (authinfo[x]);
+                        else if( where == 'V' )
+                            value += (authinfo[x]);
                     }
-
-                    free(szEncoded);
+                    
+                    if(authinfo[x] == '\0')
+                        break;
+                    x++;
                 }
-                else
+                free(tmp1);
+                
+                if(DigestMap["nonce"] != m_strDigitalMD5Nonce)
                 {
                     sprintf(xmpp_buf,
-                     "<response xmlns='urn:ietf:params:xml:ns:xmpp-sasl'/>");
-                    m_auth_success = FALSE;
-                    
-                    if(ProtSend2(xmpp_buf, strlen(xmpp_buf)) != 0)
+                        "<response xmlns='urn:ietf:params:xml:ns:xmpp-sasl'/>");
+                    m_auth_step = AUTH_STEP_INIT;
+
+                    if(ProtSendNoWait(xmpp_buf, strlen(xmpp_buf)) != 0)
                         return FALSE;
+                    else
+                        return TRUE;
+                        
                 }
-            }            
-        }
-        else if(szXmlns && strcmp(szXmlns, "urn:ietf:params:xml:ns:xmpp-sasl") == 0 &&
-            !m_auth_success && m_strDigitalMD5Nonce != "" && m_strDigitalMD5Response != "")
-        {
-            sprintf(xmpp_buf, "<success xmlns='urn:ietf:params:xml:ns:xmpp-sasl'/>");
-                     
-            if(ProtSend2(xmpp_buf, strlen(xmpp_buf)) != 0)
-                return FALSE;
-            
-            m_auth_success = TRUE;
+                
+                MailStorage* mailStg;
+                StorageEngineInstance stgengine_instance(m_storageEngine, &mailStg);
+                if(!mailStg)
+                {
+                    fprintf(stderr, "%s::%s Get Storage Engine Failed!\n", __FILE__, __FUNCTION__);
+                    return FALSE;
+                }
+                
+                string real_password;
+                if(mailStg->GetPassword(DigestMap["username"].c_str(), real_password) == 0)
+                {
+                    char * pszNonce = (char*)DigestMap["nonce"].c_str();
+                    char * pszCNonce = (char*)DigestMap["cnonce"].c_str();
+                    char * pszUser = (char*)DigestMap["username"].c_str();
+                    char * pszRealm = (char*)DigestMap["realm"].c_str();
+                    char * pszPass = (char*)real_password.c_str();
+                    char * pszAuthzid = (char*)DigestMap["authzid"].c_str();
+                    char * szNonceCount = (char*)DigestMap["nc"].c_str();
+                    char * pszQop = (char*)DigestMap["qop"].c_str();
+                    char * pszURI = (char*)DigestMap["digest-uri"].c_str();        
+                    HASHHEX HA1;
+                    HASHHEX HA2 = "";
+                    HASHHEX Response;
+                    HASHHEX ResponseAuth;
+                    
+                    DigestCalcHA1("md5-sess", pszUser, pszRealm, pszPass, pszNonce, pszCNonce, pszAuthzid, HA1);
+                    DigestCalcResponse(HA1, pszNonce, szNonceCount, pszCNonce, pszQop, "AUTHENTICATE", pszURI, HA2, Response);
+                    if(strncmp(Response, DigestMap["response"].c_str(), 32) == 0)
+                    {
+                        m_strDigitalMD5Response = Response;
+                        m_username = DigestMap["username"].c_str();
+                        DigestCalcResponse(HA1, pszNonce, szNonceCount, pszCNonce, pszQop,
+                            "" /* at server site, no need "AUTHENTICATE" */, pszURI, HA2, ResponseAuth);
+                        
+                        char rspauth[64];
+                        
+                        sprintf(rspauth, "rspauth=%s",ResponseAuth);
+                
+                        int outlen  = BASE64_ENCODE_OUTPUT_MAX_LEN(strlen(rspauth));//strlen(rspauth) *4 + 1;
+                        char* szEncoded = (char*)malloc(outlen);
+                        memset(szEncoded, 0, outlen);
+                        
+                        CBase64::Encode(rspauth, strlen(rspauth), szEncoded, &outlen);
+                        if(ProtSendNoWait("<challenge xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>", strlen("<challenge xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>")) != 0)
+                        {
+                            free(szEncoded);
+                            return FALSE;
+                        }
+                        if(ProtSendNoWait(szEncoded, strlen(szEncoded)) != 0)
+                        {
+                            free(szEncoded);
+                            return FALSE;
+                        }
+                        if(ProtSendNoWait("</challenge>", strlen("</challenge>")) != 0)
+                        {
+                            free(szEncoded);
+                            return FALSE;
+                        }
+
+                        free(szEncoded);
+                        
+                        m_auth_step = AUTH_STEP_2;
+                    }
+                    else
+                    {
+                        sprintf(xmpp_buf,
+                         "<response xmlns='urn:ietf:params:xml:ns:xmpp-sasl'/>");
+                        m_auth_step = AUTH_STEP_INIT;
+                        
+                        if(ProtSendNoWait(xmpp_buf, strlen(xmpp_buf)) != 0)
+                            return FALSE;
+                    }
+                }            
+            }
+            else if(szXmlns && strcmp(szXmlns, "urn:ietf:params:xml:ns:xmpp-sasl") == 0 &&
+                m_auth_step == AUTH_STEP_2)
+            {
+                
+                sprintf(xmpp_buf, "<success xmlns='urn:ietf:params:xml:ns:xmpp-sasl'/>");
+                
+                if(ProtSendNoWait(xmpp_buf, strlen(xmpp_buf)) != 0)
+                    return FALSE;
+                
+                m_auth_step = AUTH_STEP_SUCCESS;
+            }
         }
     }
-    
+#ifdef _WITH_GSSAPI_
+    else if(m_auth_method == AUTH_METHOD_GSSAPI)
+    {
+        TiXmlElement * pResponseElement = xmlDoc->RootElement();
+        if(pResponseElement)
+        {
+            char xmpp_buf[2048];
+            const char* szXmlns = pResponseElement->Attribute("xmlns");
+            if(szXmlns && strcmp(szXmlns, "urn:ietf:params:xml:ns:xmpp-sasl") == 0 &&
+                m_auth_step == AUTH_STEP_1)
+            {
+                gss_OID mech_type;
+                gss_buffer_desc input_token = GSS_C_EMPTY_BUFFER;
+                gss_buffer_desc output_token = GSS_C_EMPTY_BUFFER;
+                OM_uint32 ret_flags;
+                OM_uint32 time_rec;
+                gss_cred_id_t delegated_cred_handle;
+                
+                string strEnoded = pResponseElement->GetText();
+                int outlen = BASE64_DECODE_OUTPUT_MAX_LEN(strEnoded.length());//strEnoded.length()*4+1;
+                char* tmp1 = (char*)malloc(outlen);
+                memset(tmp1, 0, outlen);
+
+                CBase64::Decode((char*)strEnoded.c_str(), strEnoded.length(), tmp1, &outlen);
+                                
+                input_token.length = outlen;
+                input_token.value = tmp1;
+                
+                m_maj_stat = gss_accept_sec_context(&m_min_stat,
+                                                &m_context_hdl,
+                                                m_server_creds,
+                                                &input_token,
+                                                GSS_C_NO_CHANNEL_BINDINGS,
+                                                &m_client_name,
+                                                &mech_type,
+                                                &output_token,
+                                                &ret_flags,
+                                                &time_rec,
+                                                &delegated_cred_handle);
+                free(tmp1);
+                
+                if (GSS_ERROR(m_maj_stat))
+                {
+                    display_status ("gss_accept_sec_context", m_maj_stat, m_min_stat);
+                    
+                    sprintf(xmpp_buf,
+                     "<failure xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>"
+                        "<not-authorized/>"
+                     "</failure>");
+                    ProtSendNoWait(xmpp_buf, strlen(xmpp_buf));
+                    return FALSE;
+                }
+                
+                if(!gss_oid_equal(mech_type, GSS_KRB5))
+                {
+                    printf("not GSS_KRB5\n");
+                    if (m_context_hdl != GSS_C_NO_CONTEXT)
+                        gss_delete_sec_context(&m_min_stat, &m_context_hdl, GSS_C_NO_BUFFER);
+                    sprintf(xmpp_buf,
+                     "<failure xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>"
+                        "<not-authorized/>"
+                     "</failure>");
+                    ProtSendNoWait(xmpp_buf, strlen(xmpp_buf));
+                    return FALSE;
+                }
+                
+                if (output_token.length != 0)
+                {
+                    ProtSendNoWait("<challenge xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>", strlen("<challenge xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>"));
+                    
+                    int len_decode = BASE64_ENCODE_OUTPUT_MAX_LEN(output_token.length);
+                    char* tmp_encode = (char*)malloc(len_decode + 1);
+                    memset(tmp_encode, 0, len_decode + 1);
+                    int outlen_encode = len_decode;
+                    CBase64::Encode((char*)output_token.value, output_token.length, tmp_encode, &outlen_encode);
+            
+                    ProtSendNoWait(tmp_encode, outlen_encode);
+                    
+                    ProtSendNoWait("</challenge>", strlen("</challenge>"));
+                    
+                    gss_release_buffer(&m_min_stat, &output_token);
+                    free(tmp_encode);
+                }
+                
+                if(m_maj_stat != GSS_S_COMPLETE)
+                {
+                    if (m_context_hdl != GSS_C_NO_CONTEXT)
+                        gss_delete_sec_context(&m_min_stat, &m_context_hdl, GSS_C_NO_BUFFER);
+                }
+                if(!(m_maj_stat & GSS_S_CONTINUE_NEEDED))
+                    m_auth_step = AUTH_STEP_2;
+            }
+            else if(szXmlns && strcmp(szXmlns, "urn:ietf:params:xml:ns:xmpp-sasl") == 0 &&
+                m_auth_step == AUTH_STEP_2)
+            {
+                string strEnoded = pResponseElement->GetText();
+                int outlen = BASE64_DECODE_OUTPUT_MAX_LEN(strEnoded.length());//strEnoded.length()*4+1;
+                char* tmp1 = (char*)malloc(outlen);
+                memset(tmp1, 0, outlen);
+
+                CBase64::Decode((char*)strEnoded.c_str(), strEnoded.length(), tmp1, &outlen);
+                
+                free(tmp1);
+                
+                char sec_data[4];
+                sec_data[0] = GSS_SEC_LAYER_NONE; //No security layer
+                sec_data[1] = 0;
+                sec_data[2] = 0;
+                sec_data[3] = 0;
+                gss_buffer_desc input_message_buffer1 = GSS_C_EMPTY_BUFFER, output_message_buffer1 = GSS_C_EMPTY_BUFFER;
+                input_message_buffer1.length = 4;
+                input_message_buffer1.value = sec_data;
+                int conf_state;
+                m_maj_stat = gss_wrap (&m_min_stat, m_context_hdl, 0, 0, &input_message_buffer1, &conf_state, &output_message_buffer1);
+                if (GSS_ERROR(m_maj_stat))
+                {
+                    if (m_context_hdl != GSS_C_NO_CONTEXT)
+                        gss_delete_sec_context(&m_min_stat, &m_context_hdl, GSS_C_NO_BUFFER);
+                    sprintf(xmpp_buf,
+                         "<failure xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>"
+                            "<not-authorized/>"
+                         "</failure>");
+                    ProtSendNoWait(xmpp_buf, strlen(xmpp_buf));
+                    return FALSE;
+                }
+                
+                ProtSendNoWait("<challenge xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>", strlen("<challenge xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>"));
+                
+                int len_decode = BASE64_ENCODE_OUTPUT_MAX_LEN(output_message_buffer1.length + 2);
+                char* tmp_encode = (char*)malloc(len_decode + 1);
+                memset(tmp_encode, 0, len_decode + 1);
+                int outlen_encode = len_decode;
+                CBase64::Encode((char*)output_message_buffer1.value, output_message_buffer1.length, tmp_encode, &outlen_encode);
+
+                ProtSendNoWait(tmp_encode, outlen_encode);
+                
+                ProtSendNoWait("</challenge>", strlen("</challenge>"));
+                
+                gss_release_buffer(&m_min_stat, &output_message_buffer1);
+                free(tmp_encode);
+                
+                m_auth_step = AUTH_STEP_3;
+            }
+            else if(szXmlns && strcmp(szXmlns, "urn:ietf:params:xml:ns:xmpp-sasl") == 0 &&
+                m_auth_step == AUTH_STEP_3)
+            {
+                gss_buffer_desc input_message_buffer2 = GSS_C_EMPTY_BUFFER, output_message_buffer2 = GSS_C_EMPTY_BUFFER;
+                gss_qop_t qop_state;
+                int conf_state;
+                
+                string strEnoded = pResponseElement->GetText();
+                int outlen = BASE64_DECODE_OUTPUT_MAX_LEN(strEnoded.length());//strEnoded.length()*4+1;
+                char* tmp1 = (char*)malloc(outlen);
+                memset(tmp1, 0, outlen);
+
+                CBase64::Decode((char*)strEnoded.c_str(), strEnoded.length(), tmp1, &outlen);
+                
+                input_message_buffer2.length = outlen;
+                input_message_buffer2.value = tmp1;
+                
+                m_maj_stat = gss_unwrap (&m_min_stat, m_context_hdl, &input_message_buffer2, &output_message_buffer2, &conf_state, &qop_state);
+                if (GSS_ERROR(m_maj_stat))
+                {
+                    if (m_context_hdl != GSS_C_NO_CONTEXT)
+                        gss_delete_sec_context(&m_min_stat, &m_context_hdl, GSS_C_NO_BUFFER);
+                    
+                    sprintf(xmpp_buf,
+                         "<failure xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>"
+                            "<not-authorized/>"
+                         "</failure>");
+                    ProtSendNoWait(xmpp_buf, strlen(xmpp_buf));
+                    return FALSE;
+                }
+                
+                char sec_data[4];
+                sec_data[0] = GSS_SEC_LAYER_NONE; //No security layer
+                sec_data[1] = 0;
+                sec_data[2] = 0;
+                sec_data[3] = 0;
+                
+                memcpy(sec_data, output_message_buffer2.value, 4);
+                OM_uint32 max_limit_size = sec_data[1] << 16;
+                max_limit_size += sec_data[2] << 8;
+                max_limit_size += sec_data[3];
+                
+                char* ptr_tmp = (char*)output_message_buffer2.value;
+                for(int x = 4; x < output_message_buffer2.length; x++)
+                {
+                    m_username.push_back(ptr_tmp[x]);
+                }
+                m_username.push_back('\0');
+                
+                free(tmp1);
+                
+                gss_release_buffer(&m_min_stat, &output_message_buffer2);
+                
+                gss_buffer_desc client_name_buff = GSS_C_EMPTY_BUFFER;
+                m_maj_stat = gss_export_name (&m_min_stat, m_client_name, &client_name_buff);
+                
+                if(GSS_C_NO_NAME != m_client_name)
+                    gss_release_name(&m_min_stat, &m_client_name);
+                
+                gss_release_buffer(&m_min_stat, &client_name_buff);
+                
+                if (m_context_hdl != GSS_C_NO_CONTEXT)
+                    gss_delete_sec_context(&m_min_stat, &m_context_hdl, GSS_C_NO_BUFFER);
+                
+                MailStorage* mailStg;
+                StorageEngineInstance stgengine_instance(m_storageEngine, &mailStg);
+                if(!mailStg)
+                {
+                    printf("%s::%s Get Storage Engine Failed!\n", __FILE__, __FUNCTION__);
+                    return FALSE;
+                }
+                if(mailStg->VerifyUser(m_username.c_str()) != 0)
+                {
+                    sprintf(xmpp_buf,
+                         "<failure xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>"
+                            "<not-authorized/>"
+                         "</failure>");
+                    ProtSendNoWait(xmpp_buf, strlen(xmpp_buf));
+                    return FALSE;
+                }
+                
+                sprintf(xmpp_buf, "<success xmlns='urn:ietf:params:xml:ns:xmpp-sasl'/>");
+                         
+                if(ProtSendNoWait(xmpp_buf, strlen(xmpp_buf)) != 0)
+                    return FALSE;
+                
+                m_auth_step = AUTH_STEP_SUCCESS;
+                
+            }
+        }
+    }
+#endif /* _WITH_GSSAPI_ */
     return TRUE;
 }

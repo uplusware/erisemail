@@ -89,7 +89,7 @@ void Session::Process()
                     
                     do 
                     {
-                        new_line = str_line.find(pProtocolInstance->ProtEndingChr());
+                        new_line = str_line.find(pProtocolInstance->GetProtEndingChar());
                         
                         string str_left;
         

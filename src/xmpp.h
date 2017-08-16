@@ -35,6 +35,23 @@ enum presence_type
   PRESENCE_UNKNOW
 };
 
+enum auth_method
+{
+  AUTH_METHOD_PLAIN = 0,
+  AUTH_METHOD_DIGEST_MD5,
+  AUTH_METHOD_GSSAPI,
+  AUTH_METHOD_UNKNOWN
+};
+
+enum auth_steps
+{
+    AUTH_STEP_INIT = 0,
+    AUTH_STEP_1,
+    AUTH_STEP_2, /* DIGEST-MD5 */
+    AUTH_STEP_3,
+    AUTH_STEP_SUCCESS = 99
+};
+
 class xmpp_stanza
 {
 public:
@@ -216,10 +233,10 @@ public:
 	virtual BOOL Parse(char* text);
 	virtual int ProtRecv(char* buf, int len);
     virtual int ProtSend(const char* buf, int len) { return XmppSend(buf, len); };
-    virtual int ProtRecv2(char* buf, int len);
-    virtual int ProtSend2(const char* buf, int len);
-    virtual int ProtFlush();
-    virtual char ProtEndingChr() { return '>'; };
+    virtual int ProtRecvNoWait(char* buf, int len);
+    virtual int ProtSendNoWait(const char* buf, int len);
+    virtual int ProtTryFlush();
+    virtual char GetProtEndingChar() { return '>'; };
     
 	int XmppSend(const char* buf, int len);
 
@@ -256,11 +273,26 @@ protected:
 	SSL* m_ssl;
 	SSL_CTX* m_ssl_ctx;
 
+    auth_method m_auth_method;
+    auth_steps m_auth_step;
+    
 	string m_client;
 	string m_username;
 	string m_password;
+    
+    //DIGEST-MD5
 	string m_strDigitalMD5Nonce;
     string m_strDigitalMD5Response;
+    
+#ifdef _WITH_GSSAPI_
+    OM_uint32 m_maj_stat;
+    OM_uint32 m_min_stat;        
+    gss_cred_id_t m_server_creds; //default GSS_C_NO_CREDENTIAL;
+    gss_name_t m_server_name; //default GSS_C_NO_NAME;
+    gss_ctx_id_t m_context_hdl; // default GSS_C_NO_CONTEXT;
+    gss_name_t m_client_name; // default GSS_C_NO_NAME;
+#endif /* _WITH_GSSAPI_ */
+
 	StorageEngine* m_storageEngine;
 	memcached_st * m_memcached;
 
@@ -273,7 +305,6 @@ protected:
     int m_indent;
         
     string m_resource;
-    BOOL m_auth_success;
 
     static map<string, CXmpp* > m_online_list;
     static pthread_rwlock_t m_online_list_lock;

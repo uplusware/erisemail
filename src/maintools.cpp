@@ -2,6 +2,8 @@
 	Copyright (c) openheap, uplusware
 	uplusware@gmail.com
 */
+#define __ERISEUTIL__
+
 #include "util/general.h"
 #include "base.h"
 #include <libgen.h>
