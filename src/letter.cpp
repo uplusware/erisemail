@@ -91,7 +91,7 @@ MailLetter::MailLetter(MailStorage* mailStg, const char* private_path, const cha
     char* mail_text = NULL;
     if(m_memcached)
     {
-        MD5_CTX_OBJ context;
+        ietf::MD5_CTX_OBJ context;
         context.MD5Update ((unsigned char*)m_eml_full_path.c_str(), m_eml_full_path.length());
         unsigned char digest[16];
         context.MD5Final (digest);
@@ -598,7 +598,7 @@ void LetterSummary::loadXML()
     char* xml_text = NULL;
     if(m_memcached)
     {
-        MD5_CTX_OBJ context;
+        ietf::MD5_CTX_OBJ context;
         context.MD5Update ((unsigned char*)m_xmlpath.c_str(), m_xmlpath.length());
         unsigned char digest[16];
         context.MD5Final (digest);

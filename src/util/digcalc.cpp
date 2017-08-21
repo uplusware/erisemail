@@ -42,7 +42,7 @@ void DigestCalcHA1(
     OUT HASHHEX SessionKey
     )
 {
-      MD5_CTX_OBJ Md5Ctx;
+      ietf::MD5_CTX_OBJ Md5Ctx;
       HASH HA1;
 	  Md5Ctx.MD5Init();
       Md5Ctx.MD5Update((unsigned char*) pszUserName, strlen(pszUserName));
@@ -84,7 +84,7 @@ void DigestCalcResponse(
     OUT HASHHEX Response      /* request-digest or response-digest */
     )
 {
-      MD5_CTX_OBJ Md5Ctx;
+      ietf::MD5_CTX_OBJ Md5Ctx;
       HASH HA2;
       HASH RespHash;
       HASHHEX HA2Hex;

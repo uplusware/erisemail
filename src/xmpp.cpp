@@ -11,6 +11,8 @@
 #include <fcntl.h>
 #include "util/digcalc.h"
 #include "xmpp.h"
+#include "session_group.h"
+#include "util/sha.h"
 
 static char CHAR_TBL[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890=/";
 
@@ -116,7 +118,7 @@ bool xmpp_stanza::Parse(const char* text)
     bool ret = m_xml.LoadString(m_xml_text.c_str(), m_xml_text.length());
     if(ret)
     {
-        //printf("\n\n%s\n", m_xml_text.c_str());
+        /* printf("\n\n%s\n\n", m_xml_text.c_str()); */
         
         TiXmlElement * pStanzaElement = m_xml.RootElement();
         if(pStanzaElement)
@@ -146,14 +148,27 @@ map<string, CXmpp* > CXmpp::m_online_list;
 pthread_rwlock_t CXmpp::m_online_list_lock;
 BOOL CXmpp::m_online_list_inited = FALSE;
 
-CXmpp::CXmpp(int epoll_fd, int sockfd, SSL * ssl, SSL_CTX * ssl_ctx, const char* clientip,
-    StorageEngine* storage_engine, memcached_st * memcached, BOOL isSSL)
+map<string, CXmpp* > CXmpp::m_srv2srv_list;
+pthread_rwlock_t CXmpp::m_srv2srv_list_lock;
+BOOL CXmpp::m_srv2srv_list_inited = FALSE;
+
+CXmpp::CXmpp(Session_Info* sess_inf, int epoll_fd, int sockfd, SSL * ssl, SSL_CTX * ssl_ctx, const char* clientip,
+    StorageEngine* storage_engine, memcached_st * memcached, BOOL isSSL, BOOL s2s, const char* pdn, BOOL isDialBack)
 {
     if(!m_online_list_inited)
     {
         pthread_rwlock_init(&m_online_list_lock, NULL);
+		
         m_online_list_inited = TRUE;
     }
+    
+	if(!m_srv2srv_list_inited)
+	{
+		pthread_rwlock_init(&m_srv2srv_list_lock, NULL);
+		m_srv2srv_list_inited = TRUE;
+	}
+	
+    m_sess_inf = sess_inf;
     
     m_epoll_fd = epoll_fd;
     
@@ -204,6 +219,17 @@ CXmpp::CXmpp(int epoll_fd, int sockfd, SSL * ssl, SSL_CTX * ssl_ctx, const char*
     m_client_name = GSS_C_NO_NAME;
 #endif /* _WITH_GSSAPI_ */
 
+    m_server_to_server = s2s;
+    m_peer_server_domain_name = pdn;
+    m_is_dial_back = isDialBack;
+    if(m_server_to_server)
+    {
+        char xmpp_buf[1024*2];
+        sprintf(xmpp_buf,
+            "<stream:stream xmlns='jabber:server' xmlns:db='jabber:server:dialback' xmlns:stream='http://etherx.jabber.lit/streams' from='%s' to='%s'>",
+            m_email_domain.c_str(), m_peer_server_domain_name.c_str());
+        ProtSendNoWait(xmpp_buf, strlen(xmpp_buf));
+    }
 }
 
 CXmpp::~CXmpp()
@@ -215,7 +241,13 @@ CXmpp::~CXmpp()
     
     pthread_rwlock_wrlock(&m_online_list_lock); //acquire write
     m_online_list.erase(m_username);
-
+	
+	if(m_server_to_server && m_peer_server_domain_name != "")
+	{
+		pthread_rwlock_wrlock(&m_srv2srv_list_lock); //acquire write
+		m_srv2srv_list.erase(m_peer_server_domain_name);
+	}
+	
     if(m_online_list.size() == 0)
     {
         m_online_list_inited = FALSE;
@@ -225,7 +257,17 @@ CXmpp::~CXmpp()
     {
         pthread_rwlock_unlock(&m_online_list_lock); //release write
     }
-
+	
+	if(m_srv2srv_list.size() == 0)
+    {
+        m_srv2srv_list_inited = FALSE;
+        pthread_rwlock_destroy(&m_srv2srv_list_lock);
+    }
+    else
+    {
+        pthread_rwlock_unlock(&m_srv2srv_list_lock); //release write
+    }
+	
     //send the unavailable presence
     if(m_auth_step == AUTH_STEP_SUCCESS)
     {
@@ -328,9 +370,10 @@ int CXmpp::ProtSendNoWait(const char* buf, int len)
     
     if(sent_len > 0)
     {
-        /* for(int x = 0; x < sent_len; x++)
-            printf("%c", m_send_buf.c_str()[x]); */
-        
+        /*
+        for(int x = 0; x < sent_len; x++)
+            printf("%c", m_send_buf.c_str()[x]);
+        */
         if(m_send_buf.length() == sent_len)
         {
             m_send_buf.clear();
@@ -462,131 +505,199 @@ BOOL CXmpp::Parse(char* text)
       
       if(m_indent == 0 && m_xmpp_stanza->Parse(text))
       {
-        const char* szTagName = m_xmpp_stanza->GetTag();
+        string strToDomain = m_email_domain.c_str();
+        const char* szTo = m_xmpp_stanza->GetTo();
+        if(szTo && szTo[0] != '\0' && strstr(szTo, "@") != NULL)
+        {
+            strcut(szTo, "@", strstr(szTo, "/") ? "/" : NULL, strToDomain);
+            strtrim(strToDomain);
+                
+        }
+        else if(szTo && szTo[0] != '\0' && strstr(szTo, "/") == NULL)
+        {
+            strToDomain = szTo;
+            strtrim(strToDomain);
+        }
         
-        if(szTagName && strcasecmp(szTagName, "message") == 0)
+        BOOL s2s = FALSE;
+        string strPeerServerDomainname;
+        if(strToDomain != "" && strcasecmp(strToDomain.c_str(), m_email_domain.c_str()) != 0)
         {
-          if(m_encryptxmpp == XMPP_TLS_REQUIRED && !m_bSTARTTLS)
-          {
-              result = FALSE;
-          }
-          else
-          {
-            if(!MessageTag(m_xmpp_stanza->GetXml()))
-                result = FALSE;
-          }
+            s2s = TRUE;
+            strPeerServerDomainname = strToDomain;
         }
-        else if(szTagName && strcasecmp(szTagName, "iq") == 0)
+        
+        if(s2s && !m_server_to_server)
         {
-          if(m_encryptxmpp == XMPP_TLS_REQUIRED && !m_bSTARTTLS)
-          {
-              result = FALSE;
-          }
-          else
-          {
-            if(!IqTag(m_xmpp_stanza->GetXml()))
-                result = FALSE;
-          }
-        }
-        else if(szTagName && strcasecmp(szTagName, "presence") == 0)
-        {
-          if(m_encryptxmpp == XMPP_TLS_REQUIRED && !m_bSTARTTLS)
-          {
-              result = FALSE;
-          }
-          else
-          {
-            if(!PresenceTag(m_xmpp_stanza->GetXml()))
-                result = FALSE;
-          }
-        }
-        else if(szTagName && strcasecmp(szTagName, "auth") == 0)
-        {
-          if(m_encryptxmpp == XMPP_TLS_REQUIRED && !m_bSTARTTLS)
-          {
-              result = FALSE;
-          }
-          else
-          {
-            if(!AuthTag(m_xmpp_stanza->GetXml()))
-                result = FALSE;          
-          }
-        }
-        else if(szTagName && strcasecmp(szTagName, "response") == 0)
-        {
-          if(m_encryptxmpp == XMPP_TLS_REQUIRED && !m_bSTARTTLS)
-          {
-              result = FALSE;
-          }
-          else
-          {
-            if(!ResponseTag(m_xmpp_stanza->GetXml()))
-              result = FALSE;
-          }
-        }
-        else if(szTagName && strcasecmp(szTagName, "starttls") == 0)
-        {
-            if(!StarttlsTag(m_xmpp_stanza->GetXml()))
-              result = FALSE;
+            /*printf("server to server: %s\n", strPeerServerDomainname.c_str());
+            printf("%s\n", m_xmpp_stanza->GetXmlText());*/
+            
+			pthread_rwlock_rdlock(&m_srv2srv_list_lock); //acquire read
+            map<string, CXmpp*>::iterator it = m_srv2srv_list.find(strToDomain.c_str());
+
+            if(it != m_srv2srv_list.end())
+            {
+                CXmpp* pXmpp = it->second;
+                pXmpp->ProtSendNoWait(m_xmpp_stanza->GetXmlText(), strlen(m_xmpp_stanza->GetXmlText()));
+            }
+            else
+            {
+				std::stack<string> msg_stack;
+				msg_stack.push(m_xmpp_stanza->GetXmlText());
+				if(!GetSessionInfo()->Connect(strPeerServerDomainname.c_str(), 5222, stXMPP, m_storageEngine, NULL, m_memcached, msg_stack, FALSE))
+					return FALSE;
+            }
+            pthread_rwlock_unlock(&m_srv2srv_list_lock);
+			
         }
         else
         {
-          if(m_auth_step == AUTH_STEP_SUCCESS)
-          {
-            char xmpp_buf[1024];
-            const char* szFrom = m_xmpp_stanza->GetFrom();
-            if(!szFrom || szFrom[0] == '\0')
+            const char* szTagName = m_xmpp_stanza->GetTag();
+            
+            if(szTagName && strcasecmp(szTagName, "message") == 0)
             {
-              if(m_resource == "")
-                sprintf(xmpp_buf, "%s@%s",
-                    m_username.c_str(), CMailBase::m_email_domain.c_str());
+              if(m_encryptxmpp == XMPP_TLS_REQUIRED && !m_bSTARTTLS)
+              {
+                  result = FALSE;
+              }
               else
-                sprintf(xmpp_buf, "%s@%s/%s",
-                    m_username.c_str(), CMailBase::m_email_domain.c_str(), m_resource.c_str());
-              m_xmpp_stanza->SetFrom(xmpp_buf);
-              szFrom = xmpp_buf;
+              {
+                if(!MessageTag(m_xmpp_stanza->GetXml()))
+                    result = FALSE;
+              }
             }
-
-            const char* szTo = m_xmpp_stanza->GetTo();
-            string str_username;
-            if(szTo && szTo[0] != '\0' && strstr(szTo, "@") != NULL)
+            else if(szTagName && strcasecmp(szTagName, "stream:feature") == 0)
             {
-                strcut(szTo, NULL, "@", str_username);
-                strtrim(str_username);
-                
-                if(str_username != "")
-                {
-                    TiXmlPrinter xml_printer;
-                    xml_printer.SetIndent("");
-                    m_xmpp_stanza->GetXml()->Accept( &xml_printer );
-
-                    pthread_rwlock_rdlock(&m_online_list_lock); //acquire read
-                    map<string, CXmpp*>::iterator it = m_online_list.find(str_username);
-
-                    if(it != m_online_list.end())
-                    {
-                        CXmpp* pXmpp = it->second;
-                        pXmpp->ProtSendNoWait(xml_printer.CStr(), xml_printer.Size());
-                    }
-                    else
-                    {
-                        MailStorage* mailStg;
-                        StorageEngineInstance stgengine_instance(m_storageEngine, &mailStg);
-                        if(!mailStg)
-                        {
-                            fprintf(stderr, "%s::%s Get Storage Engine Failed!\n", __FILE__, __FUNCTION__);
-                            pthread_rwlock_unlock(&m_online_list_lock);
-                            return FALSE;
-                        }
-
-                        mailStg->InsertMyMessage(szFrom, szTo, xml_printer.CStr());
-
-                        stgengine_instance.Release();
-                    }
-                    pthread_rwlock_unlock(&m_online_list_lock);
-                }
+              if(!StreamFeatureTag(m_xmpp_stanza->GetXml()))
+                    result = FALSE;
             }
-          }
+            else if(szTagName && strcasecmp(szTagName, "db:result") == 0)
+            {
+              if(!DbResultTag(m_xmpp_stanza->GetXml()))
+                    result = FALSE;
+            }
+            else if(szTagName && strcasecmp(szTagName, "db:verify") == 0)
+            {
+              if(!DbVerifyTag(m_xmpp_stanza->GetXml()))
+                    result = FALSE;
+            }
+			else if(szTagName && strcasecmp(szTagName, "proceed") == 0)
+            {
+              if(!ProceedTag(m_xmpp_stanza->GetXml()))
+                    result = FALSE;
+            }
+            else if(szTagName && strcasecmp(szTagName, "iq") == 0)
+            {
+              if(m_encryptxmpp == XMPP_TLS_REQUIRED && !m_bSTARTTLS)
+              {
+                  result = FALSE;
+              }
+              else
+              {
+                if(!IqTag(m_xmpp_stanza->GetXml()))
+                    result = FALSE;
+              }
+            }
+            else if(szTagName && strcasecmp(szTagName, "presence") == 0)
+            {
+              if(m_encryptxmpp == XMPP_TLS_REQUIRED && !m_bSTARTTLS)
+              {
+                  result = FALSE;
+              }
+              else
+              {
+                if(!PresenceTag(m_xmpp_stanza->GetXml()))
+                    result = FALSE;
+              }
+            }
+            else if(szTagName && strcasecmp(szTagName, "auth") == 0)
+            {
+              if(m_encryptxmpp == XMPP_TLS_REQUIRED && !m_bSTARTTLS)
+              {
+                  result = FALSE;
+              }
+              else
+              {
+                if(!AuthTag(m_xmpp_stanza->GetXml()))
+                    result = FALSE;          
+              }
+            }
+            else if(szTagName && strcasecmp(szTagName, "response") == 0)
+            {
+              if(m_encryptxmpp == XMPP_TLS_REQUIRED && !m_bSTARTTLS)
+              {
+                  result = FALSE;
+              }
+              else
+              {
+                if(!ResponseTag(m_xmpp_stanza->GetXml()))
+                  result = FALSE;
+              }
+            }
+            else if(szTagName && strcasecmp(szTagName, "starttls") == 0)
+            {
+                if(!StarttlsTag(m_xmpp_stanza->GetXml()))
+                  result = FALSE;
+            }
+            else
+            {
+              if(m_auth_step == AUTH_STEP_SUCCESS)
+              {
+                char xmpp_buf[1024];
+                const char* szFrom = m_xmpp_stanza->GetFrom();
+                if(!szFrom || szFrom[0] == '\0')
+                {
+                  if(m_resource == "")
+                    sprintf(xmpp_buf, "%s@%s",
+                        m_username.c_str(), CMailBase::m_email_domain.c_str());
+                  else
+                    sprintf(xmpp_buf, "%s@%s/%s",
+                        m_username.c_str(), CMailBase::m_email_domain.c_str(), m_resource.c_str());
+                  m_xmpp_stanza->SetFrom(xmpp_buf);
+                  szFrom = xmpp_buf;
+                }
+
+                const char* szTo = m_xmpp_stanza->GetTo();
+                string str_username;
+                if(szTo && szTo[0] != '\0' && strstr(szTo, "@") != NULL)
+                {
+                    strcut(szTo, NULL, "@", str_username);
+                    strtrim(str_username);
+                    
+                    if(str_username != "")
+                    {
+                        TiXmlPrinter xml_printer;
+                        xml_printer.SetIndent("");
+                        m_xmpp_stanza->GetXml()->Accept( &xml_printer );
+
+                        pthread_rwlock_rdlock(&m_online_list_lock); //acquire read
+                        map<string, CXmpp*>::iterator it = m_online_list.find(str_username);
+
+                        if(it != m_online_list.end())
+                        {
+                            CXmpp* pXmpp = it->second;
+                            pXmpp->ProtSendNoWait(xml_printer.CStr(), xml_printer.Size());
+                        }
+                        else
+                        {
+                            MailStorage* mailStg;
+                            StorageEngineInstance stgengine_instance(m_storageEngine, &mailStg);
+                            if(!mailStg)
+                            {
+                                fprintf(stderr, "%s::%s Get Storage Engine Failed!\n", __FILE__, __FUNCTION__);
+                                pthread_rwlock_unlock(&m_online_list_lock);
+                                return FALSE;
+                            }
+
+                            mailStg->InsertMyMessage(szFrom, szTo, xml_printer.CStr());
+
+                            stgengine_instance.Release();
+                        }
+                        pthread_rwlock_unlock(&m_online_list_lock);
+                    }
+                }
+              }
+            }
         }
               
         delete m_xmpp_stanza;
@@ -613,171 +724,576 @@ BOOL CXmpp::Parse(char* text)
 
 BOOL CXmpp::StarttlsTag(TiXmlDocument* xmlDoc)
 {
-    char xmpp_buf[1024];
-    sprintf(xmpp_buf, "<proceed xmlns='urn:ietf:params:xml:ns:xmpp-tls'/>");
-    if(ProtSendNoWait(xmpp_buf, strlen(xmpp_buf)) != 0)
-        return FALSE;
-    
-    int flags = fcntl(m_sockfd, F_GETFL, 0); 
-    fcntl(m_sockfd, F_SETFL, flags & (~O_NONBLOCK)); 
-    
-    if(!create_ssl(m_sockfd, 
-        m_ca_crt_root.c_str(),
-        m_ca_crt_server.c_str(),
-        m_ca_password.c_str(),
-        m_ca_key_server.c_str(),
-        m_enableclientcacheck,
-        &m_ssl, &m_ssl_ctx))
-    {
-        throw new string(ERR_error_string(ERR_get_error(), NULL));
-        return FALSE;
-    }
-    
-    flags = fcntl(m_sockfd, F_GETFL, 0); 
-    fcntl(m_sockfd, F_SETFL, flags | O_NONBLOCK);
+	TiXmlElement * pStarttlsElement = xmlDoc->RootElement();
+	const char* szXmlns = pStarttlsElement->Attribute("xmlns");
+	
+	if( szXmlns && strcmp(szXmlns, "urn:ietf:params:xml:ns:xmpp-tls") == 0)
+	{
+		char xmpp_buf[1024];
+		sprintf(xmpp_buf, "<proceed xmlns='urn:ietf:params:xml:ns:xmpp-tls'/>");
+		if(ProtSendNoWait(xmpp_buf, strlen(xmpp_buf)) != 0)
+			return FALSE;
+		
+		int flags = fcntl(m_sockfd, F_GETFL, 0); 
+		fcntl(m_sockfd, F_SETFL, flags & (~O_NONBLOCK)); 
+		
+		if(!create_ssl(m_sockfd, 
+			m_ca_crt_root.c_str(),
+			m_ca_crt_server.c_str(),
+			m_ca_password.c_str(),
+			m_ca_key_server.c_str(),
+			false,
+			&m_ssl, &m_ssl_ctx))
+		{
+			return FALSE;
+		}
+		
+		flags = fcntl(m_sockfd, F_GETFL, 0); 
+		fcntl(m_sockfd, F_SETFL, flags | O_NONBLOCK);
 
-    m_lssl = new linessl(m_sockfd, m_ssl);
-    
-    if(!m_lssl)
-        return FALSE;
-    
-    m_bSTARTTLS = TRUE;
+		m_lssl = new linessl(m_sockfd, m_ssl);
+		
+		if(!m_lssl)
+			return FALSE;
+		
+		m_bSTARTTLS = TRUE;
+	}
     return TRUE;
 }
 
 BOOL CXmpp::StreamTag(TiXmlDocument* xmlDoc)
 {
+	char xmpp_buf[2048];
+			
+	BOOL isStreamAck = FALSE;
+	TiXmlElement * pStreamElement = xmlDoc->RootElement();
+    if(pStreamElement)
+    {
+        const char* szXmlns = pStreamElement->Attribute("xmlns");
+        if(szXmlns && strcmp(szXmlns, "jabber:server") == 0)
+        {
+            m_server_to_server = TRUE;
+        }
+		
+		const char* szStreamID = pStreamElement->Attribute("id");
+		if(szStreamID && szStreamID[0] != '\0')
+        {
+			strcpy(m_stream_id, szStreamID);
+			isStreamAck = TRUE;
+		}
+    }
     if(ProtSendNoWait(m_xml_declare.c_str(), m_xml_declare.length()) != 0)
         return FALSE;
+	
+	if(!isStreamAck)
+	{
+		char stream_id[128];
+		sprintf(stream_id, "%s_%u_%p_%d", CMailBase::m_localhostname.c_str(), getpid(), this, m_stream_count++);
 
-    char stream_id[128];
-    sprintf(stream_id, "%s_%u_%p_%d", CMailBase::m_localhostname.c_str(), getpid(), this, m_stream_count++);
+		ietf::MD5_CTX_OBJ context;
+		context.MD5Update((unsigned char*)stream_id, strlen(stream_id));
+		unsigned char digest[16];
+		context.MD5Final (digest);
+		sprintf(m_stream_id,
+			"%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
+			digest[0], digest[1], digest[2], digest[3], digest[4], digest[5], digest[6], digest[7],
+			digest[8], digest[9], digest[10], digest[11], digest[12], digest[13], digest[14], digest[15]);
+		
+		//jabber:server
+		if(m_server_to_server)
+		{
+			sprintf(xmpp_buf, "<stream:stream from='%s' id='%s' xmlns='jabber:server' xmlns:db='jabber:server:dialback' xmlns:stream='http://etherx.jabber.org/streams' version='1.0'>",
+				CMailBase::m_email_domain.c_str(), m_stream_id);
+			if(ProtSendNoWait(xmpp_buf, strlen(xmpp_buf)) != 0)
+				return FALSE;
+			
+			if(m_encryptxmpp == XMPP_OLDSSL_BASED || m_bSTARTTLS)
+			{
+				sprintf(xmpp_buf, 
+					"<stream:features>"
+					  "<dialback xmlns='urn:xmpp:features:dialback'/>"
+					"</stream:features>");
+			}
+			else
+			{
+				sprintf(xmpp_buf, 
+					"<stream:features>"
+					  "<starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls'/>"
+					  "<dialback xmlns='urn:xmpp:features:dialback'/>"
+					"</stream:features>");
+			}
+			
+			if(ProtSendNoWait(xmpp_buf, strlen(xmpp_buf)) != 0)
+				return FALSE;
+			
+			return TRUE;
+		}
 
-    MD5_CTX_OBJ context;
-    context.MD5Update((unsigned char*)stream_id, strlen(stream_id));
-    unsigned char digest[16];
-    context.MD5Final (digest);
-    sprintf(m_stream_id,
-        "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
-        digest[0], digest[1], digest[2], digest[3], digest[4], digest[5], digest[6], digest[7],
-        digest[8], digest[9], digest[10], digest[11], digest[12], digest[13], digest[14], digest[15]);
+		//jabber:client
+		
+		sprintf(xmpp_buf, "<stream:stream from='%s' id='%s' xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams' version='1.0'>",
+				CMailBase::m_email_domain.c_str(), m_stream_id);
+		if(ProtSendNoWait(xmpp_buf, strlen(xmpp_buf)) != 0)
+			return FALSE;
+		
+		if(m_auth_step == AUTH_STEP_SUCCESS)
+		{
+			sprintf(xmpp_buf,
+			  "<stream:features>"
+				  "<compression xmlns='http://jabber.org/features/compress'>"
+					  "<method>zlib</method>"
+				  "</compression>"
+				  "<bind xmlns='urn:ietf:params:xml:ns:xmpp-bind'/>"
+				  "<session xmlns='urn:ietf:params:xml:ns:xmpp-session'/>"
+			  "</stream:features>");
 
-    char xmpp_buf[2048];
-    sprintf(xmpp_buf, "<stream:stream from='%s' id='%s' xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams' version='1.0'>",
-      CMailBase::m_email_domain.c_str(), m_stream_id);
-    if(ProtSendNoWait(xmpp_buf, strlen(xmpp_buf)) != 0)
-        return FALSE;
+			if(ProtSendNoWait(xmpp_buf, strlen(xmpp_buf)) != 0)
+				return FALSE;
+		}
+		else
+		{
+			if(m_encryptxmpp == XMPP_OLDSSL_BASED)
+			{
+				sprintf(xmpp_buf,
+				  "<stream:features>"
+					"<mechanisms xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>"
+	#ifdef _WITH_GSSAPI_
+						"<mechanism>GSSAPI</mechanism>"
+	#endif /* _WITH_GSSAPI_ */                
+						"<mechanism>DIGEST-MD5</mechanism>"
+						"<mechanism>PLAIN</mechanism>"
+	#ifdef _WITH_GSSAPI_
+						"<hostname xmlns='urn:xmpp:domain-based-name:1'>%s</hostname>"
+	#endif /* _WITH_GSSAPI_ */
+					"</mechanisms>"
+				  "</stream:features>"
+	#ifdef _WITH_GSSAPI_
+				  , m_localhostname.c_str()
+	#endif /* _WITH_GSSAPI_ */
+					);
+			}
+			else if(m_encryptxmpp == XMPP_TLS_REQUIRED && !m_bSTARTTLS)
+			{
+				sprintf(xmpp_buf,
+				  "<stream:features>"
+					"<starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls'>"
+						"<required/>"
+					"</starttls>"
+					"<mechanisms xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>"
+	#ifdef _WITH_GSSAPI_
+						"<mechanism>GSSAPI</mechanism>"
+	#endif /* _WITH_GSSAPI_ */
+						"<mechanism>DIGEST-MD5</mechanism>"
+						"<mechanism>PLAIN</mechanism>"
+	#ifdef _WITH_GSSAPI_
+						"<hostname xmlns='urn:xmpp:domain-based-name:1'>%s</hostname>"
+	#endif /* _WITH_GSSAPI_ */
+					"</mechanisms>"
+				  "</stream:features>"
+	#ifdef _WITH_GSSAPI_
+				  , m_localhostname.c_str()
+	#endif /* _WITH_GSSAPI_ */
+				);
+			}
+			else
+			{
+				if(!m_bSTARTTLS)
+				{
+					sprintf(xmpp_buf,
+					  "<stream:features>"
+						"<starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls' />"
+						"<mechanisms xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>"
+	#ifdef _WITH_GSSAPI_
+							"<mechanism>GSSAPI</mechanism>"
+	#endif /* _WITH_GSSAPI_ */
+							"<mechanism>DIGEST-MD5</mechanism>"
+							"<mechanism>PLAIN</mechanism>"
+	#ifdef _WITH_GSSAPI_
+							"<hostname xmlns='urn:xmpp:domain-based-name:1'>%s</hostname>"
+	#endif /* _WITH_GSSAPI_ */
+						"</mechanisms>"
+					  "</stream:features>"
+	#ifdef _WITH_GSSAPI_
+					  , m_localhostname.c_str()
+	#endif /* _WITH_GSSAPI_ */
+					);
+				}
+				else
+				{
+					sprintf(xmpp_buf,
+					  "<stream:features>"
+						"<mechanisms xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>"
+	#ifdef _WITH_GSSAPI_
+							"<mechanism>GSSAPI</mechanism>"
+	#endif /* _WITH_GSSAPI_ */
+							"<mechanism>DIGEST-MD5</mechanism>"
+							"<mechanism>PLAIN</mechanism>"
+	#ifdef _WITH_GSSAPI_
+							"<hostname xmlns='urn:xmpp:domain-based-name:1'>%s</hostname>"
+	#endif /* _WITH_GSSAPI_ */
+						"</mechanisms>"
+					  "</stream:features>"
+	#ifdef _WITH_GSSAPI_
+					  , m_localhostname.c_str()
+	#endif /* _WITH_GSSAPI_ */
+					  );
+				}
+			}
+			if(ProtSendNoWait(xmpp_buf, strlen(xmpp_buf)) != 0)
+				return FALSE;
+		}
+	}
+	else
+	{
+		if(m_is_dial_back)
+		{
+			uint8_t Message_Digest[ietf::SHA256HashSize];
+			memset(Message_Digest, 0, sizeof(Message_Digest));
+			ietf::SHA256Context ctx;
+			ietf::SHA256Reset(&ctx);
+			SHA256Input(&ctx, (uint8_t*)m_xmpp_federation_secret.c_str(), m_xmpp_federation_secret.length());
+			SHA256Result(&ctx, Message_Digest);
 
-    if(m_auth_step == AUTH_STEP_SUCCESS)
-    {
-        sprintf(xmpp_buf,
-          "<stream:features>"
-              "<compression xmlns='http://jabber.org/features/compress'>"
-                  "<method>zlib</method>"
-              "</compression>"
-              "<bind xmlns='urn:ietf:params:xml:ns:xmpp-bind'/>"
-              "<session xmlns='urn:ietf:params:xml:ns:xmpp-session'/>"
-          "</stream:features>");
+			char secret_hex[ietf::SHA256HashSize*2 + 1];
+			for(int x = 0; x< sizeof(Message_Digest); x++)
+				sprintf(secret_hex + 2*x, "%02x", Message_Digest[x]);
+			
+			string hmac_source = m_peer_server_domain_name;
+			hmac_source += " ";
+			hmac_source += m_email_domain;
+			hmac_source += " ";
+			hmac_source += m_stream_id;
+			
+			uint8_t hmac_digest[ietf::SHA256HashSize];
 
-        if(ProtSendNoWait(xmpp_buf, strlen(xmpp_buf)) != 0)
-            return FALSE;
-    }
-    else
-    {
-        if(m_encryptxmpp == XMPP_OLDSSL_BASED)
-        {
-            sprintf(xmpp_buf,
-              "<stream:features>"
-                "<mechanisms xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>"
-#ifdef _WITH_GSSAPI_
-                    "<mechanism>GSSAPI</mechanism>"
-#endif /* _WITH_GSSAPI_ */                
-                    "<mechanism>DIGEST-MD5</mechanism>"
-                    "<mechanism>PLAIN</mechanism>"
-#ifdef _WITH_GSSAPI_
-                    "<hostname xmlns='urn:xmpp:domain-based-name:1'>%s</hostname>"
-#endif /* _WITH_GSSAPI_ */
-                "</mechanisms>"
-              "</stream:features>"
-#ifdef _WITH_GSSAPI_
-              , m_localhostname.c_str()
-#endif /* _WITH_GSSAPI_ */
-                );
-        }
-        else if(m_encryptxmpp == XMPP_TLS_REQUIRED && !m_bSTARTTLS)
-        {
-            sprintf(xmpp_buf,
-              "<stream:features>"
-                "<starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls'>"
-                    "<required/>"
-                "</starttls>"
-                "<mechanisms xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>"
-#ifdef _WITH_GSSAPI_
-                    "<mechanism>GSSAPI</mechanism>"
-#endif /* _WITH_GSSAPI_ */
-                    "<mechanism>DIGEST-MD5</mechanism>"
-                    "<mechanism>PLAIN</mechanism>"
-#ifdef _WITH_GSSAPI_
-                    "<hostname xmlns='urn:xmpp:domain-based-name:1'>%s</hostname>"
-#endif /* _WITH_GSSAPI_ */
-                "</mechanisms>"
-              "</stream:features>"
-#ifdef _WITH_GSSAPI_
-              , m_localhostname.c_str()
-#endif /* _WITH_GSSAPI_ */
-            );
-        }
-        else
-        {
-            if(!m_bSTARTTLS)
-            {
-                sprintf(xmpp_buf,
-                  "<stream:features>"
-                    "<starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls' />"
-                    "<mechanisms xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>"
-#ifdef _WITH_GSSAPI_
-                        "<mechanism>GSSAPI</mechanism>"
-#endif /* _WITH_GSSAPI_ */
-                        "<mechanism>DIGEST-MD5</mechanism>"
-                        "<mechanism>PLAIN</mechanism>"
-#ifdef _WITH_GSSAPI_
-                        "<hostname xmlns='urn:xmpp:domain-based-name:1'>%s</hostname>"
-#endif /* _WITH_GSSAPI_ */
-                    "</mechanisms>"
-                  "</stream:features>"
-#ifdef _WITH_GSSAPI_
-                  , m_localhostname.c_str()
-#endif /* _WITH_GSSAPI_ */
-                );
-            }
-            else
-            {
-                sprintf(xmpp_buf,
-                  "<stream:features>"
-                    "<mechanisms xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>"
-#ifdef _WITH_GSSAPI_
-                        "<mechanism>GSSAPI</mechanism>"
-#endif /* _WITH_GSSAPI_ */
-                        "<mechanism>DIGEST-MD5</mechanism>"
-                        "<mechanism>PLAIN</mechanism>"
-#ifdef _WITH_GSSAPI_
-                        "<hostname xmlns='urn:xmpp:domain-based-name:1'>%s</hostname>"
-#endif /* _WITH_GSSAPI_ */
-                    "</mechanisms>"
-                  "</stream:features>"
-#ifdef _WITH_GSSAPI_
-                  , m_localhostname.c_str()
-#endif /* _WITH_GSSAPI_ */
-                  );
-            }
-        }
-        if(ProtSendNoWait(xmpp_buf, strlen(xmpp_buf)) != 0)
-            return FALSE;
-    }
-
+			ietf::hmac(ietf::SHA256,
+				(const unsigned char *)hmac_source.c_str(),
+				hmac_source.length(),
+				(const unsigned char *)secret_hex,
+				64,
+				hmac_digest);
+				
+			char digest_hex[ietf::SHA256HashSize*2 + 1];
+			for(int x = 0; x < sizeof(hmac_digest); x++)
+				sprintf(digest_hex + 2*x, "%02x", hmac_digest[x]);
+					
+			sprintf(xmpp_buf, "<db:verify from='%s' id='%s' to='%s'>%s</db:verify>",
+				m_email_domain.c_str(), m_stream_id, m_peer_server_domain_name.c_str(), digest_hex);
+			
+			if(ProtSendNoWait(xmpp_buf, strlen(xmpp_buf)) != 0)
+				return FALSE;
+		}
+	}
     return TRUE;
 }
 
+BOOL CXmpp::StreamFeatureTag(TiXmlDocument* xmlDoc)
+{
+	char xmpp_buf[2048];
+    TiXmlElement * pFeatureElement = xmlDoc->RootElement();
+    TiXmlNode* pChildNode = pFeatureElement->FirstChild();
+    while(pChildNode)
+    {
+        if(pChildNode && pChildNode->ToElement())
+        {
+            if(strcasecmp(pChildNode->Value(), "starttls") == 0 && !m_bSTARTTLS && m_encryptxmpp != XMPP_OLDSSL_BASED)
+            {
+                sprintf(xmpp_buf, "<starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls'/>");
+				if(ProtSendNoWait(xmpp_buf, strlen(xmpp_buf)) != 0)
+					return FALSE;
+				break;
+            }
+            else if(strcasecmp(pChildNode->Value(), "dialback") == 0 && pChildNode->ToElement())
+			{
+				const char* szXmlns = pChildNode->ToElement()->Attribute("xmlns");
+				if( szXmlns && strcmp(szXmlns, "urn:xmpp:features:dialback") == 0)
+				{
+					
+					uint8_t Message_Digest[ietf::SHA256HashSize];
+					memset(Message_Digest, 0, sizeof(Message_Digest));
+					ietf::SHA256Context ctx;
+					ietf::SHA256Reset(&ctx);
+					SHA256Input(&ctx, (uint8_t*)m_xmpp_federation_secret.c_str(), m_xmpp_federation_secret.length());
+					SHA256Result(&ctx, Message_Digest);
+
+					char secret_hex[ietf::SHA256HashSize*2 + 1];
+					for(int x = 0; x< sizeof(Message_Digest); x++)
+						sprintf(secret_hex + 2*x, "%02x", Message_Digest[x]);
+					
+					string hmac_source = m_peer_server_domain_name;
+					hmac_source += " ";
+					hmac_source += m_email_domain;
+					hmac_source += " ";
+					hmac_source += m_stream_id;
+					
+					uint8_t hmac_digest[ietf::SHA256HashSize];
+
+					ietf::hmac(ietf::SHA256,
+						(const unsigned char *)hmac_source.c_str(),
+						hmac_source.length(),
+						(const unsigned char *)secret_hex,
+						64,
+						hmac_digest);
+						
+					char digest_hex[ietf::SHA256HashSize*2 + 1];
+					for(int x = 0; x < sizeof(hmac_digest); x++)
+						sprintf(digest_hex + 2*x, "%02x", hmac_digest[x]);
+
+					sprintf(xmpp_buf, "<db:result from='%s' to='%s'>%s</db:result>", m_peer_server_domain_name.c_str(), m_email_domain.c_str(), digest_hex);
+					if(ProtSendNoWait(xmpp_buf, strlen(xmpp_buf)) != 0)
+						return FALSE;
+					
+					break;
+				}
+			}
+        }
+        pChildNode = pChildNode->NextSibling();
+    }
+    return TRUE;    
+}
+
+BOOL CXmpp::ProceedTag(TiXmlDocument* xmlDoc)
+{
+	TiXmlElement * pProceesElement = xmlDoc->RootElement();
+	const char* szXmlns = pProceesElement->Attribute("xmlns");
+	
+	if( szXmlns && strcmp(szXmlns, "urn:ietf:params:xml:ns:xmpp-tls") == 0)
+	{
+		//Rollback to block mode
+		int flags = fcntl(m_sockfd, F_GETFL, 0); 
+		fcntl(m_sockfd, F_SETFL, flags & (~O_NONBLOCK));
+        
+        if(connect_ssl(m_sockfd, NULL, NULL, NULL, NULL, &m_ssl, &m_ssl_ctx) == FALSE)
+            return FALSE;
+
+		flags = fcntl(m_sockfd, F_GETFL, 0); 
+		fcntl(m_sockfd, F_SETFL, flags | O_NONBLOCK); 
+
+		m_lssl = new linessl(m_sockfd, m_ssl);
+
+		m_bSTARTTLS = TRUE;
+		
+		char xmpp_buf[1024*2];
+        sprintf(xmpp_buf,
+            "<stream:stream xmlns='jabber:server' xmlns:db='jabber:server:dialback' xmlns:stream='http://etherx.jabber.lit/streams' from='%s' to='%s'>",
+            m_email_domain.c_str(), m_peer_server_domain_name.c_str());
+        if(ProtSendNoWait(xmpp_buf, strlen(xmpp_buf)) != 0)
+			return FALSE;
+	}
+    return TRUE;
+}
+
+BOOL CXmpp::DbResultTag(TiXmlDocument* xmlDoc)
+{
+	char xmpp_buf[2048];
+
+    TiXmlElement * pDbResultElement = xmlDoc->RootElement();
+
+    if(pDbResultElement)
+    {
+        string strFrom = pDbResultElement->Attribute("from") ? pDbResultElement->Attribute("from") : "";
+		string strTo = pDbResultElement->Attribute("to") ? pDbResultElement->Attribute("to") : "";
+		
+		string strKey = pDbResultElement->GetText();
+		
+		uint8_t Message_Digest[ietf::SHA256HashSize];
+		memset(Message_Digest, 0, sizeof(Message_Digest));
+		ietf::SHA256Context ctx;
+		ietf::SHA256Reset(&ctx);
+		SHA256Input(&ctx, (uint8_t*)m_xmpp_federation_secret.c_str(), m_xmpp_federation_secret.length());
+		SHA256Result(&ctx, Message_Digest);
+
+		char secret_hex[ietf::SHA256HashSize*2 + 1];
+		for(int x = 0; x< sizeof(Message_Digest); x++)
+			sprintf(secret_hex + 2*x, "%02x", Message_Digest[x]);
+		
+		string hmac_source = strTo;
+		hmac_source += " ";
+		hmac_source += strFrom;
+		hmac_source += " ";
+		hmac_source += m_stream_id;
+		
+		uint8_t hmac_digest[ietf::SHA256HashSize];
+
+		ietf::hmac(ietf::SHA256,
+			(const unsigned char *)hmac_source.c_str(),
+			hmac_source.length(),
+			(const unsigned char *)secret_hex,
+			64,
+			hmac_digest);
+			
+		char digest_hex[ietf::SHA256HashSize*2 + 1];
+		for(int x = 0; x < sizeof(hmac_digest); x++)
+			sprintf(digest_hex + 2*x, "%02x", hmac_digest[x]);
+		
+		if(strcasecmp(digest_hex, strKey.c_str()) == 0)
+		{
+			if(pDbResultElement->Attribute("type") && strcasecmp(pDbResultElement->Attribute("type"), "valid") == 0)
+			{
+				pthread_rwlock_wrlock(&m_srv2srv_list_lock); //acquire write
+				m_srv2srv_list.insert(make_pair<string, CXmpp*>(m_peer_server_domain_name, this));
+				pthread_rwlock_unlock(&m_srv2srv_list_lock); //release write
+			
+				string xmsg;
+				if(GetSessionInfo()->PopData(xmsg))
+				{
+					if(ProtSendNoWait(xmsg.c_str(), xmsg.length()) != 0)
+						return FALSE;
+				}
+			}
+			else if(!pDbResultElement->Attribute("type"))
+			{
+				std::stack<string> msg_stack;
+				
+				string msg_text;
+				if(GetSessionInfo()->PopData(msg_text))
+				{
+					msg_stack.push(msg_text);
+				}
+				if(!GetSessionInfo()->Connect(strFrom.c_str(), 5222, stXMPP, m_storageEngine, NULL, m_memcached, msg_stack, TRUE))
+					return FALSE;
+			}
+			else
+				return FALSE;
+		}
+		else
+			return FALSE;
+	}
+    return TRUE;
+}
+
+BOOL CXmpp::DbVerifyTag(TiXmlDocument* xmlDoc)
+{
+	char xmpp_buf[2048];
+
+    TiXmlElement * pDbVerifyElement = xmlDoc->RootElement();
+
+    if(pDbVerifyElement)
+    {
+        string strFrom = pDbVerifyElement->Attribute("from") ? pDbVerifyElement->Attribute("from") : "";
+		string strTo = pDbVerifyElement->Attribute("to") ? pDbVerifyElement->Attribute("to") : "";
+		
+		string strKey = pDbVerifyElement->GetText();
+		
+		uint8_t Message_Digest[ietf::SHA256HashSize];
+		memset(Message_Digest, 0, sizeof(Message_Digest));
+		ietf::SHA256Context ctx;
+		ietf::SHA256Reset(&ctx);
+		SHA256Input(&ctx, (uint8_t*)m_xmpp_federation_secret.c_str(), m_xmpp_federation_secret.length());
+		SHA256Result(&ctx, Message_Digest);
+
+		char secret_hex[ietf::SHA256HashSize*2 + 1];
+		for(int x = 0; x< sizeof(Message_Digest); x++)
+			sprintf(secret_hex + 2*x, "%02x", Message_Digest[x]);
+		
+		string hmac_source = strTo;
+		hmac_source += " ";
+		hmac_source += strFrom;
+		hmac_source += " ";
+		hmac_source += m_stream_id;
+		
+		uint8_t hmac_digest[ietf::SHA256HashSize];
+
+		ietf::hmac(ietf::SHA256,
+			(const unsigned char *)hmac_source.c_str(),
+			hmac_source.length(),
+			(const unsigned char *)secret_hex,
+			64,
+			hmac_digest);
+			
+		char digest_hex[ietf::SHA256HashSize*2 + 1];
+		for(int x = 0; x < sizeof(hmac_digest); x++)
+			sprintf(digest_hex + 2*x, "%02x", hmac_digest[x]);
+		
+		if(strcasecmp(digest_hex, strKey.c_str()) == 0)
+		{
+			//TODO
+			if(pDbVerifyElement->Attribute("type") && strcasecmp(pDbVerifyElement->Attribute("type"), "valid") == 0)
+			{
+				uint8_t Message_Digest[ietf::SHA256HashSize];
+				memset(Message_Digest, 0, sizeof(Message_Digest));
+				ietf::SHA256Context ctx;
+				ietf::SHA256Reset(&ctx);
+				SHA256Input(&ctx, (uint8_t*)m_xmpp_federation_secret.c_str(), m_xmpp_federation_secret.length());
+				SHA256Result(&ctx, Message_Digest);
+
+				char secret_hex[ietf::SHA256HashSize*2 + 1];
+				for(int x = 0; x< sizeof(Message_Digest); x++)
+					sprintf(secret_hex + 2*x, "%02x", Message_Digest[x]);
+				
+				string hmac_source = m_peer_server_domain_name;
+				hmac_source += " ";
+				hmac_source += m_email_domain;
+				hmac_source += " ";
+				hmac_source += m_stream_id;
+				
+				uint8_t hmac_digest[ietf::SHA256HashSize];
+
+				ietf::hmac(ietf::SHA256,
+					(const unsigned char *)hmac_source.c_str(),
+					hmac_source.length(),
+					(const unsigned char *)secret_hex,
+					64,
+					hmac_digest);
+					
+				char digest_hex[ietf::SHA256HashSize*2 + 1];
+				for(int x = 0; x < sizeof(hmac_digest); x++)
+					sprintf(digest_hex + 2*x, "%02x", hmac_digest[x]);
+					
+				sprintf(xmpp_buf, "<db:result from='%s' id='%s' to='%s' type='valid'>%s</db:result>",
+					m_email_domain.c_str(),m_stream_id, m_peer_server_domain_name.c_str(), digest_hex);
+				if(ProtSendNoWait(xmpp_buf, strlen(xmpp_buf)) != 0)
+					return FALSE;
+			}
+			else if(!pDbVerifyElement->Attribute("type"))
+			{
+				uint8_t Message_Digest[ietf::SHA256HashSize];
+				memset(Message_Digest, 0, sizeof(Message_Digest));
+				ietf::SHA256Context ctx;
+				ietf::SHA256Reset(&ctx);
+				SHA256Input(&ctx, (uint8_t*)m_xmpp_federation_secret.c_str(), m_xmpp_federation_secret.length());
+				SHA256Result(&ctx, Message_Digest);
+
+				char secret_hex[ietf::SHA256HashSize*2 + 1];
+				for(int x = 0; x< sizeof(Message_Digest); x++)
+					sprintf(secret_hex + 2*x, "%02x", Message_Digest[x]);
+				
+				string hmac_source = m_peer_server_domain_name;
+				hmac_source += " ";
+				hmac_source += m_email_domain;
+				hmac_source += " ";
+				hmac_source += m_stream_id;
+				
+				uint8_t hmac_digest[ietf::SHA256HashSize];
+
+				ietf::hmac(ietf::SHA256,
+					(const unsigned char *)hmac_source.c_str(),
+					hmac_source.length(),
+					(const unsigned char *)secret_hex,
+					64,
+					hmac_digest);
+					
+				char digest_hex[ietf::SHA256HashSize*2 + 1];
+				for(int x = 0; x < sizeof(hmac_digest); x++)
+					sprintf(digest_hex + 2*x, "%02x", hmac_digest[x]);
+					
+				sprintf(xmpp_buf, "<db:verify from='%s' id='%s' to='%s' type='valid'>%s</db:verify>",
+					m_email_domain.c_str(),m_stream_id, m_peer_server_domain_name.c_str(), digest_hex);
+				if(ProtSendNoWait(xmpp_buf, strlen(xmpp_buf)) != 0)
+					return FALSE;
+			}
+			else
+				return FALSE;
+		}
+		else
+		{
+			return FALSE;
+		}
+					
+	}
+    return TRUE;
+}
+    
 BOOL CXmpp::PresenceTag(TiXmlDocument* xmlDoc)
 {
     char xmpp_buf[2048];

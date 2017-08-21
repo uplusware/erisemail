@@ -295,7 +295,7 @@ BOOL CMailImap::On_Authenticate(char* text)
 		unsigned char digest1[16];
 		string strMD5src1;
 		strMD5src1 = m_username + ":" + strRealm + ":" + strpwd;
-		MD5_CTX_OBJ md5;
+		ietf::MD5_CTX_OBJ md5;
 		md5.MD5Update((unsigned char*)strMD5src1.c_str(), strMD5src1.length());
 		md5.MD5Final(digest1);
 		
@@ -477,7 +477,7 @@ BOOL CMailImap::On_Authenticate(char* text)
 		if(mailStg->GetPassword(m_username.c_str(), strpwd) == 0)
 		{
 			unsigned char digest[16];
-			HMAC_MD5((unsigned char*)strDigest.c_str(), strDigest.length(), (unsigned char*)strpwd.c_str(), strpwd.length(), digest);
+			ietf::HMAC_MD5((unsigned char*)strDigest.c_str(), strDigest.length(), (unsigned char*)strpwd.c_str(), strpwd.length(), digest);
 			char szMD5dst[33];
 			memset(szMD5dst, 0, 33);
 			sprintf(szMD5dst,

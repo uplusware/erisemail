@@ -221,11 +221,13 @@ private:
 
 };
 
+class Session_Info;
+
 class CXmpp : public CMailBase
 {
 public:
-	CXmpp(int epoll_fd, int sockfd, SSL * ssl, SSL_CTX * ssl_ctx, const char* clientip,
-        StorageEngine* storage_engine, memcached_st * memcached, BOOL isSSL = FALSE);
+	CXmpp(Session_Info* sess_inf, int epoll_fd, int sockfd, SSL * ssl, SSL_CTX * ssl_ctx, const char* clientip,
+        StorageEngine* storage_engine, memcached_st * memcached, BOOL isSSL = FALSE, BOOL s2s= FALSE, const char* pdn = "", BOOL isDialBack = FALSE);
 	virtual ~CXmpp();
 
     //virtual function
@@ -247,17 +249,25 @@ public:
     const char* GetResource() { return m_resource.c_str(); }
 
     const char* GetStreamID() { return m_stream_id; }
-
+    
+    Session_Info* GetSessionInfo() { return m_sess_inf; }
+    
 protected:
     BOOL ResponseTag(TiXmlDocument* xmlDoc);
     BOOL StarttlsTag(TiXmlDocument* xmlDoc);
     BOOL PresenceTag(TiXmlDocument* xmlDoc);
     BOOL IqTag(TiXmlDocument* xmlDoc);
     BOOL StreamTag(TiXmlDocument* xmlDoc);
+    BOOL StreamFeatureTag(TiXmlDocument* xmlDoc);
     BOOL MessageTag(TiXmlDocument* xmlDoc);
     BOOL AuthTag(TiXmlDocument* xmlDoc);
+    
+    BOOL DbResultTag(TiXmlDocument* xmlDoc);
+    BOOL DbVerifyTag(TiXmlDocument* xmlDoc);
+	BOOL ProceedTag(TiXmlDocument* xmlDoc);
 
 protected:
+    Session_Info* m_sess_inf;
     int m_epoll_fd;
 	int m_sockfd;
 	linesock* m_lsockfd;
@@ -284,6 +294,10 @@ protected:
 	string m_strDigitalMD5Nonce;
     string m_strDigitalMD5Response;
     
+    //server to server session
+    BOOL m_server_to_server;
+    string m_peer_server_domain_name;
+    BOOL m_is_dial_back;
 #ifdef _WITH_GSSAPI_
     OM_uint32 m_maj_stat;
     OM_uint32 m_min_stat;        
@@ -307,8 +321,11 @@ protected:
     string m_resource;
 
     static map<string, CXmpp* > m_online_list;
+	static map<string, CXmpp* > m_srv2srv_list;
     static pthread_rwlock_t m_online_list_lock;
+	static pthread_rwlock_t m_srv2srv_list_lock;
     static BOOL m_online_list_inited;
+	static BOOL m_srv2srv_list_inited;
 
     pthread_mutex_t m_send_lock;
 };

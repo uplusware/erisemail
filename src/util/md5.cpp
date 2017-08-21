@@ -45,7 +45,8 @@
 
 #include <strings.h>
 #include "md5.h"
-
+namespace ietf
+{
 /* Constants for MD5Transform routine.
 */
 #define S11 7
@@ -396,4 +397,4 @@ void HMAC_MD5(unsigned char*  text, int text_len, unsigned char*  key, int key_l
 	context.MD5Final(digest);
 	
 }
-
+}

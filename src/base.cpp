@@ -65,6 +65,7 @@ BOOL		CMailBase::m_enablexmpp = TRUE;
 unsigned short	CMailBase::m_xmppport = 5222;
 unsigned int	CMailBase::m_encryptxmpp = XMPP_TLS_OPTIONAL; /* 0: Non-encrypted or TLS optional; 1: TLS required; 2: Old-SSL-based */
 unsigned int	CMailBase::m_xmpp_worker_thread_num = 8;
+string CMailBase::m_xmpp_federation_secret = "s3cr3tf0rd14lb4ck";
 
 BOOL   CMailBase::m_enableclientcacheck = FALSE;
 string CMailBase::m_ca_crt_root = "/var/erisemail/cert/ca.crt";
@@ -367,6 +368,11 @@ BOOL CMailBase::LoadConfig()
 				strcut(strline.c_str(), "=", NULL, xmppport );
 				strtrim(xmppport);
 				m_xmppport = atoi(xmppport.c_str());
+			}
+			else if(strncasecmp(strline.c_str(), "XMPPFederationSecret", sizeof("XMPPFederationSecret") - 1) == 0)
+			{
+				strcut(strline.c_str(), "=", NULL, m_xmpp_federation_secret);
+				strtrim(m_xmpp_federation_secret);
 			}
             else if(strncasecmp(strline.c_str(), "EncryptXMPP", sizeof("EncryptXMPP") - 1) == 0)
 			{

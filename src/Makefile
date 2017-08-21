@@ -14,6 +14,11 @@ OBJSVR = mainsrv.o sslapi.o service.o session.o session_group.o base.o smtp.o po
 	util/escape.o	\
     util/trace.o    \
     util/digcalc.o  \
+	util/sha384-512.o  \
+	util/usha.o  \
+	util/sha224-256.o	\
+	util/sha.o	\
+	util/hmac.o	\
 	tinyxml/tinyxmlparser.o	\
 	tinyxml/tinyxmlerror.o \
 	tinyxml/tinyxml.o \

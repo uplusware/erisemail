@@ -76,7 +76,8 @@
 
 #ifndef _LGY_MD5_H
 #define _LGY_MD5_H
-
+namespace ietf
+{
 /* MD5 Class. */
 class MD5_CTX_OBJ {
 public:
@@ -101,5 +102,5 @@ private:
 };
 
 void HMAC_MD5(unsigned char*  text, int text_len, unsigned char*  key, int key_len, unsigned char digest[16]);
-
+}
 #endif

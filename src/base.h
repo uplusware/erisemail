@@ -936,7 +936,8 @@ public:
 	static unsigned short	m_xmppport;
     static unsigned int		m_encryptxmpp; //0: Non-encrypted or TLS optional; 1: TLS required; 2: SSL-based
     static unsigned int	m_xmpp_worker_thread_num;
-    
+    static string m_xmpp_federation_secret;
+	
 	static BOOL 	m_enableclientcacheck;
 	static string	m_ca_crt_root;
 	static string	m_ca_crt_server;
