@@ -2,8 +2,8 @@
 	Copyright (c) openheap, uplusware
 	uplusware@gmail.com
 */
-#ifndef _SESSION_GROUP_H_
-#define _SESSION_GROUP_H_
+#ifndef _XMPP_SESSION_GROUP_H_
+#define _XMPP_SESSION_GROUP_H_
 
 #include <sys/epoll.h>  
 #include "xmpp.h"
@@ -16,27 +16,27 @@ using namespace std;
 #define MAX_EVENTS_NUM  65536*2
 #define MAX_SOCKFD_NUM  65536*2
 
-class Session_Group
+class Xmpp_Session_Group
 {
 public:
-    Session_Group();
-    virtual ~Session_Group();
+    Xmpp_Session_Group();
+    virtual ~Xmpp_Session_Group();
     BOOL Accept(int sockfd, SSL *ssl, SSL_CTX * ssl_ctx, const char* clientip, Service_Type st, BOOL is_ssl,
         StorageEngine* storage_engine, memory_cache* ch, memcached_st * memcached);
     BOOL Connect(const char* hostname, unsigned short port, Service_Type st, StorageEngine* storage_engine, memory_cache* ch, memcached_st * memcached,
-		std::stack<string>& data_stack, BOOL isXmppDialBack);
+		std::stack<string>& xmpp_stanza_stack, BOOL isXmppDialBack);
     BOOL Poll();
     
 private:
-    map<int, Session_Info*> m_session_list;
+    map<int, Xmpp_Session_Info*> m_session_list;
     int m_epoll_fd;
     struct epoll_event * m_events;
 };
 
-class Session_Info
+class Xmpp_Session_Info
 {
 private:
-    Session_Group* m_sess_grp;
+    Xmpp_Session_Group* m_sess_grp;
     Service_Type m_st;
     int m_epoll_fd;
     int m_sockfd;
@@ -50,11 +50,11 @@ private:
     string m_peer_domainname;
     CMailBase * m_protocol;
     string m_recvbuf;
-    stack<string> m_message_stack;
+    stack<string> m_xmpp_stanza_stack;
 	BOOL m_isXmppDialBack;
 	
 public:
-    Session_Info(Session_Group* sess_grp, Service_Type st, int epoll_fd, int sockfd, SSL * ssl, SSL_CTX * ssl_ctx, const char* clientip,
+    Xmpp_Session_Info(Xmpp_Session_Group* sess_grp, Service_Type st, int epoll_fd, int sockfd, SSL * ssl, SSL_CTX * ssl_ctx, const char* clientip,
         StorageEngine* storage_engine, memcached_st * memcached, BOOL isSSL,
         BOOL s2s= FALSE, const char* pdn = "", BOOL isXmppDialBack = FALSE)
     {
@@ -74,7 +74,7 @@ public:
         
     }
     
-    virtual ~Session_Info()
+    virtual ~Xmpp_Session_Info()
     {
         if(m_protocol)
             delete m_protocol;
@@ -99,27 +99,28 @@ public:
     
     string& RecvBuf() { return m_recvbuf; }
     
-    BOOL Connect(const char* hostname, unsigned short port, Service_Type st, StorageEngine* storage_engine, memory_cache* ch, memcached_st * memcached, std::stack<string>& data_stack, BOOL isXmppDialBack)
+    BOOL Connect(const char* hostname, unsigned short port, Service_Type st, StorageEngine* storage_engine, memory_cache* ch, memcached_st * memcached,
+        std::stack<string>& xmpp_stanza_stack, BOOL isXmppDialBack)
     {
-        return m_sess_grp->Connect(hostname, port, st, storage_engine, ch, memcached, data_stack, isXmppDialBack);
+        return m_sess_grp->Connect(hostname, port, st, storage_engine, ch, memcached, xmpp_stanza_stack, isXmppDialBack);
     }
 	
-	void PushData(const char* data)
+	void PushStanza(const char* stanza)
 	{
-		m_message_stack.push(data);
+		m_xmpp_stanza_stack.push(stanza);
 	}
 	
-	void SetStack(std::stack<string>& data_stack)
+	void SetStanzaStack(std::stack<string>& xmpp_stanza_stack)
 	{
-		m_message_stack = data_stack;
+		m_xmpp_stanza_stack = xmpp_stanza_stack;
 	}
 	
-	bool PopData(string & data)
+	bool PopStanza(string & stanza)
 	{
-		if(!m_message_stack.empty())
+		if(!m_xmpp_stanza_stack.empty())
 		{
-			data = m_message_stack.top();
-			m_message_stack.pop();
+			stanza = m_xmpp_stanza_stack.top();
+			m_xmpp_stanza_stack.pop();
 			return true;
 		}
 		else
@@ -129,4 +130,4 @@ public:
 
 
 
-#endif /* _SESSION_GROUP_H_ */
+#endif /* _XMPP_SESSION_GROUP_H_ */

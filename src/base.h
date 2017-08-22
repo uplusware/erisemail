@@ -885,7 +885,7 @@ public:
 #define XMPP_OLDSSL_BASED   2
 
 #define PROD_EMAIL  0
-#define PROD_IM     1
+#define PROD_INSTANT_MESSENGER     1
 
 class CMailBase
 {

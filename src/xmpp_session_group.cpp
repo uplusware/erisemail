@@ -3,9 +3,9 @@
 	uplusware@gmail.com
 */
 
-#include "session_group.h"
+#include "xmpp_session_group.h"
 
-Session_Group::Session_Group()
+Xmpp_Session_Group::Xmpp_Session_Group()
 {
     m_epoll_fd = epoll_create1(0);
     if (m_epoll_fd == -1)  
@@ -18,9 +18,9 @@ Session_Group::Session_Group()
     
 }
 
-Session_Group::~Session_Group()
+Xmpp_Session_Group::~Xmpp_Session_Group()
 {
-    map<int, Session_Info *>::iterator iter_session;
+    map<int, Xmpp_Session_Info *>::iterator iter_session;
     for(iter_session = m_session_list.begin(); iter_session != m_session_list.end(); iter_session++)
     {
         if(iter_session->second)
@@ -32,10 +32,10 @@ Session_Group::~Session_Group()
         delete[] m_events;
 }
 
-BOOL Session_Group::Accept(int sockfd, SSL *ssl, SSL_CTX * ssl_ctx, const char* clientip, Service_Type st, BOOL is_ssl,
+BOOL Xmpp_Session_Group::Accept(int sockfd, SSL *ssl, SSL_CTX * ssl_ctx, const char* clientip, Service_Type st, BOOL is_ssl,
         StorageEngine* storage_engine, memory_cache* ch, memcached_st * memcached)
 {
-    Session_Info * pSessionInstance = new Session_Info(this, st, m_epoll_fd, sockfd, ssl, ssl_ctx, clientip, storage_engine, memcached, is_ssl);
+    Xmpp_Session_Info * pSessionInstance = new Xmpp_Session_Info(this, st, m_epoll_fd, sockfd, ssl, ssl_ctx, clientip, storage_engine, memcached, is_ssl);
     if(!pSessionInstance)
         return FALSE;
     
@@ -62,8 +62,8 @@ BOOL Session_Group::Accept(int sockfd, SSL *ssl, SSL_CTX * ssl_ctx, const char* 
     return TRUE;
 }
 
-BOOL Session_Group::Connect(const char* hostname, unsigned short port, Service_Type st, StorageEngine* storage_engine, memory_cache* ch, memcached_st * memcached,
-    std::stack<string>& data_stack, BOOL isXmppDialBack)
+BOOL Xmpp_Session_Group::Connect(const char* hostname, unsigned short port, Service_Type st, StorageEngine* storage_engine, memory_cache* ch, memcached_st * memcached,
+    std::stack<string>& xmpp_stanza_stack, BOOL isXmppDialBack)
 {
     char szPort[16];
     sprintf(szPort, "%d", port);
@@ -105,7 +105,7 @@ BOOL Session_Group::Connect(const char* hostname, unsigned short port, Service_T
     }     
 
     freeaddrinfo(servinfo);
-    printf("ip: %s\n", realip);
+    /* printf("ip: %s\n", realip); */
     if(bFound == FALSE)
     {
         return FALSE;
@@ -154,11 +154,11 @@ BOOL Session_Group::Connect(const char* hostname, unsigned short port, Service_T
     
     if(isConnectOK == TRUE)
     {
-        Session_Info * pSessionInstance = new Session_Info(this, st, m_epoll_fd, sockfd, NULL, NULL, realip, storage_engine, memcached, FALSE, TRUE, hostname, isXmppDialBack);
+        Xmpp_Session_Info * pSessionInstance = new Xmpp_Session_Info(this, st, m_epoll_fd, sockfd, NULL, NULL, realip, storage_engine, memcached, FALSE, TRUE, hostname, isXmppDialBack);
         if(!pSessionInstance)
             return FALSE;
         
-		pSessionInstance->SetStack(data_stack);
+		pSessionInstance->SetStanzaStack(xmpp_stanza_stack);
 		
         struct epoll_event event;
         event.data.fd = sockfd;  
@@ -181,7 +181,7 @@ BOOL Session_Group::Connect(const char* hostname, unsigned short port, Service_T
     }
 }
 
-BOOL Session_Group::Poll()
+BOOL Xmpp_Session_Group::Poll()
 {
     int n, i;  
   
@@ -193,7 +193,7 @@ BOOL Session_Group::Poll()
         {
             if(m_session_list.find(m_events[i].data.fd) != m_session_list.end() && m_session_list[m_events[i].data.fd])
             {
-                Session_Info * pSessionInstance = m_session_list[m_events[i].data.fd];
+                Xmpp_Session_Info * pSessionInstance = m_session_list[m_events[i].data.fd];
 
                 char szmsg[4096 + 1024 + 1];
                 
@@ -239,7 +239,7 @@ BOOL Session_Group::Poll()
             
             if(m_session_list.find(m_events[i].data.fd) != m_session_list.end() && m_session_list[m_events[i].data.fd])
             {
-                Session_Info * pSessionInstance = m_session_list[m_events[i].data.fd];
+                Xmpp_Session_Info * pSessionInstance = m_session_list[m_events[i].data.fd];
                 
                 if(!pSessionInstance->GetProtocol() || !pSessionInstance->CreateProtocol())
                 {

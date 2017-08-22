@@ -115,119 +115,13 @@ private:
     string m_xml_text;
 };
 
-class xmpp_iq : public xmpp_stanza
-{
-public:
-    xmpp_iq()
-    {
-
-    }
-    virtual ~xmpp_iq()
-    {
-
-    }
-private:
-    iq_type m_type;
-};
-
-class xmpp_presence : public xmpp_stanza
-{
-public:
-    xmpp_presence()
-    {
-
-    }
-    virtual ~xmpp_presence()
-    {
-
-    }
-private:
-    presence_type m_type;
-};
-
-class xmpp_message : public xmpp_stanza
-{
-public:
-    xmpp_message()
-    {
-
-    }
-    virtual ~xmpp_message()
-    {
-
-    }
-private:
-
-};
-
-class xmpp_auth : public xmpp_stanza
-{
-public:
-    xmpp_auth()
-    {
-
-    }
-    virtual ~xmpp_auth()
-    {
-
-    }
-private:
-
-};
-
-
-class xmpp_stream_stream : public xmpp_stanza
-{
-public:
-    xmpp_stream_stream()
-    {
-
-    }
-    virtual ~xmpp_stream_stream()
-    {
-
-    }
-private:
-
-};
-
-class xmpp_stream_features : public xmpp_stanza
-{
-public:
-    xmpp_stream_features()
-    {
-
-    }
-    virtual ~xmpp_stream_features()
-    {
-
-    }
-private:
-
-};
-
-class xmpp_stream_error : public xmpp_stanza
-{
-public:
-    xmpp_stream_error()
-    {
-
-    }
-    virtual ~xmpp_stream_error()
-    {
-
-    }
-private:
-
-};
-
-class Session_Info;
+class Xmpp_Session_Info;
 
 class CXmpp : public CMailBase
 {
 public:
-	CXmpp(Session_Info* sess_inf, int epoll_fd, int sockfd, SSL * ssl, SSL_CTX * ssl_ctx, const char* clientip,
-        StorageEngine* storage_engine, memcached_st * memcached, BOOL isSSL = FALSE, BOOL s2s= FALSE, const char* pdn = "", BOOL isDialBack = FALSE);
+	CXmpp(Xmpp_Session_Info* sess_inf, int epoll_fd, int sockfd, SSL * ssl, SSL_CTX * ssl_ctx, const char* clientip, StorageEngine* storage_engine, memcached_st * memcached,
+        BOOL isSSL = FALSE, BOOL s2s= FALSE, const char* pdn = "", BOOL isDialBackStream = FALSE);
 	virtual ~CXmpp();
 
     //virtual function
@@ -250,14 +144,14 @@ public:
 
     const char* GetStreamID() { return m_stream_id; }
     
-    Session_Info* GetSessionInfo() { return m_sess_inf; }
+    Xmpp_Session_Info* GetSessionInfo() { return m_sess_inf; }
     
 protected:
     BOOL ResponseTag(TiXmlDocument* xmlDoc);
-    BOOL StarttlsTag(TiXmlDocument* xmlDoc);
+    BOOL StartTLSTag(TiXmlDocument* xmlDoc);
     BOOL PresenceTag(TiXmlDocument* xmlDoc);
     BOOL IqTag(TiXmlDocument* xmlDoc);
-    BOOL StreamTag(TiXmlDocument* xmlDoc);
+    BOOL StreamStreamTag(TiXmlDocument* xmlDoc);
     BOOL StreamFeatureTag(TiXmlDocument* xmlDoc);
     BOOL MessageTag(TiXmlDocument* xmlDoc);
     BOOL AuthTag(TiXmlDocument* xmlDoc);
@@ -267,7 +161,7 @@ protected:
 	BOOL ProceedTag(TiXmlDocument* xmlDoc);
 
 protected:
-    Session_Info* m_sess_inf;
+    Xmpp_Session_Info* m_sess_inf;
     int m_epoll_fd;
 	int m_sockfd;
 	linesock* m_lsockfd;
@@ -297,7 +191,7 @@ protected:
     //server to server session
     BOOL m_is_svr2svr;
     string m_peer_domain_name;
-    BOOL m_is_dial_back;
+    BOOL m_is_dialback_stream;
 #ifdef _WITH_GSSAPI_
     OM_uint32 m_maj_stat;
     OM_uint32 m_min_stat;        

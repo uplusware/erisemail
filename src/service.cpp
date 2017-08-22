@@ -18,7 +18,7 @@
 #include <queue>
 #include "letter.h"
 #include "mta.h"
-#include "session_group.h"
+#include "xmpp_session_group.h"
 
 //extern int Run();
 
@@ -118,14 +118,14 @@ void* Service::begin_thread_pool_handler(void* arg)
 	m_static_thread_pool_size++;
 	struct timespec ts;
     srandom(time(NULL));
-    Session_Group * p_session_group = NULL;
-    if(CMailBase::m_prod_type == PROD_IM)
-        p_session_group = new Session_Group();
+    Xmpp_Session_Group * p_session_group = NULL;
+    if(CMailBase::m_prod_type == PROD_INSTANT_MESSENGER)
+        p_session_group = new Xmpp_Session_Group();
     
 	while(m_static_thread_pool_exit)
 	{
 		clock_gettime(CLOCK_REALTIME, &ts);
-        if(CMailBase::m_prod_type != PROD_IM)
+        if(CMailBase::m_prod_type != PROD_INSTANT_MESSENGER)
             ts.tv_sec += 1;
 		if(sem_timedwait(&m_static_thread_pool_sem, &ts) == 0)
 		{
@@ -143,7 +143,7 @@ void* Service::begin_thread_pool_handler(void* arg)
 
 			if(session_arg)
 			{
-                if(CMailBase::m_prod_type == PROD_IM)
+                if(CMailBase::m_prod_type == PROD_INSTANT_MESSENGER)
                 {
                     p_session_group->Accept(session_arg->sockfd, session_arg->ssl, session_arg->ssl_ctx, session_arg->client_ip.c_str(), session_arg->svr_type, session_arg->is_ssl,
                         session_arg->storage_engine, session_arg->cache, session_arg->memcached);
@@ -158,11 +158,11 @@ void* Service::begin_thread_pool_handler(void* arg)
 		}
         else
         {
-            if(CMailBase::m_prod_type == PROD_IM)
+            if(CMailBase::m_prod_type == PROD_INSTANT_MESSENGER)
                 p_session_group->Poll();
         }
 	}
-    if(CMailBase::m_prod_type == PROD_IM)
+    if(CMailBase::m_prod_type == PROD_INSTANT_MESSENGER)
         delete p_session_group;
     
 	m_static_thread_pool_size--;
@@ -558,12 +558,12 @@ int Service::Run(int fd, vector<service_param_t> & server_params)
     {
         if(server_params[x].st == stXMPP)
         {
-            CMailBase::m_prod_type = PROD_IM;
+            CMailBase::m_prod_type = PROD_INSTANT_MESSENGER;
             break;
         }
     }
     
-	ThreadPool worker_pool(CMailBase::m_prod_type == PROD_IM ? CMailBase::m_xmpp_worker_thread_num : CMailBase::m_mda_max_conn, init_thread_pool_handler, begin_thread_pool_handler, NULL, exit_thread_pool_handler);
+	ThreadPool worker_pool(CMailBase::m_prod_type == PROD_INSTANT_MESSENGER ? CMailBase::m_xmpp_worker_thread_num : CMailBase::m_mda_max_conn, init_thread_pool_handler, begin_thread_pool_handler, NULL, exit_thread_pool_handler);
 	
 	while(!svr_exit)
 	{
