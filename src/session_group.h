@@ -23,7 +23,8 @@ public:
     virtual ~Session_Group();
     BOOL Accept(int sockfd, SSL *ssl, SSL_CTX * ssl_ctx, const char* clientip, Service_Type st, BOOL is_ssl,
         StorageEngine* storage_engine, memory_cache* ch, memcached_st * memcached);
-    BOOL Connect(const char* hostname, unsigned short port, Service_Type st, StorageEngine* storage_engine, memory_cache* ch, memcached_st * memcached, std::stack<string>& data_stack, BOOL isXmppDialBack);
+    BOOL Connect(const char* hostname, unsigned short port, Service_Type st, StorageEngine* storage_engine, memory_cache* ch, memcached_st * memcached,
+		std::stack<string>& data_stack, BOOL isXmppDialBack);
     BOOL Poll();
     
 private:

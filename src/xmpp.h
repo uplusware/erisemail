@@ -295,8 +295,8 @@ protected:
     string m_strDigitalMD5Response;
     
     //server to server session
-    BOOL m_server_to_server;
-    string m_peer_server_domain_name;
+    BOOL m_is_svr2svr;
+    string m_peer_domain_name;
     BOOL m_is_dial_back;
 #ifdef _WITH_GSSAPI_
     OM_uint32 m_maj_stat;

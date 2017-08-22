@@ -219,15 +219,15 @@ CXmpp::CXmpp(Session_Info* sess_inf, int epoll_fd, int sockfd, SSL * ssl, SSL_CT
     m_client_name = GSS_C_NO_NAME;
 #endif /* _WITH_GSSAPI_ */
 
-    m_server_to_server = s2s;
-    m_peer_server_domain_name = pdn;
+    m_is_svr2svr = s2s;
+    m_peer_domain_name = pdn;
     m_is_dial_back = isDialBack;
-    if(m_server_to_server)
+    if(m_is_svr2svr)
     {
         char xmpp_buf[1024*2];
         sprintf(xmpp_buf,
             "<stream:stream xmlns='jabber:server' xmlns:db='jabber:server:dialback' xmlns:stream='http://etherx.jabber.lit/streams' from='%s' to='%s'>",
-            m_email_domain.c_str(), m_peer_server_domain_name.c_str());
+            m_email_domain.c_str(), m_peer_domain_name.c_str());
         ProtSendNoWait(xmpp_buf, strlen(xmpp_buf));
     }
 }
@@ -242,10 +242,10 @@ CXmpp::~CXmpp()
     pthread_rwlock_wrlock(&m_online_list_lock); //acquire write
     m_online_list.erase(m_username);
 	
-	if(m_server_to_server && m_peer_server_domain_name != "")
+	if(m_is_svr2svr && m_peer_domain_name != "")
 	{
 		pthread_rwlock_wrlock(&m_srv2srv_list_lock); //acquire write
-		m_srv2srv_list.erase(m_peer_server_domain_name);
+		m_srv2srv_list.erase(m_peer_domain_name);
 	}
 	
     if(m_online_list.size() == 0)
@@ -527,7 +527,7 @@ BOOL CXmpp::Parse(char* text)
             strPeerServerDomainname = strToDomain;
         }
         
-        if(s2s && !m_server_to_server)
+        if(s2s && !m_is_svr2svr)
         {
             /*printf("server to server: %s\n", strPeerServerDomainname.c_str());
             printf("%s\n", m_xmpp_stanza->GetXmlText());*/
@@ -544,7 +544,8 @@ BOOL CXmpp::Parse(char* text)
             {
 				std::stack<string> msg_stack;
 				msg_stack.push(m_xmpp_stanza->GetXmlText());
-				if(!GetSessionInfo()->Connect(strPeerServerDomainname.c_str(), 5222, stXMPP, m_storageEngine, NULL, m_memcached, msg_stack, FALSE))
+				if(!GetSessionInfo()->Connect(strPeerServerDomainname.c_str(), 5222, stXMPP, m_storageEngine, NULL, m_memcached,
+					msg_stack, FALSE))
 					return FALSE;
             }
             pthread_rwlock_unlock(&m_srv2srv_list_lock);
@@ -772,7 +773,7 @@ BOOL CXmpp::StreamTag(TiXmlDocument* xmlDoc)
         const char* szXmlns = pStreamElement->Attribute("xmlns");
         if(szXmlns && strcmp(szXmlns, "jabber:server") == 0)
         {
-            m_server_to_server = TRUE;
+            m_is_svr2svr = TRUE;
         }
 		
 		const char* szStreamID = pStreamElement->Attribute("id");
@@ -800,7 +801,7 @@ BOOL CXmpp::StreamTag(TiXmlDocument* xmlDoc)
 			digest[8], digest[9], digest[10], digest[11], digest[12], digest[13], digest[14], digest[15]);
 		
 		//jabber:server
-		if(m_server_to_server)
+		if(m_is_svr2svr)
 		{
 			sprintf(xmpp_buf, "<stream:stream from='%s' id='%s' xmlns='jabber:server' xmlns:db='jabber:server:dialback' xmlns:stream='http://etherx.jabber.org/streams' version='1.0'>",
 				CMailBase::m_email_domain.c_str(), m_stream_id);
@@ -958,7 +959,7 @@ BOOL CXmpp::StreamTag(TiXmlDocument* xmlDoc)
 			for(int x = 0; x< sizeof(Message_Digest); x++)
 				sprintf(secret_hex + 2*x, "%02x", Message_Digest[x]);
 			
-			string hmac_source = m_peer_server_domain_name;
+			string hmac_source = m_peer_domain_name;
 			hmac_source += " ";
 			hmac_source += m_email_domain;
 			hmac_source += " ";
@@ -978,7 +979,7 @@ BOOL CXmpp::StreamTag(TiXmlDocument* xmlDoc)
 				sprintf(digest_hex + 2*x, "%02x", hmac_digest[x]);
 					
 			sprintf(xmpp_buf, "<db:verify from='%s' id='%s' to='%s'>%s</db:verify>",
-				m_email_domain.c_str(), m_stream_id, m_peer_server_domain_name.c_str(), digest_hex);
+				m_email_domain.c_str(), m_stream_id, m_peer_domain_name.c_str(), digest_hex);
 			
 			if(ProtSendNoWait(xmpp_buf, strlen(xmpp_buf)) != 0)
 				return FALSE;
@@ -1020,7 +1021,7 @@ BOOL CXmpp::StreamFeatureTag(TiXmlDocument* xmlDoc)
 					for(int x = 0; x< sizeof(Message_Digest); x++)
 						sprintf(secret_hex + 2*x, "%02x", Message_Digest[x]);
 					
-					string hmac_source = m_peer_server_domain_name;
+					string hmac_source = m_peer_domain_name;
 					hmac_source += " ";
 					hmac_source += m_email_domain;
 					hmac_source += " ";
@@ -1039,7 +1040,7 @@ BOOL CXmpp::StreamFeatureTag(TiXmlDocument* xmlDoc)
 					for(int x = 0; x < sizeof(hmac_digest); x++)
 						sprintf(digest_hex + 2*x, "%02x", hmac_digest[x]);
 
-					sprintf(xmpp_buf, "<db:result from='%s' to='%s'>%s</db:result>", m_peer_server_domain_name.c_str(), m_email_domain.c_str(), digest_hex);
+					sprintf(xmpp_buf, "<db:result from='%s' to='%s'>%s</db:result>", m_peer_domain_name.c_str(), m_email_domain.c_str(), digest_hex);
 					if(ProtSendNoWait(xmpp_buf, strlen(xmpp_buf)) != 0)
 						return FALSE;
 					
@@ -1076,7 +1077,7 @@ BOOL CXmpp::ProceedTag(TiXmlDocument* xmlDoc)
 		char xmpp_buf[1024*2];
         sprintf(xmpp_buf,
             "<stream:stream xmlns='jabber:server' xmlns:db='jabber:server:dialback' xmlns:stream='http://etherx.jabber.lit/streams' from='%s' to='%s'>",
-            m_email_domain.c_str(), m_peer_server_domain_name.c_str());
+            m_email_domain.c_str(), m_peer_domain_name.c_str());
         if(ProtSendNoWait(xmpp_buf, strlen(xmpp_buf)) != 0)
 			return FALSE;
 	}
@@ -1131,7 +1132,7 @@ BOOL CXmpp::DbResultTag(TiXmlDocument* xmlDoc)
 			if(pDbResultElement->Attribute("type") && strcasecmp(pDbResultElement->Attribute("type"), "valid") == 0)
 			{
 				pthread_rwlock_wrlock(&m_srv2srv_list_lock); //acquire write
-				m_srv2srv_list.insert(make_pair<string, CXmpp*>(m_peer_server_domain_name, this));
+				m_srv2srv_list.insert(make_pair<string, CXmpp*>(m_peer_domain_name, this));
 				pthread_rwlock_unlock(&m_srv2srv_list_lock); //release write
 			
 				string xmsg;
@@ -1150,7 +1151,8 @@ BOOL CXmpp::DbResultTag(TiXmlDocument* xmlDoc)
 				{
 					msg_stack.push(msg_text);
 				}
-				if(!GetSessionInfo()->Connect(strFrom.c_str(), 5222, stXMPP, m_storageEngine, NULL, m_memcached, msg_stack, TRUE))
+				if(!GetSessionInfo()->Connect(strFrom.c_str(), 5222, stXMPP, m_storageEngine, NULL, m_memcached,
+					msg_stack, TRUE))
 					return FALSE;
 			}
 			else
@@ -1221,7 +1223,7 @@ BOOL CXmpp::DbVerifyTag(TiXmlDocument* xmlDoc)
 				for(int x = 0; x< sizeof(Message_Digest); x++)
 					sprintf(secret_hex + 2*x, "%02x", Message_Digest[x]);
 				
-				string hmac_source = m_peer_server_domain_name;
+				string hmac_source = m_peer_domain_name;
 				hmac_source += " ";
 				hmac_source += m_email_domain;
 				hmac_source += " ";
@@ -1241,7 +1243,7 @@ BOOL CXmpp::DbVerifyTag(TiXmlDocument* xmlDoc)
 					sprintf(digest_hex + 2*x, "%02x", hmac_digest[x]);
 					
 				sprintf(xmpp_buf, "<db:result from='%s' id='%s' to='%s' type='valid'>%s</db:result>",
-					m_email_domain.c_str(),m_stream_id, m_peer_server_domain_name.c_str(), digest_hex);
+					m_email_domain.c_str(),m_stream_id, m_peer_domain_name.c_str(), digest_hex);
 				if(ProtSendNoWait(xmpp_buf, strlen(xmpp_buf)) != 0)
 					return FALSE;
 			}
@@ -1258,7 +1260,7 @@ BOOL CXmpp::DbVerifyTag(TiXmlDocument* xmlDoc)
 				for(int x = 0; x< sizeof(Message_Digest); x++)
 					sprintf(secret_hex + 2*x, "%02x", Message_Digest[x]);
 				
-				string hmac_source = m_peer_server_domain_name;
+				string hmac_source = m_peer_domain_name;
 				hmac_source += " ";
 				hmac_source += m_email_domain;
 				hmac_source += " ";
@@ -1278,7 +1280,7 @@ BOOL CXmpp::DbVerifyTag(TiXmlDocument* xmlDoc)
 					sprintf(digest_hex + 2*x, "%02x", hmac_digest[x]);
 					
 				sprintf(xmpp_buf, "<db:verify from='%s' id='%s' to='%s' type='valid'>%s</db:verify>",
-					m_email_domain.c_str(),m_stream_id, m_peer_server_domain_name.c_str(), digest_hex);
+					m_email_domain.c_str(),m_stream_id, m_peer_domain_name.c_str(), digest_hex);
 				if(ProtSendNoWait(xmpp_buf, strlen(xmpp_buf)) != 0)
 					return FALSE;
 			}
