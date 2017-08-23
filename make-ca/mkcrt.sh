@@ -1,8 +1,4 @@
 #!/bin/bash
-#
-#	Copyright (c) openheap, uplusware
-#	uplusware@gmail.com
-#
 _PASSWORD_=123456
 _COUNTRY_="CN"
 _ST_="BJ"
@@ -19,7 +15,7 @@ test -x private || mkdir private
 test -x certs || mkdir certs
 
 #CA
-openssl req -new -x509 -keyout private/ca.key -passout pass:${_PASSWORD_} -out certs/ca.crt -subj "/C="${_COUNTRY_}"/ST="${_ST_}"/L=/O="${_ORG_}"/OU="${_ORG_UNIT_}"/CN="${_COMMON_NAME_} -config openssl.cnf
+openssl req -new -x509 -keyout private/ca.key -passout pass:${_PASSWORD_} -out certs/ca.crt -days 3650 -subj "/C="${_COUNTRY_}"/ST="${_ST_}"/L=/O="${_ORG_}"/OU="${_ORG_UNIT_}"/CN="${_COMMON_NAME_} -config openssl.cnf
 
 #server
 openssl genrsa -des3 -passout pass:${_PASSWORD_} -out private/server.key 1024 -config openssl.cnf

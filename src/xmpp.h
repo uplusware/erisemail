@@ -40,6 +40,7 @@ enum auth_method
   AUTH_METHOD_PLAIN = 0,
   AUTH_METHOD_DIGEST_MD5,
   AUTH_METHOD_GSSAPI,
+  AUTH_METHOD_EXTERNAL,
   AUTH_METHOD_UNKNOWN
 };
 
@@ -121,7 +122,7 @@ class CXmpp : public CMailBase
 {
 public:
 	CXmpp(Xmpp_Session_Info* sess_inf, int epoll_fd, int sockfd, SSL * ssl, SSL_CTX * ssl_ctx, const char* clientip, StorageEngine* storage_engine, memcached_st * memcached,
-        BOOL isSSL = FALSE, BOOL s2s= FALSE, const char* pdn = "", BOOL isDialBackStream = FALSE);
+        BOOL isSSL = FALSE, BOOL s2s= FALSE, const char* pdn = "", BOOL isDialBackStream = FALSE, CXmpp* pDependency = NULL);
 	virtual ~CXmpp();
 
     //virtual function
@@ -132,6 +133,7 @@ public:
     virtual int ProtRecvNoWait(char* buf, int len);
     virtual int ProtSendNoWait(const char* buf, int len);
     virtual int ProtTryFlush();
+    virtual BOOL ProtSendBufEmpty() { return m_send_buf.length() == 0 ? TRUE : FALSE; }
     virtual char GetProtEndingChar() { return '>'; };
     
 	int XmppSend(const char* buf, int len);
@@ -152,10 +154,10 @@ protected:
     BOOL PresenceTag(TiXmlDocument* xmlDoc);
     BOOL IqTag(TiXmlDocument* xmlDoc);
     BOOL StreamStreamTag(TiXmlDocument* xmlDoc);
-    BOOL StreamFeatureTag(TiXmlDocument* xmlDoc);
+    BOOL StreamFeaturesTag(TiXmlDocument* xmlDoc);
     BOOL MessageTag(TiXmlDocument* xmlDoc);
     BOOL AuthTag(TiXmlDocument* xmlDoc);
-    
+    BOOL SuccessTag(TiXmlDocument* xmlDoc);
     BOOL DbResultTag(TiXmlDocument* xmlDoc);
     BOOL DbVerifyTag(TiXmlDocument* xmlDoc);
 	BOOL ProceedTag(TiXmlDocument* xmlDoc);
@@ -192,6 +194,8 @@ protected:
     BOOL m_is_svr2svr;
     string m_peer_domain_name;
     BOOL m_is_dialback_stream;
+    CXmpp * m_dependency;
+    
 #ifdef _WITH_GSSAPI_
     OM_uint32 m_maj_stat;
     OM_uint32 m_min_stat;        

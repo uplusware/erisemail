@@ -191,7 +191,7 @@ BOOL connect_ssl(int sockfd,
         if(SSL_CTX_use_PrivateKey_file(*pp_ssl_ctx, ca_key_client, SSL_FILETYPE_PEM) <= 0)
         {
             CUplusTrace uTrace(ERISEMAIL_SSLERR_LOGNAME, ERISEMAIL_SSLERR_LCKNAME);
-            uTrace.Write(Trace_Error, "SSL_CTX_use_certificate_file: %s", ERR_error_string(ERR_get_error(),NULL));
+            uTrace.Write(Trace_Error, "SSL_CTX_use_PrivateKey_file: %s, %s", ERR_error_string(ERR_get_error(),NULL), ca_key_client);
             goto clean_ssl2;
 
         }
@@ -199,7 +199,7 @@ BOOL connect_ssl(int sockfd,
         if(!SSL_CTX_check_private_key(*pp_ssl_ctx))
         {
             CUplusTrace uTrace(ERISEMAIL_SSLERR_LOGNAME, ERISEMAIL_SSLERR_LCKNAME);
-            uTrace.Write(Trace_Error, "SSL_CTX_use_certificate_file: %s", ERR_error_string(ERR_get_error(),NULL));
+            uTrace.Write(Trace_Error, "SSL_CTX_check_private_key: %s", ERR_error_string(ERR_get_error(),NULL));
             goto clean_ssl2;
         }
     }

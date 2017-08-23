@@ -945,7 +945,9 @@ public:
 	static string	m_ca_crt_client;
 	static string	m_ca_key_client;
 	static string	m_ca_password;
-
+    
+    static string   m_client_ca_base;
+    
     static string   m_krb5_ktname;
 
 	static string	m_db_host;

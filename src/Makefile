@@ -59,7 +59,7 @@ LDLIST_UTL = -lstdc++ -lpthread -ldl
 LDLIST_UDF = -lstdc++ -lpthread
 LDLIST_NTY = -lstdc++ -lpthread
 
-FLAGS = -O2 -fPIC -w
+FLAGS = -g -fPIC -w
 
 all: stg svr utl jks udf nty
 

@@ -24,7 +24,7 @@ public:
     BOOL Accept(int sockfd, SSL *ssl, SSL_CTX * ssl_ctx, const char* clientip, Service_Type st, BOOL is_ssl,
         StorageEngine* storage_engine, memory_cache* ch, memcached_st * memcached);
     BOOL Connect(const char* hostname, unsigned short port, Service_Type st, StorageEngine* storage_engine, memory_cache* ch, memcached_st * memcached,
-		std::stack<string>& xmpp_stanza_stack, BOOL isXmppDialBack);
+		std::stack<string>& xmpp_stanza_stack, BOOL isXmppDialBack, CXmpp* pDependency);
     BOOL Poll();
     
 private:
@@ -52,11 +52,12 @@ private:
     string m_recvbuf;
     stack<string> m_xmpp_stanza_stack;
 	BOOL m_isXmppDialBack;
+    CXmpp* m_dependency;
 	
 public:
     Xmpp_Session_Info(Xmpp_Session_Group* sess_grp, Service_Type st, int epoll_fd, int sockfd, SSL * ssl, SSL_CTX * ssl_ctx, const char* clientip,
         StorageEngine* storage_engine, memcached_st * memcached, BOOL isSSL,
-        BOOL s2s= FALSE, const char* pdn = "", BOOL isXmppDialBack = FALSE)
+        BOOL s2s= FALSE, const char* pdn = "", BOOL isXmppDialBack = FALSE, CXmpp* pDependency = NULL)
     {
         m_sess_grp = sess_grp;
         m_st = st;
@@ -71,6 +72,7 @@ public:
         m_s2s = s2s;
         m_peer_domainname = pdn;
 		m_isXmppDialBack = isXmppDialBack;
+        m_dependency = pDependency;
         
     }
     
@@ -83,7 +85,7 @@ public:
     CMailBase * CreateProtocol()
     {
         if(m_st == stXMPP)
-            m_protocol = new CXmpp(this, m_epoll_fd, m_sockfd, m_ssl, m_ssl_ctx, m_clientip.c_str(), m_storage_engine, m_memcached, m_isSSL, m_s2s, m_peer_domainname.c_str(), m_isXmppDialBack);
+            m_protocol = new CXmpp(this, m_epoll_fd, m_sockfd, m_ssl, m_ssl_ctx, m_clientip.c_str(), m_storage_engine, m_memcached, m_isSSL, m_s2s, m_peer_domainname.c_str(), m_isXmppDialBack, m_dependency);
         else
             m_protocol = NULL;
         
@@ -100,9 +102,9 @@ public:
     string& RecvBuf() { return m_recvbuf; }
     
     BOOL Connect(const char* hostname, unsigned short port, Service_Type st, StorageEngine* storage_engine, memory_cache* ch, memcached_st * memcached,
-        std::stack<string>& xmpp_stanza_stack, BOOL isXmppDialBack)
+        std::stack<string>& xmpp_stanza_stack, BOOL isXmppDialBack, CXmpp* pDependency)
     {
-        return m_sess_grp->Connect(hostname, port, st, storage_engine, ch, memcached, xmpp_stanza_stack, isXmppDialBack);
+        return m_sess_grp->Connect(hostname, port, st, storage_engine, ch, memcached, xmpp_stanza_stack, isXmppDialBack, pDependency);
     }
 	
 	void PushStanza(const char* stanza)

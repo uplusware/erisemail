@@ -73,6 +73,7 @@ string CMailBase::m_ca_crt_server = "/var/erisemail/cert/server.crt";
 string CMailBase::m_ca_key_server = "/var/erisemail/cert/server.key";
 string CMailBase::m_ca_crt_client = "/var/erisemail/cert/client.crt";
 string CMailBase::m_ca_key_client = "/var/erisemail/cert/client.key";
+string CMailBase::m_client_ca_base = "/var/erisemail/cert/client";
 
 string CMailBase::m_ca_password = "";
 
@@ -429,6 +430,11 @@ BOOL CMailBase::LoadConfig()
 				strtrim(strEncoded);
 
 				Security::Decrypt(strEncoded.c_str(), strEncoded.length(), m_ca_password);
+			}
+            else if(strncasecmp(strline.c_str(), "ClientCABase", sizeof("ClientCABase") - 1) == 0)
+			{
+				strcut(strline.c_str(), "=", NULL, m_client_ca_base);
+				strtrim(m_client_ca_base);
 			}
 #ifdef _WITH_GSSAPI_              
             else if(strncasecmp(strline.c_str(), "KRB5_KTNAME", sizeof("KRB5_KTNAME") - 1) == 0)

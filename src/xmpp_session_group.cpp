@@ -63,7 +63,7 @@ BOOL Xmpp_Session_Group::Accept(int sockfd, SSL *ssl, SSL_CTX * ssl_ctx, const c
 }
 
 BOOL Xmpp_Session_Group::Connect(const char* hostname, unsigned short port, Service_Type st, StorageEngine* storage_engine, memory_cache* ch, memcached_st * memcached,
-    std::stack<string>& xmpp_stanza_stack, BOOL isXmppDialBack)
+    std::stack<string>& xmpp_stanza_stack, BOOL isXmppDialBack, CXmpp* pDependency)
 {
     char szPort[16];
     sprintf(szPort, "%d", port);
@@ -105,7 +105,7 @@ BOOL Xmpp_Session_Group::Connect(const char* hostname, unsigned short port, Serv
     }     
 
     freeaddrinfo(servinfo);
-    /* printf("ip: %s\n", realip); */
+    printf("IP: %s\n", realip);
     if(bFound == FALSE)
     {
         return FALSE;
@@ -152,9 +152,10 @@ BOOL Xmpp_Session_Group::Connect(const char* hostname, unsigned short port, Serv
     
     freeaddrinfo(server_addr);  
     
+    printf("isConnectOK: %s, sockfd: %d\n", isConnectOK ? "TRUE" : "FALSE", sockfd);
     if(isConnectOK == TRUE)
     {
-        Xmpp_Session_Info * pSessionInstance = new Xmpp_Session_Info(this, st, m_epoll_fd, sockfd, NULL, NULL, realip, storage_engine, memcached, FALSE, TRUE, hostname, isXmppDialBack);
+        Xmpp_Session_Info * pSessionInstance = new Xmpp_Session_Info(this, st, m_epoll_fd, sockfd, NULL, NULL, realip, storage_engine, memcached, FALSE, TRUE, hostname, isXmppDialBack, pDependency);
         if(!pSessionInstance)
             return FALSE;
         
@@ -236,14 +237,15 @@ BOOL Xmpp_Session_Group::Poll()
         }
         else if (m_events[i].events & EPOLLOUT)
         {
-            
             if(m_session_list.find(m_events[i].data.fd) != m_session_list.end() && m_session_list[m_events[i].data.fd])
             {
                 Xmpp_Session_Info * pSessionInstance = m_session_list[m_events[i].data.fd];
                 
-                if(!pSessionInstance->GetProtocol() || !pSessionInstance->CreateProtocol())
+                if(!pSessionInstance->GetProtocol())
                 {
-                    return FALSE;
+                    printf("EPOLLOUT: %d\n",m_events[i].data.fd);
+                    if(!pSessionInstance->CreateProtocol())
+                        return FALSE;
                 }
                 
                 pSessionInstance->GetProtocol()->ProtTryFlush();
