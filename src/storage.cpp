@@ -25,9 +25,9 @@ static void show_error(MYSQL *mysql, const char* sqlcmd, const char* tag = "", B
     }
     else
     {
-        CUplusTrace uTrace(ERISEMAIL_MYSQLERR_LOGNAME, ERISEMAIL_MYSQLERR_LCKNAME);
-    
-        uTrace.Write(Trace_Error, "%sMySQL error(%d) [%s] \"%s\" <%s>", tag, mysql_errno(mysql), mysql_sqlstate(mysql), mysql_error(mysql), sqlcmd);
+        CUplusTrace* t = new CUplusTrace(ERISEMAIL_MYSQLERR_LOGNAME, ERISEMAIL_MYSQLERR_LCKNAME);
+        t->Write(Trace_Error, "%sMySQL error(%d) [%s] \"%s\" <%s>", tag, mysql_errno(mysql), mysql_sqlstate(mysql), mysql_error(mysql), sqlcmd);
+        delete t;
     }
 }
 

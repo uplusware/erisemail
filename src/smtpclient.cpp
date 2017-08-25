@@ -13,15 +13,18 @@
 #include <netdb.h>
 #include "base.h"
 #include "util/general.h"
+#include "util/security.h"
 #include "smtpclient.h"
 
 
-SmtpClient::SmtpClient(int sockfd)
+SmtpClient::SmtpClient(int sockfd, const char* mx_server_name)
 {
-	m_sockfd = -1;
+	m_mx_server_name = mx_server_name;
 	m_sockfd = sockfd;
 	m_bStartTLS = FALSE;
 	m_bInTLS = FALSE;
+    m_ssl = NULL;
+    m_ssl_ctx = NULL;
 	m_lssl = NULL;
 	m_lsockfd = new linesock(sockfd);
 	char welstr[4096];
@@ -316,16 +319,66 @@ BOOL SmtpClient::Do_StartTLS_Command(string& strmsg)
 	char cmd[256];
 	sprintf(cmd,"STARTTLS\r\n");
 	if((SendCmd(m_sockfd,cmd,strlen(cmd)) == 0)&&(RecvReply(cmd, strmsg))&&((strncmp(cmd,"220",3) == 0)))
-	{
-		//Rollback to block mode
-		int flags = fcntl(m_sockfd, F_GETFL, 0); 
-		fcntl(m_sockfd, F_SETFL, flags & (~O_NONBLOCK));
+	{      
+        string ca_crt_root;
+        ca_crt_root = CMailBase::m_client_ca_base;
+        ca_crt_root += "/";
+        ca_crt_root += m_mx_server_name;
+        ca_crt_root += "/ca.crt";
         
-        if(connect_ssl(m_sockfd, NULL, NULL, NULL, NULL, &m_ssl, &m_ssl_ctx) == FALSE)
-            return FALSE;
-
-		flags = fcntl(m_sockfd, F_GETFL, 0); 
-		fcntl(m_sockfd, F_SETFL, flags | O_NONBLOCK); 
+        string ca_crt_client;
+        ca_crt_client = CMailBase::m_client_ca_base;
+        ca_crt_client += "/";
+        ca_crt_client += m_mx_server_name;
+        ca_crt_client += "/client.crt";
+        
+        string ca_key_client;
+        ca_key_client = CMailBase::m_client_ca_base;
+        ca_key_client += "/";
+        ca_key_client += m_mx_server_name;
+        ca_key_client += "/client.key";
+        
+        string ca_password_file;
+        ca_password_file = CMailBase::m_client_ca_base;
+        ca_password_file += "/";
+        ca_password_file += m_mx_server_name;
+        ca_password_file += "/client.pwd";
+        
+        struct stat file_stat;
+        if(stat(ca_crt_root.c_str(), &file_stat) == 0
+            && stat(ca_crt_client.c_str(), &file_stat) == 0
+            && stat(ca_key_client.c_str(), &file_stat) == 0
+            && stat(ca_password_file.c_str(), &file_stat) == 0)
+        {
+            string ca_password;
+            string strPwdEncoded;
+            ifstream ca_password_fd(ca_password_file.c_str(), ios_base::binary);
+            if(ca_password_fd.is_open())
+            {
+                getline(ca_password_fd, strPwdEncoded);
+                ca_password_fd.close();
+                strtrim(strPwdEncoded);
+            }
+            
+            Security::Decrypt(strPwdEncoded.c_str(), strPwdEncoded.length(), ca_password);
+                
+            if(connect_ssl(m_sockfd,
+                ca_crt_root.c_str(),
+                ca_crt_client.c_str(),
+                ca_password.c_str(),
+                ca_key_client.c_str(),
+                &m_ssl, &m_ssl_ctx) == FALSE)
+            {
+                return FALSE;
+            }
+        }
+        else
+        {
+            if(connect_ssl(m_sockfd, NULL, NULL, NULL, NULL, &m_ssl, &m_ssl_ctx) == FALSE)
+            {
+                return FALSE;
+            }
+        }
 
 		m_lssl = new linessl(m_sockfd, m_ssl);
 

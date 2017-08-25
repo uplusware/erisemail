@@ -5,8 +5,14 @@
 #ifndef _ENCRYPT_H_
 #define _ENCRYPT_H_
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "base64.h"
 #include "DES.h"
+
+#include <string>
+using namespace std;
 
 #define DEF_COOKIE_DES_KEY "THJ$%gty"
 

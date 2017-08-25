@@ -18,6 +18,22 @@ Session::Session(int sockfd, SSL *ssl, SSL_CTX * ssl_ctx, const char* clientip, 
 
 	m_storageEngine = storage_engine;
 	m_memcached = memcached_clone(NULL, memcached);
+    
+    if(m_is_ssl && (!m_ssl || !m_ssl_ctx))
+    {
+        if(!create_ssl(m_sockfd, 
+                CMailBase::m_ca_crt_root.c_str(),
+                CMailBase::m_ca_crt_server.c_str(),
+                CMailBase::m_ca_password.c_str(),
+                CMailBase::m_ca_key_server.c_str(),
+                CMailBase::m_enableclientcacheck,
+                &m_ssl, &m_ssl_ctx))
+        {
+            close(m_sockfd);
+            throw new string("Create SSL session error.");
+        }
+    }
+                
 }
 
 Session::~Session()

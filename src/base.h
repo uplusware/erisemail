@@ -1010,7 +1010,7 @@ public:
     virtual int ProtSendNoWait(char* buf, int len) { };
     virtual int ProtTryFlush() { };
     virtual char GetProtEndingChar() { return '\n'; };
-    
+    virtual BOOL TLSContinue() {};
     virtual BOOL IsKeepAlive() { return FALSE; }
     virtual BOOL IsEnabledKeepAlive() { return FALSE; }
 };

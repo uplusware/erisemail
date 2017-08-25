@@ -10,7 +10,7 @@
 class SmtpClient
 {
 public:
-	SmtpClient(int sockfd);
+	SmtpClient(int sockfd, const char* mx_server_name);
 	virtual~ SmtpClient();
 	
 	BOOL Do_Auth_Command(string& strmsg);
@@ -46,5 +46,6 @@ protected:
 	SSL_CTX* m_ssl_ctx;
 	BOOL m_bStartTLS;
 	BOOL m_bInTLS;
+    string m_mx_server_name;
 };
 #endif /* _SMTP_CLIENT_H */

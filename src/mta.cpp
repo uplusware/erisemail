@@ -338,7 +338,7 @@ static BOOL SendMail(MailStorage* mailStg, memcached_st * memcached,
 		return FALSE;
 	}
 	
-	SmtpClient* pClientSmtp =  new SmtpClient(transfer_sockfd);
+	SmtpClient* pClientSmtp =  new SmtpClient(transfer_sockfd, mxserver);
 	if(!pClientSmtp)
 		return FALSE;
 	

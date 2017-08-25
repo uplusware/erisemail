@@ -53,6 +53,8 @@ enum auth_steps
     AUTH_STEP_SUCCESS = 99
 };
 
+#define XMPP_MAX_STANZA_LENGTH  (1024*8)
+
 class xmpp_stanza
 {
 public:
@@ -85,7 +87,12 @@ public:
     {
       return m_xml_text.c_str();
     }
-
+    
+    int GetXmlTextLength()
+    {
+      return m_xml_text.length();
+    }
+    
     const char* GetFrom()
     {
       return m_from.c_str();
@@ -118,6 +125,14 @@ private:
 
 class Xmpp_Session_Info;
 
+enum TLSState
+{
+    TLSNone = 0,
+    TLSWantConnect,
+    TLSWantAccept,
+    TLSEstablished
+};
+
 class CXmpp : public CMailBase
 {
 public:
@@ -133,6 +148,7 @@ public:
     virtual int ProtRecvNoWait(char* buf, int len);
     virtual int ProtSendNoWait(const char* buf, int len);
     virtual int ProtTryFlush();
+    virtual BOOL TLSContinue();
     virtual BOOL ProtSendBufEmpty() { return m_send_buf.length() == 0 ? TRUE : FALSE; }
     virtual char GetProtEndingChar() { return '>'; };
     
@@ -161,7 +177,20 @@ protected:
     BOOL DbResultTag(TiXmlDocument* xmlDoc);
     BOOL DbVerifyTag(TiXmlDocument* xmlDoc);
 	BOOL ProceedTag(TiXmlDocument* xmlDoc);
+    BOOL UnknownTag(TiXmlDocument* xmlDoc);
 
+    BOOL SendOfflineMessage();
+    
+    BOOL TLSAccept(const char* ca_crt_root,
+        const char* ca_crt_server,
+        const char* ca_password,
+        const char* ca_key_server);
+    
+    BOOL TLSConnect(const char* ca_crt_root,
+        const char* ca_crt_client,
+        const char* ca_password,
+        const char* ca_key_client);
+    
 protected:
     Xmpp_Session_Info* m_sess_inf;
     int m_epoll_fd;
@@ -178,7 +207,9 @@ protected:
     BOOL m_bSTARTTLS;
 	SSL* m_ssl;
 	SSL_CTX* m_ssl_ctx;
-
+    
+    TLSState m_TLSState;
+    
     auth_method m_auth_method;
     auth_steps m_auth_step;
     
@@ -191,7 +222,7 @@ protected:
     string m_strDigitalMD5Response;
     
     //server to server session
-    BOOL m_is_svr2svr;
+    BOOL m_is_s2s_conn;
     string m_peer_domain_name;
     BOOL m_is_dialback_stream;
     CXmpp * m_dependency;
@@ -212,7 +243,7 @@ protected:
     xmpp_stanza * m_xmpp_stanza;
     string m_xml_declare;
     string m_xml_stream;
-    char m_stream_id[33];
+    char m_stream_id[512];
     unsigned int m_stream_count;
     int m_indent;
         

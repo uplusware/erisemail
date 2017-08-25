@@ -77,15 +77,24 @@ volatile unsigned int Service::m_static_thread_pool_size = 0;
 void Service::session_handler(Session_Arg* session_arg)
 {
 	Session* pSession = NULL;
-	pSession = new Session(session_arg->sockfd, session_arg->ssl, session_arg->ssl_ctx, session_arg->client_ip.c_str(), session_arg->svr_type, session_arg->is_ssl,
-        session_arg->storage_engine, session_arg->cache, session_arg->memcached);
-	if(pSession != NULL)
-	{
-		pSession->Process();
+    try {
+        pSession = new Session(session_arg->sockfd, session_arg->ssl, session_arg->ssl_ctx, session_arg->client_ip.c_str(), session_arg->svr_type, session_arg->is_ssl,
+            session_arg->storage_engine, session_arg->cache, session_arg->memcached);
+    
+        if(pSession != NULL)
+        {
+            pSession->Process();
 
-		delete pSession;
-	}
-    close_ssl(session_arg->ssl, session_arg->ssl_ctx);
+            delete pSession;
+        }
+    }
+    catch(string* e)
+    {
+        fprintf(stderr, "Exception: %s, %s:%d\n", e->c_str(), __FILE__, __LINE__);
+        delete e;
+    }
+    if(session_arg->is_ssl)
+        close_ssl(session_arg->ssl, session_arg->ssl_ctx);
 	close(session_arg->sockfd);
 }
 
@@ -456,21 +465,7 @@ int Service::create_client_session(CUplusTrace& uTrace, int& clt_sockfd, Service
         session_arg->storage_engine = m_storageEngine;
         SSL* ssl = NULL;
         SSL_CTX* ssl_ctx = NULL;
-        if(is_ssl)
-        {
-            if(!create_ssl(clt_sockfd, 
-                CMailBase::m_ca_crt_root.c_str(),
-                CMailBase::m_ca_crt_server.c_str(),
-                CMailBase::m_ca_password.c_str(),
-                CMailBase::m_ca_key_server.c_str(),
-                CMailBase::m_enableclientcacheck,
-                &ssl, &ssl_ctx))
-                {
-                    close(clt_sockfd);
-                    delete session_arg;
-                    return -1;
-                }
-        }
+        
         session_arg->ssl = ssl;
         session_arg->ssl_ctx = ssl_ctx;
         

@@ -1636,12 +1636,38 @@ void CMailSmtp::On_Saml_Handler(char* text)
 
 BOOL CMailSmtp::On_Helo_Handler(char* text)
 {
-	string client;
-	strcut(text, " ", "\r\n", client);
-    strtrim(client);
+	strcut(text, " ", "\r\n", m_helo_argument);
+    strtrim(m_helo_argument);
+    
+    if(m_enableclientcacheck && m_ssl)
+    {
+        X509* client_cert;
+        client_cert = SSL_get_peer_certificate(m_ssl);
+        if (client_cert != NULL)
+        {
+            X509_NAME * owner = X509_get_subject_name(client_cert);
+            const char * owner_buf = X509_NAME_oneline(owner, 0, 0);
+            
+            char commonName [1025];
+            commonName[1024] = '\0';
+            X509_NAME_get_text_by_NID(owner, NID_commonName, commonName, 1024);
+            
+            X509_free (client_cert);
+            
+            if(strcasecmp(commonName, m_helo_argument.c_str()) != 0)
+            {
+               return FALSE;
+            }
+        }
+        else
+        {
+            return FALSE;
+        }
+    }
+            
 	m_status = m_status|STATUS_HELOED;
-
-	if(Check_Helo_Domain((char*)client.c_str()))
+    
+	if(Check_Helo_Domain((char*)m_helo_argument.c_str()))
 	{
 		//m_status = m_status|STATUS_AUTHED;
 		On_Request_Okay_Handler();
@@ -1847,12 +1873,7 @@ void CMailSmtp::On_STARTTLS_Handler()
 	{
 		sprintf(cmd,"220 Ready to start TLS\r\n");
 		SmtpSend(cmd,strlen(cmd));
-	}
-
-    m_bSTARTTLS = TRUE;
-
-	int flags = fcntl(m_sockfd, F_GETFL, 0); 
-	fcntl(m_sockfd, F_SETFL, flags & (~O_NONBLOCK)); 
+	}   
 	
 	if(!create_ssl(m_sockfd, 
         m_ca_crt_root.c_str(),
@@ -1866,10 +1887,36 @@ void CMailSmtp::On_STARTTLS_Handler()
         return;
     }
 
-	flags = fcntl(m_sockfd, F_GETFL, 0); 
-	fcntl(m_sockfd, F_SETFL, flags | O_NONBLOCK);
-
 	m_lssl = new linessl(m_sockfd, m_ssl);
+    m_bSTARTTLS = TRUE; 
+    
+    if(m_enableclientcacheck && m_ssl && m_ssl_ctx)
+    {
+        X509* client_cert;
+        client_cert = SSL_get_peer_certificate(m_ssl);
+        if (client_cert != NULL)
+        {
+            X509_NAME * owner = X509_get_subject_name(client_cert);
+            const char * owner_buf = X509_NAME_oneline(owner, 0, 0);
+            
+            char commonName [1025];
+            commonName[1024] = '\0';
+            X509_NAME_get_text_by_NID(owner, NID_commonName, commonName, 1024);
+            
+            X509_free (client_cert);
+            
+            if(strcasecmp(commonName, m_helo_argument.c_str()) != 0)
+            {
+               throw new string("Not pass client CA verification.");
+               return;
+            }
+        }
+        else
+        {
+            throw new string("Not pass client CA verification.");
+            return;
+        }
+    }
 }
 
 BOOL CMailSmtp::Check_Helo_Domain(const char* domain)

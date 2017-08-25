@@ -35,12 +35,15 @@ Xmpp_Session_Group::~Xmpp_Session_Group()
 BOOL Xmpp_Session_Group::Accept(int sockfd, SSL *ssl, SSL_CTX * ssl_ctx, const char* clientip, Service_Type st, BOOL is_ssl,
         StorageEngine* storage_engine, memory_cache* ch, memcached_st * memcached)
 {
+    int flags = fcntl(sockfd, F_GETFL, 0);
+  	fcntl(sockfd, F_SETFL, flags | O_NONBLOCK);
+        
     Xmpp_Session_Info * pSessionInstance = new Xmpp_Session_Info(this, st, m_epoll_fd, sockfd, ssl, ssl_ctx, clientip, storage_engine, memcached, is_ssl);
     if(!pSessionInstance)
+    {
+        close(sockfd);
         return FALSE;
-    
-    if(!pSessionInstance->CreateProtocol())
-        return FALSE;
+    }
     
     struct epoll_event event;
     event.data.fd = sockfd;  
@@ -49,6 +52,14 @@ BOOL Xmpp_Session_Group::Accept(int sockfd, SSL *ssl, SSL_CTX * ssl_ctx, const c
     {  
         fprintf(stderr, "%s %u# epoll_ctl: %s\n", __FILE__, __LINE__, strerror(errno));
         delete pSessionInstance;
+        close(sockfd);
+        return FALSE;
+    }
+    
+    if(!pSessionInstance->CreateProtocol())
+    {
+        delete pSessionInstance;
+        close(sockfd);
         return FALSE;
     }
     
@@ -79,7 +90,7 @@ BOOL Xmpp_Session_Group::Connect(const char* hostname, unsigned short port, Serv
     hints.ai_family = AF_UNSPEC;
     hints.ai_flags = AI_CANONNAME; 
     
-    /* printf("getaddrinfo: %s\n", hostname); */
+    //printf("getaddrinfo: %s\n", hostname);
     if (getaddrinfo(hostname, NULL, &hints, &servinfo) != 0)
     {
         return FALSE;
@@ -105,9 +116,10 @@ BOOL Xmpp_Session_Group::Connect(const char* hostname, unsigned short port, Serv
     }     
 
     freeaddrinfo(servinfo);
-    printf("IP: %s\n", realip);
+
     if(bFound == FALSE)
     {
+        fprintf(stderr, "couldn't find ip for %s\n", hostname);
         return FALSE;
     }
     
@@ -152,12 +164,14 @@ BOOL Xmpp_Session_Group::Connect(const char* hostname, unsigned short port, Serv
     
     freeaddrinfo(server_addr);  
     
-    printf("isConnectOK: %s, sockfd: %d\n", isConnectOK ? "TRUE" : "FALSE", sockfd);
     if(isConnectOK == TRUE)
     {
         Xmpp_Session_Info * pSessionInstance = new Xmpp_Session_Info(this, st, m_epoll_fd, sockfd, NULL, NULL, realip, storage_engine, memcached, FALSE, TRUE, hostname, isXmppDialBack, pDependency);
         if(!pSessionInstance)
+        {
+            close(sockfd);
             return FALSE;
+        }
         
 		pSessionInstance->SetStanzaStack(xmpp_stanza_stack);
 		
@@ -168,6 +182,7 @@ BOOL Xmpp_Session_Group::Connect(const char* hostname, unsigned short port, Serv
         {  
             fprintf(stderr, "%s %u# epoll_ctl: %s\n", __FILE__, __LINE__, strerror(errno));
             delete pSessionInstance;
+            close(sockfd);
             return FALSE;
         }
         
@@ -180,6 +195,8 @@ BOOL Xmpp_Session_Group::Connect(const char* hostname, unsigned short port, Serv
         
         return TRUE;
     }
+    
+    return TRUE;
 }
 
 BOOL Xmpp_Session_Group::Poll()
@@ -195,9 +212,11 @@ BOOL Xmpp_Session_Group::Poll()
             if(m_session_list.find(m_events[i].data.fd) != m_session_list.end() && m_session_list[m_events[i].data.fd])
             {
                 Xmpp_Session_Info * pSessionInstance = m_session_list[m_events[i].data.fd];
+                
+                pSessionInstance->GetProtocol()->TLSContinue();
 
                 char szmsg[4096 + 1024 + 1];
-                
+                szmsg[0] = '\0';
                 std::size_t new_line;
                 int len = pSessionInstance->GetProtocol()->ProtRecvNoWait(szmsg, 4096 + 1024);
                 if( len > 0)
@@ -218,6 +237,18 @@ BOOL Xmpp_Session_Group::Poll()
                             pSessionInstance->RecvBuf() = pSessionInstance->RecvBuf().substr(new_line + 1, pSessionInstance->RecvBuf().length() - 1 - new_line);
                             if(!pSessionInstance->GetProtocol()->Parse((char*)str_left.c_str()))
                             {
+                                // destory the xmpp session
+                                struct epoll_event ev;
+                                ev.events = EPOLLOUT |  EPOLLIN | EPOLLHUP | EPOLLERR;
+                                ev.data.fd = m_events[i].data.fd;
+                                epoll_ctl(m_epoll_fd, EPOLL_CTL_DEL, m_events[i].data.fd, &ev);
+                                                
+                                if(m_session_list.find(m_events[i].data.fd) != m_session_list.end() && m_session_list[m_events[i].data.fd])
+                                {
+                                    delete m_session_list[m_events[i].data.fd];
+                                    m_session_list.erase(m_events[i].data.fd);
+                                }
+            
                                 break;
                             }
                         }
@@ -243,10 +274,11 @@ BOOL Xmpp_Session_Group::Poll()
                 
                 if(!pSessionInstance->GetProtocol())
                 {
-                    printf("EPOLLOUT: %d\n",m_events[i].data.fd);
                     if(!pSessionInstance->CreateProtocol())
                         return FALSE;
                 }
+                
+                pSessionInstance->GetProtocol()->TLSContinue();
                 
                 pSessionInstance->GetProtocol()->ProtTryFlush();
             }

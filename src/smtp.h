@@ -116,6 +116,7 @@ private:
 	DWORD m_status;
 	string m_clientip;
 	string m_clientdomain;
+    string m_helo_argument;
 	string m_username;
 	string m_password;
 	string m_mailfrom;

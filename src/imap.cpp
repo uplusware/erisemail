@@ -42,11 +42,12 @@ CMailImap::CMailImap(int sockfd, SSL * ssl, SSL_CTX * ssl_ctx, const char* clien
 	m_memcached = memcached;
 	
 	m_isSSL = isSSL;
+    
 	if(m_isSSL && m_ssl)
 	{
 		int flags = fcntl(m_sockfd, F_GETFL, 0); 
 		fcntl(m_sockfd, F_SETFL, flags | O_NONBLOCK); 
-
+        
 		m_lssl = new linessl(m_sockfd, m_ssl);
 	}
 	else
@@ -1968,13 +1969,7 @@ void CMailImap::On_STARTTLS(char* text)
 	{		
 		sprintf(cmd, "%s OK Begin TLS negotiation now\r\n", strTag.c_str());
 		ImapSend(cmd,strlen(cmd));
-	}
-
-    m_bSTARTTLS = TRUE;
-
-	int flags = fcntl(m_sockfd, F_GETFL, 0); 
-	fcntl(m_sockfd, F_SETFL, flags & (~O_NONBLOCK)); 
-	
+	}   
 	
     if(!create_ssl(m_sockfd, 
         m_ca_crt_root.c_str(),
@@ -1987,11 +1982,10 @@ void CMailImap::On_STARTTLS(char* text)
         throw new string(ERR_error_string(ERR_get_error(), NULL));
         return;
     }
-
-	flags = fcntl(m_sockfd, F_GETFL, 0); 
-	fcntl(m_sockfd, F_SETFL, flags | O_NONBLOCK); 
 	
 	m_lssl = new linessl(m_sockfd, m_ssl);
+    
+    m_bSTARTTLS = TRUE;
 }
 
 void CMailImap::On_X_atom(char* text)
@@ -4271,7 +4265,7 @@ void CMailImap::ParseCommand(const char* text, vector<string>& vDst)
 
 BOOL CMailImap::Parse(char* text)
 {
-	/* printf("%s", text); */
+	//printf("%s", text);
 	string strNotag;
 	strcut(text, " ", " ", strNotag);
 	
