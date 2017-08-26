@@ -13,7 +13,7 @@
 #include "util/sha.h"
 #include "util/security.h"
 #include "xmpp.h"
-#include "xmpp_session_group.h"
+#include "xmpp_sessions.h"
 
 
 static char CHAR_TBL[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890=/";

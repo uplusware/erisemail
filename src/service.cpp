@@ -18,7 +18,7 @@
 #include <queue>
 #include "letter.h"
 #include "mta.h"
-#include "xmpp_session_group.h"
+#include "xmpp_sessions.h"
 
 //extern int Run();
 
