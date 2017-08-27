@@ -136,8 +136,8 @@ enum TLSState
 class CXmpp : public CMailBase
 {
 public:
-	CXmpp(Xmpp_Session_Info* sess_inf, int epoll_fd, int sockfd, SSL * ssl, SSL_CTX * ssl_ctx, const char* clientip, StorageEngine* storage_engine, memcached_st * memcached,
-        BOOL isSSL = FALSE, BOOL s2s= FALSE, const char* pdn = "", BOOL isDialBackStream = FALSE, CXmpp* pDependency = NULL);
+	CXmpp(Xmpp_Session_Info* sess_inf, int epoll_fd, int sockfd, SSL * ssl, SSL_CTX * ssl_ctx, const char* clientip, unsigned short client_port, StorageEngine* storage_engine, memcached_st * memcached,
+        BOOL isSSL = FALSE, BOOL isClientRole= FALSE, const char* pdn = "", BOOL isDialBackStream = FALSE, CXmpp* pDependency = NULL);
 	virtual ~CXmpp();
 
     //virtual function
@@ -169,8 +169,8 @@ protected:
     BOOL StartTLSTag(TiXmlDocument* xmlDoc);
     BOOL PresenceTag(TiXmlDocument* xmlDoc);
     BOOL IqTag(TiXmlDocument* xmlDoc);
-    BOOL StreamStreamTag(TiXmlDocument* xmlDoc);
-    BOOL StreamFeaturesTag(TiXmlDocument* xmlDoc);
+    BOOL Stream_StreamTag(TiXmlDocument* xmlDoc);
+    BOOL Stream_FeaturesTag(TiXmlDocument* xmlDoc);
     BOOL MessageTag(TiXmlDocument* xmlDoc);
     BOOL AuthTag(TiXmlDocument* xmlDoc);
     BOOL SuccessTag(TiXmlDocument* xmlDoc);
@@ -201,6 +201,7 @@ protected:
     string m_send_buf;
     
 	string m_clientip;
+    unsigned short m_client_port;
 	DWORD m_status;
 
 	BOOL m_isSSL;
@@ -222,6 +223,7 @@ protected:
     string m_strDigitalMD5Response;
     
     //server to server session
+    BOOL m_is_client_role;
     BOOL m_is_s2s_conn;
     string m_peer_domain_name;
     BOOL m_is_dialback_stream;

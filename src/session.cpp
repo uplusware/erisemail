@@ -4,7 +4,7 @@
 */
 #include "session.h"
 
-Session::Session(int sockfd, SSL *ssl, SSL_CTX * ssl_ctx, const char* clientip, Service_Type st, BOOL is_ssl,
+Session::Session(int sockfd, SSL *ssl, SSL_CTX * ssl_ctx, const char* clientip, unsigned short client_port, Service_Type st, BOOL is_ssl,
     StorageEngine* storage_engine, memory_cache* ch, memcached_st * memcached)
 {
 	m_sockfd = sockfd;
@@ -12,6 +12,8 @@ Session::Session(int sockfd, SSL *ssl, SSL_CTX * ssl_ctx, const char* clientip, 
     m_ssl_ctx = ssl_ctx;
 
 	m_clientip = clientip;
+    m_client_port = client_port;
+    
 	m_st = st;
     m_is_ssl = is_ssl;
 	m_cache = ch;

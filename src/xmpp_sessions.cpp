@@ -32,13 +32,13 @@ Xmpp_Session_Group::~Xmpp_Session_Group()
         delete[] m_events;
 }
 
-BOOL Xmpp_Session_Group::Accept(int sockfd, SSL *ssl, SSL_CTX * ssl_ctx, const char* clientip, Service_Type st, BOOL is_ssl,
+BOOL Xmpp_Session_Group::Accept(int sockfd, SSL *ssl, SSL_CTX * ssl_ctx, const char* clientip, unsigned short client_port, Service_Type st, BOOL is_ssl,
         StorageEngine* storage_engine, memory_cache* ch, memcached_st * memcached)
 {
     int flags = fcntl(sockfd, F_GETFL, 0);
   	fcntl(sockfd, F_SETFL, flags | O_NONBLOCK);
         
-    Xmpp_Session_Info * pSessionInstance = new Xmpp_Session_Info(this, st, m_epoll_fd, sockfd, ssl, ssl_ctx, clientip, storage_engine, memcached, is_ssl);
+    Xmpp_Session_Info * pSessionInstance = new Xmpp_Session_Info(this, st, m_epoll_fd, sockfd, ssl, ssl_ctx, clientip, client_port, storage_engine, memcached, is_ssl);
     if(!pSessionInstance)
     {
         close(sockfd);
@@ -166,7 +166,7 @@ BOOL Xmpp_Session_Group::Connect(const char* hostname, unsigned short port, Serv
     
     if(isConnectOK == TRUE)
     {
-        Xmpp_Session_Info * pSessionInstance = new Xmpp_Session_Info(this, st, m_epoll_fd, sockfd, NULL, NULL, realip, storage_engine, memcached, FALSE, TRUE, hostname, isXmppDialBack, pDependency);
+        Xmpp_Session_Info * pSessionInstance = new Xmpp_Session_Info(this, st, m_epoll_fd, sockfd, NULL, NULL, realip, port, storage_engine, memcached, FALSE, TRUE, hostname, isXmppDialBack, pDependency);
         if(!pSessionInstance)
         {
             close(sockfd);

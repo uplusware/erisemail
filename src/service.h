@@ -41,6 +41,7 @@ typedef struct _session_arg_
 {
 	int sockfd;
 	string client_ip;
+    unsigned short client_port;
 	Service_Type svr_type;
     BOOL is_ssl;
     SSL * ssl;

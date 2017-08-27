@@ -63,6 +63,9 @@ unsigned short	CMailBase::m_httpsport = 8082;
 
 BOOL		CMailBase::m_enablexmpp = TRUE;
 unsigned short	CMailBase::m_xmppport = 5222;
+unsigned short	CMailBase::m_xmppsport = 5223;
+BOOL     CMailBase::m_enablexmppfederation = TRUE;
+unsigned short	CMailBase::m_xmpps2sport = 5269;
 unsigned int	CMailBase::m_encryptxmpp = XMPP_TLS_OPTIONAL; /* 0: Non-encrypted or TLS optional; 1: TLS required; 2: Old-SSL-based */
 unsigned int	CMailBase::m_xmpp_worker_thread_num = 8;
 string CMailBase::m_xmpp_federation_secret = "s3cr3tf0rd14lb4ck";
@@ -369,6 +372,27 @@ BOOL CMailBase::LoadConfig()
 				strcut(strline.c_str(), "=", NULL, xmppport );
 				strtrim(xmppport);
 				m_xmppport = atoi(xmppport.c_str());
+			}
+            else if(strncasecmp(strline.c_str(), "XMPPSPort", sizeof("XMPPSPort") - 1) == 0)
+			{
+				string xmppsport;
+				strcut(strline.c_str(), "=", NULL, xmppsport );
+				strtrim(xmppsport);
+				m_xmppsport = atoi(xmppsport.c_str());
+			}
+            else if(strncasecmp(strline.c_str(), "XMPPFederationEnable", sizeof("XMPPFederationEnable") - 1) == 0)
+			{
+				string XMPPFederationEnable;
+				strcut(strline.c_str(), "=", NULL, XMPPFederationEnable );
+				strtrim(XMPPFederationEnable);
+				m_enablexmppfederation= (strcasecmp(XMPPFederationEnable.c_str(), "yes")) == 0 ? TRUE : FALSE;
+			}
+            else if(strncasecmp(strline.c_str(), "XMPPSrvToSrvPort", sizeof("XMPPSrvToSrvPort") - 1) == 0)
+			{
+				string xmpps2sport;
+				strcut(strline.c_str(), "=", NULL, xmpps2sport );
+				strtrim(xmpps2sport);
+				m_xmpps2sport = atoi(xmpps2sport.c_str());
 			}
 			else if(strncasecmp(strline.c_str(), "XMPPFederationSecret", sizeof("XMPPFederationSecret") - 1) == 0)
 			{

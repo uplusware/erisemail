@@ -249,13 +249,26 @@ int Run()
 
         if(CMailBase::m_enablexmpp)
         {
-            service_param_t service_param;
-            service_param.st = stXMPP;
-            service_param.host_ip = CMailBase::m_hostip.c_str();
-            service_param.host_port = CMailBase::m_xmppport;
-            service_param.is_ssl = CMailBase::m_encryptxmpp == 2 ? TRUE : FALSE;
-            service_param.sockfd = -1;
-            xmpp_params.push_back(service_param);
+            //for jabber:client
+            service_param_t service_param1;
+            service_param1.st = stXMPP;
+            service_param1.host_ip = CMailBase::m_hostip.c_str();
+            service_param1.host_port = CMailBase::m_encryptxmpp == XMPP_OLDSSL_BASED ? CMailBase::m_xmppsport : CMailBase::m_xmppport;
+            service_param1.is_ssl = CMailBase::m_encryptxmpp == XMPP_OLDSSL_BASED ? TRUE : FALSE;
+            service_param1.sockfd = -1;
+            xmpp_params.push_back(service_param1);
+            
+            if(CMailBase::m_enablexmppfederation)
+            {
+                // for jabber:server
+                service_param_t service_param2;
+                service_param2.st = stXMPP;
+                service_param2.host_ip = CMailBase::m_hostip.c_str();
+                service_param2.host_port = CMailBase::m_xmpps2sport;
+                service_param2.is_ssl = FALSE;           
+                
+                xmpp_params.push_back(service_param2);
+            }
         }
 
         if(CMailBase::m_enablexmpp)

@@ -934,6 +934,9 @@ public:
 
     static BOOL		m_enablexmpp;
 	static unsigned short	m_xmppport;
+    static unsigned short	m_xmppsport;
+    static BOOL     m_enablexmppfederation;
+    static unsigned short	m_xmpps2sport;
     static unsigned int		m_encryptxmpp; //0: Non-encrypted or TLS optional; 1: TLS required; 2: SSL-based
     static unsigned int	m_xmpp_worker_thread_num;
     static string m_xmpp_federation_secret;

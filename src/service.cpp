@@ -78,7 +78,7 @@ void Service::session_handler(Session_Arg* session_arg)
 {
 	Session* pSession = NULL;
     try {
-        pSession = new Session(session_arg->sockfd, session_arg->ssl, session_arg->ssl_ctx, session_arg->client_ip.c_str(), session_arg->svr_type, session_arg->is_ssl,
+        pSession = new Session(session_arg->sockfd, session_arg->ssl, session_arg->ssl_ctx, session_arg->client_ip.c_str(), session_arg->client_port, session_arg->svr_type, session_arg->is_ssl,
             session_arg->storage_engine, session_arg->cache, session_arg->memcached);
     
         if(pSession != NULL)
@@ -154,8 +154,8 @@ void* Service::begin_thread_pool_handler(void* arg)
 			{
                 if(CMailBase::m_prod_type == PROD_INSTANT_MESSENGER)
                 {
-                    p_session_group->Accept(session_arg->sockfd, session_arg->ssl, session_arg->ssl_ctx, session_arg->client_ip.c_str(), session_arg->svr_type, session_arg->is_ssl,
-                        session_arg->storage_engine, session_arg->cache, session_arg->memcached);
+                    p_session_group->Accept(session_arg->sockfd, session_arg->ssl, session_arg->ssl_ctx, session_arg->client_ip.c_str(), session_arg->client_port,
+                    session_arg->svr_type, session_arg->is_ssl, session_arg->storage_engine, session_arg->cache, session_arg->memcached);
                 }
                 else
                 {
@@ -382,6 +382,8 @@ int Service::create_server_service(CUplusTrace& uTrace, const char* hostip, unsi
 
 int Service::create_client_session(CUplusTrace& uTrace, int& clt_sockfd, Service_Type st, BOOL is_ssl, struct sockaddr_storage& clt_addr, socklen_t clt_size)
 {
+    unsigned short client_port = 0;
+    
     struct sockaddr_in * v4_addr;
     struct sockaddr_in6 * v6_addr;
         
@@ -395,6 +397,7 @@ int Service::create_client_session(CUplusTrace& uTrace, int& clt_sockfd, Service
             return 0;
         }
         
+        client_port = ntohs(v4_addr->sin_port);
     }
     else if(clt_addr.ss_family == AF_INET6)
     {
@@ -404,7 +407,7 @@ int Service::create_client_session(CUplusTrace& uTrace, int& clt_sockfd, Service
             close(clt_sockfd);
             return 0;
         }
-        
+        client_port = ntohs(v6_addr->sin6_port);
     }
     
     string client_ip = szclientip;
@@ -458,6 +461,7 @@ int Service::create_client_session(CUplusTrace& uTrace, int& clt_sockfd, Service
         session_arg->sockfd = clt_sockfd;
         
         session_arg->client_ip = client_ip;
+        session_arg->client_port = client_port;
         session_arg->svr_type = st;
         session_arg->is_ssl = is_ssl;
         session_arg->cache = m_cache;
