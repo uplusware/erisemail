@@ -1500,7 +1500,7 @@ void CMailImap::On_Append(char* text)
 		}
 		else if(vecDest.size() == 5)
 		{
-			if(strlike("(*)", vecDest[3].c_str()))
+			if(strmatch("(*)", vecDest[3].c_str()))
 				strStatus = vecDest[3];
 			else
 				strDateTime = vecDest[3];
@@ -2253,9 +2253,9 @@ void CMailImap::Fetch(const char* szArg, BOOL isUID)
 					char* lbuf = Letter->Body(llen);
 					for(int i = 0 ;i < iLen; i++)
 					{
-						if(strlike("BODY.PEEK[*]", vItem[i].c_str()) == TRUE)
+						if(strmatch("BODY.PEEK[*]", vItem[i].c_str()) == TRUE)
 						{
-							if(strlike("BODY.PEEK[HEADER.FIELDS (*)]", vItem[i].c_str()) == TRUE)
+							if(strmatch("BODY.PEEK[HEADER.FIELDS (*)]", vItem[i].c_str()) == TRUE)
 							{								
 								string strHeaderFileds;
 								vector<string> vecHeaderFileds;
@@ -2289,7 +2289,7 @@ void CMailImap::Fetch(const char* szArg, BOOL isUID)
 								ImapSend(cmd, strlen(cmd));
 								ImapSend(strRespHeader.c_str(), strRespHeader.length());
 							}
-							else if(strlike("BODY.PEEK[HEADER.FIELDS.NOT (*)]", vItem[i].c_str()) == TRUE)
+							else if(strmatch("BODY.PEEK[HEADER.FIELDS.NOT (*)]", vItem[i].c_str()) == TRUE)
 							{								
 								string strHeaderFileds;
 								vector<string> vecHeaderFileds;
@@ -2401,7 +2401,7 @@ void CMailImap::Fetch(const char* szArg, BOOL isUID)
 									}
 								}
 							}
-							else if(strlike("BODY.PEEK[?*.MIME]", vItem[i].c_str()) == TRUE)
+							else if(strmatch("BODY.PEEK[?*.MIME]", vItem[i].c_str()) == TRUE)
 							{
 								if(i > 0 || isUID)
 									ImapSend( " ", 1);
@@ -2458,7 +2458,7 @@ void CMailImap::Fetch(const char* szArg, BOOL isUID)
 									ImapSend( cmd, strlen(cmd));
 								}
 							}
-							else if(strlike("BODY.PEEK[?*.TEXT]", vItem[i].c_str()) == TRUE)
+							else if(strmatch("BODY.PEEK[?*.TEXT]", vItem[i].c_str()) == TRUE)
 							{
 								if(i > 0 || isUID)
 									ImapSend( " ", 1);
@@ -2511,7 +2511,7 @@ void CMailImap::Fetch(const char* szArg, BOOL isUID)
 									ImapSend( cmd, strlen(cmd));
 								}
 							}
-							else if(strlike("BODY.PEEK[?*.HEADER]", vItem[i].c_str()) == TRUE)
+							else if(strmatch("BODY.PEEK[?*.HEADER]", vItem[i].c_str()) == TRUE)
 							{
 								if(i > 0 || isUID)
 									ImapSend( " ", 1);
@@ -2619,9 +2619,9 @@ void CMailImap::Fetch(const char* szArg, BOOL isUID)
 								}
 							}
 						}
-						else if(strlike("BODY[*]", vItem[i].c_str()) == TRUE)
+						else if(strmatch("BODY[*]", vItem[i].c_str()) == TRUE)
 						{
-							if(strlike("BODY[HEADER.FIELDS (*)]", vItem[i].c_str()) == TRUE)
+							if(strmatch("BODY[HEADER.FIELDS (*)]", vItem[i].c_str()) == TRUE)
 							{
 								string strHeaderFileds;
 								vector<string> vecHeaderFileds;
@@ -2657,7 +2657,7 @@ void CMailImap::Fetch(const char* szArg, BOOL isUID)
 								ImapSend(cmd, strlen(cmd));
 								ImapSend(strRespHeader.c_str(), strRespHeader.length());
 							}
-							else if(strlike("BODY[HEADER.FIELDS.NOT (*)]", vItem[i].c_str()) == TRUE)
+							else if(strmatch("BODY[HEADER.FIELDS.NOT (*)]", vItem[i].c_str()) == TRUE)
 							{
 								string strHeaderFileds;
 								vector<string> vecHeaderFileds;
@@ -2772,7 +2772,7 @@ void CMailImap::Fetch(const char* szArg, BOOL isUID)
 								}
 								
 							}
-							else if(strlike("BODY[?*.MIME]", vItem[i].c_str()) == TRUE)
+							else if(strmatch("BODY[?*.MIME]", vItem[i].c_str()) == TRUE)
 							{									
 								if(i > 0 || isUID)
 									ImapSend( " ", 1);							
@@ -2824,7 +2824,7 @@ void CMailImap::Fetch(const char* szArg, BOOL isUID)
 									ImapSend( cmd, strlen(cmd));
 								}
 							}
-							else if(strlike("BODY[?*.TEXT]", vItem[i].c_str()) == TRUE)
+							else if(strmatch("BODY[?*.TEXT]", vItem[i].c_str()) == TRUE)
 							{
 								if(i > 0 || isUID)
 									ImapSend( " ", 1);
@@ -2878,7 +2878,7 @@ void CMailImap::Fetch(const char* szArg, BOOL isUID)
 									ImapSend( cmd, strlen(cmd));
 								}
 							}
-							else if(strlike("BODY[?*.HEADER]", vItem[i].c_str()) == TRUE)
+							else if(strmatch("BODY[?*.HEADER]", vItem[i].c_str()) == TRUE)
 							{
 								if(i > 0 || isUID)
 									ImapSend( " ", 1);
@@ -3007,9 +3007,9 @@ void CMailImap::Fetch(const char* szArg, BOOL isUID)
 							}
 						}
 						else if(
-							strlike("BODY.PEEK[]<*.*>", vItem[i].c_str())||
-							strlike("BODY[]<*.*>", vItem[i].c_str())||
-							strlike("BODY<*.*>", vItem[i].c_str())
+							strmatch("BODY.PEEK[]<*.*>", vItem[i].c_str())||
+							strmatch("BODY[]<*.*>", vItem[i].c_str())||
+							strmatch("BODY<*.*>", vItem[i].c_str())
 							)
 						{
 							if(i > 0 || isUID)
@@ -4550,7 +4550,7 @@ void CMailImap::ParseSearch(const char* text, vector<Search_Item>& vDst)
 
 void CMailImap::SearchRecv(const char* szTag, const char* szCmd, string & strsearch)
 {
-	if(strlike("*{*}\r\n", strsearch.c_str()))
+	if(strmatch("*{*}\r\n", strsearch.c_str()))
 	{
 		char cmd[1024];
 		sprintf(cmd, "%s OK %s Completed\r\n", szTag, szCmd);
@@ -4712,7 +4712,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 								int llen = 0;
 								char* lbuf = Letter->Body(llen);
 								string bcc = Letter->GetSummary()->m_header->GetBcc()->m_strfiled;
-								string condition = strlike("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
+								string condition = strmatch("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
 								if(bcc.find(condition.c_str(), 0,condition.length()) == string::npos)
 								{
 									vSearchResult[m_maillisttbl[y].mid] = 1;
@@ -4736,7 +4736,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 								int llen = 0;
 								char* lbuf = Letter->Body(llen);
 								string bcc = Letter->GetSummary()->m_header->GetBcc()->m_strfiled;
-								string condition = strlike("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
+								string condition = strmatch("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
 								if(bcc.find(condition.c_str(), 0,condition.length()) != string::npos)
 								{
 									vSearchResult[m_maillisttbl[y].mid] = 1;
@@ -4762,7 +4762,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 								int llen = 0;
 								char* lbuf = Letter->Body(llen);
 								string bcc = Letter->GetSummary()->m_header->GetBcc()->m_strfiled;
-								string condition = strlike("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
+								string condition = strmatch("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
 								if(bcc.find(condition.c_str(), 0,condition.length()) != string::npos)
 								{
 									vSearchResult[m_maillisttbl[y].mid] = 0;
@@ -4787,7 +4787,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 								int llen = 0;
 								char* lbuf = Letter->Body(llen);
 								string bcc = Letter->GetSummary()->m_header->GetBcc()->m_strfiled;
-								string condition = strlike("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
+								string condition = strmatch("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
 								if(bcc.find(condition.c_str(), 0,condition.length()) == string::npos)
 								{
 									vSearchResult[m_maillisttbl[y].mid] = 0;
@@ -4944,7 +4944,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 								int llen = 0;
 								char* lbuf = Letter->Body(llen);
 								string cc = Letter->GetSummary()->m_header->GetCc()->m_strfiled;
-								string condition = strlike("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
+								string condition = strmatch("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
 								if(cc.find(condition.c_str(), 0,condition.length()) == string::npos)
 								{
 									vSearchResult[m_maillisttbl[y].mid] = 1;
@@ -4968,7 +4968,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 								int llen = 0;
 								char* lbuf = Letter->Body(llen);
 								string cc = Letter->GetSummary()->m_header->GetCc()->m_strfiled;
-								string condition = strlike("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
+								string condition = strmatch("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
 								if(cc.find(condition.c_str(), 0,condition.length()) != string::npos)
 								{
 									vSearchResult[m_maillisttbl[y].mid] = 1;
@@ -4994,7 +4994,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 								int llen = 0;
 								char* lbuf = Letter->Body(llen);
 								string cc = Letter->GetSummary()->m_header->GetCc()->m_strfiled;
-								string condition = strlike("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
+								string condition = strmatch("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
 								if(cc.find(condition.c_str(), 0,condition.length()) != string::npos)
 								{
 									vSearchResult[m_maillisttbl[y].mid] = 0;
@@ -5019,7 +5019,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 								int llen = 0;
 								char* lbuf = Letter->Body(llen);
 								string cc = Letter->GetSummary()->m_header->GetCc()->m_strfiled;
-								string condition = strlike("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
+								string condition = strmatch("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
 								if(cc.find(condition.c_str(), 0,condition.length()) == string::npos)
 								{
 									vSearchResult[m_maillisttbl[y].mid] = 0;
@@ -5191,7 +5191,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 				{
 					if(bIsNot == TRUE)
 					{
-						if(strlike("{*}", vItem[i+1].item.c_str()))
+						if(strmatch("{*}", vItem[i+1].item.c_str()))
 						{
 							for(int y = 0; y < listtbllen; y++)
 							{
@@ -5204,7 +5204,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 									int llen = 0;
 									char* lbuf = Letter->Body(llen);
 									string subject = Letter->GetSummary()->m_header->GetDecodedSubject();
-									string condition = strlike("\"*\"", vItem[i+2].item.c_str()) ? vItem[i+2].item.substr(1, vItem[i+2].item.length() - 2) : vItem[i+2].item;
+									string condition = strmatch("\"*\"", vItem[i+2].item.c_str()) ? vItem[i+2].item.substr(1, vItem[i+2].item.length() - 2) : vItem[i+2].item;
 									if(subject.find(condition.c_str(), 0, condition.length()) == string::npos)
 									{
 										vSearchResult[m_maillisttbl[y].mid] = 1;
@@ -5228,7 +5228,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 									int llen = 0;
 									char* lbuf = Letter->Body(llen);
 									string subject = Letter->GetSummary()->m_header->GetDecodedSubject();
-									string condition = strlike("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
+									string condition = strmatch("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
 									if(subject.find(condition.c_str(), 0, condition.length()) == string::npos)
 									{
 										vSearchResult[m_maillisttbl[y].mid] = 1;
@@ -5243,7 +5243,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 					}
 					else
 					{
-						if(strlike("{*}", vItem[i+1].item.c_str()))
+						if(strmatch("{*}", vItem[i+1].item.c_str()))
 						{
 							for(int y = 0; y < listtbllen; y++)
 							{
@@ -5256,7 +5256,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 									int llen = 0;
 									char* lbuf = Letter->Body(llen);
 									string subject = Letter->GetSummary()->m_header->GetDecodedSubject();
-									string condition = strlike("\"*\"", vItem[i+2].item.c_str()) ? vItem[i+2].item.substr(1, vItem[i+2].item.length() - 2) : vItem[i+2].item;
+									string condition = strmatch("\"*\"", vItem[i+2].item.c_str()) ? vItem[i+2].item.substr(1, vItem[i+2].item.length() - 2) : vItem[i+2].item;
 									if(subject.find(condition.c_str(), 0, condition.length()) != string::npos)
 									{
 										vSearchResult[m_maillisttbl[y].mid] = 1;
@@ -5280,7 +5280,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 									int llen = 0;
 									char* lbuf = Letter->Body(llen);
 									string subject = Letter->GetSummary()->m_header->GetDecodedSubject();
-									string condition = strlike("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
+									string condition = strmatch("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
 									if(subject.find(condition.c_str(), 0, condition.length()) != string::npos)
 									{
 										vSearchResult[m_maillisttbl[y].mid] = 1;
@@ -5297,7 +5297,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 				{
 					if(bIsNot == TRUE)
 					{
-						if(strlike("{*}", vItem[i+1].item.c_str()))
+						if(strmatch("{*}", vItem[i+1].item.c_str()))
 						{
 							for(int y = 0; y < listtbllen; y++)
 							{
@@ -5310,7 +5310,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 									int llen = 0;
 									char* lbuf = Letter->Body(llen);
 									string subject = Letter->GetSummary()->m_header->GetDecodedSubject();
-									string condition = strlike("\"*\"", vItem[i+2].item.c_str()) ? vItem[i+2].item.substr(1, vItem[i+2].item.length() - 2) : vItem[i+2].item;
+									string condition = strmatch("\"*\"", vItem[i+2].item.c_str()) ? vItem[i+2].item.substr(1, vItem[i+2].item.length() - 2) : vItem[i+2].item;
 									if(subject.find(condition.c_str(), 0, condition.length()) != string::npos)
 									{
 										vSearchResult[m_maillisttbl[y].mid] = 0;
@@ -5334,7 +5334,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 									int llen = 0;
 									char* lbuf = Letter->Body(llen);
 									string subject = Letter->GetSummary()->m_header->GetDecodedSubject();
-									string condition = strlike("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
+									string condition = strmatch("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
 									if(subject.find(condition.c_str(), 0, condition.length()) != string::npos)
 									{
 										vSearchResult[m_maillisttbl[y].mid] = 0;
@@ -5349,7 +5349,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 					}
 					else
 					{
-						if(strlike("{*}", vItem[i+1].item.c_str()))
+						if(strmatch("{*}", vItem[i+1].item.c_str()))
 						{
 							for(int y = 0; y < listtbllen; y++)
 							{
@@ -5362,7 +5362,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 									int llen = 0;
 									char* lbuf = Letter->Body(llen);
 									string subject = Letter->GetSummary()->m_header->GetDecodedSubject();
-									string condition = strlike("\"*\"", vItem[i+2].item.c_str()) ? vItem[i+2].item.substr(1, vItem[i+2].item.length() - 2) : vItem[i+2].item;
+									string condition = strmatch("\"*\"", vItem[i+2].item.c_str()) ? vItem[i+2].item.substr(1, vItem[i+2].item.length() - 2) : vItem[i+2].item;
 									if(subject.find(condition.c_str(), 0, condition.length()) == string::npos)
 									{
 										vSearchResult[m_maillisttbl[y].mid] = 0;
@@ -5386,7 +5386,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 									int llen = 0;
 									char* lbuf = Letter->Body(llen);
 									string subject = Letter->GetSummary()->m_header->GetDecodedSubject();
-									string condition = strlike("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
+									string condition = strmatch("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
 									if(subject.find(condition.c_str(), 0, condition.length()) == string::npos)
 									{
 										vSearchResult[m_maillisttbl[y].mid] = 0;
@@ -6274,7 +6274,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 								int llen = 0;
 								char* lbuf = Letter->Body(llen);
 								string from = Letter->GetSummary()->m_header->GetFrom()->m_strfiled;
-								string condition = strlike("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
+								string condition = strmatch("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
 								if(from.find(condition.c_str(), 0,condition.length()) == string::npos)
 								{
 									vSearchResult[m_maillisttbl[y].mid] = 1;
@@ -6298,7 +6298,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 								int llen = 0;
 								char* lbuf = Letter->Body(llen);
 								string from = Letter->GetSummary()->m_header->GetFrom()->m_strfiled;
-								string condition = strlike("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
+								string condition = strmatch("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
 								if(from.find(condition.c_str(), 0,condition.length()) != string::npos)
 								{
 									vSearchResult[m_maillisttbl[y].mid] = 1;
@@ -6324,7 +6324,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 								int llen = 0;
 								char* lbuf = Letter->Body(llen);
 								string from = Letter->GetSummary()->m_header->GetFrom()->m_strfiled;
-								string condition = strlike("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
+								string condition = strmatch("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
 								if(from.find(condition.c_str(), 0,condition.length()) != string::npos)
 								{
 									vSearchResult[m_maillisttbl[y].mid] = 0;
@@ -6349,7 +6349,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 								int llen = 0;
 								char* lbuf = Letter->Body(llen);
 								string from = Letter->GetSummary()->m_header->GetFrom()->m_strfiled;
-								string condition = strlike("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
+								string condition = strmatch("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
 								if(from.find(condition.c_str(), 0,condition.length()) == string::npos)
 								{
 									vSearchResult[m_maillisttbl[y].mid] = 0;
@@ -6404,7 +6404,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 								int llen = 0;
 								char* lbuf = Letter->Body(llen);
 								string to = Letter->GetSummary()->m_header->GetTo()->m_strfiled;
-								string condition = strlike("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
+								string condition = strmatch("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
 								if(to.find(condition.c_str(), 0,condition.length()) == string::npos)
 								{
 									vSearchResult[m_maillisttbl[y].mid] = 1;
@@ -6428,7 +6428,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 								int llen = 0;
 								char* lbuf = Letter->Body(llen);
 								string to = Letter->GetSummary()->m_header->GetTo()->m_strfiled;
-								string condition = strlike("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
+								string condition = strmatch("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
 								if(to.find(condition.c_str(), 0,condition.length()) != string::npos)
 								{
 									vSearchResult[m_maillisttbl[y].mid] = 1;
@@ -6454,7 +6454,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 								int llen = 0;
 								char* lbuf = Letter->Body(llen);
 								string to = Letter->GetSummary()->m_header->GetTo()->m_strfiled;
-								string condition = strlike("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
+								string condition = strmatch("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
 								if(to.find(condition.c_str(), 0,condition.length()) != string::npos)
 								{
 									vSearchResult[m_maillisttbl[y].mid] = 0;
@@ -6479,7 +6479,7 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 								int llen = 0;
 								char* lbuf = Letter->Body(llen);
 								string to = Letter->GetSummary()->m_header->GetTo()->m_strfiled;
-								string condition = strlike("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
+								string condition = strmatch("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
 								if(to.find(condition.c_str(), 0,condition.length()) == string::npos)
 								{
 									vSearchResult[m_maillisttbl[y].mid] = 0;

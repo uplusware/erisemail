@@ -419,7 +419,7 @@ static BOOL RelayMail(MailStorage* mailStg, memcached_st * memcached, int mid, c
 {
 	string svraddr;
 	strcut(rcpt_to, "@", NULL, svraddr);
-	vector<Mx_List> list;
+	vector<DNSQry_List> list;
 	udpdns dns(CMailBase::m_dns_server.c_str());
 
 	int y;
@@ -432,9 +432,9 @@ static BOOL RelayMail(MailStorage* mailStg, memcached_st * memcached, int mid, c
 	
 	if(y >= 5)
 	{
-		Mx_List ml;
+		DNSQry_List ml;
 		strcpy(ml.address, svraddr.c_str());
-		ml.level = 0;
+		ml.priority = 0;
 		list.push_back(ml);
 	}
 	errormsg = "";

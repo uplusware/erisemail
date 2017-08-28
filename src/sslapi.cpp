@@ -158,20 +158,6 @@ BOOL create_ssl(int sockfd,
 		client_cert = SSL_get_peer_certificate(*pp_ssl);
 		if (client_cert != NULL)
 		{
-            /*X509_NAME * issuer = X509_get_issuer_name(client_cert);
-            const char * issuer_buf = X509_NAME_oneline(issuer, 0, 0);
-            printf("ca issuer: %s\n", issuer_buf);
-            
-           
-            
-            X509_NAME * owner = X509_get_subject_name(client_cert);
-            const char * owner_buf = X509_NAME_oneline(owner, 0, 0);
-            
-            char commonName [512];
-            X509_NAME_get_text_by_NID(owner, NID_commonName, commonName, 512);
-            
-            printf("ca owner: %s [%s]\n", owner_buf, commonName);*/
-            
 			X509_free (client_cert);
 		}
 		else

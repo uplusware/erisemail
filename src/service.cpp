@@ -418,7 +418,7 @@ int Service::create_client_session(CUplusTrace& uTrace, int& clt_sockfd, Service
         access_result = FALSE;
         for(int x = 0; x < CMailBase::m_permit_list.size(); x++)
         {
-            if(strlike(CMailBase::m_permit_list[x].c_str(), client_ip.c_str()) == TRUE)
+            if(strmatch(CMailBase::m_permit_list[x].c_str(), client_ip.c_str()) == TRUE)
             {
                 access_result = TRUE;
                 break;
@@ -427,7 +427,7 @@ int Service::create_client_session(CUplusTrace& uTrace, int& clt_sockfd, Service
         
         for(int x = 0; x < CMailBase::m_reject_list.size(); x++)
         {
-            if( (strlike(CMailBase::m_reject_list[x].ip.c_str(), (char*)client_ip.c_str()) == TRUE) 
+            if( (strmatch(CMailBase::m_reject_list[x].ip.c_str(), (char*)client_ip.c_str()) == TRUE) 
                && (time(NULL) < CMailBase::m_reject_list[x].expire) )
             {
                 access_result = FALSE;
@@ -440,7 +440,7 @@ int Service::create_client_session(CUplusTrace& uTrace, int& clt_sockfd, Service
         access_result = TRUE;
         for(int x = 0; x < CMailBase::m_reject_list.size(); x++)
         {
-            if( (strlike(CMailBase::m_reject_list[x].ip.c_str(), (char*)client_ip.c_str()) == TRUE)
+            if( (strmatch(CMailBase::m_reject_list[x].ip.c_str(), (char*)client_ip.c_str()) == TRUE)
                 && (time(NULL) < CMailBase::m_reject_list[x].expire) )
             {
                 access_result = FALSE;

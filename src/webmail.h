@@ -882,7 +882,7 @@ public:
 		BOOL access_result = FALSE;
 		for(int x = 0; x < CMailBase::m_webadmin_list.size(); x++)
 		{
-			if(strlike(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
+			if(strmatch(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
 			{
 				access_result = TRUE;
 				break;
@@ -1039,7 +1039,7 @@ public:
 		BOOL access_result = FALSE;
 		for(int x = 0; x < CMailBase::m_webadmin_list.size(); x++)
 		{
-			if(strlike(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
+			if(strmatch(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
 			{
 				access_result = TRUE;
 				break;
@@ -1197,7 +1197,7 @@ public:
 		BOOL access_result = FALSE;
 		for(int x = 0; x < CMailBase::m_webadmin_list.size(); x++)
 		{
-			if(strlike(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
+			if(strmatch(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
 			{
 				access_result = TRUE;
 				break;
@@ -1366,7 +1366,7 @@ public:
 		BOOL access_result = FALSE;
 		for(int x = 0; x < CMailBase::m_webadmin_list.size(); x++)
 		{
-			if(strlike(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
+			if(strmatch(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
 			{
 				access_result = TRUE;
 				break;
@@ -1530,7 +1530,7 @@ public:
 		BOOL access_result = FALSE;
 		for(int x = 0; x < CMailBase::m_webadmin_list.size(); x++)
 		{
-			if(strlike(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
+			if(strmatch(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
 			{
 				access_result = TRUE;
 				break;
@@ -1686,7 +1686,7 @@ public:
 		BOOL access_result = FALSE;
 		for(int x = 0; x < CMailBase::m_webadmin_list.size(); x++)
 		{
-			if(strlike(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
+			if(strmatch(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
 			{
 				access_result = TRUE;
 				break;
@@ -1874,7 +1874,7 @@ public:
 		BOOL access_result = FALSE;
 		for(int x = 0; x < CMailBase::m_webadmin_list.size(); x++)
 		{
-			if(strlike(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
+			if(strmatch(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
 			{
 				access_result = TRUE;
 				break;
@@ -2032,7 +2032,7 @@ public:
 		BOOL access_result = FALSE;
 		for(int x = 0; x < CMailBase::m_webadmin_list.size(); x++)
 		{
-			if(strlike(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
+			if(strmatch(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
 			{
 				access_result = TRUE;
 				break;
@@ -2190,7 +2190,7 @@ public:
 		BOOL access_result = FALSE;
 		for(int x = 0; x < CMailBase::m_webadmin_list.size(); x++)
 		{
-			if(strlike(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
+			if(strmatch(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
 			{
 				access_result = TRUE;
 				break;
@@ -2375,7 +2375,7 @@ public:
 		BOOL access_result = FALSE;
 		for(int x = 0; x < CMailBase::m_webadmin_list.size(); x++)
 		{
-			if(strlike(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
+			if(strmatch(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
 			{
 				access_result = TRUE;
 				break;
@@ -3897,7 +3897,7 @@ public:
 		BOOL access_result = FALSE;
 		for(int x = 0; x < CMailBase::m_webadmin_list.size(); x++)
 		{
-			if(strlike(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
+			if(strmatch(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
 			{
 				access_result = TRUE;
 				break;
@@ -4598,12 +4598,12 @@ public:
 				string mailaddr = toAddr[i];
 				strtrim(mailaddr);
 					
-				if(!strlike("*?@?*",mailaddr.c_str()))
+				if(!strmatch("*?@?*",mailaddr.c_str()))
 				{
 					continue;	
 				}
 				
-				if(strlike("*<*@*>*",mailaddr.c_str()))
+				if(strmatch("*<*@*>*",mailaddr.c_str()))
 				{
 					fnfy_strcut(mailaddr.c_str(), "<", " \t\r\n;,", " \t\r\n>;,", mailaddr);
 				}
@@ -4667,12 +4667,12 @@ public:
 			{
 				string mailaddr = allAddr[i];
 				
-				if(!strlike("*?@?*",mailaddr.c_str()))
+				if(!strmatch("*?@?*",mailaddr.c_str()))
 				{
 					continue;
 				}
 				
-				if(strlike("*<*@*>*",mailaddr.c_str()))
+				if(strmatch("*<*@*>*",mailaddr.c_str()))
 				{
 					fnfy_strcut(mailaddr.c_str(), "<", " \t\r\n;,", " \t\r\n>;,", mailaddr);
 				}
@@ -6071,7 +6071,7 @@ public:
 		BOOL access_result = FALSE;
 		for(int x = 0; x < CMailBase::m_webadmin_list.size(); x++)
 		{
-			if(strlike(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
+			if(strmatch(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
 			{
 				access_result = TRUE;
 				break;
@@ -6237,7 +6237,7 @@ public:
 		BOOL access_result = FALSE;
 		for(int x = 0; x < CMailBase::m_webadmin_list.size(); x++)
 		{
-			if(strlike(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
+			if(strmatch(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
 			{
 				access_result = TRUE;
 				break;
@@ -6965,7 +6965,7 @@ public:
 		BOOL access_result = FALSE;
 		for(int x = 0; x < CMailBase::m_webadmin_list.size(); x++)
 		{
-			if(strlike(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
+			if(strmatch(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
 			{
 				access_result = TRUE;
 				break;
@@ -8452,7 +8452,7 @@ public:
 		BOOL access_result = FALSE;
 		for(int x = 0; x < CMailBase::m_webadmin_list.size(); x++)
 		{
-			if(strlike(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
+			if(strmatch(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
 			{
 				access_result = TRUE;
 				break;
@@ -9600,7 +9600,7 @@ public:
 		BOOL access_result = FALSE;
 		for(int x = 0; x < CMailBase::m_webadmin_list.size(); x++)
 		{
-			if(strlike(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
+			if(strmatch(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
 			{
 				access_result = TRUE;
 				break;
@@ -9881,7 +9881,7 @@ public:
 		BOOL access_result = FALSE;
 		for(int x = 0; x < CMailBase::m_webadmin_list.size(); x++)
 		{
-			if(strlike(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
+			if(strmatch(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
 			{
 				access_result = TRUE;
 				break;
@@ -10162,7 +10162,7 @@ public:
 		BOOL access_result = FALSE;
 		for(int x = 0; x < CMailBase::m_webadmin_list.size(); x++)
 		{
-			if(strlike(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
+			if(strmatch(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
 			{
 				access_result = TRUE;
 				break;
@@ -10283,7 +10283,7 @@ public:
 					}
 					else
 					{
-						if(strlike(dirp->d_name, "*.log") == 0)
+						if(strmatch(dirp->d_name, "*.log") == 0)
 						{
 							string strpath = "/var/log/erisemail/";
 							strpath += dirp->d_name;
@@ -10347,7 +10347,7 @@ public:
 		BOOL access_result = FALSE;
 		for(int x = 0; x < CMailBase::m_webadmin_list.size(); x++)
 		{
-			if(strlike(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
+			if(strmatch(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
 			{
 				access_result = TRUE;
 				break;
@@ -10444,7 +10444,7 @@ public:
 			string strLogName;
 			m_session->parse_urlencode_value("LOG_NAME", strLogName);
 			
-			if(strlike("*.log", strLogName.c_str())   && strstr(strLogName.c_str(), "\\") == NULL && strstr(strLogName.c_str(), "/") == NULL && strstr(strLogName.c_str(), "../") == NULL && strstr(strLogName.c_str(), "..\\") == NULL)
+			if(strmatch("*.log", strLogName.c_str())   && strstr(strLogName.c_str(), "\\") == NULL && strstr(strLogName.c_str(), "/") == NULL && strstr(strLogName.c_str(), "../") == NULL && strstr(strLogName.c_str(), "..\\") == NULL)
 			{
 				string strPath = "/var/log/erisemail/";
 				strPath += strLogName;
@@ -10531,7 +10531,7 @@ public:
 		BOOL access_result = FALSE;
 		for(int x = 0; x < CMailBase::m_webadmin_list.size(); x++)
 		{
-			if(strlike(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
+			if(strmatch(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
 			{
 				access_result = TRUE;
 				break;

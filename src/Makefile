@@ -8,7 +8,7 @@ OBJJKS = antispam.o
 
 EXESVR = erisemaild
 OBJSVR = mainsrv.o sslapi.o service.o session.o xmpp_sessions.o base.o smtp.o pop.o imap.o xmpp.o calendar.o \
-	letter.o smtpclient.o mime.o mta.o fstring.o http.o email.o webmail.o cache.o stgengine.o pool.o postnotify.o \
+	letter.o smtpclient.o mime.o mta.o fstring.o http.o dns.o email.o webmail.o cache.o stgengine.o pool.o postnotify.o \
 	util/md5.o	\
 	util/DES.o	\
 	util/escape.o	\

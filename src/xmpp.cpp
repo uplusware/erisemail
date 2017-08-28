@@ -14,7 +14,7 @@
 #include "util/security.h"
 #include "xmpp.h"
 #include "xmpp_sessions.h"
-
+#include "dns.h"
 
 static char CHAR_TBL[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890=/";
 
@@ -784,8 +784,32 @@ BOOL CXmpp::Parse(char* text)
 				std::stack<string> msg_stack;
 				msg_stack.push(xml_printer.CStr());
                 
-                GetSessionInfo()->Connect(strToDomain.c_str(), CMailBase::m_xmpps2sport, stXMPP, m_storageEngine, NULL, m_memcached,
-					msg_stack, FALSE, this);
+                vector<DNSQry_List> list;
+                
+                udpdns dns(CMailBase::m_dns_server.c_str());
+                
+                string xmpp_server = "_xmpp-server._tcp.";
+                xmpp_server += strToDomain.c_str();
+
+                dns.srvquery(xmpp_server.c_str(), list);
+                
+                
+                DNSQry_List default_srv;
+                strcpy(default_srv.address, strToDomain.c_str());
+                default_srv.priority = 0;
+                default_srv.port = CMailBase::m_xmpps2sport;
+                default_srv.ttl = 900;
+                list.push_back(default_srv);
+                BOOL bConnected = FALSE;
+                for(int m = 0; m < list.size(); m++)
+                {
+                    if(GetSessionInfo()->Connect(list[m].address, list[m].port, stXMPP, m_storageEngine, NULL, m_memcached,
+                        msg_stack, FALSE, this))
+                    {
+                        bConnected = TRUE;
+                        break;
+                    }
+                }
             }
             pthread_rwlock_unlock(&m_srv2srv_list_lock);
 			
@@ -1923,9 +1947,36 @@ BOOL CXmpp::DbResultTag(TiXmlDocument* xmlDoc)
 				{
                     msg_stack.push(msg_text);
 				}
-				if(!GetSessionInfo()->Connect(strFrom.c_str(), CMailBase::m_xmpps2sport, stXMPP, m_storageEngine, NULL, m_memcached,
-					msg_stack, TRUE, this))
-					return FALSE;
+                
+                vector<DNSQry_List> list;
+                
+                udpdns dns(CMailBase::m_dns_server.c_str());
+                
+                string xmpp_server = "_xmpp-server._tcp.";
+                xmpp_server += strFrom.c_str();
+
+                dns.srvquery(xmpp_server.c_str(), list);
+                
+                DNSQry_List default_srv;
+                strcpy(default_srv.address, strFrom.c_str());
+                default_srv.priority = 0;
+                default_srv.port = CMailBase::m_xmpps2sport;
+                default_srv.ttl = 900;
+                list.push_back(default_srv);
+                BOOL bConnected = FALSE;
+                for(int m = 0; m < list.size(); m++)
+                {
+                    if(GetSessionInfo()->Connect(list[m].address, list[m].port, stXMPP, m_storageEngine, NULL, m_memcached,
+                        msg_stack, FALSE, this))
+                    {
+                        bConnected = TRUE;
+                        break;
+                    }
+                }
+                
+                if(!bConnected)
+                    return FALSE;
+                
 			}
 			else
 				return FALSE;
@@ -2864,13 +2915,34 @@ BOOL CXmpp::AuthTag(TiXmlDocument* xmlDoc)
                     X509_NAME * owner = X509_get_subject_name(client_cert);
                     const char * owner_buf = X509_NAME_oneline(owner, 0, 0);
                     
-                    char commonName [1025];
-                    commonName[1024] = '\0';
-                    X509_NAME_get_text_by_NID(owner, NID_commonName, commonName, 1024);
+                    const char* commonName;
+                    
+                    BOOL bFound = FALSE;
+                    int lastpos = -1;
+                    X509_NAME_ENTRY *e;
+                    for (;;)
+                    {
+                        lastpos = X509_NAME_get_index_by_NID(owner, NID_commonName, lastpos);
+                        if (lastpos == -1)
+                            break;
+                        e = X509_NAME_get_entry(owner, lastpos);
+                        if(!e)
+                            break;
+                        ASN1_STRING *d = X509_NAME_ENTRY_get_data(e);
+                        char *commonName = (char*)ASN1_STRING_data(d);
+                        
+                        if(strcasecmp(commonName, strAuthName.c_str()) == 0 || strmatch(commonName, strAuthName.c_str()))
+                        {
+                            //printf("Found CN: %s\n", commonName);
+                            bFound = TRUE;
+                            break;
+                        }
+                    }
+        
                     
                     X509_free (client_cert);
                     
-                    if(strcasecmp(commonName, strAuthName.c_str()) == 0)
+                    if(bFound)
                     {
                         m_peer_domain_name = strAuthName;
                         
