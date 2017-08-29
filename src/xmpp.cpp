@@ -18,101 +18,6 @@
 
 static char CHAR_TBL[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890=/";
 
-void __inline__ _strtrim_dquote_(string &src) /* icnluding double quote mark*/
-{
-	string::size_type ops1, ops2, ops3, ops4, ops5;
-	bool bExit = false;
-	while(!bExit)
-	{
-		bExit = true;
-		ops1 = src.find_first_not_of(" ");
-		if((ops1 != string::npos)&&(ops1 != 0))
-		{
-			src.erase(0, ops1);
-			bExit = false;
-		}
-		else if(ops1 == string::npos)
-		{
-			src.erase(0, src.length());
-		}
-		ops2 = src.find_first_not_of("\t");
-		if((ops2 != string::npos)&&(ops2 != 0))
-		{
-			src.erase(0, ops2);
-		}
-		else if(ops2 == string::npos)
-		{
-			src.erase(0, src.length());
-		}
-		ops3 = src.find_first_not_of("\r");
-		if((ops3 != string::npos)&&(ops3 != 0))
-		{
-			src.erase(0, ops3);
-		}
-		else if(ops3 == string::npos)
-		{
-			src.erase(0, src.length());
-		}
-			
-		ops4 = src.find_first_not_of("\n");
-		if((ops4 != string::npos)&&(ops4 != 0))
-		{
-			src.erase(0, ops4);
-		}
-		else if(ops4 == string::npos)
-		{
-			src.erase(0, src.length());
-		}
-		
-		ops5 = src.find_first_not_of("\"");
-		if((ops5 != string::npos)&&(ops5 != 0))
-		{
-			src.erase(0, ops5);
-		}
-		else if(ops5 == string::npos)
-		{
-			src.erase(0, src.length());
-		}
-	}
-	bExit = false;
-	while(!bExit)
-	{
-		bExit = true;
-		ops1 = src.find_last_not_of(" ");
-		if((ops1 != string::npos)&&(ops1 != src.length() - 1 ))
-		{
-			src.erase(ops1 + 1, src.length() - ops1 - 1);
-			bExit = false;
-		}
-		
-		ops2 = src.find_last_not_of("\t");
-		if((ops2 != string::npos)&&(ops2 != src.length() - 1 ))
-		{
-			src.erase(ops2 + 1, src.length() - ops2 - 1);
-			bExit = false;
-		}
-		ops3 = src.find_last_not_of("\r");
-		if((ops3 != string::npos)&&(ops3 != src.length() - 1 ))
-		{
-			src.erase(ops3 + 1, src.length() - ops3 - 1);
-			bExit = false;
-		}
-			
-		ops4 = src.find_last_not_of("\n");
-		if((ops4 != string::npos)&&(ops4 != src.length() - 1 ))
-		{
-			src.erase(ops4 + 1, src.length() - ops4 - 1);
-			bExit = false;
-		}
-		ops5 = src.find_last_not_of("\"");
-		if((ops5 != string::npos)&&(ops5 != src.length() - 1 ))
-		{
-			src.erase(ops5 + 1, src.length() - ops5 - 1);
-			bExit = false;
-		}
-	}
-}
-
 bool xmpp_stanza::Parse(const char* text)
 {
     m_xml_text += text;
@@ -120,7 +25,7 @@ bool xmpp_stanza::Parse(const char* text)
     bool ret = m_xml.LoadString(m_xml_text.c_str(), m_xml_text.length());
     if(ret)
     {
-        /*printf("\n[RECV]: %s\n", m_xml_text.c_str());*/
+        printf("\n[RECV]: %s\n", m_xml_text.c_str());
         
         TiXmlElement * pStanzaElement = m_xml.RootElement();
         if(pStanzaElement)
@@ -551,10 +456,10 @@ int CXmpp::ProtSendNoWait(const char* buf, int len)
     
     if(sent_len > 0)
     {
-        /*printf("\n[SEND]: \n");
+        printf("\n[SEND]: \n");
         for(int x = 0; x < sent_len; x++)
             printf("%c", m_send_buf.c_str()[x]);
-        printf("\n");*/
+        printf("\n");
         if(m_send_buf.length() == sent_len)
         {
             m_send_buf.clear();
@@ -1031,10 +936,7 @@ BOOL CXmpp::UnknownTag(TiXmlDocument* xmlDoc)
     return TRUE;
 }
 
-BOOL CXmpp::TLSAccept(const char* ca_crt_root,
-    const char* ca_crt_server,
-    const char* ca_password,
-    const char* ca_key_server)
+BOOL CXmpp::TLSAccept(const char* ca_crt_root, const char* ca_crt_server, const char* ca_password, const char* ca_key_server)
 {
     int ssl_rc = -1;
     X509* client_cert;
@@ -1049,7 +951,7 @@ BOOL CXmpp::TLSAccept(const char* ca_crt_root,
 	{
         
 		fprintf(stderr, "SSL_CTX_use_certificate_file: %s", ERR_error_string(ERR_get_error(),NULL));
-		goto clean_ssl3;
+		goto FAIL_CLEAN_SSL_3;
 	}
 
 	if(m_is_s2s_conn)
@@ -1063,7 +965,7 @@ BOOL CXmpp::TLSAccept(const char* ca_crt_root,
 	{
 		
 		fprintf(stderr, "SSL_CTX_use_certificate_file: %s", ERR_error_string(ERR_get_error(),NULL));
-		goto clean_ssl3;
+		goto FAIL_CLEAN_SSL_3;
 	}
 
 	SSL_CTX_set_default_passwd_cb_userdata(m_ssl_ctx, (char*)ca_password);
@@ -1071,14 +973,14 @@ BOOL CXmpp::TLSAccept(const char* ca_crt_root,
 	{
 		
 		fprintf(stderr, "SSL_CTX_use_certificate_file: %s", ERR_error_string(ERR_get_error(),NULL));
-		goto clean_ssl3;
+		goto FAIL_CLEAN_SSL_3;
 
 	}
 	if(!SSL_CTX_check_private_key(m_ssl_ctx))
 	{
 		
 		fprintf(stderr, "SSL_CTX_use_certificate_file: %s", ERR_error_string(ERR_get_error(),NULL));
-		goto clean_ssl3;
+		goto FAIL_CLEAN_SSL_3;
 	}
 	
 	ssl_rc = SSL_CTX_set_cipher_list(m_ssl_ctx, "ALL");
@@ -1086,7 +988,7 @@ BOOL CXmpp::TLSAccept(const char* ca_crt_root,
     {
         
 		fprintf(stderr, "SSL_CTX_set_cipher_list: %s", ERR_error_string(ERR_get_error(),NULL));
-        goto clean_ssl3;
+        goto FAIL_CLEAN_SSL_3;
     }
 	SSL_CTX_set_mode(m_ssl_ctx, SSL_MODE_AUTO_RETRY);
 
@@ -1095,34 +997,34 @@ BOOL CXmpp::TLSAccept(const char* ca_crt_root,
 	{
 		
 		fprintf(stderr, "SSL_new: %s", ERR_error_string(ERR_get_error(),NULL));
-		goto clean_ssl2;
+		goto FAIL_CLEAN_SSL_2;
 	}
 	ssl_rc = SSL_set_fd(m_ssl, m_sockfd);
     if(ssl_rc == 0)
     {
         
 		fprintf(stderr, "SSL_set_fd: %s", ERR_error_string(ERR_get_error(),NULL));
-        goto clean_ssl2;
+        goto FAIL_CLEAN_SSL_2;
     }
     ssl_rc = SSL_set_cipher_list(m_ssl, "ALL");
     if(ssl_rc == 0)
     {
         
 		fprintf(stderr, "SSL_set_cipher_list: %s", ERR_error_string(ERR_get_error(),NULL));
-        goto clean_ssl2;
+        goto FAIL_CLEAN_SSL_2;
     }
     ssl_rc = SSL_accept(m_ssl);
     if(ssl_rc == 1)
     {
                 
-        if(m_is_s2s_conn)
+        if(m_is_s2s_conn || m_ca_verify_client)
         {
             ssl_rc = SSL_get_verify_result(m_ssl);
             if(ssl_rc != X509_V_OK)
             {
                 
                 fprintf(stderr, "SSL_get_verify_result: %s", ERR_error_string(ERR_get_error(),NULL));
-                goto clean_ssl1;
+                goto FAIL_CLEAN_SSL_1;
             }
             
             X509* client_cert;
@@ -1136,7 +1038,7 @@ BOOL CXmpp::TLSAccept(const char* ca_crt_root,
             {
                 
                 fprintf(stderr, "SSL_get_peer_certificate: %s", ERR_error_string(ERR_get_error(),NULL));
-                goto clean_ssl1;
+                goto FAIL_CLEAN_SSL_1;
             }
         }
     
@@ -1186,28 +1088,28 @@ BOOL CXmpp::TLSAccept(const char* ca_crt_root,
                 
         
 		fprintf(stderr, "SSL_accept: %s", ERR_error_string(ERR_get_error(),NULL));
-		goto clean_ssl2;
+		goto FAIL_CLEAN_SSL_2;
 	}
     else if(ssl_rc = 0)
 	{
-		goto clean_ssl1;
+		goto FAIL_CLEAN_SSL_1;
 	}
 
     return TRUE;
 
-clean_ssl1:
+FAIL_CLEAN_SSL_1:
     if(m_ssl && m_TLSState == TLSEstablished)
     {
 		SSL_shutdown(m_ssl);
         m_TLSState = TLSNone;
     }
-clean_ssl2:
+FAIL_CLEAN_SSL_2:
     if(m_ssl)
     {
 		SSL_free(m_ssl);
         m_ssl = NULL;
     }
-clean_ssl3:
+FAIL_CLEAN_SSL_3:
     if(m_ssl_ctx)
     {
 		SSL_CTX_free(m_ssl_ctx);
@@ -1217,10 +1119,7 @@ clean_ssl3:
     return FALSE;
 }
 
-BOOL CXmpp::TLSConnect(const char* ca_crt_root,
-    const char* ca_crt_client,
-    const char* ca_password,
-    const char* ca_key_client)
+BOOL CXmpp::TLSConnect(const char* ca_crt_root, const char* ca_crt_client, const char* ca_password, const char* ca_key_client)
 {
     int ssl_rc;
     SSL_METHOD* meth = NULL;
@@ -1236,7 +1135,7 @@ BOOL CXmpp::TLSConnect(const char* ca_crt_root,
     {
         
         fprintf(stderr, "SSL_CTX_new: %s\n", ERR_error_string(ERR_get_error(),NULL));
-        goto clean_ssl3;
+        goto FAIL_CLEAN_SSL_3;
     }
 
     if(ca_crt_root && ca_crt_client && ca_password && ca_key_client
@@ -1247,7 +1146,7 @@ BOOL CXmpp::TLSConnect(const char* ca_crt_root,
         {
             
             fprintf(stderr, "SSL_CTX_use_certificate_file: %s", ERR_error_string(ERR_get_error(),NULL));
-            goto clean_ssl2;
+            goto FAIL_CLEAN_SSL_2;
         }
 
         SSL_CTX_set_default_passwd_cb_userdata(m_ssl_ctx, (char*)ca_password);
@@ -1255,7 +1154,7 @@ BOOL CXmpp::TLSConnect(const char* ca_crt_root,
         {
             
             fprintf(stderr, "SSL_CTX_use_PrivateKey_file: %s, %s", ERR_error_string(ERR_get_error(),NULL), ca_key_client);
-            goto clean_ssl2;
+            goto FAIL_CLEAN_SSL_2;
 
         }
         
@@ -1263,7 +1162,7 @@ BOOL CXmpp::TLSConnect(const char* ca_crt_root,
         {
             
             fprintf(stderr, "SSL_CTX_check_private_key: %s", ERR_error_string(ERR_get_error(),NULL));
-            goto clean_ssl2;
+            goto FAIL_CLEAN_SSL_2;
         }
     }
     
@@ -1272,14 +1171,14 @@ BOOL CXmpp::TLSConnect(const char* ca_crt_root,
     {
         
         fprintf(stderr, "SSL_new: %s\n", ERR_error_string(ERR_get_error(),NULL));
-        goto clean_ssl2;
+        goto FAIL_CLEAN_SSL_2;
     }
     
     if(SSL_set_fd(m_ssl, m_sockfd) <= 0)
     {
         
         fprintf(stderr, "SSL_set_fd: %s\n", ERR_error_string(ERR_get_error(),NULL));
-        goto clean_ssl1;
+        goto FAIL_CLEAN_SSL_1;
     }
     
     ssl_rc = SSL_connect(m_ssl);
@@ -1300,7 +1199,7 @@ BOOL CXmpp::TLSConnect(const char* ca_crt_root,
         {
             
             fprintf(stderr, "SSL_get_peer_certificate: %s", ERR_error_string(ERR_get_error(),NULL));
-            goto clean_ssl1;
+            goto FAIL_CLEAN_SSL_1;
         }
         
 		char xmpp_buf[1024*2];
@@ -1351,28 +1250,28 @@ BOOL CXmpp::TLSConnect(const char* ca_crt_root,
                 
         
 		fprintf(stderr, "SSL_connect: %s", ERR_error_string(ERR_get_error(),NULL));
-		goto clean_ssl2;
+		goto FAIL_CLEAN_SSL_2;
 	}
     else if(ssl_rc = 0)
 	{
-		goto clean_ssl1;
+		goto FAIL_CLEAN_SSL_1;
 	}
     
     return TRUE;
 
-clean_ssl1:
+FAIL_CLEAN_SSL_1:
     if(m_ssl)
     {
 		SSL_free(m_ssl);
         m_ssl = NULL;
     }
-clean_ssl2:
+FAIL_CLEAN_SSL_2:
     if(m_ssl_ctx)
     {
 		SSL_CTX_free(m_ssl_ctx);
         m_ssl_ctx = NULL;
     }
-clean_ssl3:
+FAIL_CLEAN_SSL_3:
 
     m_TLSState = TLSNone;
 
@@ -1395,9 +1294,6 @@ BOOL CXmpp::StartTLSTag(TiXmlDocument* xmlDoc)
         {
             ProtTryFlush();
         }
-        
-		//int flags = fcntl(m_sockfd, F_GETFL, 0); 
-		//fcntl(m_sockfd, F_SETFL, flags & (~O_NONBLOCK)); 
 		
 		if(!TLSAccept(m_ca_crt_root.c_str(),
 			m_ca_crt_server.c_str(),
@@ -1406,16 +1302,6 @@ BOOL CXmpp::StartTLSTag(TiXmlDocument* xmlDoc)
 		{
 			return FALSE;
 		}
-		
-		//flags = fcntl(m_sockfd, F_GETFL, 0); 
-		//fcntl(m_sockfd, F_SETFL, flags | O_NONBLOCK);
-
-		/*m_lssl = new linessl(m_sockfd, m_ssl);
-		
-		if(!m_lssl)
-			return FALSE;
-		
-		m_bSTARTTLS = TRUE;*/
 	}
     return TRUE;
 }
@@ -1548,6 +1434,7 @@ BOOL CXmpp::Stream_StreamTag(TiXmlDocument* xmlDoc)
 #endif /* _WITH_GSSAPI_ */                
                             "<mechanism>DIGEST-MD5</mechanism>"
                             "<mechanism>PLAIN</mechanism>"
+                            "<mechanism>EXTERNAL</mechanism>"
 #ifdef _WITH_GSSAPI_
                             "<hostname xmlns='urn:xmpp:domain-based-name:1'>%s</hostname>"
 #endif /* _WITH_GSSAPI_ */
@@ -1571,6 +1458,7 @@ BOOL CXmpp::Stream_StreamTag(TiXmlDocument* xmlDoc)
 #endif /* _WITH_GSSAPI_ */
                             "<mechanism>DIGEST-MD5</mechanism>"
                             "<mechanism>PLAIN</mechanism>"
+                            "<mechanism>EXTERNAL</mechanism>"
 #ifdef _WITH_GSSAPI_
                             "<hostname xmlns='urn:xmpp:domain-based-name:1'>%s</hostname>"
 #endif /* _WITH_GSSAPI_ */
@@ -1594,6 +1482,7 @@ BOOL CXmpp::Stream_StreamTag(TiXmlDocument* xmlDoc)
 #endif /* _WITH_GSSAPI_ */
                                 "<mechanism>DIGEST-MD5</mechanism>"
                                 "<mechanism>PLAIN</mechanism>"
+                                "<mechanism>EXTERNAL</mechanism>"
 #ifdef _WITH_GSSAPI_
                                 "<hostname xmlns='urn:xmpp:domain-based-name:1'>%s</hostname>"
 #endif /* _WITH_GSSAPI_ */
@@ -1614,6 +1503,7 @@ BOOL CXmpp::Stream_StreamTag(TiXmlDocument* xmlDoc)
 #endif /* _WITH_GSSAPI_ */
                                 "<mechanism>DIGEST-MD5</mechanism>"
                                 "<mechanism>PLAIN</mechanism>"
+                                "<mechanism>EXTERNAL</mechanism>"
 #ifdef _WITH_GSSAPI_
                                 "<hostname xmlns='urn:xmpp:domain-based-name:1'>%s</hostname>"
 #endif /* _WITH_GSSAPI_ */
@@ -1792,25 +1682,25 @@ BOOL CXmpp::ProceedTag(TiXmlDocument* xmlDoc)
 		//fcntl(m_sockfd, F_SETFL, flags & (~O_NONBLOCK));
         
         string ca_crt_root;
-        ca_crt_root = m_client_ca_base;
+        ca_crt_root = m_ca_client_base_dir;
         ca_crt_root += "/";
         ca_crt_root += m_peer_domain_name;
         ca_crt_root += "/ca.crt";
         
         string ca_crt_client;
-        ca_crt_client = m_client_ca_base;
+        ca_crt_client = m_ca_client_base_dir;
         ca_crt_client += "/";
         ca_crt_client += m_peer_domain_name;
         ca_crt_client += "/client.crt";
         
         string ca_key_client;
-        ca_key_client = m_client_ca_base;
+        ca_key_client = m_ca_client_base_dir;
         ca_key_client += "/";
         ca_key_client += m_peer_domain_name;
         ca_key_client += "/client.key";
         
         string ca_password_file;
-        ca_password_file = m_client_ca_base;
+        ca_password_file = m_ca_client_base_dir;
         ca_password_file += "/";
         ca_password_file += m_peer_domain_name;
         ca_password_file += "/client.pwd";
@@ -1848,21 +1738,6 @@ BOOL CXmpp::ProceedTag(TiXmlDocument* xmlDoc)
                 return FALSE;
             }
         }
-		
-		//flags = fcntl(m_sockfd, F_GETFL, 0); 
-		//fcntl(m_sockfd, F_SETFL, flags | O_NONBLOCK); 
-
-		/*m_lssl = new linessl(m_sockfd, m_ssl);
-
-		m_bSTARTTLS = TRUE;
-		
-        
-		char xmpp_buf[1024*2];
-        sprintf(xmpp_buf,
-            "<stream:stream xmlns='jabber:server' xmlns:db='jabber:server:dialback' xmlns:stream='http://etherx.jabber.lit/streams' from='%s' to='%s'>",
-            m_email_domain.c_str(), m_peer_domain_name.c_str());
-        if(ProtSendNoWait(xmpp_buf, strlen(xmpp_buf)) != 0)
-			return FALSE;*/
 	}
     return TRUE;
 }
@@ -2894,20 +2769,55 @@ BOOL CXmpp::AuthTag(TiXmlDocument* xmlDoc)
 #endif /* _WITH_GSSAPI_ */
         else if(szMechanism && strcmp(szMechanism, "EXTERNAL") == 0)
         {
-            m_auth_method = AUTH_METHOD_EXTERNAL;
-            
-            string strEnoded = pAuthElement->GetText() ? pAuthElement->GetText() : "";
-            int outlen = BASE64_DECODE_OUTPUT_MAX_LEN(strEnoded.length());//strEnoded.length()*4+1;
-            char* auth_name = (char*)malloc(outlen + 1);
-            memset(auth_name, 0, outlen + 1);
-
-            CBase64::Decode((char*)strEnoded.c_str(), strEnoded.length(), auth_name, &outlen);
-            
-            string strAuthName = auth_name;
-            free(auth_name);
-            
             if(m_ssl)
             {
+                m_auth_method = AUTH_METHOD_EXTERNAL;
+                
+                string strEncodedUsername = pAuthElement->GetText() ? pAuthElement->GetText() : "";
+                
+                if(strEncodedUsername == "")
+                {
+                     m_auth_step = AUTH_STEP_INIT;
+                        
+                    sprintf(xmpp_buf,
+                        "<failure xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>"
+                            "<not-authorized/>"
+                        "</failure>");
+                    
+                    
+                    if(ProtSendNoWait(xmpp_buf, strlen(xmpp_buf)) != 0)
+                        return FALSE;
+                    
+                    return FALSE;
+                }
+                
+                string strMailAddr = "";
+                string strAuthName = "";
+                
+                if(strEncodedUsername != "=")
+                {
+                    int outlen = BASE64_DECODE_OUTPUT_MAX_LEN(strEncodedUsername.length());
+                    char* auth_name = (char*)malloc(outlen + 1);
+                    memset(auth_name, 0, outlen + 1);
+
+                    CBase64::Decode((char*)strEncodedUsername.c_str(), strEncodedUsername.length(), auth_name, &outlen);
+                    
+                    string strAuthName = auth_name;
+                    free(auth_name);
+                    
+                    if(m_is_s2s_conn)
+                    {
+                        strMailAddr = strAuthName;
+                    }
+                    else
+                    {
+                        strMailAddr = strAuthName;
+                        strMailAddr += "@";
+                        strMailAddr += CMailBase::m_email_domain;
+                    }
+                }
+            
+
                 X509* client_cert;
                 client_cert = SSL_get_peer_certificate(m_ssl);
                 if (client_cert != NULL)
@@ -2917,6 +2827,20 @@ BOOL CXmpp::AuthTag(TiXmlDocument* xmlDoc)
                     
                     const char* commonName;
                     
+                    if(strMailAddr == "" && X509_NAME_entry_count(owner) != 1)
+                    {
+                        X509_free (client_cert);
+                        m_auth_step = AUTH_STEP_INIT;
+                        
+                        sprintf(xmpp_buf,
+                            "<failure xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>"
+                                "<not-authorized/>"
+                            "</failure>");
+                        
+                        ProtSendNoWait(xmpp_buf, strlen(xmpp_buf));
+                        
+                        return FALSE;
+                    }
                     BOOL bFound = FALSE;
                     int lastpos = -1;
                     X509_NAME_ENTRY *e;
@@ -2930,12 +2854,28 @@ BOOL CXmpp::AuthTag(TiXmlDocument* xmlDoc)
                             break;
                         ASN1_STRING *d = X509_NAME_ENTRY_get_data(e);
                         char *commonName = (char*)ASN1_STRING_data(d);
-                        
-                        if(strcasecmp(commonName, strAuthName.c_str()) == 0 || strmatch(commonName, strAuthName.c_str()))
+                        if(strMailAddr == "")
                         {
-                            //printf("Found CN: %s\n", commonName);
+                            if(m_is_s2s_conn)
+                                strAuthName = commonName;
+                            else
+                            {
+                                if(strstr(commonName, "@") != NULL)
+                                    strcut(commonName, NULL, "@", strAuthName);
+                                else
+                                    strAuthName = commonName;
+                            }
                             bFound = TRUE;
                             break;
+                        }
+                        else
+                        {
+                            if(strcasecmp(commonName, strMailAddr.c_str()) == 0 || strmatch(commonName, strMailAddr.c_str()))
+                            {
+                                //printf("Found CN: %s\n", commonName);
+                                bFound = TRUE;
+                                break;
+                            }
                         }
                     }
         
@@ -2944,7 +2884,10 @@ BOOL CXmpp::AuthTag(TiXmlDocument* xmlDoc)
                     
                     if(bFound)
                     {
-                        m_peer_domain_name = strAuthName;
+                        if(m_is_s2s_conn)
+                            m_peer_domain_name = strAuthName;
+                        else
+                            m_username = strAuthName;
                         
                         sprintf(xmpp_buf, "<success xmlns='urn:ietf:params:xml:ns:xmpp-sasl'></success>");
                         if(ProtSendNoWait(xmpp_buf, strlen(xmpp_buf)) != 0)
@@ -2962,9 +2905,7 @@ BOOL CXmpp::AuthTag(TiXmlDocument* xmlDoc)
                             "</failure>");
                         
                         
-                        if(ProtSendNoWait(xmpp_buf, strlen(xmpp_buf)) != 0)
-                            return FALSE;
-                        
+                        ProtSendNoWait(xmpp_buf, strlen(xmpp_buf));
                         return FALSE;
                  
                     }
@@ -2978,9 +2919,7 @@ BOOL CXmpp::AuthTag(TiXmlDocument* xmlDoc)
                     "<failure xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>"
                         "<not-authorized/>"
                     "</failure>");
-                if(ProtSendNoWait(xmpp_buf, strlen(xmpp_buf)) != 0)
-                    return FALSE;
-                
+                ProtSendNoWait(xmpp_buf, strlen(xmpp_buf));
                 return FALSE;
             }
         }
@@ -2990,9 +2929,7 @@ BOOL CXmpp::AuthTag(TiXmlDocument* xmlDoc)
             
             sprintf(xmpp_buf,
                      "<error code=\"401\" type=\"auth\"><not-authorized xmlns=\"urn:ietf:params:xml:ns:xmpp-stanzas\"/></error>");            
-            if(ProtSendNoWait(xmpp_buf, strlen(xmpp_buf)) != 0)
-                return FALSE;
-            
+            ProtSendNoWait(xmpp_buf, strlen(xmpp_buf));
             return FALSE;
         }
     }

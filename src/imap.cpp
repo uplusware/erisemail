@@ -125,9 +125,12 @@ void CMailImap::On_Capability(char* text)
 	string strTag;
 	strcut(text, NULL, " ", strTag);
 #ifdef _WITH_GSSAPI_	
-	sprintf(cmd, "* CAPABILITY IMAP4rev1 STARTTLS AUTH=CRAM-MD5 AUTH=DIGEST-MD5 AUTH=GSSAPI \r\n");
+    sprintf(cmd, "* CAPABILITY IMAP4rev1 STARTTLS AUTH=CRAM-MD5 AUTH=DIGEST-MD5 %s AUTH=GSSAPI\r\n",
+        m_ca_verify_client ? "AUTH=EXTERNAL" : "");
 #else
-    sprintf(cmd, "* CAPABILITY IMAP4rev1 STARTTLS AUTH=CRAM-MD5 AUTH=DIGEST-MD5\r\n");
+    sprintf(cmd, "* CAPABILITY IMAP4rev1 STARTTLS AUTH=CRAM-MD5 AUTH=DIGEST-MD5 %s\r\n",
+        m_ca_verify_client ? "AUTH=EXTERNAL" : "");
+    
 #endif /* _WITH_GSSAPI_ */    
 	ImapSend(cmd, strlen(cmd));
     sprintf(cmd, "%s OK CAPABILITY completed\r\n", strTag.c_str());
@@ -510,6 +513,125 @@ BOOL CMailImap::On_Authenticate(char* text)
 		}
 		
 	}
+    else if(strcasecmp(strAuthType.c_str(),"EXTERNAL") == 0)
+	{   
+        if(m_ssl)
+        {
+            m_authType = atEXTERNAL;
+            
+            string strEncodedUsername = vecDest[3];
+            
+            if(strEncodedUsername == "")
+            {
+                sprintf(cmd,"%s NO User Logged Failed\r\n", strTag.c_str());
+                ImapSend(cmd, strlen(cmd));
+                return FALSE;
+            }
+                
+            string strMailAddr = "";
+            string strAuthName = "";
+            if(strEncodedUsername != "=")
+            {
+                int len_encode = BASE64_DECODE_OUTPUT_MAX_LEN(strEncodedUsername.length());
+                char* tmp_decode = (char*)malloc(len_encode + 1);
+                memset(tmp_decode, 0, len_encode + 1);
+                
+                int outlen_decode = len_encode;
+                CBase64::Decode((char*)strEncodedUsername.c_str(), strEncodedUsername.length(), tmp_decode, &outlen_decode);
+                
+                strAuthName = tmp_decode;
+                
+                free(tmp_decode);
+                
+                strMailAddr = strAuthName;
+                strMailAddr += "@";
+                strMailAddr += CMailBase::m_email_domain;
+            }
+
+            X509* client_cert;
+            client_cert = SSL_get_peer_certificate(m_ssl);
+            if (client_cert != NULL)
+            {
+                X509_NAME * owner = X509_get_subject_name(client_cert);
+                const char * owner_buf = X509_NAME_oneline(owner, 0, 0);
+                
+                if(strMailAddr == "" && X509_NAME_entry_count(owner) != 1)
+                    {
+                        X509_free (client_cert);
+                        sprintf(cmd,"%s NO User Logged Failed\r\n", strTag.c_str());
+                        ImapSend(cmd, strlen(cmd));
+                        return FALSE;
+                    }
+                    
+                const char* commonName;
+                
+                BOOL bFound = FALSE;
+                int lastpos = -1;
+                X509_NAME_ENTRY *e;
+                for (;;)
+                {
+                    lastpos = X509_NAME_get_index_by_NID(owner, NID_commonName, lastpos);
+                    if (lastpos == -1)
+                        break;
+                    e = X509_NAME_get_entry(owner, lastpos);
+                    if(!e)
+                        break;
+                    ASN1_STRING *d = X509_NAME_ENTRY_get_data(e);
+                    char *commonName = (char*)ASN1_STRING_data(d);
+                    
+                    if(strMailAddr == "")
+                    {
+                        if(strstr(commonName, "@") != NULL)
+                            strcut(commonName, NULL, "@", strAuthName);
+                        else
+                            strAuthName = commonName;
+                        bFound = TRUE;
+                        break;
+                    }
+                    else
+                    {
+                        if(strcasecmp(commonName, strMailAddr.c_str()) == 0 || strmatch(commonName, strMailAddr.c_str()))
+                        {
+                            bFound = TRUE;
+                            break;
+                        }
+                    }
+                }
+    
+                
+                X509_free (client_cert);
+                
+                if(bFound)
+                {
+                    m_username = strAuthName;
+                    
+                    sprintf(cmd,"%s OK EXTERNAL authentication successful\r\n", strTag.c_str());
+                    ImapSend(cmd, strlen(cmd));
+                    m_status = m_status|STATUS_AUTHED;
+                    return TRUE;
+                }
+                else
+                {
+                    sprintf(cmd,"%s NO User Logged Failed\r\n", strTag.c_str());
+                    ImapSend(cmd, strlen(cmd));
+                    return FALSE;
+             
+                }
+            }
+            else
+            {
+                sprintf(cmd,"%s NO User Logged Failed\r\n", strTag.c_str());
+                ImapSend(cmd, strlen(cmd));
+                return FALSE;
+            }
+        }
+        else
+        {
+            sprintf(cmd,"%s NO User Logged Failed\r\n", strTag.c_str());
+            ImapSend(cmd, strlen(cmd));
+            return FALSE;
+        }
+    }
 #ifdef _WITH_GSSAPI_    
 	else if(strcasecmp(strAuthType.c_str(),"GSSAPI") == 0)
 	{        
@@ -1971,16 +2093,10 @@ void CMailImap::On_STARTTLS(char* text)
 		ImapSend(cmd,strlen(cmd));
 	}   
 	
-    if(!create_ssl(m_sockfd, 
-        m_ca_crt_root.c_str(),
-        m_ca_crt_server.c_str(),
-        m_ca_password.c_str(),
-        m_ca_key_server.c_str(),
-        m_enableclientcacheck,
-        &m_ssl, &m_ssl_ctx))
+    if(!create_ssl(m_sockfd, m_ca_crt_root.c_str(), m_ca_crt_server.c_str(), m_ca_password.c_str(), m_ca_key_server.c_str(),
+        m_ca_verify_client, &m_ssl, &m_ssl_ctx))
     {
         throw new string(ERR_error_string(ERR_get_error(), NULL));
-        return;
     }
 	
 	m_lssl = new linessl(m_sockfd, m_ssl);

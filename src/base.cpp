@@ -70,13 +70,13 @@ unsigned int	CMailBase::m_encryptxmpp = XMPP_TLS_OPTIONAL; /* 0: Non-encrypted o
 unsigned int	CMailBase::m_xmpp_worker_thread_num = 8;
 string CMailBase::m_xmpp_federation_secret = "s3cr3tf0rd14lb4ck";
 
-BOOL   CMailBase::m_enableclientcacheck = FALSE;
+BOOL   CMailBase::m_ca_verify_client = FALSE;
 string CMailBase::m_ca_crt_root = "/var/erisemail/cert/ca.crt";
 string CMailBase::m_ca_crt_server = "/var/erisemail/cert/server.crt";
 string CMailBase::m_ca_key_server = "/var/erisemail/cert/server.key";
 string CMailBase::m_ca_crt_client = "/var/erisemail/cert/client.crt";
 string CMailBase::m_ca_key_client = "/var/erisemail/cert/client.key";
-string CMailBase::m_client_ca_base = "/var/erisemail/cert/client";
+string CMailBase::m_ca_client_base_dir = "/var/erisemail/cert/client";
 
 string CMailBase::m_ca_password = "";
 
@@ -413,12 +413,12 @@ BOOL CMailBase::LoadConfig()
 				strtrim(XMPPWorkerThreadNum);
 				m_xmpp_worker_thread_num = atoi(XMPPWorkerThreadNum.c_str());
 			}
-			else if(strncasecmp(strline.c_str(), "CheckClientCA", sizeof("CheckClientCA") - 1) == 0)
+			else if(strncasecmp(strline.c_str(), "CAVerifyClient", sizeof("CAVerifyClient") - 1) == 0)
 			{
-				string CheckClientCA;
-				strcut(strline.c_str(), "=", NULL, CheckClientCA );
-				strtrim(CheckClientCA);
-				m_enableclientcacheck = (strcasecmp(CheckClientCA.c_str(), "yes")) == 0 ? TRUE : FALSE;
+				string ca_verify_client;
+				strcut(strline.c_str(), "=", NULL, ca_verify_client);
+				strtrim(ca_verify_client);
+				m_ca_verify_client = (strcasecmp(ca_verify_client.c_str(), "yes")) == 0 ? TRUE : FALSE;
 			}
 			else if(strncasecmp(strline.c_str(), "CARootCrt", sizeof("CARootCrt") - 1) == 0)
 			{
@@ -455,10 +455,10 @@ BOOL CMailBase::LoadConfig()
 
 				Security::Decrypt(strEncoded.c_str(), strEncoded.length(), m_ca_password);
 			}
-            else if(strncasecmp(strline.c_str(), "ClientCABase", sizeof("ClientCABase") - 1) == 0)
+            else if(strncasecmp(strline.c_str(), "CAClientBaseDir", sizeof("CAClientBaseDir") - 1) == 0)
 			{
-				strcut(strline.c_str(), "=", NULL, m_client_ca_base);
-				strtrim(m_client_ca_base);
+				strcut(strline.c_str(), "=", NULL, m_ca_client_base_dir);
+				strtrim(m_ca_client_base_dir);
 			}
 #ifdef _WITH_GSSAPI_              
             else if(strncasecmp(strline.c_str(), "KRB5_KTNAME", sizeof("KRB5_KTNAME") - 1) == 0)

@@ -321,25 +321,25 @@ BOOL SmtpClient::Do_StartTLS_Command(string& strmsg)
 	if((SendCmd(m_sockfd,cmd,strlen(cmd)) == 0)&&(RecvReply(cmd, strmsg))&&((strncmp(cmd,"220",3) == 0)))
 	{      
         string ca_crt_root;
-        ca_crt_root = CMailBase::m_client_ca_base;
+        ca_crt_root = CMailBase::m_ca_client_base_dir;
         ca_crt_root += "/";
         ca_crt_root += m_mx_server_name;
         ca_crt_root += "/ca.crt";
         
         string ca_crt_client;
-        ca_crt_client = CMailBase::m_client_ca_base;
+        ca_crt_client = CMailBase::m_ca_client_base_dir;
         ca_crt_client += "/";
         ca_crt_client += m_mx_server_name;
         ca_crt_client += "/client.crt";
         
         string ca_key_client;
-        ca_key_client = CMailBase::m_client_ca_base;
+        ca_key_client = CMailBase::m_ca_client_base_dir;
         ca_key_client += "/";
         ca_key_client += m_mx_server_name;
         ca_key_client += "/client.key";
         
         string ca_password_file;
-        ca_password_file = CMailBase::m_client_ca_base;
+        ca_password_file = CMailBase::m_ca_client_base_dir;
         ca_password_file += "/";
         ca_password_file += m_mx_server_name;
         ca_password_file += "/client.pwd";

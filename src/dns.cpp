@@ -184,7 +184,7 @@ int udpdns::query(const char* hostname, unsigned short record_type, vector<DNSQr
     
     if (rp == NULL)
     {               /* No address succeeded */
-          fprintf(stderr, "Could not connect to dns server(%s) or cound not parse mx record.\n", m_server.c_str());
+          fprintf(stderr, "Could not connect to DNS server(%s) when query \"%s\"\n", m_server.c_str(), hostname);
           freeaddrinfo(server_addr);           /* No longer needed */
           return -1;
     }

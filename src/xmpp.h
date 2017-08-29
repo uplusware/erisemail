@@ -15,6 +15,101 @@
 
 using namespace std;
 
+void __inline__ _strtrim_dquote_(string &src) /* icnluding double quote mark*/
+{
+	string::size_type ops1, ops2, ops3, ops4, ops5;
+	bool bExit = false;
+	while(!bExit)
+	{
+		bExit = true;
+		ops1 = src.find_first_not_of(" ");
+		if((ops1 != string::npos)&&(ops1 != 0))
+		{
+			src.erase(0, ops1);
+			bExit = false;
+		}
+		else if(ops1 == string::npos)
+		{
+			src.erase(0, src.length());
+		}
+		ops2 = src.find_first_not_of("\t");
+		if((ops2 != string::npos)&&(ops2 != 0))
+		{
+			src.erase(0, ops2);
+		}
+		else if(ops2 == string::npos)
+		{
+			src.erase(0, src.length());
+		}
+		ops3 = src.find_first_not_of("\r");
+		if((ops3 != string::npos)&&(ops3 != 0))
+		{
+			src.erase(0, ops3);
+		}
+		else if(ops3 == string::npos)
+		{
+			src.erase(0, src.length());
+		}
+			
+		ops4 = src.find_first_not_of("\n");
+		if((ops4 != string::npos)&&(ops4 != 0))
+		{
+			src.erase(0, ops4);
+		}
+		else if(ops4 == string::npos)
+		{
+			src.erase(0, src.length());
+		}
+		
+		ops5 = src.find_first_not_of("\"");
+		if((ops5 != string::npos)&&(ops5 != 0))
+		{
+			src.erase(0, ops5);
+		}
+		else if(ops5 == string::npos)
+		{
+			src.erase(0, src.length());
+		}
+	}
+	bExit = false;
+	while(!bExit)
+	{
+		bExit = true;
+		ops1 = src.find_last_not_of(" ");
+		if((ops1 != string::npos)&&(ops1 != src.length() - 1 ))
+		{
+			src.erase(ops1 + 1, src.length() - ops1 - 1);
+			bExit = false;
+		}
+		
+		ops2 = src.find_last_not_of("\t");
+		if((ops2 != string::npos)&&(ops2 != src.length() - 1 ))
+		{
+			src.erase(ops2 + 1, src.length() - ops2 - 1);
+			bExit = false;
+		}
+		ops3 = src.find_last_not_of("\r");
+		if((ops3 != string::npos)&&(ops3 != src.length() - 1 ))
+		{
+			src.erase(ops3 + 1, src.length() - ops3 - 1);
+			bExit = false;
+		}
+			
+		ops4 = src.find_last_not_of("\n");
+		if((ops4 != string::npos)&&(ops4 != src.length() - 1 ))
+		{
+			src.erase(ops4 + 1, src.length() - ops4 - 1);
+			bExit = false;
+		}
+		ops5 = src.find_last_not_of("\"");
+		if((ops5 != string::npos)&&(ops5 != src.length() - 1 ))
+		{
+			src.erase(ops5 + 1, src.length() - ops5 - 1);
+			bExit = false;
+		}
+	}
+}
+
 enum iq_type
 {
   IQ_GET = 0,
@@ -75,7 +170,10 @@ public:
 
     bool Parse(const char* text);
     
-    void Append(const char* text) { m_xml_text += text; }
+    void Append(const char* text)
+    {
+        m_xml_text += text;
+    }
 
     const char* GetTag()
     {

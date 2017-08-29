@@ -18,7 +18,8 @@ typedef enum
 	POP_AUTH_CRAM_MD5,
 	POP_AUTH_DIGEST_MD5,
 	POP_AUTH_NTLM,
-	POP_AUTH_GSSAPI
+	POP_AUTH_GSSAPI,
+    POP_AUTH_EXTERNAL
 }Pop3_Auth_Type;
 
 class CMailPop  : public CMailBase

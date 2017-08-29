@@ -21,7 +21,8 @@ typedef enum
 	atKERBEROS_V4,
     atGSSAPI,
 	atDIGEST_MD5,
-	atCRAM_MD5
+	atCRAM_MD5,
+    atEXTERNAL
 } Imap_Auth_Type;
 
 typedef enum

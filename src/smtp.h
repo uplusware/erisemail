@@ -46,7 +46,8 @@ typedef enum
 	SMTP_AUTH_CRAM_MD5,
 	SMTP_AUTH_DIGEST_MD5,
 	SMTP_AUTH_NTLM,
-	SMTP_AUTH_GSSAPI
+	SMTP_AUTH_GSSAPI,
+    SMTP_AUTH_EXTERNAL
 }Smtp_Auth_Type;
 
 class CMailSmtp : public CMailBase

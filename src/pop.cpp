@@ -125,9 +125,9 @@ void CMailPop::On_Capa_Handler(char* text)
 	sprintf(cmd,"STLS\r\n");
 	PopSend(cmd,strlen(cmd));
 #ifdef _WITH_GSSAPI_     
-    sprintf(cmd,"SASL PLAIN CRAM-MD5 DIGEST-MD5 GSSAPI\r\n");
+    sprintf(cmd,"SASL PLAIN CRAM-MD5 DIGEST-MD5 %s GSSAPI\r\n", m_ca_verify_client ? "EXTERNAL" : "");
 #else
-    sprintf(cmd,"SASL PLAIN CRAM-MD5 DIGEST-MD5\r\n");
+    sprintf(cmd,"SASL PLAIN CRAM-MD5 DIGEST-MD5 %s\r\n", m_ca_verify_client ? "EXTERNAL" : "");
 #endif /* _WITH_GSSAPI_ */    
 	PopSend(cmd,strlen(cmd));
     
@@ -936,16 +936,10 @@ void CMailPop::On_STLS_Handler()
 		PopSend(cmd,strlen(cmd));
 	}   
 	
-	if(!create_ssl(m_sockfd, 
-        m_ca_crt_root.c_str(),
-        m_ca_crt_server.c_str(),
-        m_ca_password.c_str(),
-        m_ca_key_server.c_str(),
-        m_enableclientcacheck,
-        &m_ssl, &m_ssl_ctx))
+	if(!create_ssl(m_sockfd, m_ca_crt_root.c_str(), m_ca_crt_server.c_str(), m_ca_password.c_str(), m_ca_key_server.c_str(),
+        m_ca_verify_client, &m_ssl, &m_ssl_ctx))
     {
         throw new string(ERR_error_string(ERR_get_error(), NULL));
-        return;
     }
 
 	m_lssl = new linessl(m_sockfd, m_ssl);
@@ -1069,6 +1063,125 @@ void CMailPop::On_Auth_Handler(char* text)
 		PopSend(cmd,strlen(cmd));
 		m_status = m_status|STATUS_AUTH_STEP2;
 	}
+    else if(strncasecmp(&text[5],"EXTERNAL", 8) == 0)
+    {
+        if(m_ssl)
+        {
+            m_authType = POP_AUTH_EXTERNAL;
+            
+            string strEncodedUsername;
+            strcut(&text[14], NULL, "\r\n",strEncodedUsername);	
+            
+            if(strEncodedUsername == "")
+            {
+                sprintf(cmd,"-ERR User Logged Failed\r\n");
+                PopSend(cmd, strlen(cmd));
+                return;
+            }
+            
+            string strMailAddr = "";
+            string strAuthName = "";
+            
+            if(strEncodedUsername != "=")
+            {
+                int len_encode = BASE64_DECODE_OUTPUT_MAX_LEN(strEncodedUsername.length());
+                char* tmp_decode = (char*)malloc(len_encode + 1);
+                memset(tmp_decode, 0, len_encode + 1);
+                
+                int outlen_decode = len_encode;
+                CBase64::Decode((char*)strEncodedUsername.c_str(), strEncodedUsername.length(), tmp_decode, &outlen_decode);
+                
+                strAuthName = tmp_decode;
+                
+                free(tmp_decode);
+                
+                strMailAddr = strAuthName;
+                strMailAddr += "@";
+                strMailAddr += CMailBase::m_email_domain;
+                
+                printf("[%s]\n", strMailAddr.c_str());
+            }
+        
+            X509* client_cert;
+            client_cert = SSL_get_peer_certificate(m_ssl);
+            if (client_cert != NULL)
+            {
+                X509_NAME * owner = X509_get_subject_name(client_cert);
+                const char * owner_buf = X509_NAME_oneline(owner, 0, 0);
+                if(strMailAddr == "" && X509_NAME_entry_count(owner) != 1)
+                    {
+                        X509_free (client_cert);
+                        sprintf(cmd,"-ERR User Logged Failed\r\n");
+                        PopSend(cmd, strlen(cmd));
+                        return;
+                    }
+                const char* commonName;
+                
+                BOOL bFound = FALSE;
+                int lastpos = -1;
+                X509_NAME_ENTRY *e;
+                for (;;)
+                {
+                    lastpos = X509_NAME_get_index_by_NID(owner, NID_commonName, lastpos);
+                    if (lastpos == -1)
+                        break;
+                    e = X509_NAME_get_entry(owner, lastpos);
+                    if(!e)
+                        break;
+                    ASN1_STRING *d = X509_NAME_ENTRY_get_data(e);
+                    char *commonName = (char*)ASN1_STRING_data(d);
+                    
+                    if(strMailAddr == "")
+                    {
+                        if(strstr(commonName, "@") != NULL)
+                            strcut(commonName, NULL, "@", strAuthName);
+                        else
+                            strAuthName = commonName;
+                        bFound = TRUE;
+                        break;
+                    }
+                    else
+                    {
+                        
+                        if(strcasecmp(commonName, strMailAddr.c_str()) == 0 || strmatch(commonName, strMailAddr.c_str()))
+                        {
+                            
+                            bFound = TRUE;
+                            break;
+                        }
+                    }
+                }
+    
+                
+                X509_free (client_cert);
+                
+                if(bFound)
+                {
+                    m_username = strAuthName;
+                    
+                    sprintf(cmd,"+OK EXTERNAL authentication successful\r\n");
+                    PopSend(cmd, strlen(cmd));
+                    m_status = m_status|STATUS_AUTHED;
+                }
+                else
+                {
+                    sprintf(cmd,"-ERR User Logged Failed\r\n");
+                    PopSend(cmd, strlen(cmd));
+             
+                }
+            }
+            else
+            {
+                sprintf(cmd,"-ERR User Logged Failed\r\n");
+                PopSend(cmd, strlen(cmd));
+            }
+        }
+        else
+        {
+            sprintf(cmd,"-ERR User Logged Failed\r\n");
+            PopSend(cmd, strlen(cmd));
+        }
+    }
 #ifdef _WITH_GSSAPI_ 
     else if(strncasecmp(&text[5],"GSSAPI", 6) == 0)
     {

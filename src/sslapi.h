@@ -8,19 +8,10 @@
 #include "util/trace.h"
 #include "util/general.h"
 
-BOOL create_ssl(int sockfd, 
-    const char* ca_crt_root,
-    const char* ca_crt_server,
-    const char* ca_password,
-    const char* ca_key_server,
-    BOOL enableclientcacheck,
-    SSL** pp_ssl, SSL_CTX** pp_ssl_ctx);
+BOOL create_ssl(int sockfd, const char* ca_crt_root, const char* ca_crt_server, const char* ca_password, const char* ca_key_server,
+    BOOL ca_enable_verify_client, SSL** pp_ssl, SSL_CTX** pp_ssl_ctx);
 
-BOOL connect_ssl(int sockfd, 
-    const char* ca_crt_root,
-    const char* ca_crt_client,
-    const char* ca_password,
-    const char* ca_key_client,
+BOOL connect_ssl(int sockfd, const char* ca_crt_root, const char* ca_crt_client, const char* ca_password, const char* ca_key_client,
     SSL** pp_ssl, SSL_CTX** pp_ssl_ctx);
     
 BOOL close_ssl(SSL* p_ssl, SSL_CTX* p_ssl_ctx);

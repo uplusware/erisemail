@@ -5,13 +5,8 @@
 #include "sslapi.h"
 #include "posixname.h"
 
-BOOL create_ssl(int sockfd, 
-    const char* ca_crt_root,
-    const char* ca_crt_server,
-    const char* ca_password,
-    const char* ca_key_server,
-    BOOL enableclientcacheck,
-    SSL** pp_ssl, SSL_CTX** pp_ssl_ctx)
+BOOL create_ssl(int sockfd, const char* ca_crt_root, const char* ca_crt_server, const char* ca_password, const char* ca_key_server,
+    BOOL ca_enable_verify_client, SSL** pp_ssl, SSL_CTX** pp_ssl_ctx)
 {
     int ssl_rc = -1;
     BOOL b_ssl_accepted;
@@ -27,10 +22,10 @@ BOOL create_ssl(int sockfd,
 	{
         
 		fprintf(stderr, "SSL_CTX_use_certificate_file: %s", ERR_error_string(ERR_get_error(),NULL));
-		goto clean_ssl3;
+		goto FAIL_CLEAN_SSL_3;
 	}
 
-	if(enableclientcacheck)
+	if(ca_enable_verify_client)
 	{
     	SSL_CTX_set_verify(*pp_ssl_ctx, SSL_VERIFY_PEER|SSL_VERIFY_FAIL_IF_NO_PEER_CERT, NULL);
     	SSL_CTX_set_verify_depth(*pp_ssl_ctx, 4);
@@ -41,7 +36,7 @@ BOOL create_ssl(int sockfd,
 	{
 		
 		fprintf(stderr, "SSL_CTX_use_certificate_file: %s", ERR_error_string(ERR_get_error(),NULL));
-		goto clean_ssl3;
+		goto FAIL_CLEAN_SSL_3;
 	}
 
 	SSL_CTX_set_default_passwd_cb_userdata(*pp_ssl_ctx, (char*)ca_password);
@@ -49,14 +44,14 @@ BOOL create_ssl(int sockfd,
 	{
 		
 		fprintf(stderr, "SSL_CTX_use_certificate_file: %s", ERR_error_string(ERR_get_error(),NULL));
-		goto clean_ssl3;
+		goto FAIL_CLEAN_SSL_3;
 
 	}
 	if(!SSL_CTX_check_private_key(*pp_ssl_ctx))
 	{
 		
 		fprintf(stderr, "SSL_CTX_use_certificate_file: %s", ERR_error_string(ERR_get_error(),NULL));
-		goto clean_ssl3;
+		goto FAIL_CLEAN_SSL_3;
 	}
 	
 	ssl_rc = SSL_CTX_set_cipher_list(*pp_ssl_ctx, "ALL");
@@ -64,7 +59,7 @@ BOOL create_ssl(int sockfd,
     {
         
 		fprintf(stderr, "SSL_CTX_set_cipher_list: %s", ERR_error_string(ERR_get_error(),NULL));
-        goto clean_ssl3;
+        goto FAIL_CLEAN_SSL_3;
     }
 	SSL_CTX_set_mode(*pp_ssl_ctx, SSL_MODE_AUTO_RETRY);
 
@@ -73,21 +68,21 @@ BOOL create_ssl(int sockfd,
 	{
 		
 		fprintf(stderr, "SSL_new: %s", ERR_error_string(ERR_get_error(),NULL));
-		goto clean_ssl2;
+		goto FAIL_CLEAN_SSL_2;
 	}
 	ssl_rc = SSL_set_fd(*pp_ssl, sockfd);
     if(ssl_rc == 0)
     {
         
 		fprintf(stderr, "SSL_set_fd: %s", ERR_error_string(ERR_get_error(),NULL));
-        goto clean_ssl2;
+        goto FAIL_CLEAN_SSL_2;
     }
     ssl_rc = SSL_set_cipher_list(*pp_ssl, "ALL");
     if(ssl_rc == 0)
     {
         
 		fprintf(stderr, "SSL_set_cipher_list: %s", ERR_error_string(ERR_get_error(),NULL));
-        goto clean_ssl2;
+        goto FAIL_CLEAN_SSL_2;
     }
     
     do
@@ -118,14 +113,14 @@ BOOL create_ssl(int sockfd,
                 {
                     
                     fprintf(stderr, "SSL_accept: %s %s", ERR_error_string(ERR_get_error(),NULL), strerror(errno));
-                    goto clean_ssl2;
+                    goto FAIL_CLEAN_SSL_2;
                 }
             }
             else
             {
                 
                 fprintf(stderr, "SSL_accept: %s", ERR_error_string(ERR_get_error(),NULL));
-                goto clean_ssl2;
+                goto FAIL_CLEAN_SSL_2;
             }
 
         }
@@ -134,7 +129,7 @@ BOOL create_ssl(int sockfd,
             
             fprintf(stderr, "SSL_accept: %s", ERR_error_string(ERR_get_error(),NULL));
                 
-            goto clean_ssl1;
+            goto FAIL_CLEAN_SSL_1;
         }
         else if(ssl_rc == 1)
         {
@@ -144,14 +139,14 @@ BOOL create_ssl(int sockfd,
         
     b_ssl_accepted = TRUE;
     
-    if(enableclientcacheck)
+    if(ca_enable_verify_client)
     {
         ssl_rc = SSL_get_verify_result(*pp_ssl);
         if(ssl_rc != X509_V_OK)
         {
             
             fprintf(stderr, "SSL_get_verify_result: %s", ERR_error_string(ERR_get_error(),NULL));
-            goto clean_ssl1;
+            goto FAIL_CLEAN_SSL_1;
         }
 
 		X509* client_cert;
@@ -164,25 +159,25 @@ BOOL create_ssl(int sockfd,
 		{
 			
             fprintf(stderr, "SSL_get_peer_certificate: %s", ERR_error_string(ERR_get_error(),NULL));
-			goto clean_ssl1;
+			goto FAIL_CLEAN_SSL_1;
 		}
 	}
 
     return TRUE;
 
-clean_ssl1:
+FAIL_CLEAN_SSL_1:
     if(*pp_ssl && b_ssl_accepted)
     {
 		SSL_shutdown(*pp_ssl);
         b_ssl_accepted = FALSE;
     }
-clean_ssl2:
+FAIL_CLEAN_SSL_2:
     if(*pp_ssl)
     {
 		SSL_free(*pp_ssl);
         *pp_ssl = NULL;
     }
-clean_ssl3:
+FAIL_CLEAN_SSL_3:
     if(*pp_ssl_ctx)
     {
 		SSL_CTX_free(*pp_ssl_ctx);
@@ -191,12 +186,7 @@ clean_ssl3:
     return FALSE;
 }
 
-BOOL connect_ssl(int sockfd, 
-    const char* ca_crt_root,
-    const char* ca_crt_client,
-    const char* ca_password,
-    const char* ca_key_client,
-    SSL** pp_ssl, SSL_CTX** pp_ssl_ctx)
+BOOL connect_ssl(int sockfd,  const char* ca_crt_root, const char* ca_crt_client, const char* ca_password, const char* ca_key_client, SSL** pp_ssl, SSL_CTX** pp_ssl_ctx)
 {
     SSL_METHOD* meth = NULL;
 #if OPENSSL_VERSION_NUMBER >= 0x010100000L
@@ -211,7 +201,7 @@ BOOL connect_ssl(int sockfd,
     {
         
         fprintf(stderr, "SSL_CTX_new: %s\n", ERR_error_string(ERR_get_error(),NULL));
-        goto clean_ssl3;
+        goto FAIL_CLEAN_SSL_3;
     }
 
     if(ca_crt_root && ca_crt_client && ca_password && ca_key_client
@@ -222,7 +212,7 @@ BOOL connect_ssl(int sockfd,
         {
             
             fprintf(stderr, "SSL_CTX_use_certificate_file: %s", ERR_error_string(ERR_get_error(),NULL));
-            goto clean_ssl2;
+            goto FAIL_CLEAN_SSL_2;
         }
 
         SSL_CTX_set_default_passwd_cb_userdata(*pp_ssl_ctx, (char*)ca_password);
@@ -230,7 +220,7 @@ BOOL connect_ssl(int sockfd,
         {
             
             fprintf(stderr, "SSL_CTX_use_PrivateKey_file: %s, %s", ERR_error_string(ERR_get_error(),NULL), ca_key_client);
-            goto clean_ssl2;
+            goto FAIL_CLEAN_SSL_2;
 
         }
         
@@ -238,7 +228,7 @@ BOOL connect_ssl(int sockfd,
         {
             
             fprintf(stderr, "SSL_CTX_check_private_key: %s", ERR_error_string(ERR_get_error(),NULL));
-            goto clean_ssl2;
+            goto FAIL_CLEAN_SSL_2;
         }
     }
     
@@ -247,14 +237,14 @@ BOOL connect_ssl(int sockfd,
     {
         
         fprintf(stderr, "SSL_new: %s\n", ERR_error_string(ERR_get_error(),NULL));
-        goto clean_ssl2;
+        goto FAIL_CLEAN_SSL_2;
     }
     
     if(SSL_set_fd(*pp_ssl, sockfd) <= 0)
     {
         
         fprintf(stderr, "SSL_set_fd: %s\n", ERR_error_string(ERR_get_error(),NULL));
-        goto clean_ssl1;
+        goto FAIL_CLEAN_SSL_1;
     }
     
     do
@@ -284,14 +274,14 @@ BOOL connect_ssl(int sockfd,
                 {
                     
                     fprintf(stderr, "SSL_connect: %s %s", ERR_error_string(ERR_get_error(),NULL), strerror(errno));
-                    goto clean_ssl2;
+                    goto FAIL_CLEAN_SSL_2;
                 }
             }
             else
             {
                 
                 fprintf(stderr, "SSL_connect: %s", ERR_error_string(ERR_get_error(),NULL));
-                goto clean_ssl2;
+                goto FAIL_CLEAN_SSL_2;
             }
 
         }
@@ -300,7 +290,7 @@ BOOL connect_ssl(int sockfd,
             
             fprintf(stderr, "SSL_accept: %s", ERR_error_string(ERR_get_error(),NULL));
                 
-            goto clean_ssl1;
+            goto FAIL_CLEAN_SSL_1;
         }
         else if(ssl_rc == 1)
         {
@@ -318,24 +308,24 @@ BOOL connect_ssl(int sockfd,
     else
     {
         fprintf(stderr, "SSL_get_peer_certificate: %s", ERR_error_string(ERR_get_error(),NULL));
-        goto clean_ssl1;
+        goto FAIL_CLEAN_SSL_1;
     }
         
     return TRUE;
 
-clean_ssl1:
+FAIL_CLEAN_SSL_1:
     if(*pp_ssl)
     {
 		SSL_free(*pp_ssl);
         *pp_ssl = NULL;
     }
-clean_ssl2:
+FAIL_CLEAN_SSL_2:
     if(*pp_ssl_ctx)
     {
 		SSL_CTX_free(*pp_ssl_ctx);
         *pp_ssl_ctx = NULL;
     }
-clean_ssl3:
+FAIL_CLEAN_SSL_3:
     return FALSE;
 }
 

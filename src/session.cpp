@@ -28,7 +28,7 @@ Session::Session(int sockfd, SSL *ssl, SSL_CTX * ssl_ctx, const char* clientip, 
                 CMailBase::m_ca_crt_server.c_str(),
                 CMailBase::m_ca_password.c_str(),
                 CMailBase::m_ca_key_server.c_str(),
-                CMailBase::m_enableclientcacheck,
+                CMailBase::m_ca_verify_client,
                 &m_ssl, &m_ssl_ctx))
         {
             close(m_sockfd);
