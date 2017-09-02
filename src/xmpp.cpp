@@ -60,7 +60,7 @@ pthread_rwlock_t CXmpp::m_srv2srv_list_lock;
 BOOL CXmpp::m_srv2srv_list_inited = FALSE;
 
 CXmpp::CXmpp(Xmpp_Session_Info* sess_inf, int epoll_fd, int sockfd, SSL * ssl, SSL_CTX * ssl_ctx, const char* clientip, unsigned short client_port,
-    StorageEngine* storage_engine, memcached_st * memcached, BOOL isSSL, BOOL isClientRole, const char* pdn, BOOL isDialBackStream, CXmpp* pDependency)
+    StorageEngine* storage_engine, memcached_st * memcached, BOOL isSSL, BOOL isConnectionInitiator, const char* pdn, BOOL isDialBackStream, CXmpp* pDependency)
 {
     if(!m_online_list_inited)
     {
@@ -94,7 +94,7 @@ CXmpp::CXmpp(Xmpp_Session_Info* sess_inf, int epoll_fd, int sockfd, SSL * ssl, S
     struct sockaddr_storage srv_addr;
 	socklen_t srv_size = sizeof(struct sockaddr_storage);
     int ret;
-    if(isClientRole == TRUE)
+    if(isConnectionInitiator == TRUE)
         ret = getpeername(m_sockfd, (sockaddr*)&srv_addr, &srv_size);
     else    
         ret = getsockname(m_sockfd, (sockaddr*)&srv_addr, &srv_size);
@@ -116,10 +116,9 @@ CXmpp::CXmpp(Xmpp_Session_Info* sess_inf, int epoll_fd, int sockfd, SSL * ssl, S
             srv_port = ntohs(v6_addr->sin6_port);
         }
         
-        //printf("%d\n", srv_port);
         if(srv_port == CMailBase::m_xmpps2sport)
         {
-            m_is_s2s_conn = TRUE;
+            m_is_srv2srv_conn = TRUE;
         }
     }
     else
@@ -166,8 +165,8 @@ CXmpp::CXmpp(Xmpp_Session_Info* sess_inf, int epoll_fd, int sockfd, SSL * ssl, S
     m_client_name = GSS_C_NO_NAME;
 #endif /* _WITH_GSSAPI_ */
 
-    m_is_client_role = isClientRole;
-    m_peer_domain_name = pdn;
+    m_is_connection_initiator = isConnectionInitiator;
+    m_peer_srv_domain_name = pdn;
     m_is_dialback_stream = isDialBackStream;
     m_dependency = pDependency;
     
@@ -179,12 +178,12 @@ CXmpp::CXmpp(Xmpp_Session_Info* sess_inf, int epoll_fd, int sockfd, SSL * ssl, S
 			CMailBase::m_ca_key_server.c_str());
     }
     
-    if(m_is_client_role)
+    if(m_is_connection_initiator)
     {
         char xmpp_buf[1024*2];
         sprintf(xmpp_buf,
             "<stream:stream xmlns='jabber:server' xmlns:db='jabber:server:dialback' xmlns:stream='http://etherx.jabber.lit/streams' from='%s' to='%s'>",
-            m_email_domain.c_str(), m_peer_domain_name.c_str());
+            m_email_domain.c_str(), m_peer_srv_domain_name.c_str());
         ProtSendNoWait(xmpp_buf, strlen(xmpp_buf));
     }
 }
@@ -214,14 +213,14 @@ CXmpp::~CXmpp()
         pthread_rwlock_unlock(&m_online_list_lock); //release write
     }
     
-	if(m_is_s2s_conn && m_peer_domain_name != "")
+	if(m_is_srv2srv_conn && m_peer_srv_domain_name != "")
 	{
 		pthread_rwlock_wrlock(&m_srv2srv_list_lock); //acquire write
-		map<string, CXmpp*>::iterator it2 = m_srv2srv_list.find(m_peer_domain_name);
+		map<string, CXmpp*>::iterator it2 = m_srv2srv_list.find(m_peer_srv_domain_name);
 
         if(it2 != m_srv2srv_list.end() && it2->second == this)
         {
-            m_srv2srv_list.erase(m_peer_domain_name);
+            m_srv2srv_list.erase(m_peer_srv_domain_name);
         }
 	}
 	
@@ -390,7 +389,7 @@ BOOL CXmpp::TLSContinue()
                 char xmpp_buf[1024*2];
                 sprintf(xmpp_buf,
                     "<stream:stream xmlns='jabber:server' xmlns:db='jabber:server:dialback' xmlns:stream='http://etherx.jabber.lit/streams' from='%s' to='%s'>",
-                    m_email_domain.c_str(), m_peer_domain_name.c_str());
+                    m_email_domain.c_str(), m_peer_srv_domain_name.c_str());
                 if(ProtSendNoWait(xmpp_buf, strlen(xmpp_buf)) != 0)
                     return FALSE;
         
@@ -656,7 +655,7 @@ BOOL CXmpp::Parse(char* text)
             inter_domain = TRUE;
         }
         
-        if(inter_domain && !m_is_s2s_conn)
+        if(inter_domain && !m_is_srv2srv_conn)
         {
             TiXmlElement pReponseElement(*(m_xmpp_stanza->GetXml()->RootElement()));
 
@@ -954,7 +953,7 @@ BOOL CXmpp::TLSAccept(const char* ca_crt_root, const char* ca_crt_server, const 
 		goto FAIL_CLEAN_SSL_3;
 	}
 
-	if(m_is_s2s_conn)
+	if(m_is_srv2srv_conn)
 	{
     	SSL_CTX_set_verify(m_ssl_ctx, SSL_VERIFY_PEER|SSL_VERIFY_FAIL_IF_NO_PEER_CERT, NULL);
     	SSL_CTX_set_verify_depth(m_ssl_ctx, 4);
@@ -1017,7 +1016,7 @@ BOOL CXmpp::TLSAccept(const char* ca_crt_root, const char* ca_crt_server, const 
     if(ssl_rc == 1)
     {
                 
-        if(m_is_s2s_conn || m_ca_verify_client)
+        if(m_is_srv2srv_conn || m_ca_verify_client)
         {
             ssl_rc = SSL_get_verify_result(m_ssl);
             if(ssl_rc != X509_V_OK)
@@ -1069,19 +1068,6 @@ BOOL CXmpp::TLSAccept(const char* ca_crt_root, const char* ca_crt_server, const 
         }
         else
         {
-            if(ret == SSL_ERROR_ZERO_RETURN)
-            {
-                printf("SSL_read: shutdown by the peer\n");
-            }
-            else if(ret == SSL_ERROR_SYSCALL)
-            {
-                if(ERR_get_error() == 0)
-                {
-                    printf("SSL_read: shutdown by the peer\n");
-                }
-                else
-                    printf("SSL_read: %s\n", ERR_error_string(ERR_get_error(),NULL));
-            }
             close(m_sockfd);
             return FALSE;
         }
@@ -1205,7 +1191,7 @@ BOOL CXmpp::TLSConnect(const char* ca_crt_root, const char* ca_crt_client, const
 		char xmpp_buf[1024*2];
         sprintf(xmpp_buf,
             "<stream:stream xmlns='jabber:server' xmlns:db='jabber:server:dialback' xmlns:stream='http://etherx.jabber.lit/streams' from='%s' to='%s'>",
-            m_email_domain.c_str(), m_peer_domain_name.c_str());
+            m_email_domain.c_str(), m_peer_srv_domain_name.c_str());
         if(ProtSendNoWait(xmpp_buf, strlen(xmpp_buf)) != 0)
 			return FALSE;
         
@@ -1231,19 +1217,6 @@ BOOL CXmpp::TLSConnect(const char* ca_crt_root, const char* ca_crt_client, const
         }
         else
         {
-            if(ret == SSL_ERROR_ZERO_RETURN)
-            {
-                printf("SSL_read: shutdown by the peer\n");
-            }
-            else if(ret == SSL_ERROR_SYSCALL)
-            {
-                if(ERR_get_error() == 0)
-                {
-                    printf("SSL_read: shutdown by the peer\n");
-                }
-                else
-                    printf("SSL_read: %s\n", ERR_error_string(ERR_get_error(),NULL));
-            }
             close(m_sockfd);
             return FALSE;
         }
@@ -1316,17 +1289,17 @@ BOOL CXmpp::Stream_StreamTag(TiXmlDocument* xmlDoc)
     {
         const char* szXmlns = pStreamStreamElement->Attribute("xmlns");
         if(!szXmlns
-            || (m_is_s2s_conn && strcmp(szXmlns, "jabber:server") != 0)
-            || (!m_is_s2s_conn && strcmp(szXmlns, "jabber:client") != 0))
+            || (m_is_srv2srv_conn && strcmp(szXmlns, "jabber:server") != 0)
+            || (!m_is_srv2srv_conn && strcmp(szXmlns, "jabber:client") != 0))
         {
             return FALSE;
         }
         
-        if(m_is_s2s_conn)
+        if(m_is_srv2srv_conn)
         {
-            if(m_peer_domain_name == "")
+            if(m_peer_srv_domain_name == "")
             {
-                m_peer_domain_name = pStreamStreamElement->Attribute("to") ? pStreamStreamElement->Attribute("to") : "";
+                m_peer_srv_domain_name = pStreamStreamElement->Attribute("to") ? pStreamStreamElement->Attribute("to") : "";
             }
         }
 		
@@ -1352,7 +1325,7 @@ BOOL CXmpp::Stream_StreamTag(TiXmlDocument* xmlDoc)
 			digest[0], digest[1], digest[2], digest[3], digest[4], digest[5], digest[6], digest[7],
 			digest[8], digest[9], digest[10], digest[11], digest[12], digest[13], digest[14], digest[15]);
 		
-		if(m_is_s2s_conn) //jabber:server
+		if(m_is_srv2srv_conn) //jabber:server
 		{
             if(ProtSendNoWait(m_xml_declare.c_str(), m_xml_declare.length()) != 0)
                 return FALSE;
@@ -1537,7 +1510,7 @@ BOOL CXmpp::Stream_StreamTag(TiXmlDocument* xmlDoc)
 			for(int x = 0; x< sizeof(Message_Digest); x++)
 				sprintf(secret_hex + 2*x, "%02x", Message_Digest[x]);
 			
-			string hmac_source = m_peer_domain_name;
+			string hmac_source = m_peer_srv_domain_name;
 			hmac_source += " ";
 			hmac_source += m_email_domain;
 			hmac_source += " ";
@@ -1558,7 +1531,7 @@ BOOL CXmpp::Stream_StreamTag(TiXmlDocument* xmlDoc)
 				sprintf(digest_hex + 2*x, "%02x", hmac_digest[x]);
 					
 			sprintf(xmpp_buf, "<db:verify from='%s' id='%s' to='%s'>%s</db:verify>",
-				m_email_domain.c_str(), m_stream_id, m_peer_domain_name.c_str(), digest_hex);
+				m_email_domain.c_str(), m_stream_id, m_peer_srv_domain_name.c_str(), digest_hex);
 			
 			if(ProtSendNoWait(xmpp_buf, strlen(xmpp_buf)) != 0)
 				return FALSE;
@@ -1603,7 +1576,7 @@ BOOL CXmpp::Stream_FeaturesTag(TiXmlDocument* xmlDoc)
 					for(int x = 0; x< sizeof(Message_Digest); x++)
 						sprintf(secret_hex + 2*x, "%02x", Message_Digest[x]);
 					
-					string hmac_source = m_peer_domain_name;
+					string hmac_source = m_peer_srv_domain_name;
 					hmac_source += " ";
 					hmac_source += m_email_domain;
 					hmac_source += " ";
@@ -1623,7 +1596,7 @@ BOOL CXmpp::Stream_FeaturesTag(TiXmlDocument* xmlDoc)
 					for(int x = 0; x < sizeof(hmac_digest); x++)
 						sprintf(digest_hex + 2*x, "%02x", hmac_digest[x]);
 
-					sprintf(xmpp_buf, "<db:result from='%s' to='%s'>%s</db:result>", m_email_domain.c_str(), m_peer_domain_name.c_str(), digest_hex);
+					sprintf(xmpp_buf, "<db:result from='%s' to='%s'>%s</db:result>", m_email_domain.c_str(), m_peer_srv_domain_name.c_str(), digest_hex);
 					if(ProtSendNoWait(xmpp_buf, strlen(xmpp_buf)) != 0)
 						return FALSE;
 					
@@ -1684,25 +1657,25 @@ BOOL CXmpp::ProceedTag(TiXmlDocument* xmlDoc)
         string ca_crt_root;
         ca_crt_root = m_ca_client_base_dir;
         ca_crt_root += "/";
-        ca_crt_root += m_peer_domain_name;
+        ca_crt_root += m_peer_srv_domain_name;
         ca_crt_root += "/ca.crt";
         
         string ca_crt_client;
         ca_crt_client = m_ca_client_base_dir;
         ca_crt_client += "/";
-        ca_crt_client += m_peer_domain_name;
+        ca_crt_client += m_peer_srv_domain_name;
         ca_crt_client += "/client.crt";
         
         string ca_key_client;
         ca_key_client = m_ca_client_base_dir;
         ca_key_client += "/";
-        ca_key_client += m_peer_domain_name;
+        ca_key_client += m_peer_srv_domain_name;
         ca_key_client += "/client.key";
         
         string ca_password_file;
         ca_password_file = m_ca_client_base_dir;
         ca_password_file += "/";
-        ca_password_file += m_peer_domain_name;
+        ca_password_file += m_peer_srv_domain_name;
         ca_password_file += "/client.pwd";
         
         struct stat file_stat;
@@ -1793,17 +1766,17 @@ BOOL CXmpp::DbResultTag(TiXmlDocument* xmlDoc)
 			{
 				pthread_rwlock_wrlock(&m_srv2srv_list_lock); //acquire write
                 
-                map<string, CXmpp*>::iterator it = m_srv2srv_list.find(m_peer_domain_name);
+                map<string, CXmpp*>::iterator it = m_srv2srv_list.find(m_peer_srv_domain_name);
 
                 if(it != m_srv2srv_list.end())
                 {
                     CXmpp* pXmpp = it->second;
                     pXmpp->ProtSendNoWait("</stream:stream>", _CSL_("</stream:stream>"));
                     
-                    m_srv2srv_list.erase(m_peer_domain_name);
+                    m_srv2srv_list.erase(m_peer_srv_domain_name);
                 }
                 
-				m_srv2srv_list.insert(make_pair<string, CXmpp*>(m_peer_domain_name, this));
+				m_srv2srv_list.insert(make_pair<string, CXmpp*>(m_peer_srv_domain_name, this));
 				pthread_rwlock_unlock(&m_srv2srv_list_lock); //release write
 			
 				string msg_text;
@@ -1923,7 +1896,7 @@ BOOL CXmpp::DbVerifyTag(TiXmlDocument* xmlDoc)
 				for(int x = 0; x< sizeof(Message_Digest); x++)
 					sprintf(secret_hex + 2*x, "%02x", Message_Digest[x]);
 				
-				string hmac_source = m_peer_domain_name;
+				string hmac_source = m_peer_srv_domain_name;
 				hmac_source += " ";
 				hmac_source += m_email_domain;
 				hmac_source += " ";
@@ -1944,7 +1917,7 @@ BOOL CXmpp::DbVerifyTag(TiXmlDocument* xmlDoc)
 					sprintf(digest_hex + 2*x, "%02x", hmac_digest[x]);
 					
 				sprintf(xmpp_buf, "<db:result from='%s' id='%s' to='%s' type='valid'>%s</db:result>",
-					m_email_domain.c_str(), m_stream_id, m_peer_domain_name.c_str(), digest_hex);
+					m_email_domain.c_str(), m_stream_id, m_peer_srv_domain_name.c_str(), digest_hex);
 				if(ProtSendNoWait(xmpp_buf, strlen(xmpp_buf)) != 0)
 					return FALSE;
 			}
@@ -1962,7 +1935,7 @@ BOOL CXmpp::DbVerifyTag(TiXmlDocument* xmlDoc)
 				for(int x = 0; x< sizeof(Message_Digest); x++)
 					sprintf(secret_hex + 2*x, "%02x", Message_Digest[x]);
 				
-				string hmac_source = m_peer_domain_name;
+				string hmac_source = m_peer_srv_domain_name;
 				hmac_source += " ";
 				hmac_source += m_email_domain;
 				hmac_source += " ";
@@ -1983,7 +1956,7 @@ BOOL CXmpp::DbVerifyTag(TiXmlDocument* xmlDoc)
 					sprintf(digest_hex + 2*x, "%02x", hmac_digest[x]);
 					
 				sprintf(xmpp_buf, "<db:verify from='%s' id='%s' to='%s' type='valid'>%s</db:verify>",
-					m_email_domain.c_str(), m_stream_id, m_peer_domain_name.c_str(), digest_hex);
+					m_email_domain.c_str(), m_stream_id, m_peer_srv_domain_name.c_str(), digest_hex);
 				if(ProtSendNoWait(xmpp_buf, strlen(xmpp_buf)) != 0)
 					return FALSE;
 			}
@@ -2530,20 +2503,20 @@ BOOL CXmpp::SuccessTag(TiXmlDocument* xmlDoc)
             
             pthread_rwlock_rdlock(&m_srv2srv_list_lock); //acquire read
             
-            map<string, CXmpp*>::iterator it = m_srv2srv_list.find(m_peer_domain_name);
+            map<string, CXmpp*>::iterator it = m_srv2srv_list.find(m_peer_srv_domain_name);
 
             if(it != m_srv2srv_list.end())
             {
                 CXmpp* pXmpp = it->second;
                 pXmpp->ProtSendNoWait("</stream:stream>", _CSL_("</stream:stream>"));
                 
-                m_srv2srv_list.erase(m_peer_domain_name);
+                m_srv2srv_list.erase(m_peer_srv_domain_name);
             }
             
-			m_srv2srv_list.insert(make_pair<string, CXmpp*>(m_peer_domain_name, this));
+			m_srv2srv_list.insert(make_pair<string, CXmpp*>(m_peer_srv_domain_name, this));
 			pthread_rwlock_unlock(&m_srv2srv_list_lock); //release write
             
-            if(m_is_client_role && m_bSTARTTLS)
+            if(m_is_connection_initiator && m_bSTARTTLS)
             {
                 string msg_text;
                 if(GetSessionInfo()->PopStanza(msg_text))
@@ -2805,7 +2778,7 @@ BOOL CXmpp::AuthTag(TiXmlDocument* xmlDoc)
                     string strAuthName = auth_name;
                     free(auth_name);
                     
-                    if(m_is_s2s_conn)
+                    if(m_is_srv2srv_conn)
                     {
                         strMailAddr = strAuthName;
                     }
@@ -2856,7 +2829,7 @@ BOOL CXmpp::AuthTag(TiXmlDocument* xmlDoc)
                         char *commonName = (char*)ASN1_STRING_data(d);
                         if(strMailAddr == "")
                         {
-                            if(m_is_s2s_conn)
+                            if(m_is_srv2srv_conn)
                                 strAuthName = commonName;
                             else
                             {
@@ -2884,8 +2857,8 @@ BOOL CXmpp::AuthTag(TiXmlDocument* xmlDoc)
                     
                     if(bFound)
                     {
-                        if(m_is_s2s_conn)
-                            m_peer_domain_name = strAuthName;
+                        if(m_is_srv2srv_conn)
+                            m_peer_srv_domain_name = strAuthName;
                         else
                             m_username = strAuthName;
                         

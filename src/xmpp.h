@@ -235,7 +235,7 @@ class CXmpp : public CMailBase
 {
 public:
 	CXmpp(Xmpp_Session_Info* sess_inf, int epoll_fd, int sockfd, SSL * ssl, SSL_CTX * ssl_ctx, const char* clientip, unsigned short client_port, StorageEngine* storage_engine, memcached_st * memcached,
-        BOOL isSSL = FALSE, BOOL isClientRole= FALSE, const char* pdn = "", BOOL isDialBackStream = FALSE, CXmpp* pDependency = NULL);
+        BOOL isSSL = FALSE, BOOL isConnectionInitiator= FALSE, const char* pdn = "", BOOL isDialBackStream = FALSE, CXmpp* pDependency = NULL);
 	virtual ~CXmpp();
 
     //virtual function
@@ -321,9 +321,9 @@ protected:
     string m_strDigitalMD5Response;
     
     //server to server session
-    BOOL m_is_client_role;
-    BOOL m_is_s2s_conn;
-    string m_peer_domain_name;
+    BOOL m_is_connection_initiator;
+    BOOL m_is_srv2srv_conn;
+    string m_peer_srv_domain_name;
     BOOL m_is_dialback_stream;
     CXmpp * m_dependency;
     
