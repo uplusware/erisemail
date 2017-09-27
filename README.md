@@ -1,4 +1,4 @@
-### eRisemail - Scalable distributed mail server based on the Linux and MySQL/MariaDB 
+### eRisemail - Scalable distributed Mail/IM Server based on the Linux and MySQL/MariaDB 
 * Support SMTP, POP3, IMAP4, HTTP, XMPP and SSL/TLS
 * Support WebMail and WebAdmin based on built-in web server
 * Support CRAM-MD5, DIGEST-MD5, APOP, External/TLS-Certification and GSSAPI/Kerberos
