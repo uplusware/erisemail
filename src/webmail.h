@@ -30,7 +30,8 @@
 #define ERISEMAIL_WEB_SERVER_NAME        "Server: eRisemail Web Server/1.6.09 (*NIX)"
 
 #define RSP_200_OK_CACHE			"HTTP/1.1 200 OK\r\n"   \
-                                    ERISEMAIL_WEB_SERVER_NAME "\r\n"
+                                    ERISEMAIL_WEB_SERVER_NAME "\r\n"    \
+                                    "Cache-Control: max-age=31536000\r\n"
                                     
 #define RSP_200_OK_NO_CACHE			"HTTP/1.1 200 OK\r\n"   \
                                     ERISEMAIL_WEB_SERVER_NAME "\r\n"   \
@@ -10453,7 +10454,7 @@ public:
 				string strline;
 				if(filein.is_open())
 				{
-					strResp = RSP_200_OK_CACHE_PLAIN;
+					strResp = RSP_200_OK_NO_CACHE_PLAIN;
 					
 					struct stat file_stat;
 					stat(strPath.c_str(), &file_stat);					
