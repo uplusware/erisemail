@@ -110,6 +110,9 @@ vector<string> CMailBase::m_permit_list;
 vector<string> CMailBase::m_domain_list;
 vector<string> CMailBase::m_webadmin_list;
 
+
+unsigned int	CMailBase::m_connection_idle_timeout = 20;
+    
 char CMailBase::m_des_key[9];
 
 BOOL CMailBase::m_userpwd_cache_updated = TRUE;
@@ -543,6 +546,13 @@ BOOL CMailBase::LoadConfig()
 				strcut(strline.c_str(), "=", NULL, SMTPHostNameCheck );
 				strtrim(SMTPHostNameCheck);
 				m_enablesmtphostnamecheck = (strcasecmp(SMTPHostNameCheck.c_str(), "yes")) == 0 ? TRUE : FALSE;
+			}
+            else if(strncasecmp(strline.c_str(), "ConnectionIdleTimeout", sizeof("ConnectionIdleTimeout") - 1) == 0)
+			{
+				string connection_idle_timeout;
+				strcut(strline.c_str(), "=", NULL, connection_idle_timeout );
+				strtrim(connection_idle_timeout);
+				m_connection_idle_timeout = atoi(connection_idle_timeout.c_str());
 			}
 			else if(strncasecmp(strline.c_str(), "MEMCACHEDList", sizeof("MEMCACHEDList") - 1) == 0)
 			{

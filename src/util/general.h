@@ -35,8 +35,6 @@
 
 #define MAX_STORAGE_CONN	32
 
-#define MAX_SOCKET_TIMEOUT 120
-
 using namespace std;
 
 typedef unsigned int BOOL;
@@ -215,7 +213,7 @@ void __inline__ fnln_strcut(const char* text, const char* begstring, const char*
 		strDest = strText.substr(subfirst, sublen);
 }
 
-int __inline__ Recv(int sockfd, char* buf, unsigned int buf_len)
+int __inline__ Recv(int sockfd, char* buf, unsigned int buf_len, unsigned int idle_timeout)
 {
 	int taketime = 0;
 	int res;
@@ -226,7 +224,7 @@ int __inline__ Recv(int sockfd, char* buf, unsigned int buf_len)
 	unsigned int nRecv = 0;
 	while(1)
 	{
-		timeout.tv_sec = MAX_SOCKET_TIMEOUT; 
+		timeout.tv_sec = idle_timeout; 
 		timeout.tv_usec = 0;
 
 		FD_ZERO(&mask);
@@ -310,7 +308,7 @@ int __inline__ RecvTimed(int sockfd, char* buf, unsigned int buf_len, unsigned i
 	return len;
 }
 
-int __inline__ Send(int sockfd, const char * buf, unsigned int buf_len)
+int __inline__ Send(int sockfd, const char * buf, unsigned int buf_len, unsigned int idle_timeout)
 {	
 	if(buf_len == 0)
 		return 0;
@@ -323,7 +321,7 @@ int __inline__ Send(int sockfd, const char * buf, unsigned int buf_len)
 	
 	while(1)
 	{
-		timeout.tv_sec = MAX_SOCKET_TIMEOUT; 
+		timeout.tv_sec = idle_timeout; 
 		timeout.tv_usec = 0;
 
 		FD_ZERO(&mask);
@@ -360,7 +358,7 @@ int __inline__ Send(int sockfd, const char * buf, unsigned int buf_len)
 	return 0;
 }
 
-int __inline__ SSLRead(int sockfd, SSL* ssl, char * buf, unsigned int buf_len)
+int __inline__ SSLRead(int sockfd, SSL* ssl, char * buf, unsigned int buf_len, unsigned int idle_timeout)
 {
 #if 0
 	int len, ret;
@@ -417,7 +415,7 @@ int __inline__ SSLRead(int sockfd, SSL* ssl, char * buf, unsigned int buf_len)
             ret = SSL_get_error(ssl, len);
             if(ret == SSL_ERROR_WANT_READ || ret == SSL_ERROR_WANT_WRITE)
             {
-                timeout.tv_sec = MAX_SOCKET_TIMEOUT; 
+                timeout.tv_sec = idle_timeout; 
                 timeout.tv_usec = 0;
 
                 FD_SET(sockfd, &mask);
@@ -499,7 +497,7 @@ int __inline__ SSLReadTimed(int sockfd, SSL* ssl, char * buf, unsigned int buf_l
 	return len;
 }
 
-int __inline__ SSLWrite(int sockfd, SSL* ssl, const char * buf, unsigned int buf_len)
+int __inline__ SSLWrite(int sockfd, SSL* ssl, const char * buf, unsigned int buf_len, unsigned int idle_timeout)
 {
 #if 0
 	if(buf_len == 0)
@@ -557,7 +555,7 @@ int __inline__ SSLWrite(int sockfd, SSL* ssl, const char * buf, unsigned int buf
             ret = SSL_get_error(ssl, len);
             if(ret == SSL_ERROR_WANT_READ || ret == SSL_ERROR_WANT_WRITE)
             {
-                timeout.tv_sec = MAX_SOCKET_TIMEOUT; 
+                timeout.tv_sec = idle_timeout; 
                 timeout.tv_usec = 0;
 
                 FD_SET(sockfd, &mask);

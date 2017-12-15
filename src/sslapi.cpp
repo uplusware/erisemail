@@ -6,7 +6,7 @@
 #include "posixname.h"
 
 BOOL create_ssl(int sockfd, const char* ca_crt_root, const char* ca_crt_server, const char* ca_password, const char* ca_key_server,
-    BOOL ca_enable_verify_client, SSL** pp_ssl, SSL_CTX** pp_ssl_ctx)
+    BOOL ca_enable_verify_client, SSL** pp_ssl, SSL_CTX** pp_ssl_ctx, unsigned int idle_timeout)
 {
     int ssl_rc = -1;
     BOOL b_ssl_accepted;
@@ -97,7 +97,7 @@ BOOL create_ssl(int sockfd, const char* ca_crt_root, const char* ca_crt_server, 
                 fd_set mask;
                 struct timeval timeout;
         
-                timeout.tv_sec = MAX_SOCKET_TIMEOUT;
+                timeout.tv_sec = idle_timeout;
                 timeout.tv_usec = 0;
 
                 FD_ZERO(&mask);
@@ -186,7 +186,7 @@ FAIL_CLEAN_SSL_3:
     return FALSE;
 }
 
-BOOL connect_ssl(int sockfd,  const char* ca_crt_root, const char* ca_crt_client, const char* ca_password, const char* ca_key_client, SSL** pp_ssl, SSL_CTX** pp_ssl_ctx)
+BOOL connect_ssl(int sockfd,  const char* ca_crt_root, const char* ca_crt_client, const char* ca_password, const char* ca_key_client, SSL** pp_ssl, SSL_CTX** pp_ssl_ctx, unsigned int idle_timeout)
 {
     SSL_METHOD* meth = NULL;
 #if OPENSSL_VERSION_NUMBER >= 0x010100000L
@@ -258,7 +258,7 @@ BOOL connect_ssl(int sockfd,  const char* ca_crt_root, const char* ca_crt_client
                 fd_set mask;
                 struct timeval timeout;
         
-                timeout.tv_sec = MAX_SOCKET_TIMEOUT;
+                timeout.tv_sec = idle_timeout;
                 timeout.tv_usec = 0;
 
                 FD_ZERO(&mask);

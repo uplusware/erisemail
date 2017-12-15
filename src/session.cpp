@@ -29,7 +29,7 @@ Session::Session(int sockfd, SSL *ssl, SSL_CTX * ssl_ctx, const char* clientip, 
                 CMailBase::m_ca_password.c_str(),
                 CMailBase::m_ca_key_server.c_str(),
                 CMailBase::m_ca_verify_client,
-                &m_ssl, &m_ssl_ctx))
+                &m_ssl, &m_ssl_ctx, CMailBase::m_connection_idle_timeout))
         {
             close(m_sockfd);
             throw new string("Create SSL session error.");

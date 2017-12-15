@@ -88,25 +88,25 @@ CHttp::~CHttp()
 int CHttp::HttpSend(const char* buf, int len)
 {
 	if(m_ssl)
-		return SSLWrite(m_sockfd, m_ssl, buf, len);
+		return SSLWrite(m_sockfd, m_ssl, buf, len, CMailBase::m_connection_idle_timeout);
 	else
-		return Send( m_sockfd, buf, len);	
+		return Send( m_sockfd, buf, len, CMailBase::m_connection_idle_timeout);	
 }
 
 int CHttp::HttpRecv(char* buf, int len)
 {
     if(m_ssl)
-	    return m_lssl->drecv(buf, len);
+	    return m_lssl->drecv(buf, len, CMailBase::m_connection_idle_timeout);
     else
-	    return m_lsockfd->drecv(buf, len);	
+	    return m_lsockfd->drecv(buf, len, CMailBase::m_connection_idle_timeout);	
 }
 
 int CHttp::ProtRecv(char* buf, int len)
 {
 	if(m_ssl)
-		return m_lssl->lrecv(buf, len);
+		return m_lssl->lrecv(buf, len, CMailBase::m_connection_idle_timeout);
 	else
-		return m_lsockfd->lrecv(buf, len);
+		return m_lsockfd->lrecv(buf, len, CMailBase::m_connection_idle_timeout);
 }
 
 BOOL CHttp::Parse(char* text)

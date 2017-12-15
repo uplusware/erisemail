@@ -207,17 +207,17 @@ CMailSmtp::~CMailSmtp()
 int CMailSmtp::SmtpSend(const char* buf, int len)
 {
 		if(m_ssl)
-			return SSLWrite(m_sockfd, m_ssl, buf, len);
+			return SSLWrite(m_sockfd, m_ssl, buf, len, CMailBase::m_connection_idle_timeout);
 		else
-			return Send(m_sockfd, buf, len);	
+			return Send(m_sockfd, buf, len, CMailBase::m_connection_idle_timeout);	
 }
 
 int CMailSmtp::ProtRecv(char* buf, int len)
 {
 		if(m_ssl)
-			return m_lssl->lrecv(buf, len);
+			return m_lssl->lrecv(buf, len, CMailBase::m_connection_idle_timeout);
 		else
-			return m_lsockfd->lrecv(buf, len);
+			return m_lsockfd->lrecv(buf, len, CMailBase::m_connection_idle_timeout);
 }
 
 BOOL CMailSmtp::Parse(char* text)
@@ -2017,7 +2017,7 @@ void CMailSmtp::On_STARTTLS_Handler()
 	}   
 	
 	if(!create_ssl(m_sockfd, m_ca_crt_root.c_str(), m_ca_crt_server.c_str(), m_ca_password.c_str(), m_ca_key_server.c_str(),
-        m_ca_verify_client, &m_ssl, &m_ssl_ctx))
+        m_ca_verify_client, &m_ssl, &m_ssl_ctx, CMailBase::m_connection_idle_timeout))
     {
         throw new string(ERR_error_string(ERR_get_error(), NULL));
     }

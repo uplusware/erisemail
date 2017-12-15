@@ -309,9 +309,9 @@ int CXmpp::XmppSend(const char* buf, int len)
     pthread_mutex_lock(&m_send_lock);
     
     if(m_ssl)
-        ret = SSLWrite(m_sockfd, m_ssl, buf, len);
+        ret = SSLWrite(m_sockfd, m_ssl, buf, len, CMailBase::m_connection_idle_timeout);
     else
-        ret = Send(m_sockfd, buf, len);
+        ret = Send(m_sockfd, buf, len, CMailBase::m_connection_idle_timeout);
     
     /* printf("%s", buf); */
     
@@ -522,9 +522,9 @@ int CXmpp::ProtTryFlush()
 int CXmpp::ProtRecv(char* buf, int len)
 {    
     if(m_ssl && m_lssl)
-		return m_lssl->xrecv(buf, len);
+		return m_lssl->xrecv(buf, len, CMailBase::m_connection_idle_timeout);
 	else
-		return m_lsockfd->xrecv(buf, len);
+		return m_lsockfd->xrecv(buf, len, CMailBase::m_connection_idle_timeout);
 }
 
 int CXmpp::ProtRecvNoWait(char* buf, int len)
@@ -533,9 +533,9 @@ int CXmpp::ProtRecvNoWait(char* buf, int len)
         return 0;
     
     if(m_ssl)
-		return  m_lssl ? m_lssl->xrecv_t(buf, len) : 0;
+		return  m_lssl ? m_lssl->xrecv_t(buf, len, CMailBase::m_connection_idle_timeout) : 0;
 	else
-		return m_lsockfd ? m_lsockfd->xrecv_t(buf, len) : 0;
+		return m_lsockfd ? m_lsockfd->xrecv_t(buf, len, CMailBase::m_connection_idle_timeout) : 0;
 }
 
 BOOL CXmpp::SendOfflineMessage()

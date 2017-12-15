@@ -31,7 +31,7 @@ SmtpClient::SmtpClient(int sockfd, const char* mx_server_name)
 	while(1)
 	{
 		memset(welstr,0,4096);
-		int res = m_lsockfd->lrecv(welstr,4095);
+		int res = m_lsockfd->lrecv(welstr,4095, CMailBase::m_connection_idle_timeout);
 		if(res <= 0)
 		{
 			break;
@@ -367,14 +367,14 @@ BOOL SmtpClient::Do_StartTLS_Command(string& strmsg)
                 ca_crt_client.c_str(),
                 ca_password.c_str(),
                 ca_key_client.c_str(),
-                &m_ssl, &m_ssl_ctx) == FALSE)
+                &m_ssl, &m_ssl_ctx, CMailBase::m_connection_idle_timeout) == FALSE)
             {
                 return FALSE;
             }
         }
         else
         {
-            if(connect_ssl(m_sockfd, NULL, NULL, NULL, NULL, &m_ssl, &m_ssl_ctx) == FALSE)
+            if(connect_ssl(m_sockfd, NULL, NULL, NULL, NULL, &m_ssl, &m_ssl_ctx, CMailBase::m_connection_idle_timeout) == FALSE)
             {
                 return FALSE;
             }
@@ -465,11 +465,11 @@ int SmtpClient::SendCmd(int sockfd, const char * buf, unsigned int buf_len)
 {
 	if(m_bInTLS)
 		if(m_ssl)
-			return SSLWrite(m_sockfd, m_ssl, buf, buf_len);
+			return SSLWrite(m_sockfd, m_ssl, buf, buf_len, CMailBase::m_connection_idle_timeout);
 		else
 			return -1;
 	else
-		return Send(m_sockfd, buf, buf_len);
+		return Send(m_sockfd, buf, buf_len, CMailBase::m_connection_idle_timeout);
 }
 
 BOOL SmtpClient::RecvReply(char* reply_code, string &strmsg)
@@ -483,11 +483,11 @@ BOOL SmtpClient::RecvReply(char* reply_code, string &strmsg)
 		
 		if(m_bInTLS)
 		{
-			n_recv = m_lssl->lrecv(str, 4095);
+			n_recv = m_lssl->lrecv(str, 4095, CMailBase::m_connection_idle_timeout);
 		}
 		else
 		{
-			n_recv = m_lsockfd->lrecv(str, 4095);
+			n_recv = m_lsockfd->lrecv(str, 4095, CMailBase::m_connection_idle_timeout);
 		}
 		if(n_recv < 0)
 		{

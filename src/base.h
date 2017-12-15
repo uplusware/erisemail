@@ -192,7 +192,7 @@ public:
 			free(dbuf);
 	}
 
-	int drecv(char* pbuf, int blen)
+	int drecv(char* pbuf, int blen, unsigned int idle_timeout)
 	{
 		int rlen = 0;
 		if(blen <= dlen)
@@ -211,7 +211,7 @@ public:
 			rlen = dlen;
 			dlen = 0;
 
-			int len = Recv(sockfd, pbuf + rlen, blen - rlen);
+			int len = Recv(sockfd, pbuf + rlen, blen - rlen, idle_timeout);
 			if(len > 0)
 			{
 				rlen = rlen + len;
@@ -221,7 +221,7 @@ public:
 		return rlen;
 	}
     
-	int lrecv(char* pbuf, int blen)
+	int lrecv(char* pbuf, int blen, unsigned int idle_timeout)
 	{
 		int taketime = 0;
 		int res;
@@ -279,7 +279,7 @@ public:
 			if(nRecv >= blen)
 				break;
 
-			timeout.tv_sec = MAX_SOCKET_TIMEOUT;
+			timeout.tv_sec = idle_timeout;
 			timeout.tv_usec = 0;
 
 			FD_ZERO(&mask);
@@ -334,7 +334,7 @@ public:
 		return nRecv;
 	}
     
-  int xrecv_t(char* pbuf, int blen)
+  int xrecv_t(char* pbuf, int blen, unsigned int idle_timeout)
 	{
         int len = recv(sockfd, pbuf, blen, 0);
         if(len == 0)
@@ -359,7 +359,7 @@ public:
             return len;
     }
     
-  int xrecv(char* pbuf, int blen)
+  int xrecv(char* pbuf, int blen, unsigned int idle_timeout)
 	{
 		int taketime = 0;
 		int res;
@@ -417,7 +417,7 @@ public:
 			if(nRecv >= blen)
 				break;
 
-			timeout.tv_sec = 1;
+			timeout.tv_sec = idle_timeout;
 			timeout.tv_usec = 0;
 
 			FD_ZERO(&mask);
@@ -461,19 +461,10 @@ public:
 					break;
 				}
 			}
-			else if(res == 0)
-			{
-
-				taketime = taketime + 1;
-				if(taketime > MAX_SOCKET_TIMEOUT)
-				{
-					close(sockfd);
-					return -1;
-				}
-				continue;
-			}
 			else
 			{
+
+				close(sockfd);
 				return -1;
 			}
 
@@ -511,7 +502,7 @@ public:
 			free(dbuf);
 	}
 
-	int drecv(char* pbuf, int blen)
+	int drecv(char* pbuf, int blen, unsigned int idle_timeout)
 	{
 		int rlen = 0;
 
@@ -531,7 +522,7 @@ public:
 			rlen = dlen;
 			dlen = 0;
 
-			int len = SSLRead(sockfd, sslhd, pbuf + rlen, blen - rlen);
+			int len = SSLRead(sockfd, sslhd, pbuf + rlen, blen - rlen, idle_timeout);
 			if(len > 0)
 			{
 				rlen = rlen + len;
@@ -541,7 +532,7 @@ public:
 		return rlen;
 	}
 
-	int lrecv(char* pbuf, int blen)
+	int lrecv(char* pbuf, int blen, unsigned int idle_timeout)
 	{
 		int taketime = 0;
 		int res;
@@ -611,7 +602,7 @@ public:
                 ret = SSL_get_error(sslhd, len);
                 if(ret == SSL_ERROR_WANT_READ || ret == SSL_ERROR_WANT_WRITE)
                 {
-                    timeout.tv_sec = MAX_SOCKET_TIMEOUT;
+                    timeout.tv_sec = idle_timeout;
                     timeout.tv_usec = 0;
 
                     FD_ZERO(&mask);
@@ -667,7 +658,7 @@ public:
 		return nRecv;
 	}
     
-  int xrecv_t(char* pbuf, int blen)
+  int xrecv_t(char* pbuf, int blen, unsigned int idle_timeout)
 	{
         int len = SSL_read(sslhd, pbuf, blen);
         if(len == 0)
@@ -693,7 +684,7 @@ public:
             return len;
     }
     
-  int xrecv(char* pbuf, int blen)
+  int xrecv(char* pbuf, int blen, unsigned int idle_timeout)
 	{
 		int taketime = 0;
 		int res;
@@ -763,7 +754,7 @@ public:
                 ret = SSL_get_error(sslhd, len);
                 if(ret == SSL_ERROR_WANT_READ || ret == SSL_ERROR_WANT_WRITE)
                 {
-                    timeout.tv_sec = MAX_SOCKET_TIMEOUT;
+                    timeout.tv_sec = idle_timeout;
                     timeout.tv_usec = 0;
 
                     FD_ZERO(&mask);
@@ -916,7 +907,9 @@ public:
 	static unsigned int	m_mda_max_conn;
 
 	static unsigned int	m_runtime;
-
+    
+    static unsigned int	m_connection_idle_timeout;
+    
 	static string	m_config_file;
 	static string	m_permit_list_file;
 	static string	m_reject_list_file;
