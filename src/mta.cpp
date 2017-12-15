@@ -294,7 +294,7 @@ static BOOL SendMail(MailStorage* mailStg, memcached_st * memcached,
 	    int flags = fcntl(transfer_sockfd, F_GETFL, 0); 
 	    fcntl(transfer_sockfd, F_SETFL, flags | O_NONBLOCK);
 	
-	    timeout.tv_sec = 10; 
+	    timeout.tv_sec = CMailBase::m_connection_sync_timeout; 
 	    timeout.tv_usec = 0;
 	
         connect(transfer_sockfd, rp->ai_addr, rp->ai_addrlen);

@@ -367,14 +367,14 @@ BOOL SmtpClient::Do_StartTLS_Command(string& strmsg)
                 ca_crt_client.c_str(),
                 ca_password.c_str(),
                 ca_key_client.c_str(),
-                &m_ssl, &m_ssl_ctx, CMailBase::m_connection_idle_timeout) == FALSE)
+                &m_ssl, &m_ssl_ctx, CMailBase::m_connection_sync_timeout) == FALSE)
             {
                 return FALSE;
             }
         }
         else
         {
-            if(connect_ssl(m_sockfd, NULL, NULL, NULL, NULL, &m_ssl, &m_ssl_ctx, CMailBase::m_connection_idle_timeout) == FALSE)
+            if(connect_ssl(m_sockfd, NULL, NULL, NULL, NULL, &m_ssl, &m_ssl_ctx, CMailBase::m_connection_sync_timeout) == FALSE)
             {
                 return FALSE;
             }

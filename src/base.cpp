@@ -112,6 +112,7 @@ vector<string> CMailBase::m_webadmin_list;
 
 
 unsigned int	CMailBase::m_connection_idle_timeout = 20;
+unsigned int    CMailBase::m_connection_sync_timeout = 3;
     
 char CMailBase::m_des_key[9];
 
@@ -553,6 +554,13 @@ BOOL CMailBase::LoadConfig()
 				strcut(strline.c_str(), "=", NULL, connection_idle_timeout );
 				strtrim(connection_idle_timeout);
 				m_connection_idle_timeout = atoi(connection_idle_timeout.c_str());
+			}
+            else if(strncasecmp(strline.c_str(), "ConnectionSyncTimeout", sizeof("ConnectionSyncTimeout") - 1) == 0)
+			{
+				string connection_sync_timeout;
+				strcut(strline.c_str(), "=", NULL, connection_sync_timeout );
+				strtrim(connection_sync_timeout);
+				m_connection_sync_timeout = atoi(connection_sync_timeout.c_str());
 			}
 			else if(strncasecmp(strline.c_str(), "MEMCACHEDList", sizeof("MEMCACHEDList") - 1) == 0)
 			{
