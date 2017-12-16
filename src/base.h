@@ -928,7 +928,7 @@ public:
     static char m_des_key[9];
 
     static BOOL m_userpwd_cache_updated;
-    
+    static unsigned int m_max_request_ttl;
 
 public:
 	CMailBase();

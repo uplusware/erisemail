@@ -113,7 +113,8 @@ vector<string> CMailBase::m_webadmin_list;
 
 unsigned int	CMailBase::m_connection_idle_timeout = 20;
 unsigned int    CMailBase::m_connection_sync_timeout = 3;
-    
+unsigned int    CMailBase::m_max_request_ttl = 65536;
+
 char CMailBase::m_des_key[9];
 
 BOOL CMailBase::m_userpwd_cache_updated = TRUE;
@@ -561,6 +562,13 @@ BOOL CMailBase::LoadConfig()
 				strcut(strline.c_str(), "=", NULL, connection_sync_timeout );
 				strtrim(connection_sync_timeout);
 				m_connection_sync_timeout = atoi(connection_sync_timeout.c_str());
+			}
+            else if(strncasecmp(strline.c_str(), "MaxRequestTLL", sizeof("MaxRequestTLL") - 1) == 0)
+			{
+				string max_request_ttl;
+				strcut(strline.c_str(), "=", NULL, max_request_ttl );
+				strtrim(max_request_ttl);
+				m_max_request_ttl = atoi(max_request_ttl.c_str());
 			}
 			else if(strncasecmp(strline.c_str(), "MEMCACHEDList", sizeof("MEMCACHEDList") - 1) == 0)
 			{

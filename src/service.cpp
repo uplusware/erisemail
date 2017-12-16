@@ -564,6 +564,8 @@ int Service::Run(int fd, vector<service_param_t> & server_params)
     
 	ThreadPool worker_pool(CMailBase::m_prod_type == PROD_INSTANT_MESSENGER ? CMailBase::m_xmpp_worker_thread_num : CMailBase::m_mda_max_conn, init_thread_pool_handler, begin_thread_pool_handler, NULL, exit_thread_pool_handler);
 	
+    int max_request_ttl = CMailBase::m_max_request_ttl;
+    
 	while(!svr_exit)
 	{
         int max_fd = -1;
@@ -699,8 +701,16 @@ int Service::Run(int fd, vector<service_param_t> & server_params)
                             is_ssl = server_params[x].is_ssl;
                             if(create_client_session(uTrace, clt_sockfd, server_params[x].st, is_ssl, clt_addr, clt_size) < 0)
                                 continue;
+                            if(CMailBase::m_max_request_ttl != 0)
+                                max_request_ttl--;
                         }
                     }
+                }
+                
+                if(CMailBase::m_max_request_ttl != 0 && max_request_ttl == 0 )
+                {
+                    svr_exit = TRUE;
+                    break;
                 }
 			}
 		}
