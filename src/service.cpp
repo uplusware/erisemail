@@ -562,7 +562,8 @@ int Service::Run(int fd, vector<service_param_t> & server_params)
         }
     }
     
-	ThreadPool worker_pool(CMailBase::m_prod_type == PROD_INSTANT_MESSENGER ? CMailBase::m_xmpp_worker_thread_num : CMailBase::m_mda_max_conn, init_thread_pool_handler, begin_thread_pool_handler, NULL, exit_thread_pool_handler);
+	ThreadPool worker_pool(CMailBase::m_prod_type == PROD_INSTANT_MESSENGER ? CMailBase::m_xmpp_worker_thread_num : CMailBase::m_mda_max_conn,
+        init_thread_pool_handler, begin_thread_pool_handler, NULL, 0, exit_thread_pool_handler);
 	
     int max_request_ttl = CMailBase::m_max_request_ttl;
     

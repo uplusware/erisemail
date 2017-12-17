@@ -726,7 +726,7 @@ int MTA::Run(int fd)
 		stQueueMsg* pQMsg;
 		int rc;
 
-		thd_pool = new ThreadPool(CMailBase::m_mta_relaythreadnum, init_relay_handler, begin_relay_handler, NULL, exit_relay_handler);
+		thd_pool = new ThreadPool(CMailBase::m_mta_relaythreadnum, init_relay_handler, begin_relay_handler, NULL, 0, exit_relay_handler);
 
 		while(1)
 		{
