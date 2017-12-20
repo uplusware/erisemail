@@ -85,6 +85,8 @@ protected:
 	StorageEngine* m_storageEngine;
 	memcached_st * m_memcached;
     
+    std::queue<Session_Arg*>     m_local_thread_pool_arg_queue;
+    
     //static
     static std::queue<Session_Arg*>     m_static_thread_pool_arg_queue;
     static volatile BOOL                m_static_thread_pool_exit;

@@ -473,11 +473,25 @@ int Service::create_client_session(CUplusTrace& uTrace, int& clt_sockfd, Service
         session_arg->ssl = ssl;
         session_arg->ssl_ctx = ssl_ctx;
         
-        pthread_mutex_lock(&m_static_thread_pool_mutex);
-        m_static_thread_pool_arg_queue.push(session_arg);
-        pthread_mutex_unlock(&m_static_thread_pool_mutex);
+        if(pthread_mutex_trylock(&m_static_thread_pool_mutex) == 0)
+        {
+            while(!m_local_thread_pool_arg_queue.empty())
+            {
+                Session_Arg* previous_session_arg = m_local_thread_pool_arg_queue.front();
+                m_local_thread_pool_arg_queue.pop();
+                m_static_thread_pool_arg_queue.push(previous_session_arg);
+                sem_post(&m_static_thread_pool_sem);
+            }
+            
+            m_static_thread_pool_arg_queue.push(session_arg);
+            pthread_mutex_unlock(&m_static_thread_pool_mutex);
 
-        sem_post(&m_static_thread_pool_sem);
+            sem_post(&m_static_thread_pool_sem);
+        }
+        else
+        {
+            m_local_thread_pool_arg_queue.push(session_arg);
+        }
 
     }
     
