@@ -696,6 +696,17 @@ int Service::Run(int fd, vector<service_param_t> & server_params)
 			}
 			else if(rc == 0)
 			{
+                if(!m_local_thread_pool_arg_queue.empty() && pthread_mutex_trylock(&m_static_thread_pool_mutex) == 0)
+                {
+                    while(!m_local_thread_pool_arg_queue.empty())
+                    {
+                        Session_Arg* previous_session_arg = m_local_thread_pool_arg_queue.front();
+                        m_local_thread_pool_arg_queue.pop();
+                        m_static_thread_pool_arg_queue.push(previous_session_arg);
+                        sem_post(&m_static_thread_pool_sem);
+                    }
+                }
+        
                 continue;
 			}
 			else
