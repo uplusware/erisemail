@@ -68,13 +68,13 @@ void push_reject_list(const char* service_name, const char* ip)
 		sem_close(service_sid);
 }
 
-std::queue<Session_Arg*> Service::m_static_thread_pool_arg_queue;
-volatile BOOL Service::m_static_thread_pool_exit = TRUE;
-pthread_mutex_t Service::m_static_thread_pool_mutex;
-sem_t Service::m_static_thread_pool_sem;
-volatile unsigned int Service::m_static_thread_pool_size = 0;
+std::queue<Session_Arg*> Service::m_STATIC_THREAD_POOL_ARG_QUEUE;
+volatile BOOL Service::m_STATIC_THREAD_POOL_EXIT = TRUE;
+pthread_mutex_t Service::m_STATIC_THREAD_POOL_MUTEX;
+sem_t Service::m_STATIC_THREAD_POOL_SEM;
+volatile unsigned int Service::m_STATIC_THREAD_POOL_SIZE = 0;
 
-void Service::session_handler(Session_Arg* session_arg)
+void Service::SESSION_HANDLER(Session_Arg* session_arg)
 {
 	Session* pSession = NULL;
     try {
@@ -98,57 +98,57 @@ void Service::session_handler(Session_Arg* session_arg)
 	close(session_arg->sockfd);
 }
 
-void* Service::new_session_handler(void * arg)
+void* Service::NEW_SESSION_HANDLER(void * arg)
 {
 	Session_Arg* session_arg = (Session_Arg*)arg;
 
-	session_handler(session_arg);
+	SESSION_HANDLER(session_arg);
 
 	if(session_arg)
 		delete session_arg;
 	pthread_exit(0);
 }
 
-void Service::init_thread_pool_handler()
+void Service::INIT_THREAD_POOL_HANDLER()
 {
-	m_static_thread_pool_exit = TRUE;
-	m_static_thread_pool_size = 0;
-	while(!m_static_thread_pool_arg_queue.empty())
+	m_STATIC_THREAD_POOL_EXIT = TRUE;
+	m_STATIC_THREAD_POOL_SIZE = 0;
+	while(!m_STATIC_THREAD_POOL_ARG_QUEUE.empty())
 	{
-		m_static_thread_pool_arg_queue.pop();
+		m_STATIC_THREAD_POOL_ARG_QUEUE.pop();
 	}
 
-	pthread_mutex_init(&m_static_thread_pool_mutex, NULL);
-	sem_init(&m_static_thread_pool_sem, 0, 0);
+	pthread_mutex_init(&m_STATIC_THREAD_POOL_MUTEX, NULL);
+	sem_init(&m_STATIC_THREAD_POOL_SEM, 0, 0);
 }
 
-void* Service::begin_thread_pool_handler(void* arg)
+void* Service::BEGIN_THREAD_POOL_HANDLER(void* arg)
 {
-	m_static_thread_pool_size++;
+	m_STATIC_THREAD_POOL_SIZE++;
 	struct timespec ts;
     srandom(time(NULL));
     Xmpp_Session_Group * p_session_group = NULL;
     if(CMailBase::m_prod_type == PROD_INSTANT_MESSENGER)
         p_session_group = new Xmpp_Session_Group();
     
-	while(m_static_thread_pool_exit)
+	while(m_STATIC_THREAD_POOL_EXIT)
 	{
 		clock_gettime(CLOCK_REALTIME, &ts);
         if(CMailBase::m_prod_type != PROD_INSTANT_MESSENGER)
             ts.tv_sec += 1;
-		if(sem_timedwait(&m_static_thread_pool_sem, &ts) == 0)
+		if(sem_timedwait(&m_STATIC_THREAD_POOL_SEM, &ts) == 0)
 		{
 			Session_Arg* session_arg = NULL;
 		
-			pthread_mutex_lock(&m_static_thread_pool_mutex);
+			pthread_mutex_lock(&m_STATIC_THREAD_POOL_MUTEX);
 
-			if(!m_static_thread_pool_arg_queue.empty())
+			if(!m_STATIC_THREAD_POOL_ARG_QUEUE.empty())
 			{
-				session_arg = m_static_thread_pool_arg_queue.front();
-				m_static_thread_pool_arg_queue.pop();
+				session_arg = m_STATIC_THREAD_POOL_ARG_QUEUE.front();
+				m_STATIC_THREAD_POOL_ARG_QUEUE.pop();
 			}
 
-			pthread_mutex_unlock(&m_static_thread_pool_mutex);
+			pthread_mutex_unlock(&m_STATIC_THREAD_POOL_MUTEX);
 
 			if(session_arg)
 			{
@@ -159,7 +159,7 @@ void* Service::begin_thread_pool_handler(void* arg)
                 }
                 else
                 {
-                    session_handler(session_arg);
+                    SESSION_HANDLER(session_arg);
                     delete session_arg;
                 
                 }
@@ -174,7 +174,7 @@ void* Service::begin_thread_pool_handler(void* arg)
     if(CMailBase::m_prod_type == PROD_INSTANT_MESSENGER)
         delete p_session_group;
     
-	m_static_thread_pool_size--;
+	m_STATIC_THREAD_POOL_SIZE--;
 	
 	if(arg != NULL)
 		delete arg;
@@ -182,15 +182,15 @@ void* Service::begin_thread_pool_handler(void* arg)
 	pthread_exit(0);
 }
 
-void Service::exit_thread_pool_handler()
+void Service::EXIT_THREAD_POOL_HANDLER()
 {
-	m_static_thread_pool_exit = FALSE;
+	m_STATIC_THREAD_POOL_EXIT = FALSE;
 
-	pthread_mutex_destroy(&m_static_thread_pool_mutex);
-	sem_close(&m_static_thread_pool_sem);
+	pthread_mutex_destroy(&m_STATIC_THREAD_POOL_MUTEX);
+	sem_close(&m_STATIC_THREAD_POOL_SEM);
 
 	unsigned long timeout = 200;
-	while(m_static_thread_pool_size > 0 && timeout > 0)
+	while(m_STATIC_THREAD_POOL_SIZE > 0 && timeout > 0)
 	{
 		usleep(1000*10);
 		timeout--;
@@ -473,20 +473,20 @@ int Service::create_client_session(CUplusTrace& uTrace, int& clt_sockfd, Service
         session_arg->ssl = ssl;
         session_arg->ssl_ctx = ssl_ctx;
         
-        if(pthread_mutex_trylock(&m_static_thread_pool_mutex) == 0)
+        if(pthread_mutex_trylock(&m_STATIC_THREAD_POOL_MUTEX) == 0)
         {
             while(!m_local_thread_pool_arg_queue.empty())
             {
                 Session_Arg* previous_session_arg = m_local_thread_pool_arg_queue.front();
                 m_local_thread_pool_arg_queue.pop();
-                m_static_thread_pool_arg_queue.push(previous_session_arg);
-                sem_post(&m_static_thread_pool_sem);
+                m_STATIC_THREAD_POOL_ARG_QUEUE.push(previous_session_arg);
+                sem_post(&m_STATIC_THREAD_POOL_SEM);
             }
             
-            m_static_thread_pool_arg_queue.push(session_arg);
-            pthread_mutex_unlock(&m_static_thread_pool_mutex);
+            m_STATIC_THREAD_POOL_ARG_QUEUE.push(session_arg);
+            pthread_mutex_unlock(&m_STATIC_THREAD_POOL_MUTEX);
 
-            sem_post(&m_static_thread_pool_sem);
+            sem_post(&m_STATIC_THREAD_POOL_SEM);
         }
         else
         {
@@ -577,7 +577,7 @@ int Service::Run(int fd, vector<service_param_t> & server_params)
     }
     
 	ThreadPool worker_pool(CMailBase::m_prod_type == PROD_INSTANT_MESSENGER ? CMailBase::m_xmpp_worker_thread_num : CMailBase::m_mda_max_conn,
-        init_thread_pool_handler, begin_thread_pool_handler, NULL, 0, exit_thread_pool_handler);
+        INIT_THREAD_POOL_HANDLER, BEGIN_THREAD_POOL_HANDLER, NULL, 0, EXIT_THREAD_POOL_HANDLER);
 	
     int max_request_ttl = CMailBase::m_max_request_ttl;
     
@@ -696,14 +696,14 @@ int Service::Run(int fd, vector<service_param_t> & server_params)
 			}
 			else if(rc == 0)
 			{
-                if(!m_local_thread_pool_arg_queue.empty() && pthread_mutex_trylock(&m_static_thread_pool_mutex) == 0)
+                if(!m_local_thread_pool_arg_queue.empty() && pthread_mutex_trylock(&m_STATIC_THREAD_POOL_MUTEX) == 0)
                 {
                     while(!m_local_thread_pool_arg_queue.empty())
                     {
                         Session_Arg* previous_session_arg = m_local_thread_pool_arg_queue.front();
                         m_local_thread_pool_arg_queue.pop();
-                        m_static_thread_pool_arg_queue.push(previous_session_arg);
-                        sem_post(&m_static_thread_pool_sem);
+                        m_STATIC_THREAD_POOL_ARG_QUEUE.push(previous_session_arg);
+                        sem_post(&m_STATIC_THREAD_POOL_SEM);
                     }
                 }
         

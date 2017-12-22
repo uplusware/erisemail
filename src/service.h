@@ -65,11 +65,11 @@ public:
 	memory_cache* m_cache;
 	
     //static
-    static void session_handler(Session_Arg* session_arg);
-    static void* new_session_handler(void * arg);
-    static void init_thread_pool_handler();
-    static void* begin_thread_pool_handler(void* arg);
-    static void exit_thread_pool_handler();
+    static void SESSION_HANDLER(Session_Arg* session_arg);
+    static void* NEW_SESSION_HANDLER(void * arg);
+    static void INIT_THREAD_POOL_HANDLER();
+    static void* BEGIN_THREAD_POOL_HANDLER(void* arg);
+    static void EXIT_THREAD_POOL_HANDLER();
     
 protected:
     int create_server_service(CUplusTrace& uTrace, const char* hostip, unsigned short hostport, int& srv_sockfd);
@@ -88,11 +88,11 @@ protected:
     std::queue<Session_Arg*>     m_local_thread_pool_arg_queue;
     
     //static
-    static std::queue<Session_Arg*>     m_static_thread_pool_arg_queue;
-    static volatile BOOL                m_static_thread_pool_exit;
-    static pthread_mutex_t              m_static_thread_pool_mutex;
-    static sem_t                        m_static_thread_pool_sem;
-    static volatile unsigned int        m_static_thread_pool_size;
+    static std::queue<Session_Arg*>     m_STATIC_THREAD_POOL_ARG_QUEUE;
+    static volatile BOOL                m_STATIC_THREAD_POOL_EXIT;
+    static pthread_mutex_t              m_STATIC_THREAD_POOL_MUTEX;
+    static sem_t                        m_STATIC_THREAD_POOL_SEM;
+    static volatile unsigned int        m_STATIC_THREAD_POOL_SIZE;
 
 };
 
