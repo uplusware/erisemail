@@ -911,6 +911,8 @@ public:
     static unsigned int	m_connection_idle_timeout;
     static unsigned int	m_connection_sync_timeout;
     
+    static unsigned int	m_service_idle_timeout;
+    
 	static string	m_config_file;
 	static string	m_permit_list_file;
 	static string	m_reject_list_file;
@@ -928,7 +930,7 @@ public:
     static char m_des_key[9];
 
     static BOOL m_userpwd_cache_updated;
-    static unsigned int m_max_request_ttl;
+    static unsigned int m_max_service_request_num;
 
 public:
 	CMailBase();

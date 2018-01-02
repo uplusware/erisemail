@@ -727,7 +727,9 @@ int MTA::Run(int fd)
 		int rc;
 
 		thd_pool = new ThreadPool(CMailBase::m_mta_relaythreadnum, init_relay_handler, begin_relay_handler, NULL, 0, exit_relay_handler);
-
+        
+        int max_service_request_num = 0;
+        
 		while(1)
 		{
 			clock_gettime(CLOCK_REALTIME, &ts1);
@@ -803,12 +805,18 @@ int MTA::Run(int fd)
                     
                         sem_post(&gs_thread_pool_sem);
                         
+                        max_service_request_num++;
                         
                     }
 				}
 				stgengine_instance->Release();
                 delete stgengine_instance;
-        
+                
+                if(CMailBase::m_max_service_request_num != 0 && max_service_request_num > CMailBase::m_max_service_request_num)
+                {
+                    s_relay_stop = TRUE;
+                    break;
+                }
 			}
 		}
         

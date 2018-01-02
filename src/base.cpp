@@ -113,7 +113,9 @@ vector<string> CMailBase::m_webadmin_list;
 
 unsigned int	CMailBase::m_connection_idle_timeout = 20;
 unsigned int    CMailBase::m_connection_sync_timeout = 3;
-unsigned int    CMailBase::m_max_request_ttl = 65536;
+unsigned int    CMailBase::m_max_service_request_num = 65536;
+
+unsigned int    CMailBase::m_service_idle_timeout = 90;
 
 char CMailBase::m_des_key[9];
 
@@ -556,6 +558,13 @@ BOOL CMailBase::LoadConfig()
 				strtrim(connection_idle_timeout);
 				m_connection_idle_timeout = atoi(connection_idle_timeout.c_str());
 			}
+            else if(strncasecmp(strline.c_str(), "ServiceIdleTimeout", sizeof("ServiceIdleTimeout") - 1) == 0)
+			{
+				string service_idle_timeout;
+				strcut(strline.c_str(), "=", NULL, service_idle_timeout );
+				strtrim(service_idle_timeout);
+				m_service_idle_timeout = atoi(service_idle_timeout.c_str());
+			}
             else if(strncasecmp(strline.c_str(), "ConnectionSyncTimeout", sizeof("ConnectionSyncTimeout") - 1) == 0)
 			{
 				string connection_sync_timeout;
@@ -563,12 +572,12 @@ BOOL CMailBase::LoadConfig()
 				strtrim(connection_sync_timeout);
 				m_connection_sync_timeout = atoi(connection_sync_timeout.c_str());
 			}
-            else if(strncasecmp(strline.c_str(), "MaxRequestTLL", sizeof("MaxRequestTLL") - 1) == 0)
+            else if(strncasecmp(strline.c_str(), "MaxServiceRequestNum", sizeof("MaxServiceRequestNum") - 1) == 0)
 			{
-				string max_request_ttl;
-				strcut(strline.c_str(), "=", NULL, max_request_ttl );
-				strtrim(max_request_ttl);
-				m_max_request_ttl = atoi(max_request_ttl.c_str());
+				string max_service_request_num;
+				strcut(strline.c_str(), "=", NULL, max_service_request_num );
+				strtrim(max_service_request_num);
+				m_max_service_request_num = atoi(max_service_request_num.c_str());
 			}
 			else if(strncasecmp(strline.c_str(), "MEMCACHEDList", sizeof("MEMCACHEDList") - 1) == 0)
 			{
