@@ -14,7 +14,6 @@
 #include <mqueue.h>
 #include <pthread.h>
 #include "cache.h"
-#include "pool.h"
 #include <queue>
 #include "letter.h"
 #include "mta.h"
@@ -71,11 +70,16 @@ void push_reject_list(const char* service_name, const char* ip)
 std::queue<Session_Arg*> Service::m_STATIC_THREAD_POOL_ARG_QUEUE;
 volatile BOOL Service::m_STATIC_THREAD_POOL_EXIT = TRUE;
 pthread_mutex_t Service::m_STATIC_THREAD_POOL_MUTEX;
-pthread_mutex_t Service::m_STATIC_THREAD_POOL_SIZE_MUTEX;
 sem_t Service::m_STATIC_THREAD_POOL_SEM;
+pthread_mutex_t Service::m_STATIC_THREAD_POOL_SIZE_MUTEX;
 volatile unsigned int Service::m_STATIC_THREAD_POOL_SIZE = 0;
 pthread_rwlock_t Service::m_STATIC_THREAD_IDLE_NUM_LOCK;
 volatile unsigned int Service::m_STATIC_THREAD_IDLE_NUM = 0;
+
+int Service::GetInstanceMaxThreadNum()
+{
+    return CMailBase::m_prod_type == PROD_INSTANT_MESSENGER ? CMailBase::m_xmpp_worker_thread_num : CMailBase::m_mda_max_conn;
+}
 
 void Service::SESSION_HANDLER(Session_Arg* session_arg)
 {
@@ -143,7 +147,7 @@ void* Service::BEGIN_THREAD_POOL_HANDLER(void* arg)
     if(CMailBase::m_prod_type == PROD_INSTANT_MESSENGER)
         p_session_group = new Xmpp_Session_Group();
     
-    int service_idle_seconds = 0;
+    time_t last_service_idle_time = time(NULL);
     
 	while(m_STATIC_THREAD_POOL_EXIT)
 	{
@@ -166,6 +170,8 @@ void* Service::BEGIN_THREAD_POOL_HANDLER(void* arg)
 
 			if(session_arg)
 			{
+                last_service_idle_time = time(NULL);
+                
                 if(CMailBase::m_prod_type == PROD_INSTANT_MESSENGER)
                 {
                     p_session_group->Accept(session_arg->sockfd, session_arg->ssl, session_arg->ssl_ctx, session_arg->client_ip.c_str(), session_arg->client_port,
@@ -173,8 +179,6 @@ void* Service::BEGIN_THREAD_POOL_HANDLER(void* arg)
                 }
                 else
                 {
-                    service_idle_seconds = 0;
-                    
                     pthread_rwlock_wrlock(&m_STATIC_THREAD_IDLE_NUM_LOCK);
                     m_STATIC_THREAD_IDLE_NUM--;
                     pthread_rwlock_unlock(&m_STATIC_THREAD_IDLE_NUM_LOCK);
@@ -188,6 +192,13 @@ void* Service::BEGIN_THREAD_POOL_HANDLER(void* arg)
                 
                 }
 			}
+            else
+            {
+                if(time(NULL) - last_service_idle_time > CMailBase::m_service_idle_timeout)
+                {
+                    break; //exit from the current thread
+                }
+            }
 		}
         else
         {
@@ -197,10 +208,14 @@ void* Service::BEGIN_THREAD_POOL_HANDLER(void* arg)
             }
             else
             {
-                service_idle_seconds++;
+                if(time(NULL) - last_service_idle_time > CMailBase::m_service_idle_timeout)
+                {
+                    break; //exit from the current thread
+                }
             }
         }
 	}
+    
     if(CMailBase::m_prod_type == PROD_INSTANT_MESSENGER)
         delete p_session_group;
     
@@ -222,19 +237,24 @@ void Service::EXIT_THREAD_POOL_HANDLER()
 {
 	m_STATIC_THREAD_POOL_EXIT = FALSE;
 
-	pthread_mutex_destroy(&m_STATIC_THREAD_POOL_MUTEX);
+    BOOL STILL_HAVE_THREADS = TRUE;
     
-	sem_close(&m_STATIC_THREAD_POOL_SEM);
-
-    pthread_mutex_lock(&m_STATIC_THREAD_POOL_SIZE_MUTEX);
-    int current_pool_size = m_STATIC_THREAD_POOL_SIZE;
-    pthread_mutex_unlock(&m_STATIC_THREAD_POOL_SIZE_MUTEX);
-     
-	while( current_pool_size > 0)
+	while(STILL_HAVE_THREADS)
 	{
-		usleep(1000);
+        pthread_mutex_lock(&m_STATIC_THREAD_POOL_SIZE_MUTEX);
+        if(m_STATIC_THREAD_POOL_SIZE <= 0)
+        {
+            STILL_HAVE_THREADS = FALSE;
+        }
+        pthread_mutex_unlock(&m_STATIC_THREAD_POOL_SIZE_MUTEX);
+        
+        if(STILL_HAVE_THREADS)
+            usleep(1000*10);
 	}
-	
+
+    sem_close(&m_STATIC_THREAD_POOL_SEM);
+        
+    pthread_mutex_destroy(&m_STATIC_THREAD_POOL_MUTEX);
     pthread_mutex_destroy(&m_STATIC_THREAD_POOL_SIZE_MUTEX);
     pthread_rwlock_destroy(&m_STATIC_THREAD_IDLE_NUM_LOCK);
 }
@@ -421,7 +441,7 @@ int Service::create_server_service(CUplusTrace& uTrace, const char* hostip, unsi
     return srv_sockfd;
 }
 
-int Service::create_client_session(CUplusTrace& uTrace, int& clt_sockfd, Service_Type st, BOOL is_ssl, struct sockaddr_storage& clt_addr, socklen_t clt_size)
+int Service::create_client_session(CUplusTrace& uTrace, int& clt_sockfd, Service_Type st, BOOL is_ssl, struct sockaddr_storage& clt_addr, socklen_t clt_size, ThreadPool & worker_pool)
 {
     unsigned short client_port = 0;
     
@@ -533,7 +553,19 @@ int Service::create_client_session(CUplusTrace& uTrace, int& clt_sockfd, Service
         {
             m_local_thread_pool_arg_queue.push(session_arg);
         }
+        
+        pthread_rwlock_rdlock(&m_STATIC_THREAD_IDLE_NUM_LOCK);
+        int current_idle_thread_num = m_STATIC_THREAD_IDLE_NUM;
+        pthread_rwlock_unlock(&m_STATIC_THREAD_IDLE_NUM_LOCK);
 
+        pthread_mutex_lock(&m_STATIC_THREAD_POOL_SIZE_MUTEX);
+        int current_thread_pool_size = m_STATIC_THREAD_POOL_SIZE;
+        pthread_mutex_unlock(&m_STATIC_THREAD_POOL_SIZE_MUTEX);
+
+        if(current_idle_thread_num < CMailBase::m_thread_increase_step && current_thread_pool_size < GetInstanceMaxThreadNum())
+        {
+            worker_pool.More((GetInstanceMaxThreadNum() - current_thread_pool_size) < CMailBase::m_thread_increase_step ? (GetInstanceMaxThreadNum() - current_thread_pool_size) : CMailBase::m_thread_increase_step);
+        }
     }
     
     return 0;
@@ -617,12 +649,15 @@ int Service::Run(int fd, vector<service_param_t> & server_params)
         }
     }
     
-	ThreadPool worker_pool(CMailBase::m_prod_type == PROD_INSTANT_MESSENGER ? CMailBase::m_xmpp_worker_thread_num : CMailBase::m_mda_max_conn,
-        INIT_THREAD_POOL_HANDLER, BEGIN_THREAD_POOL_HANDLER, NULL, 0, EXIT_THREAD_POOL_HANDLER);
+    ThreadPool worker_pool(GetInstanceMaxThreadNum(),
+        INIT_THREAD_POOL_HANDLER, BEGIN_THREAD_POOL_HANDLER, NULL, 0, EXIT_THREAD_POOL_HANDLER,
+            GetInstanceMaxThreadNum() > CMailBase::m_thread_increase_step ? CMailBase::m_thread_increase_step : GetInstanceMaxThreadNum());
 	
     int max_service_request_num = 0;
     
-	while(!svr_exit)
+    time_t last_service_idle_time = time(NULL);
+	
+    while(!svr_exit)
 	{
         int max_fd = -1;
         for(int x = 0; x < server_params.size(); x++)
@@ -668,7 +703,7 @@ int Service::Run(int fd, vector<service_param_t> & server_params)
 			clock_gettime(CLOCK_REALTIME, &ts);
 			rc = mq_timedreceive(m_service_qid, queue_buf_ptr, queue_buf_len, 0, &ts);
 			if( rc != -1)
-			{
+			{                
 				pQMsg = (stQueueMsg*)queue_buf_ptr;
 				if(pQMsg->cmd == MSG_EXIT)
 				{
@@ -705,11 +740,9 @@ int Service::Run(int fd, vector<service_param_t> & server_params)
 			{
 				if((errno != ETIMEDOUT)&&(errno != EINTR)&&(errno != EMSGSIZE))
 				{
-					perror("");
 					svr_exit = TRUE;
 					break;
-				}
-				
+				}                
 			}
             
             FD_ZERO(&accept_mask);
@@ -732,13 +765,15 @@ int Service::Run(int fd, vector<service_param_t> & server_params)
 			rc = select(max_fd + 1, &accept_mask, NULL, NULL, &accept_timeout);
 			if(rc == -1)
 			{	
-				sleep(5);
+				svr_exit = TRUE;
 				break;
 			}
 			else if(rc == 0)
 			{
                 if(!m_local_thread_pool_arg_queue.empty() && pthread_mutex_trylock(&m_STATIC_THREAD_POOL_MUTEX) == 0)
                 {
+                    last_service_idle_time = time(NULL);
+                    
                     while(!m_local_thread_pool_arg_queue.empty())
                     {
                         Session_Arg* previous_session_arg = m_local_thread_pool_arg_queue.front();
@@ -747,11 +782,19 @@ int Service::Run(int fd, vector<service_param_t> & server_params)
                         sem_post(&m_STATIC_THREAD_POOL_SEM);
                     }
                 }
-        
-                continue;
+                
+                if(time(NULL) - last_service_idle_time > CMailBase::m_service_idle_timeout)
+                {
+                   svr_exit = TRUE;
+                   break; 
+                }
+                else
+                    continue;
 			}
 			else
 			{
+                last_service_idle_time = time(NULL);
+                                
                 BOOL is_ssl;
                 struct sockaddr_storage clt_addr;
 				socklen_t clt_size = sizeof(struct sockaddr_storage);
@@ -766,7 +809,7 @@ int Service::Run(int fd, vector<service_param_t> & server_params)
                         if(clt_sockfd > 0)
                         {
                             is_ssl = server_params[x].is_ssl;
-                            if(create_client_session(uTrace, clt_sockfd, server_params[x].st, is_ssl, clt_addr, clt_size) < 0)
+                            if(create_client_session(uTrace, clt_sockfd, server_params[x].st, is_ssl, clt_addr, clt_size, worker_pool) < 0)
                                 continue;
                             
                             max_service_request_num++;
@@ -998,7 +1041,7 @@ int Watcher::Run(int fd, vector<service_param_t> & server_params, vector<service
                         printf("Service %s is aready runing.\n", MTA_SERVICE_NAME);   
                         exit(-1);
                     }
-                    MTA mta;
+                    MailTransferAgent mta;
                     mta.Run(pfd[1]);
                     exit(0);
                 }

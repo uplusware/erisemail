@@ -25,7 +25,7 @@ public:
         StorageEngine* storage_engine, memory_cache* ch, memcached_st * memcached);
     BOOL Connect(const char* hostname, unsigned short port, Service_Type st, StorageEngine* storage_engine, memory_cache* ch, memcached_st * memcached,
 		std::stack<string>& data_stack, BOOL isXmppDialBack);
-    BOOL Poll();
+    int Poll();
     
 private:
     map<int, Session_Info*> m_session_list;

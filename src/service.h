@@ -23,6 +23,7 @@
 #include "util/trace.h"
 #include "cache.h"
 #include "posixname.h"
+#include "pool.h"
 
 void push_reject_list(const char* service_name, const char* ip);
 
@@ -70,10 +71,10 @@ public:
     static void INIT_THREAD_POOL_HANDLER();
     static void* BEGIN_THREAD_POOL_HANDLER(void* arg);
     static void EXIT_THREAD_POOL_HANDLER();
-    
+    static int GetInstanceMaxThreadNum();
 protected:
     int create_server_service(CUplusTrace& uTrace, const char* hostip, unsigned short hostport, int& srv_sockfd);
-    int create_client_session(CUplusTrace& uTrace, int& clt_sockfd, Service_Type st, BOOL is_ssl, struct sockaddr_storage& clt_addr, socklen_t clt_size);
+    int create_client_session(CUplusTrace& uTrace, int& clt_sockfd, Service_Type st, BOOL is_ssl, struct sockaddr_storage& clt_addr, socklen_t clt_size, ThreadPool & worker_pool);
     
 	mqd_t m_service_qid;
 	

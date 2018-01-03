@@ -115,7 +115,9 @@ unsigned int	CMailBase::m_connection_idle_timeout = 20;
 unsigned int    CMailBase::m_connection_sync_timeout = 3;
 unsigned int    CMailBase::m_max_service_request_num = 65536;
 
-unsigned int    CMailBase::m_service_idle_timeout = 90;
+unsigned int    CMailBase::m_service_idle_timeout = 600;
+
+unsigned int	CMailBase::m_thread_increase_step = 8;
 
 char CMailBase::m_des_key[9];
 
@@ -578,6 +580,13 @@ BOOL CMailBase::LoadConfig()
 				strcut(strline.c_str(), "=", NULL, max_service_request_num );
 				strtrim(max_service_request_num);
 				m_max_service_request_num = atoi(max_service_request_num.c_str());
+			}
+            else if(strncasecmp(strline.c_str(), "ThreadIncreaseStep", sizeof("ThreadIncreaseStep") - 1) == 0)
+			{
+				string thread_increase_step;
+				strcut(strline.c_str(), "=", NULL, thread_increase_step );
+				strtrim(thread_increase_step);
+				m_thread_increase_step = atoi(thread_increase_step.c_str());
 			}
 			else if(strncasecmp(strline.c_str(), "MEMCACHEDList", sizeof("MEMCACHEDList") - 1) == 0)
 			{

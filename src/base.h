@@ -118,6 +118,7 @@
     }
 #endif /* _WITH_GSSAPI_ */
 #endif /* __ERISEUTIL__ */
+
 #include "util/trace.h"
 #include "util/general.h"
 #include "storage.h"
@@ -931,7 +932,8 @@ public:
 
     static BOOL m_userpwd_cache_updated;
     static unsigned int m_max_service_request_num;
-
+    
+    static unsigned int	m_thread_increase_step;
 public:
 	CMailBase();
 	virtual ~CMailBase();

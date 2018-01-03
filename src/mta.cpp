@@ -20,23 +20,181 @@
 #include "service.h"
 #include "posixname.h"
 
-typedef struct
+static void clear_posix_queue(mqd_t qid)
 {
-	Mail_Info mail_info;
-	StorageEngine* _storageEngine;
-	memcached_st * _memcached;
-}ReplyInfo;
+	mq_attr attr;
+	struct timespec ts;
+	mq_getattr(qid, &attr);
+	char* buf = (char*)malloc(attr.mq_msgsize);
+	while(1)
+	{
+		clock_gettime(CLOCK_REALTIME, &ts);
+		if(mq_timedreceive(qid, (char*)buf, attr.mq_msgsize, NULL, &ts) == -1)
+		{
+			break;
+		}
+	}
+	free(buf);
+}
 
+/////////////////////////////////////////////////////////////////////////////////////////
+//MailTransferAgent
+volatile BOOL MailTransferAgent::m_s_relay_stop = FALSE;
 
-static volatile BOOL s_relay_stop = FALSE;
-static volatile unsigned long s_relay_count = 0;
+std::queue<ReplyInfo*> MailTransferAgent::m_s_thread_pool_arg_queue;
 
-static std::queue<ReplyInfo*> gs_thread_pool_arg_queue;
-static pthread_mutex_t gs_thread_pool_mutex;
-static sem_t gs_thread_pool_sem;
-static volatile unsigned int gs_thread_pool_size = 0;
+pthread_mutex_t MailTransferAgent::m_s_thread_pool_mutex;
+sem_t MailTransferAgent::m_s_thread_pool_sem;
+volatile unsigned int MailTransferAgent::m_s_thread_pool_size = 0;
 
-static BOOL ReturnMail(MailStorage* mailStg, memcached_st * memcached,
+pthread_mutex_t MailTransferAgent::m_STATIC_THREAD_POOL_SIZE_MUTEX;
+volatile unsigned int MailTransferAgent::m_STATIC_THREAD_POOL_SIZE = 0;
+pthread_rwlock_t MailTransferAgent::m_STATIC_THREAD_IDLE_NUM_LOCK;
+volatile unsigned int MailTransferAgent::m_STATIC_THREAD_IDLE_NUM = 0;
+
+MailTransferAgent::MailTransferAgent()
+{
+	m_mta_name = MTA_SERVICE_NAME;
+	m_memcached = NULL;
+}
+
+MailTransferAgent::~MailTransferAgent()
+{	
+	
+}
+
+void MailTransferAgent::INIT_RELAY_HANDLER()
+{
+	m_s_relay_stop = FALSE;
+	
+	pthread_mutex_init(&m_s_thread_pool_mutex, NULL);
+    
+    pthread_mutex_init(&m_STATIC_THREAD_POOL_SIZE_MUTEX, NULL);
+    pthread_rwlock_init(&m_STATIC_THREAD_IDLE_NUM_LOCK, NULL);
+    
+	sem_init(&m_s_thread_pool_sem, 0, 0);
+}
+
+void* MailTransferAgent::BEGIN_RELAY_HANDLER(void* arg)
+{	
+	struct timespec ts;
+	MailStorage* mailStg;
+	ReplyInfo* reply_info;
+	
+
+    pthread_mutex_lock(&m_STATIC_THREAD_POOL_SIZE_MUTEX);
+	m_STATIC_THREAD_POOL_SIZE++;
+    pthread_mutex_unlock(&m_STATIC_THREAD_POOL_SIZE_MUTEX);
+    
+    pthread_rwlock_wrlock(&m_STATIC_THREAD_IDLE_NUM_LOCK);
+    m_STATIC_THREAD_IDLE_NUM++;
+    pthread_rwlock_unlock(&m_STATIC_THREAD_IDLE_NUM_LOCK);
+	
+    time_t last_idle_timeout = time(NULL);
+    
+	while(!m_s_relay_stop)
+	{
+		clock_gettime(CLOCK_REALTIME, &ts);
+		ts.tv_sec += 1;
+		
+		if(sem_timedwait(&m_s_thread_pool_sem, &ts) == 0)
+		{
+			pthread_mutex_lock(&m_s_thread_pool_mutex);
+			if(!m_s_thread_pool_arg_queue.empty())
+			{
+				reply_info = m_s_thread_pool_arg_queue.front();
+				m_s_thread_pool_arg_queue.pop();
+			}
+			pthread_mutex_unlock(&m_s_thread_pool_mutex);
+			if(reply_info)
+			{
+                last_idle_timeout = time(NULL);
+                
+                pthread_rwlock_wrlock(&m_STATIC_THREAD_IDLE_NUM_LOCK);
+                m_STATIC_THREAD_IDLE_NUM--;
+                pthread_rwlock_unlock(&m_STATIC_THREAD_IDLE_NUM_LOCK);
+                    
+				StorageEngineInstance stgengine_instance(reply_info->_storageEngine, &mailStg);			
+				if(!mailStg)
+				{
+					continue;
+				}
+                
+                mailStg->KeepLive();
+                                    
+				string errormsg;
+				
+				if(RelayMail(mailStg, reply_info->_memcached, reply_info->mail_info.mid, reply_info->mail_info.uniqid, reply_info->mail_info.mailfrom.c_str(), 
+					reply_info->mail_info.rcptto.c_str(), errormsg) == FALSE)
+				{
+					fprintf(stderr, "%s", errormsg.c_str());
+                    
+                    if(mailStg->GetExternMailForwardedCount(reply_info->mail_info.mid) >= MAX_TRY_FORWARD_COUNT)
+                    {
+                        ReturnMail(mailStg, reply_info->_memcached, reply_info->mail_info.mid, reply_info->mail_info.uniqid, reply_info->mail_info.mailfrom.c_str(), 
+                            reply_info->mail_info.rcptto.c_str(), errormsg.c_str());
+                    }
+				}
+                else
+                    mailStg->ShiftDelMail(reply_info->mail_info.mid, mtExtern);
+                
+				stgengine_instance.Release();		
+				delete reply_info;
+                
+                pthread_rwlock_wrlock(&m_STATIC_THREAD_IDLE_NUM_LOCK);
+                m_STATIC_THREAD_IDLE_NUM++;
+                pthread_rwlock_unlock(&m_STATIC_THREAD_IDLE_NUM_LOCK);
+                    
+			}
+		}
+        else
+        {
+            if(time(NULL) - last_idle_timeout > CMailBase::m_service_idle_timeout)
+            {
+                break;
+            }
+        }
+	}
+	
+    pthread_mutex_lock(&m_STATIC_THREAD_POOL_SIZE_MUTEX);
+	m_STATIC_THREAD_POOL_SIZE--;
+    pthread_mutex_unlock(&m_STATIC_THREAD_POOL_SIZE_MUTEX);
+    
+    pthread_rwlock_wrlock(&m_STATIC_THREAD_IDLE_NUM_LOCK);
+    m_STATIC_THREAD_IDLE_NUM--;
+    pthread_rwlock_unlock(&m_STATIC_THREAD_IDLE_NUM_LOCK);
+	
+	pthread_exit(0);
+}
+
+void MailTransferAgent::EXIT_RELAY_HANDLER()
+{
+    m_s_relay_stop = TRUE;
+    
+	BOOL STILL_HAVE_THREADS = TRUE;
+    
+	while(STILL_HAVE_THREADS)
+	{
+        pthread_mutex_lock(&m_STATIC_THREAD_POOL_SIZE_MUTEX);
+        if(m_STATIC_THREAD_POOL_SIZE <= 0)
+        {
+            STILL_HAVE_THREADS = FALSE;
+        }
+        pthread_mutex_unlock(&m_STATIC_THREAD_POOL_SIZE_MUTEX);
+        
+        if(STILL_HAVE_THREADS)
+            usleep(1000*10);
+	}
+
+	pthread_mutex_destroy(&m_s_thread_pool_mutex);
+	sem_close(&m_s_thread_pool_sem);
+    
+    pthread_mutex_destroy(&m_STATIC_THREAD_POOL_SIZE_MUTEX);
+    pthread_rwlock_destroy(&m_STATIC_THREAD_IDLE_NUM_LOCK);
+    
+}
+
+BOOL MailTransferAgent::ReturnMail(MailStorage* mailStg, memcached_st * memcached,
     int mid, const char* uniqid, const char *mail_from, const char *rcpt_to, const char * errormsg)
 {	
 	int nBoundary = 0;
@@ -208,7 +366,7 @@ static BOOL ReturnMail(MailStorage* mailStg, memcached_st * memcached,
 }
 
 
-static BOOL SendMail(MailStorage* mailStg, memcached_st * memcached, 
+BOOL MailTransferAgent::SendMail(MailStorage* mailStg, memcached_st * memcached, 
     const char* mxserver, const char* fromaddr, const char* toaddr,
     unsigned int mid, string& errormsg)
 {
@@ -415,7 +573,7 @@ static BOOL SendMail(MailStorage* mailStg, memcached_st * memcached,
 }
 
 
-static BOOL RelayMail(MailStorage* mailStg, memcached_st * memcached, int mid, const char* uniqid, const char *mail_from, const char *rcpt_to, string& errormsg)
+BOOL MailTransferAgent::RelayMail(MailStorage* mailStg, memcached_st * memcached, int mid, const char* uniqid, const char *mail_from, const char *rcpt_to, string& errormsg)
 {
 	string svraddr;
 	strcut(rcpt_to, "@", NULL, svraddr);
@@ -454,119 +612,7 @@ static BOOL RelayMail(MailStorage* mailStg, memcached_st * memcached, int mid, c
 	return FALSE;
 }
 
-
-static void init_relay_handler()
-{
-	s_relay_stop = FALSE;
-	s_relay_count = 0;
-	
-	pthread_mutex_init(&gs_thread_pool_mutex, NULL);
-	sem_init(&gs_thread_pool_sem, 0, 0);
-}
-
-static void* begin_relay_handler(void* arg)
-{	
-	struct timespec ts;
-	MailStorage* mailStg;
-	ReplyInfo* reply_info;
-	
-	s_relay_count++;
-	
-	while(!s_relay_stop || !gs_thread_pool_arg_queue.empty())
-	{
-		clock_gettime(CLOCK_REALTIME, &ts);
-		ts.tv_sec += 1;
-		
-		if(sem_timedwait(&gs_thread_pool_sem, &ts) == 0)
-		{
-			pthread_mutex_lock(&gs_thread_pool_mutex);
-			if(!gs_thread_pool_arg_queue.empty())
-			{
-				reply_info = gs_thread_pool_arg_queue.front();
-				gs_thread_pool_arg_queue.pop();
-			}
-			pthread_mutex_unlock(&gs_thread_pool_mutex);
-			if(reply_info)
-			{
-				StorageEngineInstance stgengine_instance(reply_info->_storageEngine, &mailStg);			
-				if(!mailStg)
-				{
-					continue;
-				}
-                
-                mailStg->KeepLive();
-                                    
-				string errormsg;
-				
-				if(RelayMail(mailStg, reply_info->_memcached, reply_info->mail_info.mid, reply_info->mail_info.uniqid, reply_info->mail_info.mailfrom.c_str(), 
-					reply_info->mail_info.rcptto.c_str(), errormsg) == FALSE)
-				{
-					fprintf(stderr, "%s", errormsg.c_str());
-                    
-                    if(mailStg->GetExternMailForwardedCount(reply_info->mail_info.mid) >= MAX_TRY_FORWARD_COUNT)
-                    {
-                        ReturnMail(mailStg, reply_info->_memcached, reply_info->mail_info.mid, reply_info->mail_info.uniqid, reply_info->mail_info.mailfrom.c_str(), 
-                            reply_info->mail_info.rcptto.c_str(), errormsg.c_str());
-                    }
-				}
-                else
-                    mailStg->ShiftDelMail(reply_info->mail_info.mid, mtExtern);
-                
-				stgengine_instance.Release();		
-				delete reply_info;
-			}
-		}
-	}
-	
-	s_relay_count--;
-	
-	pthread_exit(0);
-}
-
-static void exit_relay_handler()
-{
-	unsigned long timeout = 20000;
-	
-	while(s_relay_count > 0 && timeout > 0)
-	{
-		usleep(1000);
-		timeout--;
-	}
-
-	pthread_mutex_destroy(&gs_thread_pool_mutex);
-	sem_close(&gs_thread_pool_sem);
-}
-
-static void clear_posix_queue(mqd_t qid)
-{
-	mq_attr attr;
-	struct timespec ts;
-	mq_getattr(qid, &attr);
-	char* buf = (char*)malloc(attr.mq_msgsize);
-	while(1)
-	{
-		clock_gettime(CLOCK_REALTIME, &ts);
-		if(mq_timedreceive(qid, (char*)buf, attr.mq_msgsize, NULL, &ts) == -1)
-		{
-			break;
-		}
-	}
-	free(buf);
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////
-MTA::MTA()
-{
-	m_mta_name = MTA_SERVICE_NAME;
-	m_memcached = NULL;
-}
-
-MTA::~MTA()
-{	
-	
-}
-
-void MTA::ReloadConfig()
+void MailTransferAgent::ReloadConfig()
 {
 	string strqueue = ERISEMAIL_POSIX_PREFIX;
 	strqueue += m_mta_name;
@@ -596,7 +642,7 @@ void MTA::ReloadConfig()
 	printf("Reload %s Service OK\n", MTA_SERVICE_NAME);
 }
 
-void MTA::Stop()
+void MailTransferAgent::Stop()
 {
 	string strqueue = ERISEMAIL_POSIX_PREFIX;
 	strqueue += m_mta_name;
@@ -635,9 +681,9 @@ void MTA::Stop()
 	printf("Stop %s Service OK\n", MTA_SERVICE_NAME);
 }
 
-int MTA::Run(int fd)
+int MailTransferAgent::Run(int fd)
 {		
-	ThreadPool* thd_pool;
+	ThreadPool* relay_pool;
 	int retVal = 0;
 	do
 	{
@@ -726,9 +772,11 @@ int MTA::Run(int fd)
 		stQueueMsg* pQMsg;
 		int rc;
 
-		thd_pool = new ThreadPool(CMailBase::m_mta_relaythreadnum, init_relay_handler, begin_relay_handler, NULL, 0, exit_relay_handler);
+		relay_pool = new ThreadPool(CMailBase::m_mta_relaythreadnum, INIT_RELAY_HANDLER, BEGIN_RELAY_HANDLER, NULL, 0, EXIT_RELAY_HANDLER,
+            CMailBase::m_mta_relaythreadnum > CMailBase::m_thread_increase_step ? CMailBase::m_thread_increase_step : CMailBase::m_mta_relaythreadnum);
         
         int max_service_request_num = 0;
+        time_t last_idle_time = time(NULL);
         
 		while(1)
 		{
@@ -740,7 +788,7 @@ int MTA::Run(int fd)
 				pQMsg = (stQueueMsg*)q_buf_ptr;
 				if(pQMsg->cmd == MSG_EXIT)
 				{
-					s_relay_stop = TRUE;
+					m_s_relay_stop = TRUE;
 					break;
 				}
 				else if(pQMsg->cmd == MSG_GLOBAL_RELOAD)
@@ -783,6 +831,8 @@ int MTA::Run(int fd)
 				{
                     for(int x = 0; x < mitbl.size(); x++)
                     {
+                        last_idle_time = time(NULL);
+                        
                         mailStg->ForwardingExternMail(mitbl[x].mid);
                         
                         ReplyInfo* reply_info = new ReplyInfo;
@@ -799,25 +849,38 @@ int MTA::Run(int fd)
                         reply_info->mail_info.reserve = mitbl[x].reserve;
                         reply_info->_storageEngine = m_storageEngine;
                         reply_info->_memcached = m_memcached;
-                        pthread_mutex_lock(&gs_thread_pool_mutex);
-                        gs_thread_pool_arg_queue.push(reply_info);
-                        pthread_mutex_unlock(&gs_thread_pool_mutex);
+                        pthread_mutex_lock(&m_s_thread_pool_mutex);
+                        m_s_thread_pool_arg_queue.push(reply_info);
+                        pthread_mutex_unlock(&m_s_thread_pool_mutex);
                     
-                        sem_post(&gs_thread_pool_sem);
+                        sem_post(&m_s_thread_pool_sem);
                         
                         max_service_request_num++;
+                        
+                        pthread_rwlock_rdlock(&m_STATIC_THREAD_IDLE_NUM_LOCK);
+                        int current_idle_thread_num = m_STATIC_THREAD_IDLE_NUM;
+                        pthread_rwlock_unlock(&m_STATIC_THREAD_IDLE_NUM_LOCK);
+
+                        pthread_mutex_lock(&m_STATIC_THREAD_POOL_SIZE_MUTEX);
+                        int current_thread_pool_size = m_STATIC_THREAD_POOL_SIZE;
+                        pthread_mutex_unlock(&m_STATIC_THREAD_POOL_SIZE_MUTEX);
+
+                        if(current_idle_thread_num < CMailBase::m_thread_increase_step && current_thread_pool_size < CMailBase::m_mta_relaythreadnum)
+                        {
+                            relay_pool->More((CMailBase::m_mta_relaythreadnum - current_thread_pool_size) < CMailBase::m_thread_increase_step ? (CMailBase::m_mta_relaythreadnum - current_thread_pool_size) : CMailBase::m_thread_increase_step);
+                        }
                         
                     }
 				}
 				stgengine_instance->Release();
                 delete stgengine_instance;
-                
-                if(CMailBase::m_max_service_request_num != 0 && max_service_request_num > CMailBase::m_max_service_request_num)
-                {
-                    s_relay_stop = TRUE;
-                    break;
-                }
 			}
+            
+            if(time(NULL) - last_idle_time > CMailBase::m_service_idle_timeout)
+            {
+                m_s_relay_stop = TRUE;
+                break;
+            }
 		}
         
         free(q_buf_ptr);
@@ -838,8 +901,8 @@ int MTA::Run(int fd)
         if(stgengine_instance)
             delete stgengine_instance;
         
-		if(thd_pool)
-			delete thd_pool;
+		if(relay_pool)
+			delete relay_pool;
 		
 		if(m_storageEngine)
 			delete m_storageEngine;

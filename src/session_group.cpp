@@ -181,12 +181,12 @@ BOOL Session_Group::Connect(const char* hostname, unsigned short port, Service_T
     }
 }
 
-BOOL Session_Group::Poll()
+int Session_Group::Poll()
 {
     int n, i;  
   
     n = epoll_wait (m_epoll_fd, m_events, MAX_EVENTS_NUM, 1000);
-
+    
     for (i = 0; i < n; i++)  
     {
         if (m_events[i].events & EPOLLIN)
@@ -243,7 +243,7 @@ BOOL Session_Group::Poll()
                 
                 if(!pSessionInstance->GetProtocol() || !pSessionInstance->CreateProtocol())
                 {
-                    return FALSE;
+                    return -1;
                 }
                 
                 pSessionInstance->GetProtocol()->ProtTryFlush();
@@ -264,5 +264,5 @@ BOOL Session_Group::Poll()
         }
     }
     
-    return TRUE;
+    return n;
 }

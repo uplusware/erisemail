@@ -7,7 +7,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-ThreadPool::ThreadPool(unsigned int size, void(*init_pthread_handler)(), void*(*pthread_handler)(void*), void* arg, int arg_len, void(*exit_pthread_handler)())
+ThreadPool::ThreadPool(unsigned int size, void(*init_pthread_handler)(), void*(*pthread_handler)(void*), void* arg, int arg_len, void(*exit_pthread_handler)(), int pre_step)
 {
     m_init_pthread_handler = init_pthread_handler;
     m_pthread_handler = pthread_handler;
@@ -27,41 +27,40 @@ ThreadPool::ThreadPool(unsigned int size, void(*init_pthread_handler)(), void*(*
         m_arg = NULL;
     }
     
-	m_pthread_list = new pthread_t[m_size];
-	m_pthread_attr_list = new pthread_attr_t[m_size];
-	if(m_pthread_list)
-	{	
-		for(int i = 0; i < m_size; i++)
+    for(int t = 0; t < pre_step; t++)
+    {
+        pthread_t pthread_instance;
+		
+        PoolArg* pArg = new PoolArg;
+        pArg->data = m_arg;
+
+        if(pthread_create(&pthread_instance, NULL, m_pthread_handler, pArg) == 0)
 		{
-			PoolArg* pArg = new PoolArg;
-			pArg->index = i;
-			pArg->data = arg;
-			
-			pthread_attr_init(&m_pthread_attr_list[i]);
-			pthread_attr_setdetachstate (&m_pthread_attr_list[i], PTHREAD_CREATE_DETACHED);
-			
-			if(pthread_create(&m_pthread_list[i], &m_pthread_attr_list[i], pthread_handler, pArg) != 0)
-			{
-				printf("Create thread failed: %d\n", i);
-			}
+			pthread_detach(pthread_instance);
 		}
-	}
+    }
 }
 
+void ThreadPool::More(int step)
+{
+	for(int t = 0; t < step; t++)
+    {
+        pthread_t pthread_instance;
+		
+        PoolArg* pArg = new PoolArg;
+        pArg->data = m_arg;
+
+        if(pthread_create(&pthread_instance, NULL, m_pthread_handler, pArg) == 0)
+		{
+			pthread_detach(pthread_instance);
+		}
+    }
+}
 
 ThreadPool::~ThreadPool()
 {
-	for(int i = 0; i < m_size; i++)
-	{
-		pthread_attr_destroy (&m_pthread_attr_list[i]);
-	}
 	if(m_exit_pthread_handler)
 		(*m_exit_pthread_handler)();
-	
-    if(m_pthread_attr_list)
-        delete[] m_pthread_attr_list;
-	if(m_pthread_list)
-		delete[] m_pthread_list;
     
     if(m_arg)
         free(m_arg);

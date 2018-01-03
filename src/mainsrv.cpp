@@ -218,7 +218,7 @@ int Run()
 
                 close(pfd[0]);
                 daemon_init();
-                MTA mta;
+                MailTransferAgent mta;
                 mta.Run(pfd[1]);
                 close(pfd[1]);
                 exit(0);
@@ -378,7 +378,7 @@ static int Stop()
 	Service mda_svr;
 	mda_svr.Stop();
 
-	MTA mta_svr;
+	MailTransferAgent mta_svr;
 	mta_svr.Stop();
 }
 
@@ -397,7 +397,7 @@ static int Reload()
 	Service mda_svr;
 	mda_svr.ReloadConfig();
 
-	MTA mta_svr;
+	MailTransferAgent mta_svr;
 	mta_svr.ReloadConfig();
 }
 
