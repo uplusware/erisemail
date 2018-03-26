@@ -27,7 +27,7 @@
 #include "posixname.h"
 #include "postnotify.h"
 
-#define ERISEMAIL_WEB_SERVER_NAME        "Server: eRisemail Web Server/1.6.09 (*NIX)"
+#define ERISEMAIL_WEB_SERVER_NAME        "Server: eRisemail Web Server/1.6.10 (*NIX)"
 
 #define RSP_200_OK_CACHE			"HTTP/1.1 200 OK\r\n"   \
                                     ERISEMAIL_WEB_SERVER_NAME "\r\n"    \
@@ -321,7 +321,7 @@ protected:
 		Replace(str, "\"", "&quot;");
 	}
 	
-	void MailFileData(MimeSummary* part, string filename, string& type, string& dispos, fbuffer & fbuf, const char* lbuf)
+	void MailFileData(MimeSummary* part, string filename, string& type, string& dispos, fbuffer & fbuf, dynamic_mmap& lbuf)
 	{
 		if(part->GetSubPartNumber() == 0)
 		{
@@ -414,7 +414,7 @@ protected:
 		}
 	}
 	
-	void MailFileDataEx(MimeSummary * part, string contentid, string& type, string& dispos, fbuffer & fbuf, const char* lbuf)
+	void MailFileDataEx(MimeSummary * part, string contentid, string& type, string& dispos, fbuffer & fbuf, dynamic_mmap& lbuf)
 	{
 		if(part->GetSubPartNumber() == 0)
 		{
@@ -480,7 +480,7 @@ protected:
 		}
 	}
 	
-	void ExtractAttach(const char* username, MimeSummary* part, vector<AttInfo>& attlist, const char* lbuf)
+	void ExtractAttach(const char* username, MimeSummary* part, vector<AttInfo>& attlist, dynamic_mmap& lbuf)
 	{
 		if(part->GetSubPartNumber() == 0)
 		{
@@ -527,7 +527,10 @@ protected:
 							{
 								if(nWrite >= tLen)
 									break;
-								attachfd->write(lbuf + part->m_beg + nWrite, (tLen - nWrite) > 1024 ? 1024 : (tLen - nWrite));
+                                
+                                char tmp_buf[1024];
+                                dynamic_mmap_copy(tmp_buf, lbuf, part->m_beg + nWrite, (tLen - nWrite) > 1024 ? 1024 : (tLen - nWrite));
+								attachfd->write(tmp_buf, (tLen - nWrite) > 1024 ? 1024 : (tLen - nWrite));
 								nWrite += (tLen - nWrite) > 1024 ? 1024 : (tLen - nWrite);
 							}
 							attachfd->close();
@@ -607,7 +610,7 @@ protected:
 		}
 	}
 	
-	void MailInfo(MimeSummary* part, string& strtext, string& strhtml, string& strcalendar, string& strattach, const char* lbuf)
+	void MailInfo(MimeSummary* part, string& strtext, string& strhtml, string& strcalendar, string& strattach, dynamic_mmap & lbuf)
 	{
 		if(part->GetSubPartNumber() == 0)
 		{
@@ -3712,9 +3715,7 @@ public:
 					Letter = new MailLetter(m_mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_session->GetMemCached(), emlfile.c_str());
 					if(Letter && Letter->GetSize() > 0)
 					{
-						int llen = 0;
-						char* lbuf = Letter->Body(llen);
-                        string strSubject;
+						string strSubject;
                         string strSender;
                         string strFromAddr;
 						if(Letter->GetSummary()->m_header)
@@ -4044,8 +4045,6 @@ public:
 					Letter = new MailLetter(m_mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_session->GetMemCached(), emlfile.c_str());
 					if(Letter && Letter->GetSize() > 0)
 					{
-						int llen = 0;
-						char* lbuf = Letter->Body(llen);
                         string strSubject;
                         string strSender;
                         string strFromAddr;
@@ -4363,7 +4362,7 @@ public:
 			if(Letter->GetSize() > 0)
 			{	
 				int llen = 0;
-				char* lbuf = Letter->Body(llen);
+				dynamic_mmap& lbuf = Letter->Body(llen);
 				
                 if(Letter->GetSummary()->m_header)
                 {
@@ -5474,25 +5473,23 @@ public:
 										
 					if(oldLetter->GetSize() > 0)
 					{
-						int llen;
-						char* lbuf = oldLetter->Body(llen);
-						
-						int wlen = 0;
-	
-						while(1)
-						{
-							if(newLetter->Write(lbuf + wlen, ((llen - wlen) > MEMORY_BLOCK_SIZE ? MEMORY_BLOCK_SIZE : (llen - wlen))) < 0)
-							{
-								isOK = FALSE;
-								break;
-							}
-							wlen += ((llen - wlen) > MEMORY_BLOCK_SIZE ? MEMORY_BLOCK_SIZE : (llen - wlen));
-							if(wlen >= llen)
-								break;
-						}
+                        char read_buf[4096];
+                        int read_count = 0;
+                        while((read_count = oldLetter->Read(read_buf, 4096)) >= 0)
+                        {
+                            if(read_count > 0)
+                            {
+                                if(newLetter->Write(read_buf, read_count) < 0)
+                                {
+                                    isOK = FALSE;
+                                    break;
+                                }
+                            }
+                        }
 					}
 					if(isOK)
-						newLetter->SetOK();	
+						newLetter->SetOK();
+                    
 					newLetter->Close();
 
 					m_mailStg->InsertMailIndex(letter_info.mail_from.c_str(), letter_info.mail_to.c_str(),letter_info.mail_time,
@@ -5686,26 +5683,26 @@ public:
 					BOOL isOK = TRUE;
 					if(oldLetter->GetSize() > 0)
 					{
-						char* lbuf = oldLetter->Body(llen);
-						
-						int wlen = 0;
-						
-						while(1)
-						{
-							if(newLetter->Write(lbuf + wlen, ((llen - wlen) > MEMORY_BLOCK_SIZE ? MEMORY_BLOCK_SIZE : (llen - wlen))) < 0)
-							{
-								isOK = FALSE;
-								break;
-							}
-							wlen += ((llen - wlen) > MEMORY_BLOCK_SIZE ? MEMORY_BLOCK_SIZE : (llen - wlen));
-							if(wlen >= llen)
-								break;
-						}
+                        char read_buf[4096];
+                        int read_count = 0;
+                        while((read_count = oldLetter->Read(read_buf, 4096)) >= 0)
+                        {
+                            if(read_count > 0)
+                            {
+                                if(newLetter->Write(read_buf, read_count) < 0)
+                                {
+                                    isOK = FALSE;
+                                    break;
+                                }
+                            }
+                        }
 					}
 					if(isOK)
 						newLetter->SetOK();	
+                    
 					newLetter->Close();
-					if(newLetter->isOK())
+					
+                    if(newLetter->isOK())
 					{
 						m_mailStg->InsertMailIndex(letter_info.mail_from.c_str(), letter_info.mail_to.c_str(),letter_info.mail_time,
 							letter_info.mail_type, letter_info.mail_uniqueid.c_str(), letter_info.mail_dirid, letter_info.mail_status,
@@ -7210,7 +7207,7 @@ public:
 			if(Letter->GetSize() > 0)
 			{	
 				int llen = 0;
-				char* lbuf = Letter->Body(llen);
+				dynamic_mmap& lbuf = Letter->Body(llen);
 				
 				strResp = RSP_200_OK_NO_CACHE;
 				
@@ -7734,7 +7731,7 @@ public:
 			if(Letter->GetSize() > 0)
 			{
 				int llen = 0;
-				char* lbuf = Letter->Body(llen);
+				dynamic_mmap& lbuf = Letter->Body(llen);
 				strResp = RSP_200_OK_XML;
 				string strHTTPDate;
 				OutHTTPDateString(time(NULL), strHTTPDate);

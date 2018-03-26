@@ -15,6 +15,9 @@
 #include "tinyxml/tinyxml.h"
 #include "mime.h"
 #include "calendar.h"
+#ifdef _WITH_HDFS_        
+    #include "hdfs.h"
+#endif /* _WITH_HDFS_ */
 
 using namespace std;
 
@@ -44,6 +47,52 @@ public:
 	unsigned int m_end;
 	unsigned int m_linenumber;
 };
+
+#define DYNAMIC_MMAP_SIZE   4096
+
+class dynamic_mmap_exception
+{
+public:
+    dynamic_mmap_exception()
+    {
+        fprintf(stderr, "out of scope\n");
+    }
+    virtual ~dynamic_mmap_exception()
+    {
+        
+    }
+};
+
+class dynamic_mmap
+{
+public:
+#ifdef _WITH_HDFS_
+    dynamic_mmap(hdfsFS hdfs_conn, hdfsFile ifile);
+#else
+    dynamic_mmap(ifstream* ifile);
+#endif /* _WITH_HDFS_ */
+    virtual ~dynamic_mmap();
+    
+    char& operator[](int i);
+private:
+#ifdef _WITH_HDFS_
+    hdfsFS m_hdfs_conn;
+    hdfsFile m_ifile;
+#else
+    ifstream* m_ifile;
+#endif /* _WITH_HDFS_ */
+    char m_map_buf[DYNAMIC_MMAP_SIZE];
+    unsigned int m_map_beg;
+    unsigned int m_map_end;
+};
+
+void inline dynamic_mmap_copy(char* dest, dynamic_mmap& src, int from, int size)
+{
+    for(int i = 0; i < size; i++)
+    {
+        dest[i] = src[from + i];
+    }
+}
 
 class BlockSummary : public Block
 {
@@ -273,8 +322,8 @@ class MailLetter
 protected:
 	lAtt m_att;
 	
-	char* m_body;
-    MemoryType m_body_memtype; 
+	dynamic_mmap * m_body;
+    
 	unsigned int m_size;
 	
 	unsigned int m_real_size;
@@ -284,18 +333,32 @@ protected:
 	string m_emlfile;
 	
 	string m_uid;
-	ofstream* m_ofile;
+    
+#ifdef _WITH_HDFS_        
+    hdfsFS m_hdfs_conn;
+    hdfsFile m_ofile_in_hdfs;
+    hdfsFile m_ifile_in_hdfs;
+    hdfsFile m_ifile_line_in_hdfs;
+    hdfsFile m_ifile_mmap_in_hdfs;
+#else
+  	ofstream* m_ofile;
+    ifstream* m_ifile;
+    ifstream* m_ifile_line;
+    ifstream* m_ifile_mmap;
+#endif /* _WITH_HDFS_ */
+
+
+    
+    string m_line_text;
 
 	BOOL m_LetterOk;	
 	unsigned long long m_maxsize;
 
-	ifstream* m_ifilestream;
+	
 		
 	LetterSummary * m_letterSummary;
 
 	void get_attach_summary(MimeSummary* part, unsigned long& count, unsigned long& sumsize);
-
-	int m_emlmapfd;
 	
     string m_private_path;
     string m_encoding;
@@ -311,8 +374,11 @@ public:
 	virtual ~MailLetter();
 	
 	int 	Write(const char* buf, unsigned int len);
+    int 	Read(char* buf, unsigned int len);
+    int     Seek(unsigned int pos);
+    
 	void 	Flush();
-	char* 	Body(int& len);
+	dynamic_mmap& Body(int& len);
 	int 	Line(string &strline);
 	void 	Close();
 

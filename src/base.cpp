@@ -6,7 +6,7 @@
 #include "util/security.h"
 #include "posixname.h"
 
-#define ERISEMAIL_VERSION "1.6.09"
+#define ERISEMAIL_VERSION "1.6.10"
 
 static char CHAR_TBL[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890-=~!@#$%^&*()_+[]\\{}|;':\",./<>?";
 
@@ -21,6 +21,14 @@ BOOL CMailBase::m_prod_type = PROD_EMAIL;
 
 BOOL CMailBase::m_close_stderr = TRUE;
 string CMailBase::m_encoding = "UTF-8";
+
+#ifdef _WITH_HDFS_
+    string CMailBase::m_hdfs_host = "default";
+    unsigned short CMailBase::m_hdfs_port = 0;
+    string CMailBase::m_hdfs_path = "/erisemail/eml";
+    string   CMailBase::m_java_home = "/usr/lib/jvm/default-java";
+    string   CMailBase::m_hadoop_home = "/usr/local/hadoop";
+#endif /* _WITH_HDFS_ */
 
 string CMailBase::m_private_path = "/var/erisemail/private";
 string CMailBase::m_html_path = "/var/erisemail/html";
@@ -187,6 +195,25 @@ BOOL CMailBase::LoadConfig()
 				strtrim(close_stderr);
 				m_close_stderr = (strcasecmp(close_stderr.c_str(), "yes")) == 0 ? TRUE : FALSE;
 			}
+#ifdef _WITH_HDFS_
+            else if(strncasecmp(strline.c_str(), "HDFSHost", sizeof("HDFSHost") - 1) == 0)
+			{
+				strcut(strline.c_str(), "=", NULL, m_hdfs_host);
+				strtrim(m_hdfs_host);
+			}
+            else if(strncasecmp(strline.c_str(), "HDFSPort", sizeof("HDFSPort") - 1) == 0)
+			{
+				string hdfs_port;
+				strcut(strline.c_str(), "=", NULL, hdfs_port);
+				strtrim(hdfs_port);
+				m_hdfs_port = atoi(hdfs_port.c_str());
+			}
+            else if(strncasecmp(strline.c_str(), "HDFSPath", sizeof("HDFSPath") - 1) == 0)
+			{
+				strcut(strline.c_str(), "=", NULL, m_hdfs_path);
+				strtrim(m_hdfs_path);
+			}
+#endif /* _WITH_HDFS_ */
 			else if(strncasecmp(strline.c_str(), "PrivatePath", sizeof("PrivatePath") - 1) == 0)
 			{
 				strcut(strline.c_str(), "=", NULL, m_private_path);

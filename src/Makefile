@@ -37,20 +37,28 @@ OBJNTY = erisenotify.o postnotify.o
 MDEF = _LINUX_OS_
 
 OPENSSL_DIR = openssl
+HADOOP_DIR = hadoop
+LIBJVM_DIR = /usr/lib/jvm/default-java/jre/lib/amd64/server/
 
-INCDIR := $(INCDIR) -I../$(OPENSSL_DIR)/include
-LDDIRS := $(LDDIRS) -L.
-    
+INCDIR = -I../$(OPENSSL_DIR)/include -I/usr/local/include/mariadb/
+LDDIRS = -L. -L/usr/local/lib/mariadb/
+
+LDLIST_SVR = ../$(OPENSSL_DIR)/libssl.a ../$(OPENSSL_DIR)/libcrypto.a -lstdc++ -lrt -ldl -lpthread -lmemcached
+
 ifdef GSSAPI
     GSS_DEF = _WITH_GSSAPI_
-    INCDIR := $(INCDIR) -I/usr/local/include/mariadb/
-    LDDIRS := $(LDDIRS) -L/usr/local/lib/mariadb/
-    LDLIST_SVR = ../$(OPENSSL_DIR)/libssl.a ../$(OPENSSL_DIR)/libcrypto.a -lstdc++ -lrt -ldl -lpthread -lmemcached -lgss
+    LDLIST_SVR := $(LDLIST_SVR) -lgss
 else
     GSS_DEF = _WITHOUT_GSSAPI_
-    INCDIR := $(INCDIR) -I/usr/local/include/mariadb/
-    LDDIRS := $(LDDIRS) -L/usr/local/lib/mariadb/
-    LDLIST_SVR = ../$(OPENSSL_DIR)/libssl.a ../$(OPENSSL_DIR)/libcrypto.a -lstdc++ -lrt -ldl -lpthread -lmemcached
+endif
+
+ifdef HDFS
+    HDFS_DEF = _WITH_HDFS_
+    INCDIR := $(INCDIR) -I../$(HADOOP_DIR)/include
+    LDDIRS := $(LDDIRS) -L../$(HADOOP_DIR)/lib/native -L$(LIBJVM_DIR)
+    LDLIST_SVR := $(LDLIST_SVR) -lhdfs -ljvm
+else
+    HDFS_DEF = _WITHOUT_HDFS_
 endif
 
 LDLIST_STG = -lstdc++ -lrt -lmariadb -lmemcached
@@ -89,7 +97,7 @@ $(EXENTY): $(OBJNTY)
 	$(CC) -o $@ $(OBJNTY) $(LDDIRS) $(LDLIST_NTY)
 	
 %.o : %.cpp
-	$(CC) -D$(MDEF) -D$(GSS_DEF) $(INCDIR) $(FLAGS) -c $< -o $@
+	$(CC) -D$(MDEF) -D$(GSS_DEF) -D$(HDFS_DEF) $(INCDIR) $(FLAGS) -c $< -o $@
 
 clean:
 	-rm -f $(LIBSTG) $(LIBJKS) $(EXESVR) $(EXEUTL) $(SQLUDF) $(EXENTY) $(OBJSVR) $(OBJJKS) $(OBJSTG) $(OBJUDF) $(OBJNTY) *.elf *.gdb *.o *.a *.so

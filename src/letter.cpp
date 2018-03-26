@@ -14,6 +14,103 @@
 #define MEMCACHED_EML 0x00000001
 #define MEMCACHED_XML 0x00000002
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// dynamic_mmap
+#ifdef _WITH_HDFS_
+    dynamic_mmap::dynamic_mmap(hdfsFS hdfs_conn, hdfsFile ifile)
+    {
+        m_hdfs_conn = hdfs_conn;
+        m_ifile = ifile;
+        m_map_beg = -1;
+        m_map_end = -1;
+    }
+
+#else
+    dynamic_mmap::dynamic_mmap(ifstream* ifile)
+    {
+        m_ifile = ifile;
+        m_map_beg = -1;
+        m_map_end = -1;
+    }
+#endif /* _WITH_HDFS_ */
+
+dynamic_mmap::~dynamic_mmap()
+{
+    
+}
+
+char& dynamic_mmap::operator[](int i)
+{
+    if(i > 0 && i >= m_map_beg && i <= m_map_end)
+    {
+        return m_map_buf[i - m_map_beg];
+    }
+    else
+    {
+#ifdef _WITH_HDFS_
+        if(m_hdfs_conn && m_ifile)
+        {
+            hdfsSeek(m_hdfs_conn, m_ifile, i);
+            int read_count = hdfsRead(m_hdfs_conn, m_ifile, m_map_buf, DYNAMIC_MMAP_SIZE);
+            if(read_count > 0)
+            {
+                m_map_beg = i;
+                m_map_end = i + read_count - 1;
+                
+                if(i > 0 && i >= m_map_beg && i <= m_map_end)
+                {
+                    return m_map_buf[m_map_beg - i];
+                }
+                else
+                {
+                    throw new dynamic_mmap_exception();
+                }
+            }
+            else
+            {
+                m_map_beg = -1;
+                m_map_end = -1;
+                
+                throw new dynamic_mmap_exception();
+            }
+        }
+#else
+        if(m_ifile && m_ifile->is_open())
+        {
+            m_ifile->seekg(i, ios::beg);
+            m_ifile->read(m_map_buf, DYNAMIC_MMAP_SIZE);
+            int read_count = m_ifile->gcount();
+            if(read_count > 0)
+            {
+                m_map_beg = i;
+                m_map_end = i + read_count - 1;
+                
+                if(i > 0 && i >= m_map_beg && i <= m_map_end)
+                {
+                    return m_map_buf[m_map_beg - i];
+                }
+                else
+                {
+                    throw new dynamic_mmap_exception();
+                }
+            }
+            else
+            {
+                m_map_beg = -1;
+                m_map_end = -1;
+                
+                throw new dynamic_mmap_exception();
+            }
+                
+        }
+#endif /* _WITH_HDFS_ */
+        else
+            throw new dynamic_mmap_exception();
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// MailLetter
 MailLetter::MailLetter(MailStorage* mailStg, const char* private_path, const char*  encoding, memcached_st * memcached, const char* uid, unsigned long long maxsize)
 {
     m_mailbody_fragment = "";
@@ -26,16 +123,24 @@ MailLetter::MailLetter(MailStorage* mailStg, const char* private_path, const cha
 	m_eml_full_path = "";
 	m_emlfile = "";
     m_eml_cache_full_path = "";
-	
-	m_ofile = NULL;
+    
 	m_body = NULL;
-    m_body_memtype = MMAPED;
+    
+#ifdef _WITH_HDFS_        
+    m_hdfs_conn = NULL;
+    m_ofile_in_hdfs = NULL;
+    m_ifile_in_hdfs = NULL;
+    m_ifile_line_in_hdfs = NULL;
+    m_ifile_mmap_in_hdfs = NULL;
+#else
+    m_ofile = NULL;
+    m_ifile = NULL;
+    m_ifile_line = NULL;
+    m_ifile_mmap = NULL;
+#endif /* _WITH_HDFS_ */
+
 	m_size = 0;
 	m_real_size = 0;
-
-	m_ifilestream = NULL;
-
-	m_emlmapfd = -1;
 	
 	m_uid = uid;
 	m_memcached = memcached;
@@ -61,11 +166,23 @@ MailLetter::MailLetter(MailStorage* mailStg, const char* private_path, const cha
 	m_emlfile = "";
     m_eml_cache_full_path = "";
     
-	m_emlmapfd = -1;
 	m_LetterOk = TRUE;
-	m_ofile = NULL;
+    
 	m_body = NULL;
-    m_body_memtype = MMAPED;
+    
+#ifdef _WITH_HDFS_        
+    m_hdfs_conn = NULL;
+    m_ofile_in_hdfs = NULL;
+    m_ifile_in_hdfs = NULL;
+    m_ifile_line_in_hdfs = NULL;
+    m_ifile_mmap_in_hdfs = NULL;
+#else
+    m_ofile = NULL;
+    m_ifile = NULL;
+    m_ifile_line = NULL;
+    m_ifile_mmap = NULL;
+#endif /* _WITH_HDFS_ */
+
 	m_real_size = 0;
 	
 	m_letterSummary = NULL;
@@ -74,99 +191,70 @@ MailLetter::MailLetter(MailStorage* mailStg, const char* private_path, const cha
 
 	m_emlfile = emlfile;
 	m_memcached = memcached;
-	
+#ifdef _WITH_HDFS_
+    m_eml_full_path = CMailBase::m_hdfs_path;
+    m_eml_full_path +="/eml/";
+    m_eml_full_path += m_emlfile;
+#else
 	m_eml_full_path = m_private_path.c_str();
 	m_eml_full_path += "/eml/";
 	m_eml_full_path += m_emlfile;
+    
+    //Load the file from the db
+    if(access(m_eml_full_path.c_str(), F_OK) != 0)
+    {
+        m_mailstg->LoadMailBodyToFile(m_emlfile.c_str(), m_eml_full_path.c_str());
+    }
+#endif /* _WITH_HDFS_ */
 	
     m_eml_cache_full_path = m_private_path.c_str();
 	m_eml_cache_full_path += "/cache/";
 	m_eml_cache_full_path += m_emlfile;
     m_eml_cache_full_path += POSTFIX_CACHE;
     
-    memcached_return memc_rc;
-    size_t memc_value_length;
-    uint32_t memc_flags = 0;
-    char szMD5dst[36];
-    char* mail_text = NULL;
-    if(m_memcached)
-    {
-        ietf::MD5_CTX_OBJ context;
-        context.MD5Update ((unsigned char*)m_eml_full_path.c_str(), m_eml_full_path.length());
-        unsigned char digest[16];
-        context.MD5Final (digest);
-        sprintf(szMD5dst,
-            "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
-            digest[0], digest[1], digest[2], digest[3], digest[4], digest[5], digest[6], digest[7],
-            digest[8], digest[9], digest[10], digest[11], digest[12], digest[13], digest[14], digest[15]);
-        szMD5dst[32] = 'e';
-        szMD5dst[33] = 'm';
-        szMD5dst[34] = 'l';
-        szMD5dst[35] = '\0';
-        mail_text = memcached_get(m_memcached, szMD5dst, 35, &memc_value_length, &memc_flags, &memc_rc);
+#ifdef _WITH_HDFS_
+    if(m_hdfs_conn == NULL)
+    {        
+        m_hdfs_conn = hdfsConnect(CMailBase::m_hdfs_host.c_str(), CMailBase::m_hdfs_port);
     }
-    if (m_memcached && mail_text && memc_rc == MEMCACHED_SUCCESS && memc_value_length > 0)
+    
+    
+    if(m_hdfs_conn)
     {
-        m_body = mail_text;
-        m_size = memc_value_length;
-        m_body_memtype = CACHED;
-    }
-    else
-    {
-        if(access(m_eml_full_path.c_str(), F_OK) != 0)
+        hdfsFileInfo* file_info = hdfsGetPathInfo(m_hdfs_conn, m_eml_full_path.c_str());
+        if(file_info)
         {
-            m_mailstg->LoadMailBodyToFile(m_emlfile.c_str(), m_eml_full_path.c_str());
-        }
-        
-        m_emlmapfd = open(m_eml_full_path.c_str(), O_RDONLY);
-        
-        if(m_emlmapfd > 0)
-        {
-            struct stat file_stat;
-            fstat(m_emlmapfd, &file_stat);
-            m_size = file_stat.st_size;
-            m_body = (char*)mmap(NULL, m_size, PROT_READ, MAP_SHARED , m_emlmapfd, 0);
-            m_body_memtype = MMAPED;
-            if(m_memcached && m_size < 4*1024*1024)
-            {
-                memc_rc = memcached_set(m_memcached, szMD5dst, 35, m_body, m_size, (time_t)3600, (uint32_t)memc_flags);
-                if(memc_rc != MEMCACHED_SUCCESS)
-                {
-                    fprintf(stderr, "memcached_set: %s %d\n", m_eml_full_path.c_str(), m_size);
-                }
-            }
-        }
-        else
-        {
-            printf("Unable to open %s\r\n", m_eml_full_path.c_str());
+            m_size = file_info->mSize;
+            hdfsFreeFileInfo(file_info, 1);
         }
     }
-	
+#else
+	m_ifile_mmap = new ifstream(m_eml_full_path.c_str(), ios_base::binary);
+    m_ifile_mmap->seekg (0, ios::end);
+    m_size = m_ifile_mmap->tellg();
+    m_ifile_mmap->seekg (0, ios::beg);
+#endif /* _WITH_HDFS_ */
+    
 	if(access(m_eml_cache_full_path.c_str(), F_OK) != 0)
 	{
 		m_letterSummary = new LetterSummary(m_encoding.c_str(), m_memcached);
-		
-		int nParsed = 0;
-		while(1)
-		{
-			if(nParsed >= m_size)
-				break;
-			
-			char szTmp[1025];
-			memcpy(szTmp, m_body + nParsed, (m_size - nParsed) > 1024 ? 1024 : (m_size - nParsed));
-			szTmp[(m_size - nParsed) > 1024 ? 1024 : (m_size - nParsed)] = '\0';
-			m_letterSummary->Parse(szTmp);
-
-			nParsed += (m_size - nParsed) > 1024 ? 1024 : (m_size - nParsed);
-		}
-		
+        
+        char read_buf[4096];
+        int read_count = 0;
+        while((read_count = Read(read_buf, 4095)) >= 0)
+        {
+            if(read_count > 0)
+            {
+                read_buf[read_count] = '\0';
+                m_letterSummary->Parse(read_buf);
+            }
+        }
+        
 		m_letterSummary->setPath(m_eml_cache_full_path.c_str());
 		
 		delete m_letterSummary;
 		m_letterSummary = NULL;
 	}
-
-	m_ifilestream = NULL;
 	
 	m_letterSummary =  new LetterSummary(m_encoding.c_str(), m_eml_cache_full_path.c_str(), m_memcached);
 }
@@ -177,41 +265,227 @@ MailLetter::~MailLetter()
 	
 	if(m_letterSummary)
 		delete m_letterSummary;
-
-	if(m_ifilestream)
-		delete m_ifilestream;
 }
 
-char* MailLetter::Body(int &len)
+dynamic_mmap& MailLetter::Body(int &len)
 {
-	if(m_att == laOut)
-	{
-		len = m_size;
-		return m_body;
-	}
-	else
-		return NULL;
+    if(!m_body)
+    {
+#ifdef _WITH_HDFS_
+        if(m_hdfs_conn == NULL)
+        {
+            m_hdfs_conn = hdfsConnect(CMailBase::m_hdfs_host.c_str(), CMailBase::m_hdfs_port);
+        }
+        if(m_hdfs_conn && m_ifile_mmap_in_hdfs == NULL)
+        {
+            m_ifile_mmap_in_hdfs = hdfsOpenFile(m_hdfs_conn, m_eml_full_path.c_str(), O_RDONLY, 0, 0, 0);
+        }
+        
+        if(m_hdfs_conn && m_ifile_mmap_in_hdfs)
+        {
+            m_body = new dynamic_mmap(m_hdfs_conn, m_ifile_mmap_in_hdfs);
+        }
+#else
+        if(!m_ifile_mmap)
+        {
+             m_ifile_mmap = new ifstream(m_eml_full_path.c_str(), ios_base::binary);
+        }
+        
+        if(m_ifile_mmap && m_ifile_mmap->is_open())
+        {
+            m_body = new dynamic_mmap(m_ifile_mmap);
+        }
+#endif /* _WITH_HDFS_ */  
+    }
+  
+    len = m_size;
+    
+    return *m_body;
 }
 
 int MailLetter::Line(string &strline)
 {
 	if(m_att == laOut)
 	{
-		if(!m_ifilestream)
+        strline = "";
+#ifdef _WITH_HDFS_
+        if(m_hdfs_conn == NULL)
+        {
+            m_hdfs_conn = hdfsConnect(CMailBase::m_hdfs_host.c_str(), CMailBase::m_hdfs_port);
+            if(!m_hdfs_conn)
+                return -1;
+        }
+    
+        if(m_hdfs_conn && m_ifile_in_hdfs == NULL)
+        {
+            m_ifile_in_hdfs = hdfsOpenFile(m_hdfs_conn, m_eml_full_path.c_str(), O_RDONLY, 0, 0, 0);
+            if(!m_ifile_in_hdfs)
+                return -1;
+        }
+        if(m_hdfs_conn && m_ifile_in_hdfs)
+        {
+            
+            std::size_t new_line;
+            
+            while((new_line = m_line_text.find('\n')) == std::string::npos)
+            {                
+                char buf[4096];
+                int read_count = hdfsRead(m_hdfs_conn, m_ifile_in_hdfs, (void*)buf, 4096);
+                if(read_count > 0)
+                {
+                    buf[read_count] = '\0';
+                    
+                    m_line_text += buf;
+                }
+                else
+                    return -1;
+            }
+            
+            strline = m_line_text.substr(0, new_line + 1);
+            m_line_text = m_line_text.substr(new_line + 1);
+
+            strtrim(strline);
+            
+            return 0;
+        }
+#else
+		if(!m_ifile_line)
 		{
-			 m_ifilestream = new ifstream(m_eml_full_path.c_str(), ios_base::binary);
+			 m_ifile_line = new ifstream(m_eml_full_path.c_str(), ios_base::binary);
 		}
 		
-		void* rVal = NULL;
-		if(m_ifilestream && m_ifilestream->is_open())
+		if(m_ifile_line && m_ifile_line->is_open())
 		{
-			strline ="";
-			rVal = getline(*m_ifilestream, strline);
-			return rVal != NULL ? 0 : -1;
+            std::size_t new_line;
+            
+            while((new_line = m_line_text.find('\n')) == std::string::npos)
+            {
+                if(m_ifile_line->eof())
+                    return -1;
+                
+                char buf[4096];
+                m_ifile_line->read(buf, 4095);
+                
+                int read_count = m_ifile_line->gcount();
+                
+                if(read_count > 0)
+                {
+                    buf[read_count] = '\0';
+                    
+                    m_line_text += buf;
+                }
+                else
+                    return -1;
+            }
+            
+            strline = m_line_text.substr(0, new_line + 1);
+            m_line_text = m_line_text.substr(new_line + 1);
+
+            strtrim(strline);
+            
+            return 0;
+        
+		}
+		else
+        {
+			return -1;
+        }
+#endif /* _WITH_HDFS_ */
+		
+	}
+	else
+		return -1;
+}
+
+int MailLetter::Read(char* buf, unsigned int len)
+{
+    if(m_att == laOut)
+	{
+#ifdef _WITH_HDFS_
+
+        if(m_hdfs_conn == NULL)
+        {
+            m_hdfs_conn = hdfsConnect(CMailBase::m_hdfs_host.c_str(), CMailBase::m_hdfs_port);
+            if(!m_hdfs_conn)
+                return -1;
+        }
+    
+        if(m_hdfs_conn && m_ifile_in_hdfs == NULL)
+        {
+            m_ifile_in_hdfs = hdfsOpenFile(m_hdfs_conn, m_eml_full_path.c_str(), O_RDONLY, 0, 0, 0);
+            if(!m_ifile_in_hdfs)
+                return -1;
+        }
+        if(m_hdfs_conn && m_ifile_in_hdfs)
+        {
+            int read_count = hdfsRead(m_hdfs_conn, m_ifile_in_hdfs, (void*)buf, len);
+            return read_count > 0 ? read_count : -1;
+        }
+        else
+            return -1;
+#else
+		if(!m_ifile)
+		{
+			 m_ifile = new ifstream(m_eml_full_path.c_str(), ios_base::binary);
+		}
+		
+		if(m_ifile && m_ifile->is_open())
+		{
+            if(m_ifile->eof())
+                return -1;
+			
+            m_ifile->read(buf, len);
+            
+			return m_ifile->gcount();
 		}
 		else
 			return -1;
+#endif /* _WITH_HDFS_ */
+	}
+	else
+		return -1;
+}
+
+int MailLetter::Seek(unsigned int pos)
+{
+    if(m_att == laOut)
+	{
+        if(m_size > pos)
+            return -1;
+        
+#ifdef _WITH_HDFS_
+
+        if(m_hdfs_conn == NULL)
+        {   
+            m_hdfs_conn = hdfsConnect(CMailBase::m_hdfs_host.c_str(), CMailBase::m_hdfs_port);
+            if(!m_hdfs_conn)
+                return -1;
+        }
+    
+        if(m_hdfs_conn && m_ifile_in_hdfs == NULL)
+        {
+            m_ifile_in_hdfs = hdfsOpenFile(m_hdfs_conn, m_eml_full_path.c_str(), O_RDONLY, 0, 0, 0);
+            if(!m_ifile_in_hdfs)
+                return -1;
+        }
+        if(m_hdfs_conn && m_ifile_in_hdfs)
+            return hdfsSeek(m_hdfs_conn, m_ifile_in_hdfs, pos);
+        else
+            return -1;
+#else
+		if(!m_ifile)
+		{
+			 m_ifile = new ifstream(m_eml_full_path.c_str(), ios_base::binary);
+		}
 		
+		if(m_ifile && m_ifile->is_open())
+		{            
+            m_ifile->seekg(pos, ios::beg);
+            return 0;
+		}
+		else
+			return -1;
+#endif /* _WITH_HDFS_ */
 	}
 	else
 		return -1;
@@ -223,12 +497,60 @@ int MailLetter::Write(const char* buf, unsigned int len)
 	{
 		return -1;
 	}
-	
-	if(m_size + len > m_maxsize)
-	{
-		return -1;
-	}
-	
+
+#ifdef _WITH_HDFS_        
+    if(m_hdfs_conn == NULL)
+    {
+        char emlfile[512];
+		sprintf(emlfile, "%s.eml", m_uid.c_str());
+
+		m_emlfile = emlfile;
+		
+		m_eml_full_path = CMailBase::m_hdfs_path;
+		m_eml_full_path +="/eml/";
+		m_eml_full_path += m_emlfile;
+        
+        m_eml_cache_full_path = m_private_path;
+		m_eml_cache_full_path += "/cache/";
+		m_eml_cache_full_path += m_emlfile;
+        m_eml_cache_full_path += POSTFIX_CACHE;
+        
+        m_hdfs_conn = hdfsConnect(CMailBase::m_hdfs_host.c_str(), CMailBase::m_hdfs_port);
+    }
+    
+    if(m_hdfs_conn && m_ofile_in_hdfs == NULL)
+    {
+        m_ofile_in_hdfs = hdfsOpenFile(m_hdfs_conn, m_eml_full_path.c_str(), O_WRONLY |O_CREAT, 0, 0, 0);
+    }
+    
+    if(m_hdfs_conn && m_ofile_in_hdfs)
+    {
+        int write_len = hdfsWrite(m_hdfs_conn, m_ofile_in_hdfs, (void*)buf, len);
+        if(write_len < 0)
+            return -1;
+        
+        m_size += len;
+        
+        if(m_size > m_maxsize)
+        {
+            return -1;
+        }
+        
+        //gernate the summary
+        char* tbuf = new char[len + 1];
+        memcpy(tbuf, buf, len);
+        tbuf[len] = '\0';
+        m_letterSummary->Parse(tbuf);
+        delete tbuf;
+
+        return 0;
+    }
+    else
+    {
+        return -1;
+    }
+        
+#else
 	if(!m_ofile)
 	{
 		char emlfile[512];
@@ -293,7 +615,7 @@ int MailLetter::Write(const char* buf, unsigned int len)
 	{
 		return -1;
 	}
-	
+#endif /* _WITH_HDFS_ */
 }
 
 void MailLetter::Flush()
@@ -302,7 +624,13 @@ void MailLetter::Flush()
 	{
 		return;
 	}
-
+#ifdef _WITH_HDFS_   
+    if(m_hdfs_conn && m_ofile_in_hdfs)
+    {
+        hdfsFlush(m_hdfs_conn, m_ofile_in_hdfs);
+        m_letterSummary->Flush();
+    }
+#else
 	if(m_ofile)
 	{
 		if(m_ofile->is_open())
@@ -311,12 +639,27 @@ void MailLetter::Flush()
 			m_letterSummary->Flush();
 		}
 	}
+#endif /* _WITH_HDFS_ */
 }
 
 void MailLetter::Close()
 {	
 	if(m_att == laIn)
 	{
+#ifdef _WITH_HDFS_ 
+        
+
+        if(m_hdfs_conn && m_ofile_in_hdfs)
+        {
+            hdfsCloseFile(m_hdfs_conn, m_ofile_in_hdfs);
+            m_ofile_in_hdfs = NULL;
+            
+            if(m_LetterOk == TRUE)
+            {
+                m_letterSummary->setPath(m_eml_cache_full_path.c_str());
+            }
+        }
+#else
         if(m_mailbody_fragment.length() > 0)
         {
             m_mailstg->SaveMailBodyToDB(m_emlfile.c_str(), m_mailbody_fragment.c_str());
@@ -333,21 +676,34 @@ void MailLetter::Close()
 				}
 			}
 		}
+#endif /* _WITH_HDFS_ */
 	}
-	
-	if(m_emlmapfd > 0)
-	{
-		munmap(m_body, m_size);
-        m_body = NULL;
-		close(m_emlmapfd);
-        m_emlmapfd = -1;
-	}
-	
-	if(m_body_memtype == CACHED && m_body)
+    
+#ifdef _WITH_HDFS_ 
+    if(m_hdfs_conn)
     {
-        free(m_body);
-        m_body = NULL;
+        if(m_ofile_in_hdfs)
+            hdfsCloseFile(m_hdfs_conn, m_ofile_in_hdfs);
+        
+        if(m_ifile_in_hdfs)
+            hdfsCloseFile(m_hdfs_conn, m_ifile_in_hdfs);
+        
+        if(m_ifile_line_in_hdfs)
+            hdfsCloseFile(m_hdfs_conn, m_ifile_line_in_hdfs);
+        
+        if(m_ifile_mmap_in_hdfs)
+            hdfsCloseFile(m_hdfs_conn, m_ifile_mmap_in_hdfs);
+    
+        m_ofile_in_hdfs = NULL;
+        m_ifile_in_hdfs = NULL;
+        m_ifile_line_in_hdfs = NULL;
+        m_ifile_mmap_in_hdfs = NULL;
+        
+        hdfsDisconnect(m_hdfs_conn);
+            
+        m_hdfs_conn = NULL;
     }
+#else
 	if(m_ofile)
 	{
 		if(m_ofile->is_open())
@@ -355,7 +711,37 @@ void MailLetter::Close()
 		delete m_ofile;
 	}
 	m_ofile = NULL;
+    
+    if(m_ifile)
+	{
+		if(m_ifile->is_open())
+			m_ifile->close();
+		delete m_ifile;
+	}
+	m_ifile = NULL;
+    
+    if(m_ifile_line)
+	{
+		if(m_ifile_line->is_open())
+			m_ifile_line->close();
+		delete m_ifile_line;
+	}
+	m_ifile_line = NULL;
+    
+    if(m_ifile_mmap)
+	{
+		if(m_ifile_mmap->is_open())
+			m_ifile_mmap->close();
+		delete m_ifile_mmap;
+	}
+	m_ifile_mmap = NULL;    
+#endif /* _WITH_HDFS_ */
 
+    if(m_body)
+        delete m_body;
+    
+    m_body = NULL;
+    
 	if(m_LetterOk == FALSE && m_att == laIn) 
 	{
 		if(m_eml_full_path != "")

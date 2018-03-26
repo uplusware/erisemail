@@ -875,7 +875,7 @@ void CMailPop::On_Top_Handler(char* text)
                         break;
                     str_line += "\r\n";
                     if(PopSend(str_line.c_str(), str_line.length()) < 0)
-						break;
+					break;
 				}
 			}
 			delete Letter;

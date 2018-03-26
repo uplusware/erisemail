@@ -328,17 +328,15 @@ BOOL MailTransferAgent::ReturnMail(MailStorage* mailStg, memcached_st * memcache
     {
         if(oldLetter->GetSize() > 0)
         {
-            int llen;
-            char* lbuf = oldLetter->Body(llen);
-
-            int wlen = 0;
-            while(1)
+            char read_buf[4096];
+            int read_count = 0;
+            while((read_count = oldLetter->Read(read_buf, 4096)) >= 0)
             {
-                if(newLetter->Write(lbuf + wlen, (llen - wlen) > 1448 ? 1448 : (llen - wlen)) < 0)
-                    break;
-                wlen += ((llen - wlen) > 1448 ? 1448 : (llen - wlen));
-                if(wlen >= llen)
-                    break;
+                if(read_count > 0)
+                {                    
+                    if(newLetter->Write(read_buf, read_count))
+                        break;
+                }
             }
         }
         oldLetter->Close();
@@ -545,16 +543,15 @@ BOOL MailTransferAgent::SendMail(MailStorage* mailStg, memcached_st * memcached,
     {
         if(Letter->GetSize() > 0)
         {
-            int llen;
-            char* lbuf = Letter->Body(llen);
-            int wlen = 0;
-            while(1)
+            char read_buf[4096];
+            int read_count = 0;
+            while((read_count = Letter->Read(read_buf, 4096)) >= 0)
             {
-                if(!pClientSmtp->Do_Dataing_Command(lbuf + wlen, (llen - wlen) > 1448 ? 1448 : (llen - wlen), errormsg))
-                    break;
-                wlen += (llen - wlen) > 1448 ? 1448 : (llen - wlen);
-                if(wlen >= llen)
-                    break;
+                if(read_count > 0)
+                {                    
+                    if(!pClientSmtp->Do_Dataing_Command(read_buf, read_count, errormsg))
+                        break;
+                }
             }
         }
         Letter->Close();

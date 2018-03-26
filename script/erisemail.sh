@@ -13,13 +13,19 @@
 #
 DESC="erisemaild control script"
 DAEMON=/usr/bin/erisemaild
-
+   
 test -x /usr/bin/erisemaild || exit 0
 
 SELF=$(cd $(dirname $0); pwd -P)/$(basename $0)
 
 cd /
 umask 0
+
+HADOOP_HOME=/usr/local/hadoop
+JAVA_HOME=/usr/lib/jvm/default-java
+
+test -x ${HADOOP_HOME} && test -x ${JAVA_HOME} && export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/hadoop/lib/native:/usr/lib/jvm/default-java/jre/lib/amd64/server/
+test -x ${HADOOP_HOME} && test -x ${JAVA_HOME} && export CLASSPATH=${CLASSPATH}:`${HADOOP_HOME}/bin/hadoop classpath --glob`    
 
 erisemail_start()
 {

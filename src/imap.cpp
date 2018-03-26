@@ -2366,7 +2366,7 @@ void CMailImap::Fetch(const char* szArg, BOOL isUID)
 				if(Letter->GetSize()> 0)
 				{
 					int llen = 0;
-					char* lbuf = Letter->Body(llen);
+					dynamic_mmap& lbuf = Letter->Body(llen);
 					for(int i = 0 ;i < iLen; i++)
 					{
 						if(strmatch("BODY.PEEK[*]", vItem[i].c_str()) == TRUE)
@@ -2449,18 +2449,16 @@ void CMailImap::Fetch(const char* szArg, BOOL isUID)
 								sprintf(cmd, "BODY[] {%u}\r\n", Letter->GetSummary()->m_mime->m_end - Letter->GetSummary()->m_mime->m_beg);
 								ImapSend( cmd, strlen(cmd));
 								
-								int llen;
-								char* lbuf = Letter->Body(llen);
-								
-								int wlen = 0;
-								while(1)
-								{
-									if(ImapSend(lbuf + wlen, (llen - wlen) > 1448 ? 1448 : (llen - wlen)) < 0)
-										break;
-									wlen += ((llen - wlen) > 1448 ? 1448 : (llen - wlen));
-									if(wlen >= llen)
-										break;
-								}
+                                char read_buf[4096];
+                                int read_count = 0;
+                                while((read_count = Letter->Read(read_buf, 4096)) >= 0)
+                                {
+                                    if(read_count > 0)
+                                    {
+                                        if(ImapSend(read_buf, read_count) < 0)
+                                            break;
+                                    }
+                                }
 							}
 							else if(strcasecmp((char*)vItem[i].c_str(), "BODY.PEEK[HEADER]") == 0)
 							{
@@ -2478,7 +2476,7 @@ void CMailImap::Fetch(const char* szArg, BOOL isUID)
 									if(nRead >= tLen)
 										break;
 									char sztmp[1025];
-									memcpy(sztmp, lbuf + Letter->GetSummary()->m_mime->m_header->m_beg + nRead, (tLen - nRead) > 1024 ? 1024 : (tLen - nRead) );
+									dynamic_mmap_copy(sztmp, lbuf, Letter->GetSummary()->m_mime->m_header->m_beg + nRead, (tLen - nRead) > 1024 ? 1024 : (tLen - nRead) );
 									sztmp[(tLen - nRead) > 1024 ? 1024 : (tLen - nRead)] = '\0';
 
 									nRead += (tLen - nRead) > 1024 ? 1024 : (tLen - nRead);
@@ -2506,7 +2504,7 @@ void CMailImap::Fetch(const char* szArg, BOOL isUID)
 									if(nRead >= tLen)
 										break;
 									char sztmp[1025];
-									memcpy(sztmp, lbuf + Letter->GetSummary()->m_mime->m_data->m_beg + nRead, (tLen - nRead) > 1024 ? 1024 : (tLen - nRead) );
+									dynamic_mmap_copy(sztmp, lbuf, Letter->GetSummary()->m_mime->m_data->m_beg + nRead, (tLen - nRead) > 1024 ? 1024 : (tLen - nRead) );
 									sztmp[(tLen - nRead) > 1024 ? 1024 : (tLen - nRead)] = '\0';
 
 									nRead += (tLen - nRead) > 1024 ? 1024 : (tLen - nRead);
@@ -2556,7 +2554,7 @@ void CMailImap::Fetch(const char* szArg, BOOL isUID)
 										if(nRead >= tLen)
 											break;
 										char sztmp[1025];
-										memcpy(sztmp, lbuf + pMp->m_header->m_beg + nRead, (tLen - nRead) > 1024 ? 1024 : (tLen - nRead) );
+										dynamic_mmap_copy(sztmp, lbuf, pMp->m_header->m_beg + nRead, (tLen - nRead) > 1024 ? 1024 : (tLen - nRead) );
 										sztmp[(tLen - nRead) > 1024 ? 1024 : (tLen - nRead)] = '\0';
 
 										nRead += (tLen - nRead) > 1024 ? 1024 : (tLen - nRead);
@@ -2610,7 +2608,7 @@ void CMailImap::Fetch(const char* szArg, BOOL isUID)
 										if(nRead >= tLen)
 											break;
 										char sztmp[1025];
-										memcpy(sztmp, lbuf + pMp->m_data->m_beg + nRead, (tLen - nRead) > 1024 ? 1024 : (tLen - nRead));
+										dynamic_mmap_copy(sztmp, lbuf, pMp->m_data->m_beg + nRead, (tLen - nRead) > 1024 ? 1024 : (tLen - nRead));
 										sztmp[(tLen - nRead) > 1024 ? 1024 : (tLen - nRead)] = '\0';
 
 										nRead += (tLen - nRead) > 1024 ? 1024 : (tLen - nRead);
@@ -2663,7 +2661,7 @@ void CMailImap::Fetch(const char* szArg, BOOL isUID)
 										if(nRead >= tLen)
 											break;
 										char sztmp[1025];
-										memcpy(sztmp, lbuf + pMp->m_header->m_beg + nRead, (tLen - nRead) > 1024 ? 1024 : (tLen - nRead) );
+										dynamic_mmap_copy(sztmp, lbuf, pMp->m_header->m_beg + nRead, (tLen - nRead) > 1024 ? 1024 : (tLen - nRead) );
 										sztmp[(tLen - nRead) > 1024 ? 1024 : (tLen - nRead)] = '\0';
 
 										nRead += (tLen - nRead) > 1024 ? 1024 : (tLen - nRead);
@@ -2716,7 +2714,7 @@ void CMailImap::Fetch(const char* szArg, BOOL isUID)
 										if(nRead >= tLen)
 											break;
 										char sztmp[1025];
-										memcpy(sztmp, lbuf + pMp->m_data->m_beg + nRead, (tLen - nRead) > 1024 ? 1024 : (tLen - nRead) );
+										dynamic_mmap_copy(sztmp, lbuf, pMp->m_data->m_beg + nRead, (tLen - nRead) > 1024 ? 1024 : (tLen - nRead) );
 										sztmp[(tLen - nRead) > 1024 ? 1024 : (tLen - nRead)] = '\0'; 
 
 										nRead += (tLen - nRead) > 1024 ? 1024 : (tLen - nRead);
@@ -2818,18 +2816,16 @@ void CMailImap::Fetch(const char* szArg, BOOL isUID)
 																
 								ImapSend( cmd, strlen(cmd));
 								
-								int llen;
-								char* lbuf = Letter->Body(llen);
-								
-								int wlen = 0;
-								while(1)
-								{
-									if(ImapSend(lbuf + wlen, (llen - wlen) > 1448 ? 1448 : (llen - wlen)) < 0)
-										break;
-									wlen += ((llen - wlen) > 1448 ? 1448 : (llen - wlen));
-									if(wlen >= llen)
-										break;
-								}
+                                char read_buf[4096];
+                                int read_count = 0;
+                                while((read_count = Letter->Read(read_buf, 4096)) >= 0)
+                                {
+                                    if(read_count > 0)
+                                    {
+                                        if(ImapSend(read_buf, read_count) < 0)
+                                            break;
+                                    }
+                                }
 							}
 							else if(strcasecmp((char*)vItem[i].c_str(), "BODY[HEADER]") == 0)
 							{
@@ -2847,7 +2843,7 @@ void CMailImap::Fetch(const char* szArg, BOOL isUID)
 									if(nRead >= tLen)
 										break;
 									char sztmp[1025];
-									memcpy(sztmp, lbuf +  Letter->GetSummary()->m_mime->m_header->m_beg + nRead, (tLen - nRead) > 1024 ? 1024 : (tLen - nRead) );
+									dynamic_mmap_copy(sztmp, lbuf, Letter->GetSummary()->m_mime->m_header->m_beg + nRead, (tLen - nRead) > 1024 ? 1024 : (tLen - nRead) );
 									sztmp[(tLen - nRead) > 1024 ? 1024 : (tLen - nRead)] = '\0';
 
 									nRead += (tLen - nRead) > 1024 ? 1024 : (tLen - nRead);
@@ -2876,7 +2872,7 @@ void CMailImap::Fetch(const char* szArg, BOOL isUID)
 									if(nRead >= tLen)
 										break;
 									char sztmp[1025];
-									memcpy(sztmp, lbuf +  Letter->GetSummary()->m_mime->m_data->m_beg + nRead, (tLen - nRead) > 1024 ? 1024 : (tLen - nRead) );
+									dynamic_mmap_copy(sztmp, lbuf, Letter->GetSummary()->m_mime->m_data->m_beg + nRead, (tLen - nRead) > 1024 ? 1024 : (tLen - nRead) );
 									sztmp[(tLen - nRead) > 1024 ? 1024 : (tLen - nRead)] = '\0';
 
 									nRead += (tLen - nRead) > 1024 ? 1024 : (tLen - nRead);
@@ -2923,7 +2919,7 @@ void CMailImap::Fetch(const char* szArg, BOOL isUID)
 										if(nRead >= tLen)
 											break;
 										char sztmp[1025];
-										memcpy(sztmp, lbuf + pMp->m_header->m_beg + nRead, (tLen - nRead) > 1024 ? 1024 : (tLen - nRead) );
+										dynamic_mmap_copy(sztmp, lbuf, pMp->m_header->m_beg + nRead, (tLen - nRead) > 1024 ? 1024 : (tLen - nRead) );
 										sztmp[(tLen - nRead) > 1024 ? 1024 : (tLen - nRead)] = '\0';
 
 										nRead += (tLen - nRead) > 1024 ? 1024 : (tLen - nRead);
@@ -2976,7 +2972,7 @@ void CMailImap::Fetch(const char* szArg, BOOL isUID)
 										if(nRead >= tLen)
 											break;
 										char sztmp[1025];
-										memcpy(sztmp, lbuf + pMp->m_data->m_beg + nRead, (tLen - nRead) > 1024 ? 1024 : (tLen - nRead) );
+										dynamic_mmap_copy(sztmp, lbuf, pMp->m_data->m_beg + nRead, (tLen - nRead) > 1024 ? 1024 : (tLen - nRead) );
 										sztmp[(tLen - nRead) > 1024 ? 1024 : (tLen - nRead)] = '\0';\
 
 										nRead += (tLen - nRead) > 1024 ? 1024 : (tLen - nRead);
@@ -3030,7 +3026,7 @@ void CMailImap::Fetch(const char* szArg, BOOL isUID)
 										if(nRead >= tLen)
 											break;
 										char sztmp[1025];
-										memcpy(sztmp, lbuf + pMp->m_header->m_beg + nRead, (tLen - nRead) > 1024 ? 1024 : (tLen - nRead) );
+										dynamic_mmap_copy(sztmp, lbuf, pMp->m_header->m_beg + nRead, (tLen - nRead) > 1024 ? 1024 : (tLen - nRead) );
 										sztmp[(tLen - nRead) > 1024 ? 1024 : (tLen - nRead)] = '\0';
 
 										nRead += (tLen - nRead) > 1024 ? 1024 : (tLen - nRead);
@@ -3082,7 +3078,7 @@ void CMailImap::Fetch(const char* szArg, BOOL isUID)
 										if(nRead >= tLen)
 											break;
 										char sztmp[1025];
-										memcpy(sztmp, lbuf + pMp->m_data->m_beg + nRead, (tLen - nRead) > 1024 ? 1024 : (tLen - nRead) );
+										dynamic_mmap_copy(sztmp, lbuf, pMp->m_data->m_beg + nRead, (tLen - nRead) > 1024 ? 1024 : (tLen - nRead) );
 										sztmp[(tLen - nRead) > 1024 ? 1024 : (tLen - nRead)] = '\0';
 
 										nRead += (tLen - nRead) > 1024 ? 1024 : (tLen - nRead);
@@ -3109,18 +3105,16 @@ void CMailImap::Fetch(const char* szArg, BOOL isUID)
 
 							ImapSend( cmd, strlen(cmd));
 							
-							int llen;
-							char* lbuf = Letter->Body(llen);
-							
-							int wlen = 0;
-							while(1)
-							{
-								if(ImapSend(lbuf + wlen, (llen - wlen) > 1448 ? 1448 : (llen - wlen)) < 0)
-									break;
-								wlen += ((llen - wlen) > 1448 ? 1448 : (llen - wlen));
-								if(wlen >= llen)
-									break;
-							}
+                            char read_buf[4096];
+                            int read_count = 0;
+                            while((read_count = Letter->Read(read_buf, 4096)) >= 0)
+                            {
+                                if(read_count > 0)
+                                {
+                                    if(ImapSend(read_buf, read_count) < 0)
+                                        break;
+                                }
+                            }
 						}
 						else if(
 							strmatch("BODY.PEEK[]<*.*>", vItem[i].c_str())||
@@ -3137,29 +3131,34 @@ void CMailImap::Fetch(const char* szArg, BOOL isUID)
 							unsigned int origin, octet;
 							sscanf(strRange.c_str(), "%u.%u", &origin, &octet);
                             
-							int llen;
-							char* lbuf = Letter->Body(llen);                                                        
+							int llen = Letter->GetSize();
                             
-							lbuf = lbuf + origin;
 							llen = origin + octet > llen ? llen  - origin : octet;
 							
-                            sprintf(cmd, "BODY[]<%u.%u> {%u}\r\n",origin, llen, llen);
+                            sprintf(cmd, "BODY[]<%u.%u> {%u}\r\n", origin, llen, llen);
                             
 							if(i > 0 || isUID)
 								ImapSend( " ", 1);
 							ImapSend(cmd, strlen(cmd));
 							
-                            /* printf("%s\n", cmd);*/
+                            //move the original position
+                            Letter->Seek(origin);
                             
-							int wlen = 0;
-							while(1)
-							{
-								if(ImapSend(lbuf + wlen, (llen - wlen) > 1448 ? 1448 : (llen - wlen)) < 0)
-									break;
-								wlen += ((llen - wlen) > 1448 ? 1448 : (llen - wlen));
-								if(wlen >= llen)
-									break;
-							}
+                            int wlen = 0;
+                            char read_buf[4096];
+                            int read_count = 0;
+                            while((read_count = Letter->Read(read_buf, (llen - wlen) > 4096 ? 4096 : (llen - wlen))) >= 0)
+                            {
+                                if(read_count > 0)
+                                {
+                                    if(ImapSend(read_buf, read_count) < 0)
+                                        break;
+                                    
+                                    wlen += read_count;
+                                    if(wlen >= llen)
+                                        break;
+                                }
+                            }
 						}
 						
 						else if(strcasecmp(vItem[i].c_str(), "BODYSTRUCTURE") == 0)
@@ -3194,7 +3193,7 @@ void CMailImap::Fetch(const char* szArg, BOOL isUID)
 								if(nRead >= tLen)
 									break;
 								char sztmp[1025];
-								memcpy(sztmp, lbuf + Letter->GetSummary()->m_mime->m_beg + nRead, (tLen - nRead) > 1024 ? 1024 : (tLen - nRead) );
+								dynamic_mmap_copy(sztmp, lbuf, Letter->GetSummary()->m_mime->m_beg + nRead, (tLen - nRead) > 1024 ? 1024 : (tLen - nRead) );
 								sztmp[(tLen - nRead) > 1024 ? 1024 : (tLen - nRead)] = '\0';
 
 								nRead += (tLen - nRead) > 1024 ? 1024 : (tLen - nRead);
@@ -3221,7 +3220,7 @@ void CMailImap::Fetch(const char* szArg, BOOL isUID)
 								if(nRead >= tLen)
 									break;
 								char sztmp[1025];
-								memcpy(sztmp, lbuf + Letter->GetSummary()->m_mime->m_header->m_beg + nRead, (tLen - nRead) > 1024 ? 1024 : (tLen - nRead) );
+								dynamic_mmap_copy(sztmp, lbuf, Letter->GetSummary()->m_mime->m_header->m_beg + nRead, (tLen - nRead) > 1024 ? 1024 : (tLen - nRead) );
 								sztmp[(tLen - nRead) > 1024 ? 1024 : (tLen - nRead)] = '\0';
 
 								nRead += (tLen - nRead) > 1024 ? 1024 : (tLen - nRead);
@@ -3252,7 +3251,7 @@ void CMailImap::Fetch(const char* szArg, BOOL isUID)
 								if(nRead >= tLen)
 									break;
 								char sztmp[1025];
-								memcpy(sztmp, lbuf + Letter->GetSummary()->m_mime->m_data->m_beg + nRead, (tLen - nRead) > 1024 ? 1024 : (tLen - nRead) );
+								dynamic_mmap_copy(sztmp, lbuf, Letter->GetSummary()->m_mime->m_data->m_beg + nRead, (tLen - nRead) > 1024 ? 1024 : (tLen - nRead) );
 								sztmp[(tLen - nRead) > 1024 ? 1024 : (tLen - nRead)] = '\0';
 
 								nRead += (tLen - nRead) > 1024 ? 1024 : (tLen - nRead);
@@ -4228,23 +4227,23 @@ int CMailImap::Copy(const char* szArg, BOOL isUID)
 				letter_info.mail_time = time(NULL);
 				letter_info.user_maxsize = usermaxsize;
 				letter_info.mail_id = -1;
-
-				int llen;
-				char* lbuf = oldLetter->Body(llen);
 				
 				int wlen = 0;
 				BOOL isOK = TRUE;
-				while(1)
-				{
-					if(newLetter->Write(lbuf + wlen, ((llen - wlen) > MEMORY_BLOCK_SIZE ? MEMORY_BLOCK_SIZE : (llen - wlen))) < 0)
-					{
-						isOK = FALSE;
-						break;
-					}
-					wlen += ((llen - wlen) > MEMORY_BLOCK_SIZE ? MEMORY_BLOCK_SIZE : (llen - wlen));
-					if(wlen >= llen)
-						break;
-				}
+                
+                char read_buf[4096];
+                int read_count = 0;
+                while((read_count = oldLetter->Read(read_buf, 4096)) >= 0)
+                {
+                    if(read_count > 0)
+                    {
+                        if(newLetter->Write(read_buf, read_count) < 0)
+                        {
+                            isOK = FALSE;
+                            break;
+                        }
+                    }
+                }
 				if(isOK)
 					newLetter->SetOK();
 				newLetter->Close();
@@ -4825,8 +4824,6 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize()> 0)
 							{
-								int llen = 0;
-								char* lbuf = Letter->Body(llen);
 								string bcc = Letter->GetSummary()->m_header->GetBcc()->m_strfiled;
 								string condition = strmatch("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
 								if(bcc.find(condition.c_str(), 0,condition.length()) == string::npos)
@@ -4849,8 +4846,6 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize()> 0)
 							{
-								int llen = 0;
-								char* lbuf = Letter->Body(llen);
 								string bcc = Letter->GetSummary()->m_header->GetBcc()->m_strfiled;
 								string condition = strmatch("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
 								if(bcc.find(condition.c_str(), 0,condition.length()) != string::npos)
@@ -4875,8 +4870,6 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize()> 0)
 							{
-								int llen = 0;
-								char* lbuf = Letter->Body(llen);
 								string bcc = Letter->GetSummary()->m_header->GetBcc()->m_strfiled;
 								string condition = strmatch("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
 								if(bcc.find(condition.c_str(), 0,condition.length()) != string::npos)
@@ -4900,8 +4893,6 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize()> 0)
 							{
-								int llen = 0;
-								char* lbuf = Letter->Body(llen);
 								string bcc = Letter->GetSummary()->m_header->GetBcc()->m_strfiled;
 								string condition = strmatch("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
 								if(bcc.find(condition.c_str(), 0,condition.length()) == string::npos)
@@ -4936,8 +4927,6 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize()> 0)
 							{
-								int llen = 0;
-								char* lbuf = Letter->Body(llen);
 								if(datecmp(year1, month1, day1, Letter->GetSummary()->m_header->GetTm()->tm_year + 1900, Letter->GetSummary()->m_header->GetTm()->tm_mon, Letter->GetSummary()->m_header->GetTm()->tm_mday) <= 0)
 								{
 									vSearchResult[m_maillisttbl[y].mid] = 1;
@@ -4958,8 +4947,6 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize()> 0)
 							{
-								int llen = 0;
-								char* lbuf = Letter->Body(llen);
 								if(datecmp(year1, month1, day1, Letter->GetSummary()->m_header->GetTm()->tm_year + 1900, Letter->GetSummary()->m_header->GetTm()->tm_mon, Letter->GetSummary()->m_header->GetTm()->tm_mday) >= 0)
 								{
 									vSearchResult[m_maillisttbl[y].mid] = 1;
@@ -4982,8 +4969,6 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize()> 0)
 							{
-								int llen = 0;
-								char* lbuf = Letter->Body(llen);
 								if(datecmp(year1, month1, day1, Letter->GetSummary()->m_header->GetTm()->tm_year + 1900, Letter->GetSummary()->m_header->GetTm()->tm_mon, Letter->GetSummary()->m_header->GetTm()->tm_mday) >= 0)
 								{
 									vSearchResult[m_maillisttbl[y].mid] = 0;
@@ -5004,8 +4989,6 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize()> 0)
 							{
-								int llen = 0;
-								char* lbuf = Letter->Body(llen);
 								if(datecmp(year1, month1, day1, Letter->GetSummary()->m_header->GetTm()->tm_year + 1900, Letter->GetSummary()->m_header->GetTm()->tm_mon, Letter->GetSummary()->m_header->GetTm()->tm_mday) <= 0)
 								{
 									vSearchResult[m_maillisttbl[y].mid] = 0;
@@ -5057,8 +5040,6 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize()> 0)
 							{
-								int llen = 0;
-								char* lbuf = Letter->Body(llen);
 								string cc = Letter->GetSummary()->m_header->GetCc()->m_strfiled;
 								string condition = strmatch("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
 								if(cc.find(condition.c_str(), 0,condition.length()) == string::npos)
@@ -5081,8 +5062,6 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize()> 0)
 							{
-								int llen = 0;
-								char* lbuf = Letter->Body(llen);
 								string cc = Letter->GetSummary()->m_header->GetCc()->m_strfiled;
 								string condition = strmatch("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
 								if(cc.find(condition.c_str(), 0,condition.length()) != string::npos)
@@ -5107,8 +5086,6 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize()> 0)
 							{
-								int llen = 0;
-								char* lbuf = Letter->Body(llen);
 								string cc = Letter->GetSummary()->m_header->GetCc()->m_strfiled;
 								string condition = strmatch("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
 								if(cc.find(condition.c_str(), 0,condition.length()) != string::npos)
@@ -5132,8 +5109,6 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize()> 0)
 							{
-								int llen = 0;
-								char* lbuf = Letter->Body(llen);
 								string cc = Letter->GetSummary()->m_header->GetCc()->m_strfiled;
 								string condition = strmatch("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
 								if(cc.find(condition.c_str(), 0,condition.length()) == string::npos)
@@ -5317,8 +5292,6 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 								MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 								if(Letter->GetSize()> 0)
 								{
-									int llen = 0;
-									char* lbuf = Letter->Body(llen);
 									string subject = Letter->GetSummary()->m_header->GetDecodedSubject();
 									string condition = strmatch("\"*\"", vItem[i+2].item.c_str()) ? vItem[i+2].item.substr(1, vItem[i+2].item.length() - 2) : vItem[i+2].item;
 									if(subject.find(condition.c_str(), 0, condition.length()) == string::npos)
@@ -5341,8 +5314,6 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 								MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 								if(Letter->GetSize()> 0)
 								{
-									int llen = 0;
-									char* lbuf = Letter->Body(llen);
 									string subject = Letter->GetSummary()->m_header->GetDecodedSubject();
 									string condition = strmatch("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
 									if(subject.find(condition.c_str(), 0, condition.length()) == string::npos)
@@ -5369,8 +5340,6 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 								MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 								if(Letter->GetSize()> 0)
 								{
-									int llen = 0;
-									char* lbuf = Letter->Body(llen);
 									string subject = Letter->GetSummary()->m_header->GetDecodedSubject();
 									string condition = strmatch("\"*\"", vItem[i+2].item.c_str()) ? vItem[i+2].item.substr(1, vItem[i+2].item.length() - 2) : vItem[i+2].item;
 									if(subject.find(condition.c_str(), 0, condition.length()) != string::npos)
@@ -5393,8 +5362,6 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 								MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 								if(Letter->GetSize()> 0)
 								{
-									int llen = 0;
-									char* lbuf = Letter->Body(llen);
 									string subject = Letter->GetSummary()->m_header->GetDecodedSubject();
 									string condition = strmatch("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
 									if(subject.find(condition.c_str(), 0, condition.length()) != string::npos)
@@ -5423,8 +5390,6 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 								MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 								if(Letter->GetSize()> 0)
 								{
-									int llen = 0;
-									char* lbuf = Letter->Body(llen);
 									string subject = Letter->GetSummary()->m_header->GetDecodedSubject();
 									string condition = strmatch("\"*\"", vItem[i+2].item.c_str()) ? vItem[i+2].item.substr(1, vItem[i+2].item.length() - 2) : vItem[i+2].item;
 									if(subject.find(condition.c_str(), 0, condition.length()) != string::npos)
@@ -5447,8 +5412,6 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 								MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 								if(Letter->GetSize()> 0)
 								{
-									int llen = 0;
-									char* lbuf = Letter->Body(llen);
 									string subject = Letter->GetSummary()->m_header->GetDecodedSubject();
 									string condition = strmatch("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
 									if(subject.find(condition.c_str(), 0, condition.length()) != string::npos)
@@ -5475,8 +5438,6 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 								MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 								if(Letter->GetSize()> 0)
 								{
-									int llen = 0;
-									char* lbuf = Letter->Body(llen);
 									string subject = Letter->GetSummary()->m_header->GetDecodedSubject();
 									string condition = strmatch("\"*\"", vItem[i+2].item.c_str()) ? vItem[i+2].item.substr(1, vItem[i+2].item.length() - 2) : vItem[i+2].item;
 									if(subject.find(condition.c_str(), 0, condition.length()) == string::npos)
@@ -5499,8 +5460,6 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 								MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 								if(Letter->GetSize()> 0)
 								{
-									int llen = 0;
-									char* lbuf = Letter->Body(llen);
 									string subject = Letter->GetSummary()->m_header->GetDecodedSubject();
 									string condition = strmatch("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
 									if(subject.find(condition.c_str(), 0, condition.length()) == string::npos)
@@ -5910,8 +5869,6 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize()> 0)
 							{
-								int llen = 0;
-								char* lbuf = Letter->Body(llen);
 								if(datecmp(year1, month1, day1, Letter->GetSummary()->m_header->GetTm()->tm_year + 1900, Letter->GetSummary()->m_header->GetTm()->tm_mon, Letter->GetSummary()->m_header->GetTm()->tm_mday) <= 0)
 								{
 									vSearchResult[m_maillisttbl[y].mid] = 1;
@@ -5932,8 +5889,6 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize()> 0)
 							{
-								int llen = 0;
-								char* lbuf = Letter->Body(llen);
 								if(datecmp(year1, month1, day1, Letter->GetSummary()->m_header->GetTm()->tm_year + 1900, Letter->GetSummary()->m_header->GetTm()->tm_mon, Letter->GetSummary()->m_header->GetTm()->tm_mday) >= 0)
 								{
 									vSearchResult[m_maillisttbl[y].mid] = 1;
@@ -5956,8 +5911,6 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize()> 0)
 							{
-								int llen = 0;
-								char* lbuf = Letter->Body(llen);
 								if(datecmp(year1, month1, day1, Letter->GetSummary()->m_header->GetTm()->tm_year + 1900, Letter->GetSummary()->m_header->GetTm()->tm_mon, Letter->GetSummary()->m_header->GetTm()->tm_mday) >= 0)
 								{
 									vSearchResult[m_maillisttbl[y].mid] = 0;
@@ -5978,8 +5931,6 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize()> 0)
 							{
-								int llen = 0;
-								char* lbuf = Letter->Body(llen);
 								if(datecmp(year1, month1, day1, Letter->GetSummary()->m_header->GetTm()->tm_year + 1900, Letter->GetSummary()->m_header->GetTm()->tm_mon, Letter->GetSummary()->m_header->GetTm()->tm_mday) <= 0)
 								{
 									vSearchResult[m_maillisttbl[y].mid] = 0;
@@ -6011,8 +5962,6 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize()> 0)
 							{
-								int llen = 0;
-								char* lbuf = Letter->Body(llen);
 								if(datecmp(year1, month1, day1, Letter->GetSummary()->m_header->GetTm()->tm_year + 1900, Letter->GetSummary()->m_header->GetTm()->tm_mon, Letter->GetSummary()->m_header->GetTm()->tm_mday) != 0)
 								{
 									vSearchResult[m_maillisttbl[y].mid] = 1;
@@ -6033,8 +5982,6 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize()> 0)
 							{
-								int llen = 0;
-								char* lbuf = Letter->Body(llen);
 								if(datecmp(year1, month1, day1, Letter->GetSummary()->m_header->GetTm()->tm_year + 1900, Letter->GetSummary()->m_header->GetTm()->tm_mon, Letter->GetSummary()->m_header->GetTm()->tm_mday) == 0)
 								{
 									vSearchResult[m_maillisttbl[y].mid] = 1;
@@ -6057,8 +6004,6 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize()> 0)
 							{
-								int llen = 0;
-								char* lbuf = Letter->Body(llen);
 								if(datecmp(year1, month1, day1, Letter->GetSummary()->m_header->GetTm()->tm_year + 1900, Letter->GetSummary()->m_header->GetTm()->tm_mon, Letter->GetSummary()->m_header->GetTm()->tm_mday) == 0)
 								{
 									vSearchResult[m_maillisttbl[y].mid] = 0;
@@ -6079,8 +6024,6 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize()> 0)
 							{
-								int llen = 0;
-								char* lbuf = Letter->Body(llen);
 								if(datecmp(year1, month1, day1, Letter->GetSummary()->m_header->GetTm()->tm_year + 1900, Letter->GetSummary()->m_header->GetTm()->tm_mon, Letter->GetSummary()->m_header->GetTm()->tm_mday) != 0)
 								{
 									vSearchResult[m_maillisttbl[y].mid] = 0;
@@ -6112,8 +6055,6 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize()> 0)
 							{
-								int llen = 0;
-								char* lbuf = Letter->Body(llen);
 								if(datecmp(year1, month1, day1, Letter->GetSummary()->m_header->GetTm()->tm_year + 1900, Letter->GetSummary()->m_header->GetTm()->tm_mon, Letter->GetSummary()->m_header->GetTm()->tm_mday) >= 0)
 								{
 									vSearchResult[m_maillisttbl[y].mid] = 1;
@@ -6134,8 +6075,6 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize()> 0)
 							{
-								int llen = 0;
-								char* lbuf = Letter->Body(llen);
 								if(datecmp(year1, month1, day1, Letter->GetSummary()->m_header->GetTm()->tm_year + 1900, Letter->GetSummary()->m_header->GetTm()->tm_mon, Letter->GetSummary()->m_header->GetTm()->tm_mday) <= 0)
 								{
 									vSearchResult[m_maillisttbl[y].mid] = 1;
@@ -6158,8 +6097,6 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize()> 0)
 							{
-								int llen = 0;
-								char* lbuf = Letter->Body(llen);
 								if(datecmp(year1, month1, day1, Letter->GetSummary()->m_header->GetTm()->tm_year + 1900, Letter->GetSummary()->m_header->GetTm()->tm_mon, Letter->GetSummary()->m_header->GetTm()->tm_mday) <= 0)
 								{
 									vSearchResult[m_maillisttbl[y].mid] = 0;
@@ -6180,8 +6117,6 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize()> 0)
 							{
-								int llen = 0;
-								char* lbuf = Letter->Body(llen);
 								if(datecmp(year1, month1, day1, Letter->GetSummary()->m_header->GetTm()->tm_year + 1900, Letter->GetSummary()->m_header->GetTm()->tm_mon, Letter->GetSummary()->m_header->GetTm()->tm_mday) >= 0)
 								{
 									vSearchResult[m_maillisttbl[y].mid] = 0;
@@ -6213,8 +6148,6 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize()> 0)
 							{
-								int llen = 0;
-								char* lbuf = Letter->Body(llen);
 								if(datecmp(year1, month1, day1, Letter->GetSummary()->m_header->GetTm()->tm_year + 1900, Letter->GetSummary()->m_header->GetTm()->tm_mon, Letter->GetSummary()->m_header->GetTm()->tm_mday) >= 0)
 								{
 									vSearchResult[m_maillisttbl[y].mid] = 1;
@@ -6235,8 +6168,6 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize()> 0)
 							{
-								int llen = 0;
-								char* lbuf = Letter->Body(llen);
 								if(datecmp(year1, month1, day1, Letter->GetSummary()->m_header->GetTm()->tm_year + 1900, Letter->GetSummary()->m_header->GetTm()->tm_mon, Letter->GetSummary()->m_header->GetTm()->tm_mday) <= 0)
 								{
 									vSearchResult[m_maillisttbl[y].mid] = 1;
@@ -6259,8 +6190,6 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize()> 0)
 							{
-								int llen = 0;
-								char* lbuf = Letter->Body(llen);
 								if(datecmp(year1, month1, day1, Letter->GetSummary()->m_header->GetTm()->tm_year + 1900, Letter->GetSummary()->m_header->GetTm()->tm_mon, Letter->GetSummary()->m_header->GetTm()->tm_mday) <= 0)
 								{
 									vSearchResult[m_maillisttbl[y].mid] = 0;
@@ -6281,8 +6210,6 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize()> 0)
 							{
-								int llen = 0;
-								char* lbuf = Letter->Body(llen);
 								if(datecmp(year1, month1, day1, Letter->GetSummary()->m_header->GetTm()->tm_year + 1900, Letter->GetSummary()->m_header->GetTm()->tm_mon, Letter->GetSummary()->m_header->GetTm()->tm_mday) >= 0)
 								{
 									vSearchResult[m_maillisttbl[y].mid] = 0;
@@ -6387,8 +6314,6 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize()> 0)
 							{
-								int llen = 0;
-								char* lbuf = Letter->Body(llen);
 								string from = Letter->GetSummary()->m_header->GetFrom()->m_strfiled;
 								string condition = strmatch("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
 								if(from.find(condition.c_str(), 0,condition.length()) == string::npos)
@@ -6411,8 +6336,6 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize()> 0)
 							{
-								int llen = 0;
-								char* lbuf = Letter->Body(llen);
 								string from = Letter->GetSummary()->m_header->GetFrom()->m_strfiled;
 								string condition = strmatch("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
 								if(from.find(condition.c_str(), 0,condition.length()) != string::npos)
@@ -6437,8 +6360,6 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize()> 0)
 							{
-								int llen = 0;
-								char* lbuf = Letter->Body(llen);
 								string from = Letter->GetSummary()->m_header->GetFrom()->m_strfiled;
 								string condition = strmatch("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
 								if(from.find(condition.c_str(), 0,condition.length()) != string::npos)
@@ -6462,8 +6383,6 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize()> 0)
 							{
-								int llen = 0;
-								char* lbuf = Letter->Body(llen);
 								string from = Letter->GetSummary()->m_header->GetFrom()->m_strfiled;
 								string condition = strmatch("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
 								if(from.find(condition.c_str(), 0,condition.length()) == string::npos)
@@ -6517,8 +6436,6 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize()> 0)
 							{
-								int llen = 0;
-								char* lbuf = Letter->Body(llen);
 								string to = Letter->GetSummary()->m_header->GetTo()->m_strfiled;
 								string condition = strmatch("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
 								if(to.find(condition.c_str(), 0,condition.length()) == string::npos)
@@ -6541,8 +6458,6 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize()> 0)
 							{
-								int llen = 0;
-								char* lbuf = Letter->Body(llen);
 								string to = Letter->GetSummary()->m_header->GetTo()->m_strfiled;
 								string condition = strmatch("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
 								if(to.find(condition.c_str(), 0,condition.length()) != string::npos)
@@ -6567,8 +6482,6 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize()> 0)
 							{
-								int llen = 0;
-								char* lbuf = Letter->Body(llen);
 								string to = Letter->GetSummary()->m_header->GetTo()->m_strfiled;
 								string condition = strmatch("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
 								if(to.find(condition.c_str(), 0,condition.length()) != string::npos)
@@ -6592,8 +6505,6 @@ void CMailImap::SubSearch(MailStorage* mailStg, const char* szArg, map<int,int>&
 							MailLetter* Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
 							if(Letter->GetSize()> 0)
 							{
-								int llen = 0;
-								char* lbuf = Letter->Body(llen);
 								string to = Letter->GetSummary()->m_header->GetTo()->m_strfiled;
 								string condition = strmatch("\"*\"", vItem[i+1].item.c_str()) ? vItem[i+1].item.substr(1, vItem[i+1].item.length() - 2) : vItem[i+1].item;
 								if(to.find(condition.c_str(), 0,condition.length()) == string::npos)

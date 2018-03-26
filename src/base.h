@@ -833,6 +833,13 @@ public:
     static unsigned int m_prod_type;
     
     static BOOL     m_close_stderr;
+#ifdef _WITH_HDFS_
+    static string   m_java_home;
+    static string   m_hadoop_home;
+    static string   m_hdfs_path;
+    static string m_hdfs_host;
+    static unsigned short m_hdfs_port;
+#endif /* _WITH_HDFS_ */
 	static string	m_private_path;
 	static string 	m_html_path;
 	static string	m_localhostname;
