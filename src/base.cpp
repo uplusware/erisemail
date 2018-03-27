@@ -23,9 +23,10 @@ BOOL CMailBase::m_close_stderr = TRUE;
 string CMailBase::m_encoding = "UTF-8";
 
 #ifdef _WITH_HDFS_
-    string CMailBase::m_hdfs_host = "default";
-    unsigned short CMailBase::m_hdfs_port = 0;
+    string CMailBase::m_hdfs_host = "hdfs://localhost";
+    unsigned short CMailBase::m_hdfs_port = 9000;
     string CMailBase::m_hdfs_path = "/erisemail/eml";
+    string   CMailBase::m_hdfs_user = "_huser";
     string   CMailBase::m_java_home = "/usr/lib/jvm/default-java";
     string   CMailBase::m_hadoop_home = "/usr/local/hadoop";
 #endif /* _WITH_HDFS_ */
@@ -207,6 +208,11 @@ BOOL CMailBase::LoadConfig()
 				strcut(strline.c_str(), "=", NULL, hdfs_port);
 				strtrim(hdfs_port);
 				m_hdfs_port = atoi(hdfs_port.c_str());
+			}
+            else if(strncasecmp(strline.c_str(), "HDFSUser", sizeof("HDFSUser") - 1) == 0)
+			{
+				strcut(strline.c_str(), "=", NULL, m_hdfs_user);
+				strtrim(m_hdfs_user);
 			}
             else if(strncasecmp(strline.c_str(), "HDFSPath", sizeof("HDFSPath") - 1) == 0)
 			{

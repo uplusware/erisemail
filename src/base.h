@@ -839,6 +839,7 @@ public:
     static string   m_hdfs_path;
     static string m_hdfs_host;
     static unsigned short m_hdfs_port;
+    static string   m_hdfs_user;
 #endif /* _WITH_HDFS_ */
 	static string	m_private_path;
 	static string 	m_html_path;

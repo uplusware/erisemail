@@ -55,7 +55,8 @@ class dynamic_mmap_exception
 public:
     dynamic_mmap_exception()
     {
-        fprintf(stderr, "out of scope\n");
+        fprintf(stderr, "out of dynamic_mmap's scope\n");
+        abort();
     }
     virtual ~dynamic_mmap_exception()
     {
@@ -336,6 +337,7 @@ protected:
     
 #ifdef _WITH_HDFS_        
     hdfsFS m_hdfs_conn;
+    struct hdfsBuilder* m_hdfs_bld;
     hdfsFile m_ofile_in_hdfs;
     hdfsFile m_ifile_in_hdfs;
     hdfsFile m_ifile_line_in_hdfs;
@@ -367,6 +369,26 @@ protected:
     MailStorage* m_mailstg;
     string m_mailbody_fragment;
 	
+#ifdef _WITH_HDFS_        
+    hdfsFS ConnectHDFS()
+    {
+        if(m_hdfs_conn == NULL)
+        {
+            m_hdfs_bld = hdfsNewBuilder();
+            hdfsBuilderSetNameNode(m_hdfs_bld, CMailBase::m_hdfs_host.c_str());
+            hdfsBuilderSetNameNodePort(m_hdfs_bld, CMailBase::m_hdfs_port);
+            hdfsBuilderSetUserName(m_hdfs_bld, CMailBase::m_hdfs_user.c_str());
+            
+            hdfsBuilderSetForceNewInstance(m_hdfs_bld);
+        
+            m_hdfs_conn = hdfsBuilderConnect(m_hdfs_bld);
+        }
+        
+        return m_hdfs_conn;
+    }
+#endif /* _WITH_HDFS_ */
+
+
 public:
 	MailLetter(MailStorage* mailStg, const char* private_path, const char* encoding, memcached_st * memcached, const char* emlfile);
 	MailLetter(MailStorage* mailStg, const char* private_path, const char* encoding, memcached_st * memcached, const char* uid, unsigned long long maxsize);

@@ -3131,7 +3131,7 @@ void CMailImap::Fetch(const char* szArg, BOOL isUID)
 							unsigned int origin, octet;
 							sscanf(strRange.c_str(), "%u.%u", &origin, &octet);
                             
-							int llen = Letter->GetSize();
+							unsigned int llen = Letter->GetSize();
                             
 							llen = origin + octet > llen ? llen  - origin : octet;
 							
@@ -3144,7 +3144,7 @@ void CMailImap::Fetch(const char* szArg, BOOL isUID)
                             //move the original position
                             Letter->Seek(origin);
                             
-                            int wlen = 0;
+                            unsigned int wlen = 0;
                             char read_buf[4096];
                             int read_count = 0;
                             while((read_count = Letter->Read(read_buf, (llen - wlen) > 4096 ? 4096 : (llen - wlen))) >= 0)
