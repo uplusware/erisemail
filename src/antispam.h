@@ -21,11 +21,18 @@
 #include <string>
 using namespace std;
 
+struct popen2 {
+    pid_t child_pid;
+    int from_child;
+    int to_child;
+};
+
 typedef struct
 {
 	int is_spam;
 	int is_virs;
     string param;
+    struct popen2* fd;
 } MailFilter;
 
 #ifdef __cplusplus
