@@ -4214,8 +4214,7 @@ int CMailImap::Copy(const char* szArg, BOOL isUID)
 				mailStg->GetMailIndex(m_maillisttbl[x].mid, emlfile);
 				
 				oldLetter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
-				newLetter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, newuid, usermaxsize /*mailStg, 
-					"", "", mtLocal, newuid, dirID, m_maillisttbl[x].mstatus, (unsigned int)time(NULL), usermaxsize*/);
+				newLetter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, newuid, usermaxsize);
 				
 				Letter_Info letter_info;
 				letter_info.mail_from = "";

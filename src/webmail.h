@@ -5665,8 +5665,7 @@ public:
 			
 					oldLetter = new MailLetter(m_mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_session->GetMemCached(), emlfile.c_str());
 					
-					newLetter = new MailLetter(m_mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_session->GetMemCached(), newuid, usermaxsize /*m_mailStg, "", "", mtLocal,
-						newuid, nToDirID, mstatus, (unsigned int)time(NULL), usermaxsize*/);
+					newLetter = new MailLetter(m_mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_session->GetMemCached(), newuid, usermaxsize);
 
 					Letter_Info letter_info;
 					letter_info.mail_from = "";

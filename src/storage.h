@@ -175,7 +175,11 @@ public:
 	int Ping();
 	
 	void KeepLive();
+    
+    int StartTransaction();
 	int Query(const char *stmt_str, unsigned long length);
+    int CommitTransaction();
+    int RollbackTransaction();
     
 	int Install(const char* database);
 	int Uninstall(const char* database);
@@ -339,6 +343,7 @@ public:
     int ListBuddys(const char* selfid, vector<string>& buddys);
     
 protected:
+    BOOL m_inTranscation;
 	MYSQL m_hMySQL;
     memcached_st * m_memcached;
     BOOL m_isInited;
