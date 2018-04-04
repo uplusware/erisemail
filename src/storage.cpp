@@ -171,7 +171,11 @@ int MailStorage::Query(const char *stmt_str, unsigned long length)
         
         int r_val = _mysql_real_query_(&m_hMySQL, stmt_str, length);
 		
-        if(r_val != 0 && m_inTranscation && strncasecmp(stmt_str, "BEGIN", 5) != 0 && strncasecmp(stmt_str, "COMMIT", 6) != 0 && strncasecmp(stmt_str, "ROLLBACK", 8) != 0)
+        if(r_val != 0 && m_inTranscation
+            && strncasecmp(stmt_str, "BEGIN", 5) != 0
+            && strncasecmp(stmt_str, "START TRANSACTION", 17) != 0
+            && strncasecmp(stmt_str, "COMMIT", 6) != 0
+            && strncasecmp(stmt_str, "ROLLBACK", 8) != 0)
         {
             _mysql_real_query_(&m_hMySQL, "ROLLBACK", 8);
         }

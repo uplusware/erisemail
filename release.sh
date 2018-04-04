@@ -29,14 +29,8 @@ rm -rf $3-erisemail-bin-cn-$2-${m}-${o}
 mkdir $3-erisemail-bin-cn-$2-${m}-${o}
 mkdir $3-erisemail-bin-cn-$2-${m}-${o}/html
 
-cp cn-html-$2/*.js $3-erisemail-bin-cn-$2-${m}-${o}/html/
-cp cn-html-$2/*.jpg $3-erisemail-bin-cn-$2-${m}-${o}/html/
-cp cn-html-$2/*.gif $3-erisemail-bin-cn-$2-${m}-${o}/html/
-cp cn-html-$2/*.png $3-erisemail-bin-cn-$2-${m}-${o}/html/
-cp cn-html-$2/*.ico $3-erisemail-bin-cn-$2-${m}-${o}/html/
-cp cn-html-$2/*.html $3-erisemail-bin-cn-$2-${m}-${o}/html/
-cp cn-html-$2/*.css $3-erisemail-bin-cn-$2-${m}-${o}/html/
-cp cn-html-$2/*.xml $3-erisemail-bin-cn-$2-${m}-${o}/html/
+cp -rf cn-html-$2/* $3-erisemail-bin-cn-$2-${m}-${o}/html/
+cp -rf jqueryui $3-erisemail-bin-cn-$2-${m}-${o}/html/
 
 cp src/erisemaild $3-erisemail-bin-cn-$2-${m}-${o}/erisemaild
 cp src/eriseutil $3-erisemail-bin-cn-$2-${m}-${o}/eriseutil
@@ -78,26 +72,17 @@ cp ca/client.crt $3-erisemail-bin-cn-$2-${m}-${o}/client.crt
 cp ca/client.p12 $3-erisemail-bin-cn-$2-${m}-${o}/client.p12
 cp ca/client.key $3-erisemail-bin-cn-$2-${m}-${o}/client.key
 
-cp script/README-EN.html $3-erisemail-bin-cn-$2-${m}-${o}/
-cp script/README-ZH.html $3-erisemail-bin-cn-$2-${m}-${o}/
-
 chmod a+x $3-erisemail-bin-cn-$2-${m}-${o}/*
-#ls -al $3-erisemail-bin-cn-$2-${m}-${o}
 tar zcf $3-erisemail-bin-cn-$2-${m}-${o}-$1.tar.gz $3-erisemail-bin-cn-$2-${m}-${o}
+
 ##############################################################################
 # English
 rm -rf $3-erisemail-bin-en-$2-${m}-${o}
 mkdir $3-erisemail-bin-en-$2-${m}-${o}
 mkdir $3-erisemail-bin-en-$2-${m}-${o}/html
 
-cp en-html-$2/*.js $3-erisemail-bin-en-$2-${m}-${o}/html/
-cp en-html-$2/*.jpg $3-erisemail-bin-en-$2-${m}-${o}/html/
-cp en-html-$2/*.gif $3-erisemail-bin-en-$2-${m}-${o}/html/
-cp en-html-$2/*.ico $3-erisemail-bin-en-$2-${m}-${o}/html/
-cp en-html-$2/*.png $3-erisemail-bin-en-$2-${m}-${o}/html/
-cp en-html-$2/*.html $3-erisemail-bin-en-$2-${m}-${o}/html/
-cp en-html-$2/*.css $3-erisemail-bin-en-$2-${m}-${o}/html/
-cp en-html-$2/*.xml $3-erisemail-bin-en-$2-${m}-${o}/html/
+cp -rf en-html-$2/* $3-erisemail-bin-en-$2-${m}-${o}/html/
+cp -rf jqueryui $3-erisemail-bin-en-$2-${m}-${o}/html/
 
 cp src/erisemaild $3-erisemail-bin-en-$2-${m}-${o}/erisemaild
 cp src/eriseutil $3-erisemail-bin-en-$2-${m}-${o}/eriseutil
@@ -138,9 +123,6 @@ cp ca/server.key $3-erisemail-bin-en-$2-${m}-${o}/server.key
 cp ca/client.p12 $3-erisemail-bin-en-$2-${m}-${o}/client.p12
 cp ca/client.crt $3-erisemail-bin-en-$2-${m}-${o}/client.crt
 cp ca/client.key $3-erisemail-bin-en-$2-${m}-${o}/client.key
-
-cp script/README-EN.html $3-erisemail-bin-en-$2-${m}-${o}/README.html
-cp script/README-ZH.html $3-erisemail-bin-en-$2-${m}-${o}/README.html
 
 chmod a+x $3-erisemail-bin-en-$2-${m}-${o}/*
 tar zcf $3-erisemail-bin-en-$2-${m}-${o}-$1.tar.gz $3-erisemail-bin-en-$2-${m}-${o}
