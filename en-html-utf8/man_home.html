@@ -37,77 +37,7 @@
 
 	function change_tab(tabname)
 	{
-		if(tabname == "status")
-		{
-			_$_('imgstatus').src = "manstatus.gif";
-			_$_('imglevel').src = "manlevel2.gif";
-			_$_('imgmail').src = "manmail2.gif";
-			_$_('imguser').src = "manuser2.gif";
-			_$_('imggroup').src = "mangroup2.gif";
-			_$_('imgaccess').src = "manaccess2.gif";
-			_$_('imglog').src = "manlog2.gif";
-			
-		}
-		else if(tabname == "level")
-		{
-			_$_('imgstatus').src = "manstatus2.gif";
-			_$_('imglevel').src = "manlevel.gif";
-			_$_('imgmail').src = "manmail2.gif";
-			_$_('imguser').src = "manuser2.gif";
-			_$_('imggroup').src = "mangroup2.gif";
-			_$_('imgaccess').src = "manaccess2.gif";
-			_$_('imglog').src = "manlog2.gif";
-		}
-		else if(tabname == "mail")
-		{
-			_$_('imgstatus').src = "manstatus2.gif";
-			_$_('imglevel').src = "manlevel2.gif";
-			_$_('imgmail').src = "manmail.gif";
-			_$_('imguser').src = "manuser2.gif";
-			_$_('imggroup').src = "mangroup2.gif";
-			_$_('imgaccess').src = "manaccess2.gif";
-			_$_('imglog').src = "manlog2.gif";
-		}
-		else if(tabname == "user")
-		{
-			_$_('imgstatus').src = "manstatus2.gif";
-			_$_('imglevel').src = "manlevel2.gif";
-			_$_('imgmail').src = "manmail2.gif";
-			_$_('imguser').src = "manuser.gif";
-			_$_('imggroup').src = "mangroup2.gif";
-			_$_('imgaccess').src = "manaccess2.gif";
-			_$_('imglog').src = "manlog2.gif";
-		}
-		else if(tabname == "group")
-		{
-			_$_('imgstatus').src = "manstatus2.gif";
-			_$_('imglevel').src = "manlevel2.gif";
-			_$_('imgmail').src = "manmail2.gif";
-			_$_('imguser').src = "manuser2.gif";
-			_$_('imggroup').src = "mangroup.gif";
-			_$_('imgaccess').src = "manaccess2.gif";
-			_$_('imglog').src = "manlog2.gif";
-		}
-		else if(tabname == "access")
-		{
-			_$_('imgstatus').src = "manstatus2.gif";
-			_$_('imglevel').src = "manlevel2.gif";
-			_$_('imgmail').src = "manmail2.gif";
-			_$_('imguser').src = "manuser2.gif";
-			_$_('imggroup').src = "mangroup2.gif";
-			_$_('imgaccess').src = "manaccess.gif";
-			_$_('imglog').src = "manlog2.gif";
-		}
-		else if(tabname == "log")
-		{
-			_$_('imgstatus').src = "manstatus2.gif";
-			_$_('imglevel').src = "manlevel2.gif";
-			_$_('imgmail').src = "manmail2.gif";
-			_$_('imguser').src = "manuser2.gif";
-			_$_('imggroup').src = "mangroup2.gif";
-			_$_('imgaccess').src = "manaccess2.gif";
-			_$_('imglog').src = "manlog.gif";
-		}
+		
 	}
 </script>
 <body>
@@ -128,28 +58,28 @@
 						  <tr><td>
 							<table width="100%" border="0" cellspacing="6" cellpadding="0" background="man_menubg.gif">
 								<tr align="center">
-									<td ><input type="image" src="manstatus_btn.gif" onMouseOver="this.src='manstatus_btn2.gif'" onMouseOut="this.src='manstatus_btn.gif'" onClick="window.parent.childframe.location.href='man_status.html'"></td>
+									<td><a href="javascript:void(0)" onClick="window.parent.childframe.location.href='man_status.html'">System Status</a></td>
 								  </tr>
 								  <tr align="center">
-									<td ><input type="image"  src="manlevel_btn.gif" onMouseOver="this.src='manlevel_btn2.gif'" onMouseOut="this.src='manlevel_btn.gif'" onClick="window.parent.childframe.location.href='man_levels.html'"></td>
+									<td><a href="javascript:void(0)" onClick="window.parent.childframe.location.href='man_levels.html'">User Policy</a></td>
 								  </tr>
 								  <tr align="center">
-									<td ><input type="image"  src="manmail_btn.gif" onMouseOver="this.src='manmail_btn2.gif'" onMouseOut="this.src='manmail_btn.gif'" onClick="window.parent.childframe.location.href='man_mails.html'"></td>
+									<td><a href="javascript:void(0)" onClick="window.parent.childframe.location.href='man_mails.html'">Mail Review</a></td>
 								  </tr>
 								  <tr align="center">
-									<td ><input type="image"  src="manuser_btn.gif" onMouseOver="this.src='manuser_btn2.gif'" onMouseOut="this.src='manuser_btn.gif'" onClick="window.parent.childframe.location.href='man_users.html'"></td>
+									<td><a href="javascript:void(0)" onClick="window.parent.childframe.location.href='man_users.html'">Account IDs</a></td>
 								  </tr>
 								   <tr align="center">
-									<td ><input type="image"  src="mangroup_btn.gif" onMouseOver="this.src='mangroup_btn2.gif'" onMouseOut="this.src='mangroup_btn.gif'" onClick="window.parent.childframe.location.href='man_groups.html'"></td>
+									<td><a href="javascript:void(0)" onClick="window.parent.childframe.location.href='man_groups.html'">Groups</a></td>
 								  </tr>
 								   <tr align="center">
-									<td ><input type="image"  src="manaccess_btn.gif" onMouseOver="this.src='manaccess_btn2.gif'" onMouseOut="this.src='manaccess_btn.gif'" onClick="window.parent.childframe.location.href='man_access.html'"></td>
+									<td><a href="javascript:void(0)" onClick="window.parent.childframe.location.href='man_access.html'">Access Policy</a></td>
 								  </tr>
 								   <tr align="center">
-									<td ><input type="image"  src="manlog_btn.gif" onMouseOver="this.src='manlog_btn2.gif'" onMouseOut="this.src='manlog_btn.gif'" onClick="window.parent.childframe.location.href='man_logs.html'"></td>
+									<td><a href="javascript:void(0)" onClick="window.parent.childframe.location.href='man_logs.html'">System Logs</a></td>
 								  </tr>
 								  <tr align="center">
-									<td ><input type="image"  src="manexit_btn.gif" onMouseOver="this.src='manexit_btn2.gif'" onMouseOut="this.src='manexit_btn.gif'" onClick="logout()"></td>
+									<td><a href="javascript:void(0)" onClick="logout()">Logout</a></td>
 								  </tr>
 							</table>
 						  </td></tr>
@@ -161,17 +91,6 @@
 		</table>
 	</td>
     <td  bgcolor="#FFFFFF" valign="top" align="left">
-    	<table border="0" cellspacing="1" cellpadding="0">
-			 <tr align="left">
-		        <td ><img name="imgstatus" id="imgstatus" src="manstatus2.gif" ></td>
-				<td ><img name="imglevel" id="imglevel" src="manlevel2.gif"></td>
-				<td ><img name="imgmail" id="imgmail" src="manmail2.gif" ></td>
-				<td ><img name="imguser" id="imguser" src="manuser2.gif"></td>
-				<td ><img name="imggroup" id="imggroup" src="mangroup2.gif"></td>
-				<td ><img name="imgaccess" id="imgaccess" src="manaccess2.gif"></td>
-				<td ><img name="imglog" id="imglog" src="manlog2.gif"></td>
-			 </tr>
-		</table>
 							
 	<iframe name="childframe" longdesc="..:::eRisemail Web Management System:::.." src="man_status.html" width="100%" height="700" scrolling="auto" marginwidth="1" marginheight="1" border="0" frameborder="0" title="..:::eRisemail Web Management System:::..">
 	</iframe>	
