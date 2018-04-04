@@ -6,6 +6,7 @@
 <LINK rel="Bookmark" href="erisemail.ico" >
 <LINK rel="Shortcut Icon" href="erisemail.ico" />
 <link href="css.css" rel="stylesheet" type="text/css">
+<link href="/jqueryui/jquery-ui.css" rel="stylesheet">
 <script type="text/javascript" src="inc.js"></script>
 <title>..:::易睿邮件后台管理系统:::..</title>
 <script language="JavaScript"> 
@@ -100,16 +101,6 @@
 			load_config_file(cfgname, ctrlobj, statusobj);
 			divobj.setAttribute('loaded', 'true');
 		}
-		if(divobj.style.display == "none")
-		{
-			divobj.style.display = "block"
-			btnobj.src = "closediv.gif";
-		}
-		else
-		{
-			divobj.style.display = "none";
-			btnobj.src = "opendiv.gif";
-		}
 	}
 	
 </script>
@@ -130,19 +121,15 @@
 </td></tr>
 </table>
 
-
-<table border="0" width="100%" bordercolorlight="#C0C0C0" cellpadding="0" cellspacing="0" bordercolordark="#FFFFFF" class="gray">
-<tr><td class="blue">
-<table border="0" width="100%" bordercolorlight="#C0C0C0" cellpadding="2" cellspacing="0" bordercolordark="#FFFFFF">
-  <tr align="center" valign="middle" height="25" onMouseOver="this.mousepoint = 99;this.style.cursor = 'pointer';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onClick="click_div('GLOBAL_REJECT_LIST',_$_('GLOBAL_REJECT_LIST_DIV'), _$_('GLOBAL_REJECT_LIST_BTN'), _$_('GLOBAL_REJECT_LIST'), _$_('GLOBAL_REJECT_LIST_STATUS'))">
-    <td width="22"><img src="list.gif"></td>
-    <td align="left"><font color="#FFFFFF">黑名单</font></td>
-    <td align="right" width="20"><img id="GLOBAL_REJECT_LIST_BTN" src="opendiv.gif"></td>
-  </tr>
-</table>
-</td></tr>
-</table>
-<div id="GLOBAL_REJECT_LIST_DIV" border="0" style="display:none">
+<div id="ACCESS_TABS">
+<ul>
+<li><a href="#tabs-1"><img src="list.gif" />黑名单</a></li>
+<li><a href="#tabs-2"><img src="list.gif" />白名单</a></li>
+<li><a href="#tabs-3"><img src="list.gif" />附加域</a></li>
+<li><a href="#tabs-4"><img src="list.gif" />Web后台允许IP</a></li>
+</ul>
+<div id="tabs-1">    
+<div id="GLOBAL_REJECT_LIST_DIV" border="0">
 	<table border="0" width="100%" bordercolorlight="#C0C0C0" cellpadding="2" cellspacing="0" bordercolordark="#FFFFFF" class="gray">
 		<tr>
 			<td class="gray">
@@ -158,18 +145,10 @@
 	</table>
 	<div id="GLOBAL_REJECT_LIST_STATUS"></div>
 </div>
-<table border="0" width="100%" bordercolorlight="#C0C0C0" cellpadding="0" cellspacing="0" bordercolordark="#FFFFFF" class="gray">
-<tr><td class="blue">
-<table border="0" width="100%" bordercolorlight="#C0C0C0" cellpadding="2" cellspacing="0" bordercolordark="#FFFFFF">
-  <tr align="center" valign="middle" height="25" onMouseOver="this.mousepoint = 99;this.style.cursor = 'pointer';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onClick="click_div('GLOBAL_PERMIT_LIST',_$_('GLOBAL_PERMIT_LIST_DIV'), _$_('GLOBAL_PERMIT_LIST_BTN'), _$_('GLOBAL_PERMIT_LIST'), _$_('GLOBAL_PERMIT_LIST_STATUS'))">
-    <td width="22"><img src="list.gif"></td>
-    <td align="left"><font color="#FFFFFF">白名单</font></td>
-    <td align="right" width="20"><img id="GLOBAL_PERMIT_LIST_BTN" src="opendiv.gif"></td>
-  </tr>
-</table>
-</td></tr>
-</table>
-<div id="GLOBAL_PERMIT_LIST_DIV" border="0" style="display:none">
+
+</div>
+<div id="tabs-2">
+<div id="GLOBAL_PERMIT_LIST_DIV" border="0">
 	<table border="0" width="100%" bordercolorlight="#C0C0C0" cellpadding="2" cellspacing="0" bordercolordark="#FFFFFF" class="gray">
 		<tr>
 			<td class="gray">
@@ -185,18 +164,9 @@
 	</table>
 	<div id="GLOBAL_PERMIT_LIST_STATUS"></div>
 </div>
-<table border="0" width="100%" bordercolorlight="#C0C0C0" cellpadding="0" cellspacing="0" bordercolordark="#FFFFFF" class="gray">
-<tr><td class="blue">
-<table border="0" width="100%" bordercolorlight="#C0C0C0" cellpadding="2" cellspacing="0" bordercolordark="#FFFFFF">
-  <tr align="center" valign="middle" height="25" onMouseOver="this.mousepoint = 99;this.style.cursor = 'pointer';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onClick="click_div('DOMAIN_PERMIT_LIST',_$_('DOMAIN_PERMIT_LIST_DIV'), _$_('DOMAIN_PERMIT_LIST_BTN'), _$_('DOMAIN_PERMIT_LIST'), _$_('DOMAIN_PERMIT_LIST_STATUS'))">
-    <td width="22"><img src="list.gif"></td>
-    <td align="left"><font color="#FFFFFF">附加域</font></td>
-    <td align="right" width="20"><img id="DOMAIN_PERMIT_LIST_BTN" src="opendiv.gif" ></td>
-  </tr>
-</table>
-</td></tr>
-</table>
-<div id="DOMAIN_PERMIT_LIST_DIV" border="0" style="display:none">
+</div>
+<div id="tabs-3">
+<div id="DOMAIN_PERMIT_LIST_DIV" border="0">
 	<table border="0" width="100%" bordercolorlight="#C0C0C0" cellpadding="2" cellspacing="0" bordercolordark="#FFFFFF" class="gray">
 		<tr>
 			<td class="gray">
@@ -212,18 +182,9 @@
 	</table>
 	<div id="DOMAIN_PERMIT_LIST_STATUS"></div>
 </div>
-<table border="0" width="100%" bordercolorlight="#C0C0C0" cellpadding="0" cellspacing="0" bordercolordark="#FFFFFF" class="gray">
-<tr><td class="blue">
-<table border="0" width="100%" bordercolorlight="#C0C0C0" cellpadding="2" cellspacing="0" bordercolordark="#FFFFFF">
-  <tr align="center" valign="middle" height="25" onMouseOver="this.mousepoint = 99;this.style.cursor = 'pointer';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onClick="click_div('WEBADMIN_PERMIT_LIST',_$_('WEBADMIN_PERMIT_LIST_DIV'), _$_('WEBADMIN_PERMIT_LIST_BTN'), _$_('WEBADMIN_PERMIT_LIST'), _$_('WEBADMIN_PERMIT_LIST_STATUS'))">
-    <td width="22"><img src="list.gif"></td>
-    <td align="left"><font color="#FFFFFF">后台允许访问IP地址</font></td>
-    <td align="right" width="20"><img id="WEBADMIN_PERMIT_LIST_BTN" src="opendiv.gif" ></td>
-  </tr>
-</table>
-</td></tr>
-</table>
-<div id="WEBADMIN_PERMIT_LIST_DIV" border="0" style="display:none">
+</div>
+<div id="tabs-4">
+<div id="WEBADMIN_PERMIT_LIST_DIV" border="0">
 	<table border="0" width="100%" bordercolorlight="#C0C0C0" cellpadding="2" cellspacing="0" bordercolordark="#FFFFFF" class="gray">
 		<tr>
 			<td class="gray">
@@ -239,7 +200,18 @@
 	</table>
 	<div id="WEBADMIN_PERMIT_LIST_STATUS"></div>
 </div>
-
+</div>
+<script src="/jqueryui/external/jquery/jquery.js"></script>
+<script src="/jqueryui/jquery-ui.js"></script>
+<script>
+    $( function() {
+        $( "#ACCESS_TABS" ).tabs();
+        click_div('GLOBAL_REJECT_LIST',_$_('GLOBAL_REJECT_LIST_DIV'), _$_('GLOBAL_REJECT_LIST_BTN'), _$_('GLOBAL_REJECT_LIST'), _$_('GLOBAL_REJECT_LIST_STATUS'));
+        click_div('GLOBAL_PERMIT_LIST',_$_('GLOBAL_PERMIT_LIST_DIV'), _$_('GLOBAL_PERMIT_LIST_BTN'), _$_('GLOBAL_PERMIT_LIST'), _$_('GLOBAL_PERMIT_LIST_STATUS'));
+        click_div('DOMAIN_PERMIT_LIST',_$_('DOMAIN_PERMIT_LIST_DIV'), _$_('DOMAIN_PERMIT_LIST_BTN'), _$_('DOMAIN_PERMIT_LIST'), _$_('DOMAIN_PERMIT_LIST_STATUS'));
+        click_div('WEBADMIN_PERMIT_LIST',_$_('WEBADMIN_PERMIT_LIST_DIV'), _$_('WEBADMIN_PERMIT_LIST_BTN'), _$_('WEBADMIN_PERMIT_LIST'), _$_('WEBADMIN_PERMIT_LIST_STATUS'));
+    } );
+</script>
 </body>
 
 </html>

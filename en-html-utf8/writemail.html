@@ -6,6 +6,7 @@
 <LINK rel="Bookmark" href="erisemail.ico" >
 <LINK rel="Shortcut Icon" href="erisemail.ico" />
 <link href="css.css" rel="stylesheet" type="text/css">
+<link href="/jqueryui/jquery-ui.css" rel="stylesheet">
 <script type="text/javascript" src="inc.js"></script>
 <script type="text/javascript" src="ui.js"></script>
 <title>...::: Welcome to eRisemail System :::...</title>
@@ -1120,9 +1121,26 @@
 		}
 	}
 	
-	function showbook(who, x, y, orderby)
+	function showbook(who, orderby)
 	{	
 		sel_alluser(false);
+        
+        $("#ADDR_BOOK_DIV").dialog({
+		  height: 500,
+		  width: 600,
+		  modal: false,
+		  title: 'Address Book',
+		  buttons: {                  
+			  "Ok": function() {
+                  append_addrs();
+				  $(this).dialog("close");
+				  },
+              "Close": function() {
+				  $(this).dialog("close");
+				  }
+		 }});
+         
+        
 		_$_('ADDR_BOOK_DIV').setAttribute("who", who);
 		
 		_$_('selalluser').checked = false;
@@ -1135,10 +1153,10 @@
 			_$_('ADDR_BOOK_DIV').setAttribute("loaded", "true");
 		}
 		
-		_$_('ADDR_BOOK_DIV').style.display = "block";
+		/*_$_('ADDR_BOOK_DIV').style.display = "block";
 
 		_$_('ADDR_BOOK_DIV').style.left = x;
-		_$_('ADDR_BOOK_DIV').style.top = y;
+		_$_('ADDR_BOOK_DIV').style.top = y;*/
 	}
 
 	function do_copy_mail(mid, todirs)
@@ -1285,9 +1303,11 @@
 		if(strDirs == "")
 		{
 			alert('Not choose any folder yet');
-			return;
+			return -1;
 		}
 		copy_mail(strDirs);
+        
+        return 0
 	}
 	
 	function ok_move_mail()
@@ -1303,13 +1323,30 @@
 		if(strDirs == "")
 		{
 			alert('Not choose any folder yet');
-			return;
+			return -1;
 		}
 		move_mail(strDirs);
+        
+        return 0;
 	}
 	
 	function show_copy_mail_dir_div()
 	{
+        $("#DIRS_DIV1").dialog({
+		  height: 500,
+		  width: 300,
+		  modal: false,
+		  title: 'Folder',
+		  buttons: {                  
+			  "Ok": function() {
+                  if(ok_copy_mail() != -1)
+                    $(this).dialog("close");
+				  },
+              "Cancel": function() {
+				  $(this).dialog("close");
+				  }
+		 }});
+         
 		_$_('DIRS_DIV2').style.display = "none";
 		
 		var Pos = GetObjPos(_$_('COPYMAIL'))
@@ -1318,6 +1355,21 @@
 
 	function show_move_mail_dir_div()
 	{
+        $("#DIRS_DIV2").dialog({
+		  height: 500,
+		  width: 300,
+		  modal: false,
+		  title: '文件夹',
+		  buttons: {                  
+			  "确定": function() {
+                  if(ok_move_mail() != -1)
+                    $(this).dialog("close");
+				  },
+              "取消": function() {
+				  $(this).dialog("close");
+				  }
+		 }});
+         
 		_$_('DIRS_DIV1').style.display = "none";
 		
 		var Pos = GetObjPos(_$_('MOVEMAIL'))
@@ -1361,7 +1413,7 @@
 	</table>	
 </div>
 
-<div class="div1" id="DIRS_DIV1" style="display:none; z-Index:20; width:220px; height:200px;">
+<div id="DIRS_DIV1" style="display:none; z-Index:20; width:220px; height:200px;">
   <table border="0" cellspacing="0" cellpadding="1" width="100%" bordercolorlight="#C0C0C0" bordercolordark="#FFFFFF" class="gray">
     <tr>
       <td align="left" valign="top" class="gray" bgcolor="#FFFFFF" height="160">
@@ -1378,7 +1430,7 @@
      </td></tr>
   </table>
 </div>
-<div class="div1" id="DIRS_DIV2" style="display:none; z-Index:20; width:220px; height:200px;">
+<div id="DIRS_DIV2" style="display:none; z-Index:20; width:220px; height:200px;">
   <table border="0" cellspacing="0" cellpadding="1" width="100%" bordercolorlight="#C0C0C0" bordercolordark="#FFFFFF" class="gray">
     <tr>
       <td align="left" valign="top" class="gray" bgcolor="#FFFFFF" height="160">
@@ -1396,17 +1448,8 @@
   </table>
 </div>
 
-<div class="div1" id="ADDR_BOOK_DIV" style="display:none; z-Index:20; width:500px; height:326px;">
+<div id="ADDR_BOOK_DIV" style="display:none; z-Index:20; width:500px; height:326px;">
 	<table id="USERTOPTBL" border="0" cellpadding="0" cellspacing="0" bgcolor="#EDF1F8">
-		<tr><td class="title" height="25">
-			<table border="0" width="100%" bordercolorlight="#C0C0C0" cellpadding="0" cellspacing="0" bordercolordark="#FFFFFF" background="pathbg.gif">
-			<tr height="25">
-				<td width="22" align="right"><img src="book.gif"></td>
-					<td align="center" valign="middle" onMouseOver="this.mousepoint = 99;this.style.cursor = 'move';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onMouseDown="return drag(_$_('ADDR_BOOK_DIV'), (event ? event : window.event));"><font color="#FFFFFF"><b>Address Book</b></font></td>
-				<td width="22" align="left"><input type="image" src="close.gif" onClick="_$_('ADDR_BOOK_DIV').style.display='none'"></td>
-			</tr>
-		</table>
-		</td></tr>
 		<tr><td height="260">
 			<div style="overflow:auto;width:100%;height:100%; background-color: #FFFFFF;">
 				<table id="USERTBL" border="0" bordercolorlight="#C0C0C0" cellpadding="0" cellspacing="0" bordercolordark="#FFFFFF" bgcolor="#FFFFFF" class="gray">
@@ -1419,18 +1462,6 @@
 				</table>
 			</div>
 		</td></tr>
-		<tr><td height="32">
-			<table border="0" width="100%" bordercolorlight="#C0C0C0" cellpadding="0" cellspacing="0" bordercolordark="#FFFFFF">
-		<tr><td>
-			<table border="0" width="100%" cellspacing="1" cellpadding="1">
-				<tr>
-					<td align="center" valign="middle"><input type="image" src="ok.gif" onMouseOver="this.src='ok2.gif'" onMouseOut="this.src='ok.gif'" onClick="append_addrs();_$_('ADDR_BOOK_DIV').style.display='none';"></td>
-					<td align="center" valign="middle"><input type="image" src="cancel.gif" onMouseOver="this.src='cancel2.gif'" onMouseOut="this.src='cancel.gif'" onClick="_$_('ADDR_BOOK_DIV').style.display='none'"></td>
-			</tr>
-			</table>
-		</td></tr>
-		</table>
-	</td></tr>
 	</table>
 </div>
 
@@ -1467,7 +1498,7 @@
 				<table border="0" cellspacing="0" cellpadding="0">
 					<tr>
 						<td><input type="text" value="" size="80" id="TO_ADDRS" name="TO_ADDRS" onChange="isChange = true;toggle_onbeforeunload(isChange)"></td>
-						<td width="100" align="center"><input type="image" src="showbook.gif" onMouseOver="this.src='showbook2.gif'" onMouseOut="this.src='showbook.gif'" onClick="Pos = GetObjPos(_$_('TO_ADDRS')); showbook(1, Pos.x, Pos.y + Pos.h + 2 ,'uname')"></td>
+						<td width="100" align="center"><input type="image" src="showbook.gif" onMouseOver="this.src='showbook2.gif'" onMouseOut="this.src='showbook.gif'" onClick="showbook(1, 'uname')"></td>
 					</tr>
 				</table>
 			</td>
@@ -1479,7 +1510,7 @@
 				<table border="0" cellspacing="0" cellpadding="0">
 					<tr>
 						<td><input type="text" value="" size="80" id="CC_ADDRS" name="CC_ADDRS" onChange="isChange = true;toggle_onbeforeunload(isChange)"></td>
-						<td width="100" align="center"><input type="image" src="showbook.gif" onMouseOver="this.src='showbook2.gif'" onMouseOut="this.src='showbook.gif'" onClick="Pos = GetObjPos(_$_('CC_ADDRS')); showbook(2, Pos.x, Pos.y + Pos.h + 2 ,'uname')"></td>
+						<td width="100" align="center"><input type="image" src="showbook.gif" onMouseOver="this.src='showbook2.gif'" onMouseOut="this.src='showbook.gif'" onClick="showbook(2, 'uname')"></td>
 					</tr>
 				</table>
 			</td>
@@ -1491,7 +1522,7 @@
 				<table border="0"  cellspacing="0" cellpadding="0">
 					<tr>
 						<td><input type="text" value="" size="80" id="BCC_ADDRS" name="BCC_ADDRS" onChange="isChange = true;toggle_onbeforeunload(isChange)"></td>
-						<td width="100" align="center"><input type="image" src="showbook.gif" onMouseOver="this.src='showbook2.gif'" onMouseOut="this.src='showbook.gif'" onClick="Pos = GetObjPos(_$_('BCC_ADDRS')); showbook(3, Pos.x, Pos.y + Pos.h + 2 ,'uname')"></td>
+						<td width="100" align="center"><input type="image" src="showbook.gif" onMouseOver="this.src='showbook2.gif'" onMouseOut="this.src='showbook.gif'" onClick="showbook(3, 'uname')"></td>
 					</tr>
 				</table>
 			</td>
@@ -1572,6 +1603,9 @@
 <div name="foreColorTbl" id="foreColorTbl" class="div1" style="z-index:100; border:solid 1px #cccccc; display:none; width:200px; height:120px;"></div>
 <div name="backColorTbl" id="backColorTbl" class="div1" style="z-index:100; border:solid 1px #cccccc; display:none; width:200px; height:120px;"></div>
 <div name="fontSizeTbl" id="fontSizeTbl" class="div1" style="z-index:100; border:solid 1px #cccccc; display:none; width:70px; height:231px;"></div>
+
+<script src="/jqueryui/external/jquery/jquery.js"></script>
+<script src="/jqueryui/jquery-ui.js"></script>
 
 </body>
 

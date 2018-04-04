@@ -6,6 +6,7 @@
 <LINK rel="Bookmark" href="erisemail.ico" >
 <LINK rel="Shortcut Icon" href="erisemail.ico" />
 <link href="css.css" rel="stylesheet" type="text/css">
+<link href="/jqueryui/jquery-ui.css" rel="stylesheet">
 <script type="text/javascript" src="inc.js"></script>
 <title>..:::eRisemail Web Management System:::..</title>
 <script language="JavaScript">
@@ -53,13 +54,26 @@
 	
 	function show_edituser_div(username, obj)
 	{
+        $("#EDIT_USER_DIV").dialog({
+		  height: 300,
+		  width: 300,
+		  modal: false,
+		  title: 'Edit Account',
+		  buttons: {                  
+			  "Ok": function() {
+                    do_edit_user();
+                    $(this).dialog("close");
+				  },
+              "Cancel": function() {
+				  $(this).dialog("close");
+				  }
+		 }});
+         
 		if(_$_('EDIT_USER_DIV').getAttribute("loaded") != "true")
 		{
 			load_levels_to_option(_$_('EDIT_LEVEL'));
 			_$_('EDIT_USER_DIV').setAttribute("loaded", "true")
 		}
-
-		_$_('NEW_USER_DIV').style.display='none';
 		
 		_$_('EDIT_USERNAME').value = obj.getAttribute("username");
 		_$_('EDIT_ALIAS').value = obj.getAttribute("alias");
@@ -84,28 +98,27 @@
 		}
 		
 		_$_('EDIT_USER_STATUS').checked = (obj.getAttribute("status") == "Active") ? false : true;
-									
-		
-		Pos = GetObjPos(obj); 
-											
-		_$_('NEW_USER_DIV').style.display= 'none';
-		
-		_$_('EDIT_USER_DIV').style.left = Pos.x - 1;
-		_$_('EDIT_USER_DIV').style.top = Pos.y + Pos.h + 1;
-		
-		_$_('EDIT_USER_DIV').style.display = "block";
-
-		_$_('EDIT_USER_DIV').style.height= "auto";
-		_$_('EDIT_USER_DIV').style.width = "auto";
-
-		_$_('EDIT_USER_DIV').style.height = _$_('EDIT_USER_SIZE').offsetHeight;
-		_$_('EDIT_USER_DIV').style.width = _$_('EDIT_USER_SIZE').offsetWidth;
 		
 		_$_('EDIT_USER_DIV').setAttribute("username", username);
 	}
 
 	function show_newuser_div()
 	{
+        $("#NEW_USER_DIV").dialog({
+		  height: 300,
+		  width: 300,
+		  modal: false,
+		  title: 'New Account',
+		  buttons: {                  
+			  "Ok": function() {
+                    do_add_user();
+                    $(this).dialog("close");
+				  },
+              "Cancel": function() {
+				  $(this).dialog("close");
+				  }
+		 }});
+         
 		document.getElementsByName('NEW_TYPE')[0].checked = true;
 
 		_$_('NEW_USERNAME').value = "";
@@ -127,21 +140,6 @@
 		}
 
 		_$_('NEW_LEVEL').value = _$_('NEW_USER_DIV').getAttribute("defaultlevel");
-		
-		_$_('EDIT_USER_DIV').style.display='none';
-			
-		var Pos = GetObjPos(_$_('TITLE_BAR'));
-											
-		_$_('NEW_USER_DIV').style.left = Pos.x - 1;
-		_$_('NEW_USER_DIV').style.top = Pos.y + Pos.h + 1;
-		
-		_$_('NEW_USER_DIV').style.display = "block";
-
-		_$_('NEW_USER_DIV').style.height= 300;
-		_$_('NEW_USER_DIV').style.width = 300;
-
-		_$_('NEW_USER_DIV').style.height = _$_('NEW_USER_SIZE').offsetHeight;
-		_$_('NEW_USER_DIV').style.width = _$_('NEW_USER_SIZE').offsetWidth;
 	}
 
 	function do_delete_user(uname)
@@ -514,17 +512,10 @@
 
 <body onLoad="init()" onUnload="">
 
-<div class="div1" id="NEW_USER_DIV" style="display:none">
+<div id="NEW_USER_DIV" style="display:none">
 	<table id="NEW_USER_SIZE" bgcolor="#EDF1F8" border="0" cellspacing="0" cellpadding="0">
 	<tr><td>
 		<table id="NEW_USER_TBL" border="0" bordercolorlight="#C0C0C0" cellspacing="0" cellpadding="1" bordercolordark="#FFFFFF" class="gray" bgcolor="#FFFFFF">
-		<tr height="28">
-			<td colspan="2" class="blue">
-		<table border="0" width="100%" cellpadding="2" cellspacing="2" onMouseOver="this.mousepoint = 99;this.style.cursor = 'move';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onMouseDown="return drag(_$_('NEW_USER_DIV'), (event ? event : window.event));"><tr>
-				<td align="left" width="16"><img src="append.gif"></td><td align="left"><b><font color="#FFFFFF"><b>Create ID</b></font></b></td>
-		</tr></table>
-		</td>
-	</tr>
 	<tr>
 		<td class="gray" align="right">Type:</td>
 		<td class="gray" align="left"><input type="radio" name="NEW_TYPE" id="NEW_TYPE" value="member" checked onClick="switch_id_type()">User<input type="radio" name="NEW_TYPE" id="NEW_TYPE" value="group" onClick="switch_id_type()">Group</td>
@@ -551,26 +542,13 @@
 	</tr>
 		</table>
 	</td><tr>
-	<tr><td>
-		<table border="0" cellpadding="2" cellspacing="2" width="100%" bgcolor="#EDF1F8"><tr>
-		<td align="center"><input type="image" src="ok.gif" onMouseOver="this.src='ok2.gif'" onMouseOut="this.src='ok.gif'" onClick="do_add_user(); _$_('NEW_USER_DIV').style.display='none';"></td>
-		<td align="center"><input type="image" src="cancel.gif" onMouseOver="this.src='cancel2.gif'" onMouseOut="this.src='cancel.gif'" onClick="_$_('NEW_USER_DIV').style.display='none'"></td>
-		</tr></table>
-	</td></tr>
 	</table>
 </div>
 
-<div class="div1" id="EDIT_USER_DIV" style="display:none">
+<div id="EDIT_USER_DIV" style="display:none">
 	<table  id="EDIT_USER_SIZE" bgcolor="#EDF1F8" border="0" cellspacing="0" cellpadding="0">
 	<tr><td>
 		<table id="EDIT_USER_TBL" border="0" bordercolorlight="#C0C0C0" cellspacing="0" cellpadding="1" bordercolordark="#FFFFFF" class="gray" bgcolor="#FFFFFF">
-		<tr height="28">
-			<td colspan="2" class="blue">
-		<table border="0" width="100%" cellpadding="2" cellspacing="2" onMouseOver="this.mousepoint = 99;this.style.cursor = 'move';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onMouseDown="return drag(_$_('EDIT_USER_DIV'), (event ? event : window.event));"><tr>
-				<td align="left" width="16"><img src="edit.gif"></td><td align="left"><b><font color="#FFFFFF"><b>Edit ID</b></font></b></td>
-		</tr></table>
-		</td>
-	</tr>
 	<tr>
 		<td class="gray" align="right" width="100">ID:</td>
 		<td class="gray" align="left" width="170"><input type="text" name="EDIT_USERNAME" id="EDIT_USERNAME" size="16" readonly="true"></td>
@@ -590,12 +568,6 @@
 	</tr>
 		</table>
 	</td><tr>
-	<tr><td>
-		<table border="0" cellpadding="2" cellspacing="2" width="100%">
-		<td align="center"><input type="image" src="ok.gif" onMouseOver="this.src='ok2.gif'" onMouseOut="this.src='ok.gif'" onClick="do_edit_user(); _$_('EDIT_USER_DIV').style.display='none';"></td>
-		<td align="center"><input type="image" src="cancel.gif" onMouseOver="this.src='cancel2.gif'" onMouseOut="this.src='cancel.gif'" onClick="_$_('EDIT_USER_DIV').style.display='none'"></td>
-		</table>
-	</td></tr>
 	</table>
 </div>
 <table border="0" width="100%" bordercolorlight="#C0C0C0" cellpadding="0" cellspacing="0" bordercolordark="#FFFFFF">
@@ -634,7 +606,8 @@
 		</td>
 	</tr>
 </table>
-
+<script src="/jqueryui/external/jquery/jquery.js"></script>
+<script src="/jqueryui/jquery-ui.js"></script>
 </body>
 
 </html>

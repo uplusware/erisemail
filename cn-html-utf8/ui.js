@@ -225,16 +225,16 @@ function show_dirs(divobj, tblobj, x, y, checkname)
 	{
 		clear_table(tblobj);
 		load_dirs(tblobj, -1, "", -1, 0, checkname);
-        var trHeader = tblobj.insertRow(0);
+        /*var trHeader = tblobj.insertRow(0);
         var tdHeader = trHeader.insertCell(0);
         tdHeader.className = "title";
         tdHeader.style.height = "25";
-        tdHeader.innerHTML = "<table bordercolorlight=\"#C0C0C0\" bordercolordark=\"#FFFFFF\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" background=\"pathbg.gif\" border=\"0\"><tbody><tr height=\"25\"><td width=\"22\" align=\"right\"><img src=\"lfolder.gif\"></td><td style=\"cursor: default;\" onmouseover=\"this.mousepoint = 99;this.style.cursor = 'move';\" onmouseout=\"this.mousepoint = 99;this.style.cursor = 'default';\" onmousedown=\"return drag(_$_('" + divobj.id + "'), (event ? event : window.event));\" valign=\"middle\" align=\"center\"><font color=\"#FFFFFF\"><b>文件夹</b></font></td><td width=\"22\" align=\"left\"><input src=\"close.gif\" onclick=\"_$_('" + divobj.id + "').style.display='none'\" type=\"image\"></td></tr></tbody></table>";
+        tdHeader.innerHTML = "<table bordercolorlight=\"#C0C0C0\" bordercolordark=\"#FFFFFF\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" background=\"pathbg.gif\" border=\"0\"><tbody><tr height=\"25\"><td width=\"22\" align=\"right\"><img src=\"lfolder.gif\"></td><td style=\"cursor: default;\" onmouseover=\"this.mousepoint = 99;this.style.cursor = 'move';\" onmouseout=\"this.mousepoint = 99;this.style.cursor = 'default';\" onmousedown=\"return drag(_$_('" + divobj.id + "'), (event ? event : window.event));\" valign=\"middle\" align=\"center\"><font color=\"#FFFFFF\"><b>文件夹</b></font></td><td width=\"22\" align=\"left\"><input src=\"close.gif\" onclick=\"_$_('" + divobj.id + "').style.display='none'\" type=\"image\"></td></tr></tbody></table>";*/
 		divobj.setAttribute("loaded", "true");
 	}
 	
-	divobj.style.left = x;
-	divobj.style.top = y;
+	//divobj.style.left = x;
+	//divobj.style.top = y;
 	
 	for(var a = 0; a < document.getElementsByName(checkname).length; a++)
 	{

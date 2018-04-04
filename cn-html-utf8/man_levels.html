@@ -6,6 +6,7 @@
 <LINK rel="Bookmark" href="erisemail.ico" >
 <LINK rel="Shortcut Icon" href="erisemail.ico" />
 <link href="css.css" rel="stylesheet" type="text/css">
+<link href="/jqueryui/jquery-ui.css" rel="stylesheet">
 <script type="text/javascript" src="inc.js"></script>
 <title>..:::易睿邮件后台管理系统:::..</title>
 <script language="JavaScript"> 
@@ -299,6 +300,21 @@
 		
 	function show_newlevel_div()
 	{
+        $("#NEW_LEVEL_DIV").dialog({
+		  height: 500,
+		  width: 500,
+		  modal: false,
+		  title: '新增策略',
+		  buttons: {                  
+			  "确定": function() {
+                if(do_create_level())
+                    $(this).dialog("close");
+				  },
+              "取消": function() {
+				  $(this).dialog("close");
+				  }
+		 }});
+         
 		_$_('NEW_LEVELNAME').value = "";
 		_$_('NEW_DESCRIPTION').value = "";
 		_$_('NEW_MAILMAXSIZE').value = "5000";
@@ -307,30 +323,27 @@
 		_$_('NEW_MAILSIZETHRESHOLD').value = "5000";
 		_$_('NEW_ATTACHSIZETHRESHOLD').value = "5000";
 		_$_('NEW_DEFAULT').checked = false;
-		
-		_$_('NEW_LEVEL_DIV').style.display = 'none';
-			
-		var Pos = GetObjPos(_$_('TITLE_BAR'));
-											
-		_$_('NEW_LEVEL_DIV').style.left = Pos.x - 1;
-		_$_('NEW_LEVEL_DIV').style.top = Pos.y + Pos.h + 1;
-
-		_$_('NEW_LEVEL_DIV').style.display = "block";
-		
-		_$_('NEW_LEVEL_DIV').style.height= "auto";
-		_$_('NEW_LEVEL_DIV').style.width = "auto";
-
-		_$_('NEW_LEVEL_DIV').style.height= _$_('NEW_LEVEL_SIZE').offsetHeight;
-		_$_('NEW_LEVEL_DIV').style.width = _$_('NEW_LEVEL_SIZE').offsetWidth;
 	}
 	
 	function show_editlevel_div(obj)
 	{
-		_$_('EDIT_LEVEL_DIV').style.display = 'none';
+        $("#EDIT_LEVEL_DIV").dialog({
+		  height: 500,
+		  width: 500,
+		  modal: false,
+		  title: '编辑策略',
+		  buttons: {                  
+			  "确定": function() {
+                if(do_edit_level())
+                    $(this).dialog("close");
+				  },
+              "取消": function() {
+				  $(this).dialog("close");
+				  }
+		 }});
+         
 
 		_$_('EDIT_LEVEL_DIV').setAttribute("lid", obj.getAttribute("lid"));
-		
-		var Pos = GetObjPos(obj);
 
 		_$_('EDIT_LEVELNAME').value = obj.getAttribute("name");
 		_$_('EDIT_DESCRIPTION').value = obj.getAttribute("description");
@@ -340,17 +353,6 @@
 		_$_('EDIT_MAILSIZETHRESHOLD').value = Math.round(obj.getAttribute("mailsizethreshold")/1024);
 		_$_('EDIT_ATTACHSIZETHRESHOLD').value = Math.round(obj.getAttribute("attachsizethreshold")/1024);
 		_$_('EDIT_DEFAULT').checked = obj.getAttribute("default") == "true" ? true : false;
-									
-		_$_('EDIT_LEVEL_DIV').style.left = Pos.x - 1;
-		_$_('EDIT_LEVEL_DIV').style.top = Pos.y + Pos.h + 1;
-
-		_$_('EDIT_LEVEL_DIV').style.display = "block";
-		
-		_$_('EDIT_LEVEL_DIV').style.height= "auto";
-		_$_('EDIT_LEVEL_DIV').style.width = "auto";
-
-		_$_('EDIT_LEVEL_DIV').style.height= _$_('EDIT_LEVEL_SIZE').offsetHeight;
-		_$_('EDIT_LEVEL_DIV').style.width = _$_('EDIT_LEVEL_SIZE').offsetWidth;
 	}
 	
 	function do_create_level()
@@ -518,17 +520,10 @@
 
 <body onLoad="init()" onUnload="">
 
-<div class="div1" id="NEW_LEVEL_DIV" style="display:none">
+<div id="NEW_LEVEL_DIV" style="display:none">
 	<table id="NEW_LEVEL_SIZE" bgcolor="#EDF1F8" border="0" cellspacing="0" cellpadding="0">
 	<tr><td>
 		<table id="NEW_LEVEL_TBL" border="0" backcolor="#FFFFFF" bordercolorlight="#C0C0C0" cellspacing="0" cellpadding="1" bordercolordark="#FFFFFF" class="gray" bgcolor="#FFFFFF">
-		<tr height="25">
-			<td class="blue" colspan="2">
-			<table border="0" width="100%" cellpadding="2" cellspacing="2" onMouseOver="this.mousepoint = 99;this.style.cursor = 'move';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';"  onMouseDown="return drag(_$_('NEW_LEVEL_DIV'), (event ? event : window.event));"><tr>
-				<td align="left" width="16"><img src="append.gif"></td><td align="left"><b><font color="#FFFFFF"><b>创建策略</b></font></b></td>
-			</tr></table>
-			</td>
-		</tr>
 		<tr>
 		<td  class="gray"align="right">策略名:</td>
 		<td  class="gray"align="left"><input type="text" name="NEW_LEVELNAME" id="NEW_LEVELNAME" size="16" onPaste="this.value=this.value.replace(/[^a-zA-Z0-9\-_\.]/g,'');" onKeyup="this.value=this.value.replace(/[^a-zA-Z0-9\-_\.]/g,'');" onBlur="this.value=this.value.replace(/[^a-zA-Z0-9\-_\.]/g,'');"></td>
@@ -563,26 +558,13 @@
 		</tr>
 		</table>
 	</td><tr>
-	<tr><td>	
-		<table border="0" cellpadding="2" cellspacing="2" width="100%"><tr>
-		<td align="center"><input type="image" src="ok.gif" onMouseOver="this.src='ok2.gif'" onMouseOut="this.src='ok.gif'" onClick="if(do_create_level())_$_('NEW_LEVEL_DIV').style.display='none';"></td>
-		<td align="center"><input type="image" src="cancel.gif" onMouseOver="this.src='cancel2.gif'" onMouseOut="this.src='cancel.gif'" onClick="_$_('NEW_LEVEL_DIV').style.display='none'"></td>
-		</tr></table>
-	</td></tr>
 	</table>
 </div>
 
-<div class="div1" id="EDIT_LEVEL_DIV" style="display:none">
+<div id="EDIT_LEVEL_DIV" style="display:none">
 	<table id="EDIT_LEVEL_SIZE" bgcolor="#EDF1F8" border="0" cellspacing="0" cellpadding="0">
 	<tr><td>
 		<table id="EDIT_LEVEL_TBL" border="0" backcolor="#FFFFFF" bordercolorlight="#C0C0C0" cellspacing="0" cellpadding="1" bordercolordark="#FFFFFF" class="gray"  bgcolor="#FFFFFF">
-		<tr height="25">
-			<td class="blue" colspan="2">
-			<table border="0" width="100%" cellpadding="2" cellspacing="2" onMouseOver="this.mousepoint = 99;this.style.cursor = 'move';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onMouseDown="return drag(_$_('EDIT_LEVEL_DIV'), (event ? event : window.event));"><tr>
-				<td align="left" width="16"><img src="edit.gif"></td><td align="left"><b><font color="#FFFFFF"><b>编辑策略</b></font></b></td>
-			</tr></table>
-			</td>
-		</tr>
 		<tr>
 		<td class="gray" align="right">策略名:</td>
 		<td class="gray" align="left"><input type="text" name="EDIT_LEVELNAME" id="EDIT_LEVELNAME" size="16" onPaste="this.value=this.value.replace(/[^a-zA-Z0-9\-_\.]/g,'');" onKeyup="this.value=this.value.replace(/[^a-zA-Z0-9\-_\.]/g,'');" onBlur="this.value=this.value.replace(/[^a-zA-Z0-9\-_\.]/g,'');"></td>
@@ -618,10 +600,6 @@
 		</table>
 	</td><tr>
 	<tr><td>
-		<table border="0" cellpadding="2" cellspacing="2" width="100%"><tr>
-			<td align="center"><input type="image" src="ok.gif" onMouseOver="this.src='ok2.gif'" onMouseOut="this.src='ok.gif'" onClick="if(do_edit_level())_$_('EDIT_LEVEL_DIV').style.display='none';"></td>
-			<td align="center"><input type="image" src="cancel.gif" onMouseOver="this.src='cancel2.gif'" onMouseOut="this.src='cancel.gif'" onClick="_$_('EDIT_LEVEL_DIV').style.display='none'"></td>
-		</tr></table>
 	</td></tr>
 	</table>
 </div>
@@ -660,7 +638,8 @@
 		</td>
 	</tr>
 </table>
-
+<script src="/jqueryui/external/jquery/jquery.js"></script>
+<script src="/jqueryui/jquery-ui.js"></script>
 </body>
 
 </html>

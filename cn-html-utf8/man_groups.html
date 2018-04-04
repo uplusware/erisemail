@@ -6,30 +6,33 @@
 <LINK rel="Bookmark" href="erisemail.ico" >
 <LINK rel="Shortcut Icon" href="erisemail.ico" />
 <link href="css.css" rel="stylesheet" type="text/css">
+<link href="/jqueryui/jquery-ui.css" rel="stylesheet">
 <script type="text/javascript" src="inc.js"></script>
 <title>..:::易睿邮件后台管理系统:::..</title>
 <script language="JavaScript">
 
 	function add_user_to_group(obj, groupname)
 	{
+        $("#ADDRS").dialog({
+		  height: 500,
+		  width: 500,
+		  modal: false,
+		  title: '增加账号',
+		  buttons: {                  
+			  "确定": function() {
+                    do_add_user_to_group();
+                    $(this).dialog("close");
+				  },
+              "取消": function() {
+				  $(this).dialog("close");
+				  }
+		 }});
+         
 		_$_('ADDRS').setAttribute("groupname", groupname);
-		
-		var Pos = GetObjPos(obj);
 		
 		load_members();
 
 		_$_('selalluser').checked = false; 
-
-		_$_('ADDRS').style.left = Pos.x - 1;
-		_$_('ADDRS').style.top = Pos.y + Pos.h + 1;
-
-		_$_('ADDRS').style.display = "block";
-
-		_$_('ADDRS').style.height= "auto";
-		_$_('ADDRS').style.width = "auto";
-
-		_$_('ADDRS').style.height= (_$_('USERTBL').offsetHeight + 32) > 600 ? 600 : (_$_('USERTBL').offsetHeight + 32); 
-		_$_('ADDRS').style.width = _$_('USERTBL').offsetWidth;
 	}
 
 	function do_del_user_from_group(groupname, userlist)
@@ -358,50 +361,6 @@
 										this.mousepoint = 99;
 										this.style.cursor ="default";
 									}
-
-									/*
-									newtd3.valign="middle";
-									newtd3.align="center";
-									newtd3.width="22";
-									newtd3.setAttribute("groupname", userList.item(i).getAttribute("name"));
-							        newtd3.innerHTML = "<img src=\"opendiv.gif\">";
-
-									newtd3.onclick = function()
-									{
-										if(this.parentNode.parentNode.parentNode.parentNode.parentNode.nextSibling.getAttribute("loaded") ==  "false")
-										{
-											while(this.parentNode.parentNode.parentNode.parentNode.parentNode.nextSibling.cells[0].firstChild != null)
-											{
-												this.parentNode.parentNode.parentNode.parentNode.parentNode.nextSibling.cells[0].firstChild.parentNode.removeChild(this.parentNode.parentNode.parentNode.parentNode.parentNode.nextSibling.cells[0].firstChild);
-											}
-											this.parentNode.parentNode.parentNode.parentNode.parentNode.nextSibling.setAttribute("loaded", "true");
-											list_members_in_group(this.parentNode.parentNode.parentNode.parentNode.parentNode.nextSibling, this.getAttribute("groupname"));
-										}
-										
-										if(this.parentNode.parentNode.parentNode.parentNode.parentNode.nextSibling.style.display == "none")
-										{
-											this.parentNode.parentNode.parentNode.parentNode.parentNode.nextSibling.style.display = "block";
-											this.innerHTML = "<img src=\"closediv.gif\">";;
-										}
-										else
-										{
-											this.parentNode.parentNode.parentNode.parentNode.parentNode.nextSibling.style.display = "none";
-											this.innerHTML = "<img src=\"opendiv.gif\">";;
-										}
-									}
-
-									newtd3.onmouseover = function()
-									{
-										this.mousepoint = 99;
-										this.style.cursor ="pointer";
-									}
-									
-									newtd3.onmouseout = function()
-									{
-										this.mousepoint = 99;
-										this.style.cursor ="default";
-									}
-									*/
 									
 									td10.appendChild(newtbl);
 									
@@ -451,7 +410,7 @@
 							var strTmp;
 							var userList = responseNode.childNodes;
 
-							clear_table_without_header(_$_('USERTBL'));
+							clear_table(_$_('USERTBL'));
 
 							for(var i = 0; i < userList.length; i++)
 							{
@@ -540,24 +499,10 @@
 
 <body onLoad="init()" onUnload="">
 
-<div class="div1" id="ADDRS" style="display:none">
-	<table id="USERTBL_SIZE" bgcolor="#EDF1F8" border="0" cellspacing="0" cellpadding="0" width="100%" height="100%">
+<div id="ADDRS" style="display:none">
+	<table id="USERTBL_SIZE" bgcolor="#EDF1F8" border="0" cellspacing="0" cellpadding="0" width="300pt">
 	<tr><td>
 		<table id="USERTBL" border="0" width="100%" bordercolorlight="#C0C0C0" cellpadding="0" cellspacing="0" bordercolordark="#FFFFFF" class="gray" bgcolor="#FFFFFF">
-		<tr height="25">
-			<td class="blue" width="22" align="left" ><input type="checkbox" name="selalluser" id="selalluser" onClick="sel_alluser(this.checked)"></td>
-			<td class="blue" width="22" align="left" onMouseOver="this.mousepoint = 99;this.style.cursor = 'move';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onMouseDown="return drag(_$_('ADDRS'), (event ? event : window.event));"><img src="pad.gif"></td>
-			<td class="blue" height="22" align="center" onMouseOver="this.mousepoint = 99;this.style.cursor = 'move';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onMouseDown="return drag(_$_('ADDRS'), (event ? event : window.event));"><font color="#FFFFFF"><b>账号</b></font></td>
-			<td class="blue" height="22" align="center" onMouseOver="this.mousepoint = 99;this.style.cursor = 'move';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onMouseDown="return drag(_$_('ADDRS'), (event ? event : window.event));"><font color="#FFFFFF"><b>别名</b></font></td>
-		</tr>
-		</table>
-	</td><tr>
-	<tr><td>
-		<table border="0" width="100%" cellspacing="3" cellpadding="3">
-		<tr align="center">
-			<td align="center"><input type="image" src="ok.gif" onMouseOver="this.src='ok2.gif'" onMouseOut="this.src='ok.gif'" onClick="do_add_user_to_group();_$_('ADDRS').style.display='none';"></td>
-			<td align="center"><input type="image" src="cancel.gif" onMouseOver="this.src='cancel2.gif'" onMouseOut="this.src='cancel.gif'" onClick="_$_('ADDRS').style.display='none'"></td>
-		</tr>
 		</table>
 	</td></tr>
 	</table>
@@ -577,7 +522,8 @@
 <table id="GROUPTBL" border="0" width="100%" bordercolorlight="#C0C0C0" cellpadding="1" cellspacing="0" bordercolordark="#FFFFFF" class="title"></table>
 
 <div id="STATUS"></div>
-
+<script src="/jqueryui/external/jquery/jquery.js"></script>
+<script src="/jqueryui/jquery-ui.js"></script>
 </body>
 
 </html>

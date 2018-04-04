@@ -6,6 +6,7 @@
 <LINK rel="Bookmark" href="erisemail.ico" >
 <LINK rel="Shortcut Icon" href="erisemail.ico" />
 <link href="css.css" rel="stylesheet" type="text/css">
+<link href="/jqueryui/jquery-ui.css" rel="stylesheet">
 <script type="text/javascript" src="inc.js"></script>
 <title>...::: Welcome to eRisemail System :::...</title>
 <script language="JavaScript">
@@ -98,15 +99,22 @@
 		_$_('NEW_LABEL').value = "";
 	}
 		
-	function show_inputlabel_div(dirid, x, y)
+	function show_inputlabel_div(dirid)
 	{
-		_$_('NEW_LABEL_DIV').style.left = x - 1;
-		_$_('NEW_LABEL_DIV').style.top = y + 1;
-		
-		_$_('NEW_LABEL_DIV').style.height= 39;
-		_$_('NEW_LABEL_DIV').style.width = 398;
-		
-		_$_('NEW_LABEL_DIV').style.display = "block";
+        $("#NEW_LABEL_DIV").dialog({
+		  height: 200,
+		  width: 300,
+		  modal: false,
+		  title: 'New Folder',
+		  buttons: {                  
+			  "Ok": function() {
+                    do_create_label();
+                    $(this).dialog("close");
+				  },
+              "Cancel": function() {
+				  $(this).dialog("close");
+				  }
+		 }});
 
 		_$_('NEW_LABEL_DIV').setAttribute("dirid", dirid);
 	}
@@ -238,8 +246,7 @@
 				td2.innerHTML = "<img src=\"append.gif\" alt=\"Create the folder\">";
 				td2.onclick = function()
 				{
-					Pos = GetObjPos(this.parentNode); 
-					show_inputlabel_div(this.getAttribute("dirid"), Pos.x, Pos.y + Pos.h)
+					show_inputlabel_div(this.getAttribute("dirid"))
 				}
 				
 				td2.onmouseover = function()
@@ -430,8 +437,7 @@
 
 	function create_root_dir()
 	{
-		Pos = GetObjPos(_$_('DIRS_TITLE')); 
-		show_inputlabel_div("-1", Pos.x, Pos.y + Pos.h)		
+		show_inputlabel_div("-1");
 	}
 	
 </script>
@@ -439,14 +445,12 @@
 
 <body onLoad="init(); login_username();travel_dirs(-1, '', -1);" onUnload="uninit()" bgcolor="#FFFFFF">
 
-<div class="div1" id="NEW_LABEL_DIV" style="display:none">
+<div id="NEW_LABEL_DIV" style="display:none">
 	<table border="0" cellpadding="2" cellspacing="2" width="100%" height="100%">
 	<tr>
 	<td align="right"><img src="tosub.gif"></td>
 	<td align="right">Folder:</td>
 	<td align="left"><input type="text" name="NEW_LABEL" id="NEW_LABEL" size="16"></td>
-	<td align="center"><input type="image" src="ok.gif" onMouseOver="this.src='ok2.gif'" onMouseOut="this.src='ok.gif'" onClick="do_create_label(); _$_('NEW_LABEL_DIV').style.display='none';"></td>
-	<td align="center"><input type="image" src="cancel.gif" onMouseOver="this.src='cancel2.gif'" onMouseOut="this.src='cancel.gif'" onClick="_$_('NEW_LABEL_DIV').style.display='none'"></td>
 	</tr>
 	</table>
 </div>
@@ -461,6 +465,8 @@
 
 <table id="DIRTBL" border="0" width="100%" bordercolorlight="#C0C0C0" cellpadding="2" cellspacing="0" bordercolordark="#FFFFFF" class="gray">
 </table>
+<script src="/jqueryui/external/jquery/jquery.js"></script>
+<script src="/jqueryui/jquery-ui.js"></script>
 </body>
 
 </html>

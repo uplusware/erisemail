@@ -1,7 +1,5 @@
 TD 
 {
-	font-family: "宋体";
-	font-size: 10pt;
 	color: #000066;
 }
 
@@ -65,7 +63,7 @@ TD.gray
 a {	text-decoration: none; }
 a:link { color:#0000FF }
 a:visited { color:#0000FF; }
-a:hover, a:active, a:focus { font-size: 10pt;color:#FF0000; }
+a:hover, a:active, a:focus { color:#FF0000; }
 
 .clearit{clear:both;}
 
@@ -73,8 +71,6 @@ a:hover, a:active, a:focus { font-size: 10pt;color:#FF0000; }
 .but2{ border-width: 1px; background: #996633; border-color: #D0D0D0; padding: 2px; color:#FFFFFF}
 
 .div1{
-	font-family: "宋体";
-	font-size: 10pt;
 	color: #000066;
 	border: 1px solid #999999;
 	position: absolute;
@@ -90,8 +86,6 @@ a:hover, a:active, a:focus { font-size: 10pt;color:#FF0000; }
 }
 
 .div2{
-	font-family: "宋体";
-	font-size: 10pt;
 	color: #000066;
 	border: 0px solid #999999;
 	position: relative;
@@ -107,8 +101,6 @@ a:hover, a:active, a:focus { font-size: 10pt;color:#FF0000; }
 }
 
 .div3{
-	font-family: "宋体";
-	font-size: 10pt;
 	color: #000066;
 	border: 0px solid #999999;
 	position: relative;
@@ -159,6 +151,5 @@ a:hover, a:active, a:focus { font-size: 10pt;color:#FF0000; }
 }
 
 .sel1{
-	font-size: 12px;
-	height: 20px;
+	
 }

@@ -6,6 +6,7 @@
 <LINK rel="Bookmark" href="erisemail.ico" >
 <LINK rel="Shortcut Icon" href="erisemail.ico" />
 <link href="css.css" rel="stylesheet" type="text/css">
+<link href="/jqueryui/jquery-ui.css" rel="stylesheet">
 <script type="text/javascript" src="inc.js"></script>
 <script type="text/javascript" src="ui.js"></script>
 <script type="text/javascript" src="calendar.js"></script>
@@ -136,9 +137,11 @@
 		if(strDirs == "")
 		{
 			alert('没有选择目的文件夹');
-			return;
+			return -1;
 		}
 		copy_mail(strDirs);
+        
+        return 0;
 	}
 	
 	function ok_move_mail()
@@ -154,9 +157,11 @@
 		if(strDirs == "")
 		{
 			alert('没有选择目的文件夹');
-			return;
+			return -1;
 		}
 		move_mail(strDirs);
+        
+        return 0;
 	}
 	
 	function do_copy_mail(mid, todirs)
@@ -206,6 +211,21 @@
 		
 	function show_copy_mail_dir_div()
 	{
+        $("#DIRS_DIV1").dialog({
+		  height: 500,
+		  width: 300,
+		  modal: false,
+		  title: '文件夹',
+		  buttons: {                  
+			  "确定": function() {
+                  if(ok_copy_mail() != -1)
+                    $(this).dialog("close");
+				  },
+              "取消": function() {
+				  $(this).dialog("close");
+				  }
+		 }});
+         
 		_$_('DIRS_DIV2').style.display = "none";
 		var Pos = GetObjPos(_$_('COPYMAIL'))
 		show_dirs(_$_('DIRS_DIV1'), _$_('DIRTBL1'), Pos.x, Pos.y + Pos.h + 2, "seldir1");
@@ -213,6 +233,21 @@
 
 	function show_move_mail_dir_div()
 	{
+        $("#DIRS_DIV2").dialog({
+		  height: 500,
+		  width: 300,
+		  modal: false,
+		  title: '文件夹',
+		  buttons: {                  
+			  "确定": function() {
+                  if(ok_move_mail() != -1)
+                    $(this).dialog("close");
+				  },
+              "取消": function() {
+				  $(this).dialog("close");
+				  }
+		 }});
+         
 		_$_('DIRS_DIV1').style.display = "none";
 		
 		var Pos = GetObjPos(_$_('MOVEMAIL'))
@@ -550,41 +585,25 @@
 	</table>	
 </div>
 
-<div class="div1" id="DIRS_DIV1" style="display:none; z-Index:20; width:220px; height:200px;">
+<div id="DIRS_DIV1" style="display:none; z-Index:20; width:220px; height:200px;">
   <table border="0" cellspacing="0" cellpadding="1" width="100%" bordercolorlight="#C0C0C0" bordercolordark="#FFFFFF" class="gray">
 	<tr>
       <td align="left" valign="top" class="gray" bgcolor="#FFFFFF" height="160">
       	<div style="overflow:auto; width:100%; height:100%; background-color: #FFFFFF;"><table id="DIRTBL1" bgcolor="#FFFFFF" border="0" cellspacing="0" cellpadding="0" width="100%"></table></div>
       </td>
     </tr>
-    <tr><td bgcolor="#EDF1F8" height="32">
-    	<table width="100%" border="0" cellspacing="1" cellpadding="1">
-          <tr>
-            <td align="center" valign="middle"><input type="image" src="ok.gif" onMouseOver="this.src='ok2.gif'" onMouseOut="this.src='ok.gif'" onClick="ok_copy_mail();_$_('DIRS_DIV1').style.display = 'none';"></td>
-            <td align="center" valign="middle"><input type="image" src="cancel.gif" onMouseOver="this.src='cancel2.gif'" onMouseOut="this.src='cancel.gif'" onClick="_$_('DIRS_DIV1').style.display = 'none';"></td>
-          </tr>
-        </table>
-     </td></tr>
   </table>
 </div>
-<div class="div1" id="DIRS_DIV2" style="display:none; z-Index:20; width:220px; height:200px;">
+<div id="DIRS_DIV2" style="display:none; z-Index:20; width:220px; height:200px;">
   <table border="0" cellspacing="0" cellpadding="1" width="100%" bordercolorlight="#C0C0C0" bordercolordark="#FFFFFF" class="gray">
   	<tr>
       <td align="left" valign="top" class="gray" bgcolor="#FFFFFF" height="160">
       	<div style="overflow:auto; width:100%; height:100%; background-color: #FFFFFF;"><table id="DIRTBL2" bgcolor="#FFFFFF" border="0" cellspacing="0" cellpadding="0" width="100%"></table></div>
       </td>
     </tr>
-    <tr><td bgcolor="#EDF1F8" height="32">
-    	 <table width="100%" border="0" cellspacing="1" cellpadding="1">
-          <tr>
-            <td align="center" valign="middle"><input type="image" src="ok.gif" onMouseOver="this.src='ok2.gif'" onMouseOut="this.src='ok.gif'" onClick="ok_move_mail();_$_('DIRS_DIV2').style.display = 'none';"></td>
-            <td align="center" valign="middle"><input type="image" src="cancel.gif" onMouseOver="this.src='cancel2.gif'" onMouseOut="this.src='cancel.gif'" onClick="_$_('DIRS_DIV2').style.display = 'none';"></td>
-          </tr>
-        </table>
-    </td></tr>
   </table>
 </div>
-
+<p align="center">
 <table border="0" width="900" height="600" cellpadding="0" cellspacing="0" bgcolor="#FFFFFF">
 <tr>
     <td valign="top">
@@ -660,7 +679,9 @@
     	<td><p align="center">copyright &copy; <a href="http://uplusware.org" target="_blank">uplusware</a> 2009, all right reserved</td>
     </tr>
 </table>
-
+</p>
+<script src="/jqueryui/external/jquery/jquery.js"></script>
+<script src="/jqueryui/jquery-ui.js"></script>
 </body>
 
 </html>

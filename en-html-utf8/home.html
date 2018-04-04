@@ -5,6 +5,7 @@
 <LINK rel="Bookmark" href="erisemail.ico" >
 <LINK rel="Shortcut Icon" href="erisemail.ico" />
 <link href="css.css" rel="stylesheet" type="text/css">
+<link href="/jqueryui/jquery-ui.css" rel="stylesheet">
 <script type="text/javascript" src="inc.js"></script>
 <script type="text/javascript" src="ui.js"></script>
 <title>...::: Welcome to eRisemail System :::...</title>
@@ -168,9 +169,11 @@
 		if(strDirs == "")
 		{
 			alert('Not choose any folder.');
-			return;
+			return -1;
 		}
 		window.parent.childframe1.copy_mail(strDirs);
+        
+        return 0;
 	}
 
 	function ok_move_mail()
@@ -186,9 +189,10 @@
 		if(strDirs == "")
 		{
 			alert('Not choose any folder.');
-			return;
+			return -1;
 		}
 		window.parent.childframe1.move_mail(strDirs);
+        return 0;
 	}
 
 	function ok_create_label()
@@ -212,11 +216,30 @@
 		else
 		{
 			alert("Can not choose more than one folder");
+            
+            return -1;
 		}
+        
+        return 0;
 	}
 	
 	function show_copy_mail_dir_div()
 	{
+        $("#DIRS_DIV1").dialog({
+		  height: 500,
+		  width: 300,
+		  modal: false,
+		  title: 'Folder',
+		  buttons: {                  
+			  "Ok": function() {
+                  if(ok_copy_mail() != -1)
+                    $(this).dialog("close");
+				  },
+              "Cancel": function() {
+				  $(this).dialog("close");
+				  }
+		 }});
+         
 		_$_('DIRS_DIV2').style.display = "none";
 		_$_('DIRS_DIV3').style.display = "none";
 		var Pos = GetObjPos(_$_('COPYMAIL'))
@@ -225,6 +248,21 @@
 
 	function show_move_mail_dir_div()
 	{
+        $("#DIRS_DIV2").dialog({
+		  height: 500,
+		  width: 300,
+		  modal: false,
+		  title: 'Folder',
+		  buttons: {                  
+			  "Ok": function() {
+                  if(ok_move_mail() != -1)
+                    $(this).dialog("close");
+				  },
+              "Cancel": function() {
+				  $(this).dialog("close");
+				  }
+		 }});
+         
 		_$_('DIRS_DIV1').style.display = "none";
 		_$_('DIRS_DIV3').style.display = "none";
 		
@@ -239,6 +277,21 @@
 	
 	function show_add_dir_div()
 	{
+        $("#DIRS_DIV3").dialog({
+		  height: 500,
+		  width: 300,
+		  modal: false,
+		  title: 'Folder',
+		  buttons: {                  
+			  "Ok": function() {
+                  if(ok_create_label() != -1)
+                    $(this).dialog("close");
+				  },
+              "Cancel": function() {
+				  $(this).dialog("close");
+				  }
+		 }});
+         
 		_$_('DIRS_DIV1').style.display = "none";
 		_$_('DIRS_DIV2').style.display = "none";
 		var Pos = GetObjPos(_$_('NEW_LABEL'))
@@ -259,57 +312,34 @@
 </script>
 </head>
 <body leftmargin="0" topmargin="0" marginwidth="0" marginheight="0" onLoad="init()">
-<div class="div1" id="DIRS_DIV1" style="display:none; z-Index:20; width:220px; height:200px;">
+<div id="DIRS_DIV1" style="display:none; z-Index:20; width:220px; height:200px;">
   <table border="0" cellspacing="0" cellpadding="1" width="100%" bordercolorlight="#C0C0C0" bordercolordark="#FFFFFF" class="gray">
     <tr>
       <td align="left" valign="top" class="gray" bgcolor="#FFFFFF" height="160">
       	<div style="overflow:auto; width:100%; height:100%; background-color: #FFFFFF;"><table id="DIRTBL1" bgcolor="#FFFFFF" border="0" cellspacing="0" cellpadding="0" width="100%"></table></div>
       </td>
     </tr>
-    <tr><td bgcolor="#EDF1F8" height="32">
-    	<table width="100%" border="0" cellspacing="1" cellpadding="1">
-          <tr>
-            <td align="center" valign="middle"><input type="image" src="ok.gif" onMouseOver="this.src='ok2.gif'" onMouseOut="this.src='ok.gif'" onClick="ok_copy_mail();_$_('DIRS_DIV1').style.display = 'none';"></td>
-            <td align="center" valign="middle"><input type="image" src="cancel.gif" onMouseOver="this.src='cancel2.gif'" onMouseOut="this.src='cancel.gif'" onClick="_$_('DIRS_DIV1').style.display = 'none';"></td>
-          </tr>
-        </table>
-     </td></tr>
   </table>
 </div>
-<div class="div1" id="DIRS_DIV2" style="display:none; z-Index:20; width:220px; height:200px;">
+<div id="DIRS_DIV2" style="display:none; z-Index:20; width:220px; height:200px;">
   <table border="0" cellspacing="0" cellpadding="1" width="100%" bordercolorlight="#C0C0C0" bordercolordark="#FFFFFF" class="gray">
     <tr>
       <td align="left" valign="top" class="gray" bgcolor="#FFFFFF" height="160">
       	<div style="overflow:auto; width:100%; height:100%; background-color: #FFFFFF;"><table id="DIRTBL2" bgcolor="#FFFFFF" border="0" cellspacing="0" cellpadding="0" width="100%"></table></div>
       </td>
     </tr>
-    <tr><td bgcolor="#EDF1F8" height="32">
-    	 <table width="100%" border="0" cellspacing="1" cellpadding="1">
-          <tr>
-            <td align="center" valign="middle"><input type="image" src="ok.gif" onMouseOver="this.src='ok2.gif'" onMouseOut="this.src='ok.gif'" onClick="ok_move_mail();_$_('DIRS_DIV2').style.display = 'none';"></td>
-            <td align="center" valign="middle"><input type="image" src="cancel.gif" onMouseOver="this.src='cancel2.gif'" onMouseOut="this.src='cancel.gif'" onClick="_$_('DIRS_DIV2').style.display = 'none';"></td>
-          </tr>
-        </table>
-    </td></tr>
   </table>
 </div>
-<div class="div1" id="DIRS_DIV3" style="display:none; z-Index:20; width:220px; height:200px;">
+<div id="DIRS_DIV3" style="display:none; z-Index:20; width:220px; height:200px;">
   <table border="0" cellspacing="0" cellpadding="1" width="100%" bordercolorlight="#C0C0C0" bordercolordark="#FFFFFF" class="gray">
     <tr>
       <td align="left" valign="top" class="gray" bgcolor="#FFFFFF" height="160">
       <div style="overflow:auto; width:100%; height:100%; background-color: #FFFFFF;"><table id="DIRTBL3" bgcolor="#FFFFFF" border="0" cellspacing="0" cellpadding="0" width="100%"></table></div>
       </td>
     </tr>
-    <tr><td bgcolor="#EDF1F8" height="32">
-    	 <table width="100%" border="0" cellspacing="1" cellpadding="1">
-          <tr>
-            <td align="center" valign="middle"><input type="image" src="ok.gif" onMouseOver="this.src='ok2.gif'" onMouseOut="this.src='ok.gif'" onClick="ok_create_label();_$_('DIRS_DIV3').style.display = 'none';"></td>
-            <td align="center" valign="middle"><input type="image" src="cancel.gif" onMouseOver="this.src='cancel2.gif'" onMouseOut="this.src='cancel.gif'" onClick="_$_('DIRS_DIV3').style.display = 'none';"></td>
-          </tr>
-        </table>
-    </td></tr>
   </table>
 </div>
+<p align="center">
 <table border="0" width="1150" height="732" bordercolorlight="#000000" bordercolordark="#6699FF" cellpadding="0">
   <tr height="60">
     <td><table width="100%">
@@ -452,5 +482,8 @@
       </table></td>
   </tr>
 </table>
+</p>
+<script src="/jqueryui/external/jquery/jquery.js"></script>
+<script src="/jqueryui/jquery-ui.js"></script>
 </body>
 </html>
