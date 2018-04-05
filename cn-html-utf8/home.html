@@ -359,7 +359,7 @@
                 <td>
                 <table border="0" width="100%" cellpadding="0" cellspacing="0">
                     <tr>
-                      <td width="202" height="26" align="center" background="headerbg.gif"><font color="#FFFFFF" size="2"><b>文&nbsp件&nbsp夹</b></font></td>
+                      <td width="202" height="26" align="center" bgcolor="#FFFFFF" background="headerbg.gif"><font color="#FFFFFF" size="2"><b>文&nbsp件&nbsp夹</b></font></td>
                     </tr>
                     <tr>
                       <td width="202" height="22" align="left" bgcolor="#FFFFFF"><table>
@@ -426,20 +426,20 @@
           </td>
           <td valign="top" background="basebg.gif" ><table border="0" cellpadding="0" cellspacing="1" bordercolorlight="#C0C0C0" bordercolordark="#FFFFFF" width="100%" height="100%">
               <tr height="22">
-                <td background="topbg.gif">
+                <td bgcolor="#FFFFFF">
 					<table id="MAILBAR" style="display:block">
 						<tr>
-						  <td><input id="NEWMAIL" name="NEWMAIL" type="image" src="newmail.gif" onMouseOver="this.src='newmail2.gif'" onMouseOut="this.src='newmail.gif'" onClick="newmail()"></td>
-						  <td><input id="REMAIL" name="REMAIL" type="image" src="remail.gif" onMouseOver="this.src='remail2.gif'" onMouseOut="this.src='remail.gif'" onClick="remail();"></td>
-						  <td><input id="RETOALL" name="RETOALL" type="image" src="retoall.gif" onMouseOver="this.src='retoall2.gif'" onMouseOut="this.src='retoall.gif'" onClick="remail_all()"></td>
-						  <td><input id="FORWARD" name="FORWARD" type="image" src="forward.gif" onMouseOver="this.src='forward2.gif'" onMouseOut="this.src='forward.gif'" onClick="forward_mail()"></td>
-						  <td><input id="FLAG" name="FLAG" type="image" src="flag.gif" onMouseOver="this.src='flag2.gif'" onMouseOut="this.src='flag.gif'" onClick="flag_mail(true)"></td>
-						  <td><input id="UNFLAG" name="UNFLAG" type="image" src="unflag.gif" onMouseOver="this.src='unflag2.gif'" onMouseOut="this.src='unflag.gif'" onClick="flag_mail(false)"></td>
-						  <td><input id="SEEN" name="SEEN" type="image" src="toseen.gif" onMouseOver="this.src='toseen2.gif'" onMouseOut="this.src='toseen.gif'" onClick="seen_mail(true)"></td>
-						  <td><input id="UNSEEN" name="UNSEEN" type="image" src="tounseen.gif" onMouseOver="this.src='tounseen2.gif'" onMouseOut="this.src='tounseen.gif'" onClick="seen_mail(false)"></td>
-						  <td><input id="COPYMAIL" name="COPYMAIL" type="image" src="copy.gif" onMouseOver="this.src='copy2.gif'" onMouseOut="this.src='copy.gif'" onClick="show_copy_mail_dir_div();"></td>
-						  <td><input id="MOVEMAIL" name="MOVEMAIL" type="image" src="move.gif" onMouseOver="this.src='move2.gif'" onMouseOut="this.src='move.gif'" onClick="show_move_mail_dir_div();"></td>
-						  <td><input id="DELMAIL" name="DELMAIL" type="image" src="delmail.gif" onMouseOver="this.src='delmail2.gif'" onMouseOut="this.src='delmail.gif'" onClick="delmail();"></td>
+						  <td><button id="NEWMAIL" name="NEWMAIL" class="ui-button ui-corner-all ui-widget" onclick="newmail();">新邮件</button></td>
+						  <td><button id="REMAIL" name="REMAIL" class="ui-button ui-corner-all ui-widget" onclick="remail();">回复</button></td>
+						  <td><button id="RETOALL" name="RETOALL" class="ui-button ui-corner-all ui-widget" onclick="remail_all();">全部回复</button></td>
+						  <td><button id="FORWARD" name="FORWARD" class="ui-button ui-corner-all ui-widget" onclick="forward_mail();">转发</button></td>
+						  <td><button id="FLAG" name="FLAG" class="ui-button ui-corner-all ui-widget" onclick="flag_mail(true);">标记</button></td>
+						  <td><button id="UNFLAG" name="UNFLAG" class="ui-button ui-corner-all ui-widget" onclick="flag_mail(false)();">取消标记</button></td>
+						  <td><button id="SEEN" name="SEEN" class="ui-button ui-corner-all ui-widget" onclick="seen_mail(true)();">已读</button></td>
+						  <td><button id="UNSEEN" name="UNSEEN" class="ui-button ui-corner-all ui-widget" onclick="seen_mail(false);">未读</button></td>
+						  <td><button id="COPYMAIL" name="COPYMAIL" class="ui-button ui-corner-all ui-widget" onclick="show_copy_mail_dir_div();">复制</button></td>
+						  <td><button id="MOVEMAIL" name="MOVEMAIL" class="ui-button ui-corner-all ui-widget" onclick="show_move_mail_dir_div();">移动</button></td>
+						  <td><button id="DELMAIL" name="DELMAIL" class="ui-button ui-corner-all ui-widget" onclick="delmail();">删除</button></td>
 						</tr>
                   	</table>
 					

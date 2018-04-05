@@ -1474,19 +1474,19 @@
 			<table background="pathbg.gif" border="0" width="100%" bordercolorlight="#C0C0C0" cellspacing="0" cellpadding="2" bordercolordark="#FFFFFF"><tr valign="middle" height="25"><td align="center" width="22"><img src="writemail.gif"></td><td align="center"><b><font color="#FFFFFF"><div id="GLOBALPATH"></div></font></b></td><td width="20"><input type="image" src="close.gif" onClick="window.close()"></td></tr></table>
 		</td></tr>
 		</table>
-		<table border="0" width="900" cellpadding="0" cellspacing="0" background="toptitlebg.gif">
+		<table border="0" width="900" cellpadding="1" cellspacing="1" background="toptitlebg.gif">
 			<tr><td>
-				<table id="MAILBAR" style="display:block">
+				<table id="MAILBAR" style="display:block"  bgcolor="#FFFFFF">
 					<tr>
-					  <td><input type="image" src="sendmail.gif" onMouseOver="this.src='sendmail2.gif'" onMouseOut="this.src='sendmail.gif'"onclick="send_mail()"></td>
-					  <td><input type="image" src="savedraft.gif" onMouseOver="this.src='savedraft2.gif'" onMouseOut="this.src='savedraft.gif'"onclick="save_draft()"></td>		
-					  <td><input id="FLAG" name="FLAG" type="image" src="flag.gif" onMouseOver="this.src='flag2.gif'" onMouseOut="this.src='flag.gif'" onClick="flag_mail(true)"></td>
-					  <td><input id="UNFLAG" name="UNFLAG" type="image" src="unflag.gif" onMouseOver="this.src='unflag2.gif'" onMouseOut="this.src='unflag.gif'" onClick="flag_mail(false)"></td>
-					  <td><input id="SEEN" name="SEEN" type="image" src="toseen.gif" onMouseOver="this.src='toseen2.gif'" onMouseOut="this.src='toseen.gif'" onClick="seen_mail(true)"></td>
-					  <td><input id="UNSEEN" name="UNSEEN" type="image" src="tounseen.gif" onMouseOver="this.src='tounseen2.gif'" onMouseOut="this.src='tounseen.gif'" onClick="seen_mail(false)"></td>
-					  <td><input id="COPYMAIL" name="COPYMAIL" type="image" src="copy.gif" onMouseOver="this.src='copy2.gif'" onMouseOut="this.src='copy.gif'" onClick="show_copy_mail_dir_div();"></td>
-					  <td><input id="MOVEMAIL" name="MOVEMAIL" type="image" src="move.gif" onMouseOver="this.src='move2.gif'" onMouseOut="this.src='move.gif'" onClick="show_move_mail_dir_div();"></td>
-					  <td><input id="DELMAIL" name="DELMAIL" type="image" src="delmail.gif" onMouseOver="this.src='delmail2.gif'" onMouseOut="this.src='delmail.gif'" onClick="delmail();"></td>
+					  <td><button id="SENDMAIL" name="SENDMAIL" class="ui-button ui-corner-all ui-widget" onclick="send_mail();">Send</button></td>
+					  <td><button id="SAVEDRAFT" name="SAVEDRAFT" class="ui-button ui-corner-all ui-widget" onclick="save_draft();">Save</button></td>
+					  <td><button id="FLAG" name="FLAG" class="ui-button ui-corner-all ui-widget" onclick="flag_mail(true);">Flag</button></td>
+					  <td><button id="UNFLAG" name="UNFLAG" class="ui-button ui-corner-all ui-widget" onclick="flag_mail(false)();">Unflag</button></td>
+					  <td><button id="SEEN" name="SEEN" class="ui-button ui-corner-all ui-widget" onclick="seen_mail(true)();">Seen</button></td>
+					  <td><button id="UNSEEN" name="UNSEEN" class="ui-button ui-corner-all ui-widget" onclick="seen_mail(false);">Unseen</button></td>
+					  <td><button id="COPYMAIL" name="COPYMAIL" class="ui-button ui-corner-all ui-widget" onclick="show_copy_mail_dir_div();">Copy</button></td>
+					  <td><button id="MOVEMAIL" name="MOVEMAIL" class="ui-button ui-corner-all ui-widget" onclick="show_move_mail_dir_div();">Move</button></td>
+					  <td><button id="DELMAIL" name="DELMAIL" class="ui-button ui-corner-all ui-widget" onclick="delmail();">Delete</button></td>
 					</tr>
 				</table>
 			</td></tr>
@@ -1498,7 +1498,7 @@
 				<table border="0" cellspacing="0" cellpadding="0">
 					<tr>
 						<td><input type="text" value="" size="80" id="TO_ADDRS" name="TO_ADDRS" onChange="isChange = true;toggle_onbeforeunload(isChange)"></td>
-						<td width="100" align="center"><input type="image" src="showbook.gif" onMouseOver="this.src='showbook2.gif'" onMouseOut="this.src='showbook.gif'" onClick="showbook(1, 'uname')"></td>
+						<td width="100" align="center"><button id="ADDRESS_BOOK1" name="ADDRESS_BOOK" class="ui-button ui-corner-all ui-widget" onclick="showbook(1, 'uname');">Address</button></td>
 					</tr>
 				</table>
 			</td>
@@ -1510,7 +1510,7 @@
 				<table border="0" cellspacing="0" cellpadding="0">
 					<tr>
 						<td><input type="text" value="" size="80" id="CC_ADDRS" name="CC_ADDRS" onChange="isChange = true;toggle_onbeforeunload(isChange)"></td>
-						<td width="100" align="center"><input type="image" src="showbook.gif" onMouseOver="this.src='showbook2.gif'" onMouseOut="this.src='showbook.gif'" onClick="showbook(2, 'uname')"></td>
+						<td width="100" align="center"><button id="ADDRESS_BOOK2" name="ADDRESS_BOOK" class="ui-button ui-corner-all ui-widget" onclick="showbook(2, 'uname');">Address</button></td>
 					</tr>
 				</table>
 			</td>
@@ -1522,7 +1522,7 @@
 				<table border="0"  cellspacing="0" cellpadding="0">
 					<tr>
 						<td><input type="text" value="" size="80" id="BCC_ADDRS" name="BCC_ADDRS" onChange="isChange = true;toggle_onbeforeunload(isChange)"></td>
-						<td width="100" align="center"><input type="image" src="showbook.gif" onMouseOver="this.src='showbook2.gif'" onMouseOut="this.src='showbook.gif'" onClick="showbook(3, 'uname')"></td>
+						<td width="100" align="center"><button id="ADDRESS_BOOK3" name="ADDRESS_BOOK" class="ui-button ui-corner-all ui-widget" onclick="showbook(3, 'uname');">Address</button></td>
 					</tr>
 				</table>
 			</td>
@@ -1546,7 +1546,6 @@
 			<td class="gray">
 				<input type="hidden" id="DRAFTID" name="DRAFTID" value="-1">
 				<iframe name="attachframe" title="...::: Welcome to eRisemail System :::..." src="attach.html" width="100%" height="32" scrolling="no" marginwidth="0" marginheight="0" border="0" frameborder="0">
-
 				</iframe>
 				<table id="SHOW_UPLOADEDFILES">
 				</table>
