@@ -318,12 +318,10 @@
 										if(this.parentNode.parentNode.parentNode.parentNode.parentNode.nextSibling.style.display == "none")
 										{
 											this.parentNode.parentNode.parentNode.parentNode.parentNode.nextSibling.style.display = "block";
-											//this.parentNode.cells[3].innerHTML = "<img src=\"closediv.gif\">";;
 										}
 										else
 										{
 											this.parentNode.parentNode.parentNode.parentNode.parentNode.nextSibling.style.display = "none";
-											//this.parentNode.cells[3].innerHTML = "<img src=\"opendiv.gif\">";;
 										}
 									}
 
@@ -341,9 +339,9 @@
 									
 									newtd2.valign="middle";
 									newtd2.align="center";
-									newtd2.width="22";
+									newtd2.width="100";
 									newtd2.setAttribute("groupname", userList.item(i).getAttribute("name"));
-							        newtd2.innerHTML = "<img src=\"append_blue.gif\">";
+							        newtd2.innerHTML = "<table><tr><td><img src=\"member.gif\"></td><td><font color='#FFFFFF'>增加账号</font></td></tr></table>";
 									
 									newtd2.onclick = function()
 									{
