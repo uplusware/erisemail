@@ -368,13 +368,6 @@
 		xmlHttp.send("");
 	}
 	
-	function close_processing_div()
-	{
-		_$_('PROCESSING_DIV').style.zIndex = 9;
-		_$_('PROCESSING_DIV').style.display = "none";
-		
-	}
-	
 	function do_savesent()
 	{
 		var uploadedfiles = "";
@@ -412,10 +405,8 @@
 						{
 							do_delsentmail();
 
-							_$_('PROCESSING_DIV').style.zIndex = 18;
-							_$_('PROCESSING_DIV').style.display = "block";
 							_$_('PROCESSING_TBL').rows[0].cells[0].innerHTML = "Save mail to sent folder successfully.";
-				
+                            $( "#PROCESSING_DIV" ).dialog();
 
 							if(window.opener && window.opener.refresh)
 								window.opener.refresh();
@@ -430,17 +421,15 @@
 						}
 						else
 						{
-							_$_('PROCESSING_DIV').style.zIndex = 18;
-							_$_('PROCESSING_DIV').style.display = "block";
 							_$_('PROCESSING_TBL').rows[0].cells[0].innerHTML = "<font color='#FF0000'>Save mail to sent folder failed.</font>";
+                            $( "#PROCESSING_DIV" ).dialog();
 						}
 					}
 				}
 				else
 				{
-					_$_('PROCESSING_DIV').style.zIndex = 18;
-					_$_('PROCESSING_DIV').style.display = "block";
 					_$_('PROCESSING_TBL').rows[0].cells[0].innerHTML = "<font color='#FF0000'>Save mail to sent folder failed.</font>";
+                    $( "#PROCESSING_DIV" ).dialog();
 				}
 			}
 			else
@@ -448,9 +437,8 @@
 				sent_status = true;
 				toggle_onbeforeunload(sent_status);
 
-				_$_('PROCESSING_DIV').style.zIndex = 18;
-				_$_('PROCESSING_DIV').style.display = "block";
 				_$_('PROCESSING_TBL').rows[0].cells[0].innerHTML = "Saving mail to sent folder - <img src=\"waiting.gif\" />";
+                $( "#PROCESSING_DIV" ).dialog();
 			}
 		}
 
@@ -513,24 +501,20 @@
 						{
 							isChange = false;
 							toggle_onbeforeunload(isChange);
-							_$_('PROCESSING_DIV').style.zIndex = 18;
-							_$_('PROCESSING_DIV').style.display = "block";
 							_$_('PROCESSING_TBL').rows[0].cells[0].innerHTML = "Send mail successfully.";
+                            $( "#PROCESSING_DIV" ).dialog();
 							
 							do_savesent();
 						}
 						else
 						{
-							_$_('PROCESSING_DIV').style.zIndex = 18;
-							_$_('PROCESSING_DIV').style.display = "block";
 							_$_('PROCESSING_TBL').rows[0].cells[0].innerHTML = "<font color='#FF0000'>Send mail failed(Mail size is too large.)</font>";
+                            $( "#PROCESSING_DIV" ).dialog();
 						}
 					}
 				}
 				else
 				{
-					_$_('PROCESSING_DIV').style.zIndex = 18;
-					_$_('PROCESSING_DIV').style.display = "block";
 					_$_('PROCESSING_TBL').rows[0].cells[0].innerHTML = "<font color='#FF0000'>Send mail failed</font>";
 				}
 			}
@@ -538,9 +522,8 @@
 			{
 				sending_status = true;
 				toggle_onbeforeunload(sending_status);
-				_$_('PROCESSING_DIV').style.zIndex = 18;
-				_$_('PROCESSING_DIV').style.display = "block";
 				_$_('PROCESSING_TBL').rows[0].cells[0].innerHTML = "Sending mail - <img src=\"waiting.gif\" />";
+                $( "#PROCESSING_DIV" ).dialog();
 			}
 		}
 		xmlHttp.open("POST", qUrl , true);
@@ -603,18 +586,15 @@
 								}
 							}
 							
-							_$_('PROCESSING_DIV').style.zIndex = 18;
-							_$_('PROCESSING_DIV').style.display = "block";
 							_$_('PROCESSING_TBL').rows[0].cells[0].innerHTML = "Save draft successfully";
+                            $( "#PROCESSING_DIV" ).dialog();
 							
 						}
 						else
 						{
 							
-							_$_('PROCESSING_DIV').style.zIndex = 18;
-							_$_('PROCESSING_DIV').style.display = "block";
 							_$_('PROCESSING_TBL').rows[0].cells[0].innerHTML = "<font color='#FF0000'>Save draft failed(Draft is too large)</font>";
-
+                            $( "#PROCESSING_DIV" ).dialog();
 
 						}
 					}
@@ -622,9 +602,8 @@
 				else
 				{
 
-					_$_('PROCESSING_DIV').style.zIndex = 18;
-					_$_('PROCESSING_DIV').style.display = "block";
 					_$_('PROCESSING_TBL').rows[0].cells[0].innerHTML = "<font color='#FF0000'>Save draft failed</font>";
+                    $( "#PROCESSING_DIV" ).dialog();
 
 
 				}
@@ -634,9 +613,8 @@
 			{
 				saving_status = true;
 				toggle_onbeforeunload(saving_status);
-				_$_('PROCESSING_DIV').style.zIndex = 18;
-				_$_('PROCESSING_DIV').style.display = "block";
 				_$_('PROCESSING_TBL').rows[0].cells[0].innerHTML = "Saving draft - <img src=\"waiting.gif\" />";
+                $( "#PROCESSING_DIV" ).dialog();
 			}
 		}
 		
@@ -1184,7 +1162,7 @@
 					{
 						if(window.opener && window.opener.refresh)
 								window.opener.refresh();
-						_$_('PROCESSING_DIV').style.display = "none";
+						$( "PROCESSING_DIV" ).dialog("close");
 						return true;
 					}
 					else
@@ -1195,9 +1173,8 @@
 			}
 			else
 			{
-				_$_('PROCESSING_DIV').style.zIndex = 18;
-				_$_('PROCESSING_DIV').style.display = "block";
 				_$_('PROCESSING_TBL').rows[0].cells[0].innerHTML = "Processing, please wait...";
+                $( "#PROCESSING_DIV" ).dialog();
 			}
 		}
 		xmlHttp.open("GET", qUrl , true);
@@ -1239,7 +1216,7 @@
 					var errno = responseNode.getAttribute("errno")
 					if(errno == "0" || errno == 0)
 					{
-						_$_('PROCESSING_DIV').style.display = "none";
+						$( "#PROCESSING_DIV" ).dialog("close");
 						
 						window.opener.delete_maillist_row(mid);
 	
@@ -1253,9 +1230,8 @@
 			}
 			else
 			{
-				_$_('PROCESSING_DIV').style.zIndex = 18;
-				_$_('PROCESSING_DIV').style.display = "block";
 				_$_('PROCESSING_TBL').rows[0].cells[0].innerHTML = "Processing, please wait...";
+                $( "#PROCESSING_DIV" ).dialog();
 			}
 
 		}
@@ -1396,18 +1372,7 @@
 
 <body onLoad="init()" onUnload="uninit()">
 
-<div id="PROCESSING_DIV" class="div1" style="display:none; width: 380; height:100; left:300; top:200; background-color: #fafafa;">
-	<table border="0" width="100%" bordercolorlight="#C0C0C0" cellpadding="0" cellspacing="0" bordercolordark="#FFFFFF">
-		<tr height="22"><td class="gray">
-			<table width="100%" height="100%" border="0" cellpadding="1" cellspacing="1" background="titlebg.gif">
-				<tr>
-					<td width="16" align="left" valign="middle"><img src="writemail.gif"></td>
-					<td align="center" valign="middle" onMouseOver="this.mousepoint = 99;this.style.cursor = 'move';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onMouseDown="return drag(_$_('PROCESSING_DIV'), (event ? event : window.event));"><font color="#FFFFFF"><b>Write Mail</b></font></td>
-					<td align="right" width="16" height="22"><input type="image" src="close.gif" onClick="close_processing_div()"></td>
-				</tr>
-			</table>
-		</td></tr>
-	</table>
+<div id="PROCESSING_DIV" style="display:none;">
 	<table id="PROCESSING_TBL" width="100%" height="70" border="0" cellpadding="0" cellspacing="0">
 		<tr><td align="center" valign="middle"></td></tr>
 	</table>	

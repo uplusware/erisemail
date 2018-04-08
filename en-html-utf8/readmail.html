@@ -187,7 +187,7 @@
 					if(errno == "0" || errno == 0)
 					{
 						window.opener.refresh();
-						_$_('PROCESSING_DIV').style.display = "none";
+						$( "#PROCESSING_DIV" ).dialog("close");
 						return true;
 					}
 					else
@@ -198,9 +198,8 @@
 			}
 			else
 			{
-				_$_('PROCESSING_DIV').style.zIndex = 18;
-				_$_('PROCESSING_DIV').style.display = "block";
 				_$_('PROCESSING_TBL').rows[0].cells[1].innerHTML = "Processing, please wait...";
+                $( "#PROCESSING_DIV" ).dialog();
 			}
 		}
 		xmlHttp.open("GET", qUrl , true);
@@ -281,7 +280,7 @@
 					var errno = responseNode.getAttribute("errno")
 					if(errno == "0" || errno == 0)
 					{
-						_$_('PROCESSING_DIV').style.display = "none";
+						$( "#PROCESSING_DIV" ).dialog("close");
 
 						window.opener.delete_maillist_row(mid);
 						
@@ -294,9 +293,8 @@
 			}
 			else
 			{
-				_$_('PROCESSING_DIV').style.zIndex = 18;
-				_$_('PROCESSING_DIV').style.display = "block";
 				_$_('PROCESSING_TBL').rows[0].cells[1].innerHTML = "Processing, please wait...";
+                $( "#PROCESSING_DIV" ).dialog();
 			}
 
 		}
@@ -579,7 +577,7 @@
 
 <body onLoad="init()">
 
-<div id="PROCESSING_DIV" class="div1" style="display:none; width: 300; height:100; left:300; top:200;background-color: #fafafa;">
+<div id="PROCESSING_DIV" style="display:none;">
 	<table id="PROCESSING_TBL" width="100%" height="100%">
 		<tr><td align="right"><img src="busy.gif"></td><td align="left"></td></tr>
 	</table>	
