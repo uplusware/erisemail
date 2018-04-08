@@ -374,6 +374,7 @@ int MailStorage::Install(const char* database)
 		"`uname` VARCHAR( 64 ) NOT NULL ,"
 		"`upasswd` BLOB NOT NULL ,"
 		"`ualias` VARCHAR( 256 ) NOT NULL ,"
+        "`uhost` VARCHAR( 256 ) NULL ,"
 		"`utype` INT UNSIGNED NOT NULL ,"
 		"`urole` INT UNSIGNED NOT NULL ,"
 		"`usize` INT UNSIGNED NOT NULL DEFAULT %d ,"
@@ -457,7 +458,8 @@ int MailStorage::Install(const char* database)
 		"CREATE TABLE IF NOT EXISTS `%s`.`extmailtbl` ("
 		"`mid` INT UNSIGNED NOT NULL AUTO_INCREMENT ,"
 		"`muniqid` VARCHAR( 256 ) NOT NULL ,"
-		"`mfrom` VARCHAR( 256 ) NULL ,"
+		"`mhost` VARCHAR( 256 ) NULL ,"
+        "`mfrom` VARCHAR( 256 ) NULL ,"
 		"`mto` VARCHAR( 256 ) NULL ,"
 		"`mbody` VARCHAR( 256 ) NOT NULL ,"
 		"`msize` INT UNSIGNED NOT NULL DEFAULT '0',"
@@ -778,6 +780,60 @@ int MailStorage::GetPassword(const char* username, string& password)
 		show_error(&m_hMySQL, sqlcmd);
 		return -1;
 	}
+}
+
+int MailStorage::GetHost(const char* username, string& host)
+{
+#ifdef _DISTRIBUTED_HOST_    
+	string strpwd;
+	char sqlcmd[1024];
+	string strSafetyUsername = username;
+	SqlSafetyString(strSafetyUsername);
+		
+	sprintf(sqlcmd, "SELECT uhost FROM usertbl WHERE uname='%s' AND utype=%d", strSafetyUsername.c_str(), utMember);
+	
+	if(Query(sqlcmd, strlen(sqlcmd)) == 0)
+	{
+		MYSQL_RES *query_result;
+		query_result = mysql_store_result(&m_hMySQL);
+		
+		if(query_result)
+		{
+			if( mysql_num_rows(query_result) == 1 )
+			{
+				MYSQL_ROW row;
+				row = mysql_fetch_row(query_result);
+				if(row == NULL)
+				{
+					mysql_free_result(query_result);
+					return -1;
+				}
+				else
+				{
+					host = row[0];
+					mysql_free_result(query_result);
+					return 0;
+				}
+			}
+			else
+			{
+				mysql_free_result(query_result);
+				return -1;
+			}
+		}
+		else
+			return -1;
+	}
+	else
+	{
+	    
+		show_error(&m_hMySQL, sqlcmd);
+		return -1;
+	}
+#else
+    host = "";
+    return 0;
+#endif /*_DISTRIBUTED_HOST_ */
 }
 
 int MailStorage::VerifyUser(const char* username)
@@ -1735,7 +1791,7 @@ int MailStorage::InsertMail(const char* mfrom, const char* mto, unsigned int mti
 		return -1;
 }
 
-int MailStorage::InsertMailIndex(const char* mfrom, const char* mto, unsigned int mtime,unsigned int mtx,const char* muniqid, int mdirid, unsigned int mstatus, const char* mpath, unsigned int msize, int& mailid)
+int MailStorage::InsertMailIndex(const char* mfrom, const char* mto, const char* mhost, unsigned int mtime,unsigned int mtx,const char* muniqid, int mdirid, unsigned int mstatus, const char* mpath, unsigned int msize, int& mailid)
 {
 	if(mdirid != -1)
 	{
@@ -1763,13 +1819,25 @@ int MailStorage::InsertMailIndex(const char* mfrom, const char* mto, unsigned in
 
 	string strSafetyBody = mpath;
 	SqlSafetyString(strSafetyBody);
-	
+    
 	char* sqlcmd = (char*)malloc(strSafetyBody.length() + strSafetyTo.length() + strSafetyFrom.length() + 1024);
 	if(sqlcmd)
 	{
-		sprintf(sqlcmd, "INSERT INTO %s.%s (mfrom,mto,mtime,mtx,muniqid,mdirid,mstatus,mbody,msize) VALUES('%s','%s',%u,%u,'%s',%d,%u,'%s','%u')", m_database.c_str(),
-            mtx == mtExtern ? "extmailtbl" : "mailtbl",
-			strSafetyFrom.c_str(), strSafetyTo.c_str(), mtime, mtx, muniqid, mdirid, mstatus, strSafetyBody.c_str(), msize);
+        if(strcmp(mhost, "") == 0 || strcasecmp(mhost, CMailBase::m_localhostname.c_str()) == 0)
+        {
+            sprintf(sqlcmd, "INSERT INTO %s.%s (mfrom,mto,mtime,mtx,muniqid,mdirid,mstatus,mbody,msize) VALUES('%s','%s',%u,%u,'%s',%d,%u,'%s','%u')", m_database.c_str(),
+                mtx == mtExtern ? "extmailtbl" : "mailtbl",
+                strSafetyFrom.c_str(), strSafetyTo.c_str(), mtime, mtx, muniqid, mdirid, mstatus, strSafetyBody.c_str(), msize);
+        }
+        else
+        {
+            string strSafetyHost = mhost;
+            SqlSafetyString(strSafetyHost);
+    
+            sprintf(sqlcmd, "INSERT INTO %s.%s (mfrom,mto,mhost,mtime,mtx,muniqid,mdirid,mstatus,mbody,msize) VALUES('%s','%s','%s',%u,%u,'%s',%d,%u,'%s','%u')", m_database.c_str(),
+                mtx == mtExtern ? "extmailtbl" : "mailtbl",
+                strSafetyFrom.c_str(), strSafetyTo.c_str(), strSafetyHost.c_str(), mtime, mtx, muniqid, mdirid, mstatus, strSafetyBody.c_str(), msize);
+        }
 
 		if(Query(sqlcmd, strlen(sqlcmd) + 1) == 0)
 		{
@@ -2222,8 +2290,13 @@ int MailStorage::ListAvailableExternMail(vector<Mail_Info>& listtbl, unsigned in
 {
 	listtbl.clear();
 	char sqlcmd[1024];
-	sprintf(sqlcmd, "SELECT mfrom, mto, muniqid, mid FROM extmailtbl WHERE mtx='%d' AND mstatus&%d<>%d AND mstatus&%d<>%d AND mid%%%d=%d and TIMESTAMPDIFF(SECOND, next_fwd_time, CURRENT_TIMESTAMP) > 0 and tried_count<%d ORDER BY mid",
+#ifdef _DISTRIBUTED_HOST_  
+	sprintf(sqlcmd, "SELECT mfrom, mto, mhost, muniqid, mid FROM extmailtbl WHERE mtx='%d' AND mstatus&%d<>%d AND mstatus&%d<>%d AND mid%%%d=%d and TIMESTAMPDIFF(SECOND, next_fwd_time, CURRENT_TIMESTAMP) > 0 and tried_count<%d ORDER BY mid",
         mtExtern, MSG_ATTR_DELETED, MSG_ATTR_DELETED, MSG_ATTR_UNAUDITED, MSG_ATTR_UNAUDITED, mta_count, mta_index, MAX_TRY_FORWARD_COUNT);
+#else
+    sprintf(sqlcmd, "SELECT mfrom, mto, muniqid, mid FROM extmailtbl WHERE mtx='%d' AND mstatus&%d<>%d AND mstatus&%d<>%d AND mid%%%d=%d and TIMESTAMPDIFF(SECOND, next_fwd_time, CURRENT_TIMESTAMP) > 0 and tried_count<%d ORDER BY mid",
+        mtExtern, MSG_ATTR_DELETED, MSG_ATTR_DELETED, MSG_ATTR_UNAUDITED, MSG_ATTR_UNAUDITED, mta_count, mta_index, MAX_TRY_FORWARD_COUNT);
+#endif /* _DISTRIBUTED_HOST_ */
     max_num = (max_num == 0 ? 0x7FFFFFFFFU : max_num);
 	if(Query(sqlcmd, strlen(sqlcmd)) == 0)
 	{
@@ -2239,10 +2312,19 @@ int MailStorage::ListAvailableExternMail(vector<Mail_Info>& listtbl, unsigned in
                 if(max_num == 0)
                     break;
 				Mail_Info mi;
+#ifdef _DISTRIBUTED_HOST_  
+                mi.mailfrom = row[0];
+				mi.rcptto = row[1];
+                mi.host = row[2];
+				strcpy(mi.uniqid, row[3]);
+				mi.mid = atoi(row[4]);
+#else
 				mi.mailfrom = row[0];
 				mi.rcptto = row[1];
+                mi.host = "";
 				strcpy(mi.uniqid, row[2]);
 				mi.mid = atoi(row[3]);
+#endif /* _DISTRIBUTED_HOST_ */
 				listtbl.push_back(mi);
                 max_num--;
 			}
@@ -2577,6 +2659,36 @@ int MailStorage::Alias(const char* uname, const char* alias)
 	}
 	else
 		return -1;
+}
+
+int MailStorage::Host(const char* uname, const char* host)
+{
+#ifdef _DISTRIBUTED_HOST_ 
+    if(VerifyUser(uname) == 0)
+	{
+		char sqlcmd[1024];
+		string strSafetyUsername = uname;
+		SqlSafetyString(strSafetyUsername);
+
+		string strSafetyHost = host;
+		SqlSafetyString(strSafetyHost);
+		
+		sprintf(sqlcmd, "UPDATE usertbl SET uhost='%s' WHERE uname='%s'", strSafetyHost.c_str(), strSafetyUsername.c_str());
+		if(Query(sqlcmd, strlen(sqlcmd)) == 0)
+		{
+			return 0;
+		}
+		else
+		{
+            show_error(&m_hMySQL, sqlcmd);
+			return -1;
+		}
+	}
+	else
+		return -1;
+#else
+    return 0;
+#endif /* _DISTRIBUTED_HOST_ */
 }
 
 int MailStorage::SetUserStatus(const char* uname, UserStatus status)

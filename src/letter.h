@@ -303,6 +303,7 @@ typedef struct
 {
 	string mail_from;
 	string mail_to;
+    string host;
 	MailType mail_type;
 	string mail_uniqueid;
 	int mail_dirid;

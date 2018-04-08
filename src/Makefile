@@ -61,6 +61,12 @@ else
     HDFS_DEF = _WITHOUT_HDFS_
 endif
 
+ifdef DISTR_HOST
+    DISTR_HOST_DEF = _WITH_DISTRIBUTED_HOST_
+else
+    DISTR_HOST_DEF = _WITHOUT_DISTRIBUTED_HOST_
+endif
+
 LDLIST_STG = -lstdc++ -lrt -lmariadb -lmemcached
 LDLIST_JKS = -lstdc++
 LDLIST_UTL = -lstdc++ -lpthread -ldl
@@ -97,7 +103,7 @@ $(EXENTY): $(OBJNTY)
 	$(CC) -o $@ $(OBJNTY) $(LDDIRS) $(LDLIST_NTY)
 	
 %.o : %.cpp
-	$(CC) -D$(MDEF) -D$(GSS_DEF) -D$(HDFS_DEF) $(INCDIR) $(FLAGS) -c $< -o $@
+	$(CC) -D$(MDEF) -D$(GSS_DEF) -D$(HDFS_DEF) -D$(DISTR_HOST_DEF) $(INCDIR) $(FLAGS) -c $< -o $@
 
 clean:
 	-rm -f $(LIBSTG) $(LIBJKS) $(EXESVR) $(EXEUTL) $(SQLUDF) $(EXENTY) $(OBJSVR) $(OBJJKS) $(OBJSTG) $(OBJUDF) $(OBJNTY) *.elf *.gdb *.o *.a *.so

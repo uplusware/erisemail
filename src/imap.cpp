@@ -1720,6 +1720,7 @@ void CMailImap::On_Append(char* text)
 		Letter_Info letter_info;
 		letter_info.mail_from = "";
 		letter_info.mail_to = "";
+        letter_info.host = "";
 		letter_info.mail_type = mtLocal;
 		letter_info.mail_uniqueid = newuid;
 		letter_info.mail_dirid = DirID;
@@ -1757,7 +1758,7 @@ void CMailImap::On_Append(char* text)
 		Letter->Close();
 		if(Letter->isOK())
 		{
-			mailStg->InsertMailIndex(letter_info.mail_from.c_str(), letter_info.mail_to.c_str(),letter_info.mail_time,
+			mailStg->InsertMailIndex(letter_info.mail_from.c_str(), letter_info.mail_to.c_str(),letter_info.host.c_str(), letter_info.mail_time,
 						letter_info.mail_type, letter_info.mail_uniqueid.c_str(), letter_info.mail_dirid, letter_info.mail_status,
 						Letter->GetEmlName(), Letter->GetSize(), letter_info.mail_id);
 		}
@@ -4219,6 +4220,7 @@ int CMailImap::Copy(const char* szArg, BOOL isUID)
 				Letter_Info letter_info;
 				letter_info.mail_from = "";
 				letter_info.mail_to = "";
+                letter_info.host = "";
 				letter_info.mail_type = mtLocal;
 				letter_info.mail_uniqueid = newuid;
 				letter_info.mail_dirid = dirID;
@@ -4248,7 +4250,7 @@ int CMailImap::Copy(const char* szArg, BOOL isUID)
 				newLetter->Close();
 				if(newLetter->isOK())
 				{
-					mailStg->InsertMailIndex(letter_info.mail_from.c_str(), letter_info.mail_to.c_str(),letter_info.mail_time,
+					mailStg->InsertMailIndex(letter_info.mail_from.c_str(), letter_info.mail_to.c_str(), letter_info.host.c_str(), letter_info.mail_time,
 						letter_info.mail_type, letter_info.mail_uniqueid.c_str(), letter_info.mail_dirid, letter_info.mail_status,
 						newLetter->GetEmlName(), newLetter->GetSize(), letter_info.mail_id);
 				}

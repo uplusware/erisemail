@@ -125,7 +125,7 @@ void* MailTransferAgent::BEGIN_RELAY_HANDLER(void* arg)
 				string errormsg;
 				
 				if(RelayMail(mailStg, reply_info->_memcached, reply_info->mail_info.mid, reply_info->mail_info.uniqid, reply_info->mail_info.mailfrom.c_str(), 
-					reply_info->mail_info.rcptto.c_str(), errormsg) == FALSE)
+					reply_info->mail_info.rcptto.c_str(), reply_info->mail_info.host.c_str(), errormsg) == FALSE)
 				{
 					fprintf(stderr, "%s", errormsg.c_str());
                     
@@ -223,6 +223,7 @@ BOOL MailTransferAgent::ReturnMail(MailStorage* mailStg, memcached_st * memcache
 
 	MailType mType;
 	string strMailTo;
+    string strHost;
 	unsigned long long usermaxsize;
 	
 	if(CMailBase::Is_Local_Domain(rcpttodomain.c_str()))
@@ -231,8 +232,24 @@ BOOL MailTransferAgent::ReturnMail(MailStorage* mailStg, memcached_st * memcache
 		{
 			usermaxsize = 5000*1024;
 		}
-
-		mType = mtLocal;
+        
+        string host;
+                
+        if(mailStg->GetHost(rcpttoid.c_str(), host) == -1)
+        {
+            host = "";
+        }
+        
+        if(host == "" || strcasecmp(host.c_str(), CMailBase::m_localhostname.c_str()) == 0)
+        {
+            mType = mtLocal;
+            strHost = "";
+        }
+        else
+        {
+            mType = mtExtern;
+            strHost = host;
+        }
 		strMailTo = "";
 	}
 	else
@@ -243,6 +260,7 @@ BOOL MailTransferAgent::ReturnMail(MailStorage* mailStg, memcached_st * memcache
 			usermaxsize = 5000*1024;
 		}
 		mType = mtExtern;
+        strHost = "";
 		inBoxID = -1;
 		strMailTo = strRcptTo.c_str();		
 	}
@@ -255,6 +273,7 @@ BOOL MailTransferAgent::ReturnMail(MailStorage* mailStg, memcached_st * memcache
 	Letter_Info letter_info;
 	letter_info.mail_from = szMailFrom;
 	letter_info.mail_to = strMailTo.c_str();
+    letter_info.host = strHost.c_str();
 	letter_info.mail_type = mType;
 	letter_info.mail_uniqueid = szUid;
 	letter_info.mail_dirid = inBoxID;
@@ -353,7 +372,7 @@ BOOL MailTransferAgent::ReturnMail(MailStorage* mailStg, memcached_st * memcache
 	newLetter->SetOK();
 	newLetter->Close();
 
-	mailStg->InsertMailIndex(letter_info.mail_from.c_str(), letter_info.mail_to.c_str(),letter_info.mail_time,
+	mailStg->InsertMailIndex(letter_info.mail_from.c_str(), letter_info.mail_to.c_str(), letter_info.host.c_str(),letter_info.mail_time,
 						letter_info.mail_type, letter_info.mail_uniqueid.c_str(), letter_info.mail_dirid, letter_info.mail_status,
 						newLetter->GetEmlName(), newLetter->GetSize(), letter_info.mail_id);
                         
@@ -570,28 +589,42 @@ BOOL MailTransferAgent::SendMail(MailStorage* mailStg, memcached_st * memcached,
 }
 
 
-BOOL MailTransferAgent::RelayMail(MailStorage* mailStg, memcached_st * memcached, int mid, const char* uniqid, const char *mail_from, const char *rcpt_to, string& errormsg)
+BOOL MailTransferAgent::RelayMail(MailStorage* mailStg, memcached_st * memcached, int mid, const char* uniqid, const char *mail_from, const char *rcpt_to, const char * host, string& errormsg)
 {
-	string svraddr;
-	strcut(rcpt_to, "@", NULL, svraddr);
-	vector<DNSQry_List> list;
-	udpdns dns(CMailBase::m_dns_server.c_str());
+    vector<DNSQry_List> list;
+    
+    if(strcmp(host, "") == 0 )
+    {
+        string svraddr;
+        strcut(rcpt_to, "@", NULL, svraddr);
+        udpdns dns(CMailBase::m_dns_server.c_str());
 
-	int y;
-	for(y = 0; y < 5; y ++)
-	{
-		list.clear();
-		if(dns.mxquery(svraddr.c_str(), list) == 0)
-			break;
-	}
-	
-	if(y >= 5)
-	{
-		DNSQry_List ml;
-		strcpy(ml.address, svraddr.c_str());
-		ml.priority = 0;
-		list.push_back(ml);
-	}
+        int y;
+        for(y = 0; y < 5; y ++)
+        {
+            list.clear();
+            if(dns.mxquery(svraddr.c_str(), list) == 0)
+                break;
+        }
+        
+        if(y >= 5)
+        {
+            DNSQry_List ml;
+            strcpy(ml.address, svraddr.c_str());
+            ml.priority = 0;
+            list.push_back(ml);
+        }
+    }
+    else 
+    {
+        if(strcasecmp(host, CMailBase::m_localhostname.c_str()) != 0) //not self-host
+        {
+            DNSQry_List ml;
+            strcpy(ml.address, host);
+            ml.priority = 0;
+            list.push_back(ml);
+        }
+    }
 	errormsg = "";
 	int mxcount = list.size();
 
@@ -838,6 +871,7 @@ int MailTransferAgent::Run(int fd)
                         memcpy(reply_info->mail_info.uniqid, mitbl[x].uniqid, 256);
                         reply_info->mail_info.mailfrom = mitbl[x].mailfrom;
                         reply_info->mail_info.rcptto = mitbl[x].rcptto;
+                        reply_info->mail_info.host = mitbl[x].host;
                         reply_info->mail_info.mtime = mitbl[x].mtime;
                         reply_info->mail_info.mstatus = mitbl[x].mstatus;
                         reply_info->mail_info.mtype = mitbl[x].mtype;

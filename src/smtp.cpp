@@ -1448,12 +1448,28 @@ void CMailSmtp::On_Data_Handler(char* text)
 				{
 					usermaxsize = 5000*1024;
 				}
-						
-				m_letter_obj_vector[x]->letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, uid, usermaxsize /*mailStg, m_mailfrom.c_str(),
-					m_letter_obj_vector[x].rcpt_to->c_str(), mtLocal, uid, DirID, mstatus, (unsigned int)time(NULL), usermaxsize*/);
+				
+                string host;
+                
+                if(mailStg->GetHost(rcpttoid.c_str(), host) == -1)
+				{
+					host = "";
+				}
+                
+				m_letter_obj_vector[x]->letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, uid, usermaxsize);
 
 				m_letter_obj_vector[x]->letter_info.mail_from = m_mailfrom.c_str();
-				m_letter_obj_vector[x]->letter_info.mail_type = mtLocal;
+                
+                if(host == "" || strcasecmp(host.c_str(), CMailBase::m_localhostname.c_str()) == 0)
+                {
+                    m_letter_obj_vector[x]->letter_info.mail_type = mtLocal;
+                    m_letter_obj_vector[x]->letter_info.host = "";
+                }
+                else
+                {
+                    m_letter_obj_vector[x]->letter_info.mail_type = mtExtern;
+                    m_letter_obj_vector[x]->letter_info.host = host;
+                }
 				m_letter_obj_vector[x]->letter_info.mail_uniqueid = uid;
 				m_letter_obj_vector[x]->letter_info.mail_dirid = DirID;
 				m_letter_obj_vector[x]->letter_info.mail_status = mstatus;
@@ -1472,11 +1488,27 @@ void CMailSmtp::On_Data_Handler(char* text)
 				{
 					usermaxsize = 5000*1024;
 				}
-
 				
-				m_letter_obj_vector[x]->letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, uid, usermaxsize /*mailStg, m_mailfrom.c_str(), 
-					m_letter_obj_vector[x].rcpt_to->c_str(), mtLocal, uid, DirID, mstatus, (unsigned int)time(NULL), usermaxsize*/);
-
+                string host;
+                
+                if(mailStg->GetHost(rcpttoid.c_str(), host) == -1)
+				{
+					host = "";
+				}
+                
+				m_letter_obj_vector[x]->letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, uid, usermaxsize);
+                
+                if(host == "" || strcasecmp(host.c_str(), CMailBase::m_localhostname.c_str()) == 0)
+                {
+                    m_letter_obj_vector[x]->letter_info.mail_type = mtLocal;
+                    m_letter_obj_vector[x]->letter_info.host = "";
+                }
+                else
+                {
+                    m_letter_obj_vector[x]->letter_info.mail_type = mtExtern;
+                    m_letter_obj_vector[x]->letter_info.host = host;
+                }
+                
 				m_letter_obj_vector[x]->letter_info.mail_from = m_mailfrom.c_str();
 				m_letter_obj_vector[x]->letter_info.mail_type = mtLocal;
 				m_letter_obj_vector[x]->letter_info.mail_uniqueid = uid;
@@ -1504,6 +1536,7 @@ void CMailSmtp::On_Data_Handler(char* text)
 				m_letter_obj_vector[x]->letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, uid, usermaxsize);
 
 				m_letter_obj_vector[x]->letter_info.mail_from = m_mailfrom.c_str();
+                m_letter_obj_vector[x]->letter_info.host = "";
 				m_letter_obj_vector[x]->letter_info.mail_type = mtExtern;
 				m_letter_obj_vector[x]->letter_info.mail_uniqueid = uid;
 				m_letter_obj_vector[x]->letter_info.mail_dirid = -1;
@@ -1524,6 +1557,7 @@ void CMailSmtp::On_Data_Handler(char* text)
 
 				m_letter_obj_vector[x]->letter_info.mail_from = m_mailfrom.c_str();
 				m_letter_obj_vector[x]->letter_info.mail_type = mtExtern;
+                m_letter_obj_vector[x]->letter_info.host = "";
 				m_letter_obj_vector[x]->letter_info.mail_uniqueid = uid;
 				m_letter_obj_vector[x]->letter_info.mail_dirid = -1;
 				m_letter_obj_vector[x]->letter_info.mail_status = mstatus;
@@ -1690,7 +1724,9 @@ void CMailSmtp::On_Finish_Data_Handler()
 
 		if(action != jaDrop && m_letter_obj_vector[x]->letter->isOK())
 		{
-			mailStg->InsertMailIndex(m_letter_obj_vector[x]->letter_info.mail_from.c_str(), m_letter_obj_vector[x]->letter_info.mail_to.c_str(), 
+			mailStg->InsertMailIndex(m_letter_obj_vector[x]->letter_info.mail_from.c_str(),
+                        m_letter_obj_vector[x]->letter_info.mail_to.c_str(), 
+                        m_letter_obj_vector[x]->letter_info.host.c_str(),
 						m_letter_obj_vector[x]->letter_info.mail_time,
 						m_letter_obj_vector[x]->letter_info.mail_type, m_letter_obj_vector[x]->letter_info.mail_uniqueid.c_str(), 
 						m_letter_obj_vector[x]->letter_info.mail_dirid, m_letter_obj_vector[x]->letter_info.mail_status,

@@ -4698,14 +4698,32 @@ public:
 							usermaxsize = 5000*1024;
 						}
 						
+                        string host;
+                
+                        if(m_mailStg->GetHost(id.c_str(), host) == -1)
+                        {
+                            host = "";
+                        }
+                
 						pLetter = new MailLetter(m_mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_session->GetMemCached(), newuid, usermaxsize);
 
 						Letter_Info* letter_info = new Letter_Info;
 						if(pLetter && letter_info)
 						{
-							letter_info->mail_from = "";
+                            letter_info->mail_from = "";
 							letter_info->mail_to = "";
-							letter_info->mail_type = mtLocal;
+                            
+                            if(host == "" || strcasecmp(host.c_str(), CMailBase::m_localhostname.c_str()) == 0)
+                            {
+                                letter_info->mail_type = mtLocal;
+                                letter_info->host = "";
+                            }
+                            else
+                            {
+                                letter_info->mail_type = mtExtern;
+                                letter_info->host = "";
+                            }
+                            
 							letter_info->mail_uniqueid = newuid;
 							letter_info->mail_dirid = DirID;
 							letter_info->mail_status = mstatus;
@@ -4864,7 +4882,7 @@ public:
 					
 					vLetter[v]->Close();
 
-					m_mailStg->InsertMailIndex(vLetterInfo[v]->mail_from.c_str(), vLetterInfo[v]->mail_to.c_str(),vLetterInfo[v]->mail_time,
+					m_mailStg->InsertMailIndex(vLetterInfo[v]->mail_from.c_str(), vLetterInfo[v]->mail_to.c_str(), vLetterInfo[v]->host.c_str(), vLetterInfo[v]->mail_time,
 						vLetterInfo[v]->mail_type, vLetterInfo[v]->mail_uniqueid.c_str(), vLetterInfo[v]->mail_dirid, vLetterInfo[v]->mail_status,
 						vLetter[v]->GetEmlName(), vLetter[v]->GetSize(), vLetterInfo[v]->mail_id);
                     
@@ -5461,6 +5479,7 @@ public:
 					Letter_Info letter_info;
 					letter_info.mail_from = "";
 					letter_info.mail_to = "";
+                    letter_info.host = "";
 					letter_info.mail_type = mtLocal;
 					letter_info.mail_uniqueid = newuid;
 					letter_info.mail_dirid = nToDirID;
@@ -5492,7 +5511,7 @@ public:
                     
 					newLetter->Close();
 
-					m_mailStg->InsertMailIndex(letter_info.mail_from.c_str(), letter_info.mail_to.c_str(),letter_info.mail_time,
+					m_mailStg->InsertMailIndex(letter_info.mail_from.c_str(), letter_info.mail_to.c_str(), letter_info.host.c_str(), letter_info.mail_time,
 						letter_info.mail_type, letter_info.mail_uniqueid.c_str(), letter_info.mail_dirid, letter_info.mail_status,
 						newLetter->GetEmlName(), newLetter->GetSize(), letter_info.mail_id);
 					
@@ -5670,6 +5689,7 @@ public:
 					Letter_Info letter_info;
 					letter_info.mail_from = "";
 					letter_info.mail_to = "";
+                    letter_info.host = "";
 					letter_info.mail_type = mtLocal;
 					letter_info.mail_uniqueid = newuid;
 					letter_info.mail_dirid = nToDirID;
@@ -5703,7 +5723,7 @@ public:
 					
                     if(newLetter->isOK())
 					{
-						m_mailStg->InsertMailIndex(letter_info.mail_from.c_str(), letter_info.mail_to.c_str(),letter_info.mail_time,
+						m_mailStg->InsertMailIndex(letter_info.mail_from.c_str(), letter_info.mail_to.c_str(), letter_info.host.c_str(), letter_info.mail_time,
 							letter_info.mail_type, letter_info.mail_uniqueid.c_str(), letter_info.mail_dirid, letter_info.mail_status,
 							newLetter->GetEmlName(), newLetter->GetSize(), letter_info.mail_id);
 					}
@@ -6338,14 +6358,32 @@ public:
 				{
 					BOOL isLocal = FALSE;
 					int nToDirID = -1;
+                    string strHost;
 					string strDomain;
 					string strUserID;
 					strcut(strFrom.c_str(), "@", NULL, strDomain);
 					strcut(strFrom.c_str(), NULL, "@", strUserID);
 					if(CMailBase::Is_Local_Domain(strDomain.c_str()))
 					{
-						isLocal = TRUE;
-						m_mailStg->GetInboxID(strUserID.c_str(), nToDirID);
+                        string host;
+                
+                        if(m_mailStg->GetHost(strUserID.c_str(), host) == -1)
+                        {
+                            host = "";
+                        }
+                        
+                        if(host == "" || strcasecmp(host.c_str(), CMailBase::m_localhostname.c_str()) == 0)
+                        {
+                           strHost = "";
+                           isLocal = TRUE;
+                           m_mailStg->GetInboxID(strUserID.c_str(), nToDirID);
+                        }
+                        else
+                        {
+                            strHost = host;
+                            isLocal = FALSE;
+                            nToDirID = -1;
+                        }						
 					}
 					else
 					{
@@ -6380,6 +6418,7 @@ public:
 					Letter_Info letter_info;
 					letter_info.mail_from = postmaster.c_str();
 					letter_info.mail_to = strFrom.c_str();
+                    letter_info.host = strHost.c_str();
 					letter_info.mail_type = isLocal ? mtLocal : mtExtern;
 					letter_info.mail_uniqueid = newuid;
 					letter_info.mail_dirid = nToDirID;
@@ -6431,7 +6470,7 @@ public:
 					newLetter->SetOK();	
 					newLetter->Close();
 					
-					m_mailStg->InsertMailIndex(letter_info.mail_from.c_str(), letter_info.mail_to.c_str(),letter_info.mail_time,
+					m_mailStg->InsertMailIndex(letter_info.mail_from.c_str(), letter_info.mail_to.c_str(), letter_info.host.c_str(), letter_info.mail_time,
 						letter_info.mail_type, letter_info.mail_uniqueid.c_str(), letter_info.mail_dirid, letter_info.mail_status,
 						newLetter->GetEmlName(), newLetter->GetSize(), letter_info.mail_id);
 					
@@ -7925,12 +7964,12 @@ public:
 				usermaxsize = 5000*1024;
 			}
 			
-			MailLetter* pLetter = new MailLetter(m_mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_session->GetMemCached(), newuid, usermaxsize /*m_mailStg, 
-				"", "", mtLocal, newuid, DirID, mstatus, time(NULL), usermaxsize, DraftID*/);
+			MailLetter* pLetter = new MailLetter(m_mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_session->GetMemCached(), newuid, usermaxsize);
 
 			Letter_Info letter_info;
 			letter_info.mail_from = "";
 			letter_info.mail_to = "";
+            letter_info.host = "";
 			letter_info.mail_type = mtLocal;
 			letter_info.mail_uniqueid = newuid;
 			letter_info.mail_dirid = DirID;
@@ -7993,7 +8032,7 @@ public:
 			{
 				if(letter_info.mail_id == -1)
 				{
-					m_mailStg->InsertMailIndex(letter_info.mail_from.c_str(), letter_info.mail_to.c_str(),letter_info.mail_time,
+					m_mailStg->InsertMailIndex(letter_info.mail_from.c_str(), letter_info.mail_to.c_str(), letter_info.host.c_str(), letter_info.mail_time,
 						letter_info.mail_type, letter_info.mail_uniqueid.c_str(), letter_info.mail_dirid, letter_info.mail_status,
 						pLetter->GetEmlName(), pLetter->GetSize(), letter_info.mail_id);
 				}
@@ -8201,6 +8240,7 @@ public:
 			Letter_Info letter_info;
 			letter_info.mail_from = "";
 			letter_info.mail_to = "";
+            letter_info.host = "";
 			letter_info.mail_type = mtLocal;
 			letter_info.mail_uniqueid = newuid;
 			letter_info.mail_dirid = DirID;
@@ -8263,7 +8303,7 @@ public:
 			{
 				if(letter_info.mail_id == -1)
 				{
-					m_mailStg->InsertMailIndex(letter_info.mail_from.c_str(), letter_info.mail_to.c_str(),letter_info.mail_time,
+					m_mailStg->InsertMailIndex(letter_info.mail_from.c_str(), letter_info.mail_to.c_str(), letter_info.host.c_str(), letter_info.mail_time,
 						letter_info.mail_type, letter_info.mail_uniqueid.c_str(), letter_info.mail_dirid, letter_info.mail_status,
 						pLetter->GetEmlName(), pLetter->GetSize(), letter_info.mail_id);
 				}

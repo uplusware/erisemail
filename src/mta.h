@@ -50,7 +50,7 @@ public:
         const char* mxserver, const char* fromaddr, const char* toaddr,
         unsigned int mid, string& errormsg);
         
-    static BOOL RelayMail(MailStorage* mailStg, memcached_st * memcached, int mid, const char* uniqid, const char *mail_from, const char *rcpt_to, string& errormsg);
+    static BOOL RelayMail(MailStorage* mailStg, memcached_st * memcached, int mid, const char* uniqid, const char *mail_from, const char *rcpt_to, const char * host, string& errormsg);
     
 private:
 	mqd_t m_mta_qid;

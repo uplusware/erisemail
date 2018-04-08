@@ -95,7 +95,8 @@ typedef struct
 	unsigned int mid;
 	char uniqid[256];
 	string mailfrom;
-	string rcptto;	
+	string rcptto;
+    string host;
 	unsigned int mtime;
 	unsigned int mstatus;
 	MailType mtype;
@@ -234,6 +235,7 @@ public:
 
 	int Passwd(const char* uname, const char* password);
 	int Alias(const char* uname, const char* alias);
+    int Host(const char* uname, const char* domain);
 
 	int IsAdmin(const char* username);
 	
@@ -252,6 +254,7 @@ public:
 	
 	int ListMemberOfGroup(const char* group, vector<User_Info>& listtbl);
 	int GetPassword(const char* username, string& password);
+    int GetHost(const char* username, string& host);
 
 	int GetMailLen(int mid, int& mlen);
 	int GetMailBody(int mid, char* body);
@@ -303,7 +306,7 @@ public:
 
 	int InsertMail(const char* mfrom, const char* mto, unsigned int mtime,unsigned int mtx, const char* muniqid,int mdirid, unsigned int mstatus, const char* mbody, unsigned int msize, int& mailid);
 	int UpdateMail(const char* mfrom, const char* mto, unsigned int mtime,unsigned int mtx, const char* muniqid,int mdirid, unsigned int mstatus, const char* mbody, unsigned int msize,  int mailid);
-	int InsertMailIndex(const char* mfrom, const char* mto, unsigned int mtime,unsigned int mtx,const char* muniqid,int mdirid, unsigned int mstatus, const char* mpath, unsigned int msize,  int& mailid);
+	int InsertMailIndex(const char* mfrom, const char* mto, const char* mhost, unsigned int mtime,unsigned int mtx,const char* muniqid,int mdirid, unsigned int mstatus, const char* mpath, unsigned int msize,  int& mailid);
 	int UpdateMailIndex(const char* mfrom, const char* mto, unsigned int mtime,unsigned int mtx,const char* muniqid,int mdirid, unsigned int mstatus, const char* mpath, unsigned int msize,  int mailid);
 
 	int ChangeMailDir(int mdirid, int mailid);

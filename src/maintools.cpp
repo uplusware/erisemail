@@ -13,20 +13,21 @@ void usage()
 {
 	printf("Usage:eriseutil --install\n");
 	printf("Usage:eriseutil --uninstall\n");
-	printf("Usage:eriseutil -a user_group_name password  alias [-u|-g] [-A|-U]\n");
-	printf("Usage:eriseutil -a user_group_name alias [-u|-g] [-A|-U]\n");
-	printf("Usage:eriseutil -d user_group_name\n");
-	printf("Usage:eriseutil -p username\n");
-	printf("Usage:eriseutil -A username groupname\n");
-	printf("Usage:eriseutil -D username groupname\n");
+	printf("Usage:eriseutil -a <user|group name> password  alias [-u|-g] [-A|-U]\n");
+	printf("Usage:eriseutil -a <user|group name> alias [-u|-g] [-A|-U]\n");
+	printf("Usage:eriseutil -d <user|group name>\n");
+	printf("Usage:eriseutil -p <user name>\n");
+	printf("Usage:eriseutil -A <user name> <group name>\n");
+	printf("Usage:eriseutil -D <user name> <group name>\n");
 	printf("Usage:eriseutil -l --level\n");
-	printf("Usage:eriseutil -s --level username level_id\n");
-	printf("Usage:eriseutil -s --defaultlevel level_id\n");
-	printf("Usage:eriseutil -a --level level_name level_description level_mailmaxsize level_boxmaxsize level_audit(yes/no) level_mailsizethreshold level_attachsizethreshold\n");
+	printf("Usage:eriseutil -s --level <user name> <level id>\n");
+	printf("Usage:eriseutil -s --defaultlevel <level id>\n");
+	printf("Usage:eriseutil -a --level <level name> <level description> <max-size of per mail> <max-size of whole inbox> <audit [yes|no]> <threshold of whole mail size > <threshold of all attachments size>\n");
 	printf("Usage:eriseutil -l --user\n");
-	printf("Usage:eriseutil -l --group groupname\n");
-	printf("Usage:eriseutil --disable user_group_name\n");
-	printf("Usage:eriseutil --enable user_group_name\n");
+	printf("Usage:eriseutil -l --group <group name>\n");
+	printf("Usage:eriseutil --disable <user|group name>\n");
+	printf("Usage:eriseutil --enable <user|group name>\n");
+    printf("Usage:eriseutil --host <user name>\n");
 	printf("Usage:eriseutil --encode\n");
 }
 
@@ -298,6 +299,21 @@ int run(int argc, char* argv[])
 				else
 				{
 					usage();
+				}
+			}
+            else if(strcmp(argv[1], "--host") == 0)
+			{
+				
+				if(mailStg && mailStg->Connect(CMailBase::m_db_host.c_str(), CMailBase::m_db_username.c_str(), CMailBase::m_db_password.c_str(), CMailBase::m_db_name.c_str(), CMailBase::m_db_port, CMailBase::m_db_sock_file.c_str()) == 0)
+				{
+									
+					mailStg->Host(argv[2], argv[3]);
+					
+					printf("Done\n");
+				}
+				else
+				{
+					printf("Ops..., system error!\n");
 				}
 			}
 			else
