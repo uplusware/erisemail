@@ -682,7 +682,13 @@ int MailStorage::CheckLogin(const char* username, const char* password)
         pthread_rwlock_unlock(&m_userpwd_cache_lock); //release read
         pthread_rwlock_wrlock(&m_userpwd_cache_lock); //acquire write
         m_userpwd_cache.clear();
+#ifdef _DISTRIBUTED_HOST_ 
+		string strSafetyHost = CMailBase::m_localhostname;
+		SqlSafetyString(strSafetyHost);
+		sprintf(sqlcmd, "SELECT uname, DECODE(upasswd,'%s') FROM usertbl WHERE ustatus = %d AND utype = %d and uhost='%s'", CODE_KEY, usActive, utMember, strSafetyHost.c_str());
+#else
         sprintf(sqlcmd, "SELECT uname, DECODE(upasswd,'%s') FROM usertbl WHERE ustatus = %d AND utype = %d", CODE_KEY, usActive, utMember);
+#endif /* _DISTRIBUTED_HOST_ */
         
         if(Query(sqlcmd, strlen(sqlcmd)) == 0)
         {
@@ -739,9 +745,13 @@ int MailStorage::GetPassword(const char* username, string& password)
 	char sqlcmd[1024];
 	string strSafetyUsername = username;
 	SqlSafetyString(strSafetyUsername);
-		
-	sprintf(sqlcmd, "SELECT DECODE(upasswd,'%s') FROM usertbl WHERE uname='%s' AND utype=%d", CODE_KEY, strSafetyUsername.c_str(), utMember);
-	
+#ifdef _DISTRIBUTED_HOST_ 
+	string strSafetyHost = CMailBase::m_localhostname;
+	SqlSafetyString(strSafetyHost);
+	sprintf(sqlcmd, "SELECT DECODE(upasswd,'%s') FROM usertbl WHERE uname='%s' AND utype=%d AND uhost='%s'", CODE_KEY, strSafetyUsername.c_str(), utMember, strSafetyHost.c_str());
+#else
+    sprintf(sqlcmd, "SELECT DECODE(upasswd,'%s') FROM usertbl WHERE uname='%s' AND utype=%d", CODE_KEY, strSafetyUsername.c_str(), utMember);
+#endif /* _DISTRIBUTED_HOST_ */	
 	if(Query(sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *query_result;
