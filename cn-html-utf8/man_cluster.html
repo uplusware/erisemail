@@ -11,8 +11,11 @@
 <script language="JavaScript"> 
 	function init()
 	{
+		window.parent.change_tab("cluster");
+		list_cluster();
 	}
 
+	function list_cluster()
 	{
 		var qUrl = "/api/listcluster.xml";
 		var xmlHttp = initxmlhttp();
