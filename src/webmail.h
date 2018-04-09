@@ -2698,7 +2698,7 @@ public:
 #ifdef _WITH_DISTRIBUTED_HOST_
                 strResp +="<cluster host=\"";
                 strResp += CMailBase::m_localhostname;
-                strResp +="\" desc=\"local mode\"/>";
+                strResp +="\" desc=\"local host\"/>";
                 
                 string strline;
                 ifstream clustersfilein(CMailBase::m_clusters_list_file.c_str(), ios_base::binary);
