@@ -15,13 +15,13 @@ path=$(pwd)
 
 if [ $# = 3 ]
 then
-	${path}/eriseutil -a $1 $2 $3 -u -U
+	${path}/eriseutil -a $1 $2 $3 $4 -u -U
 elif [ $# = 2 ]
 then
-	${path}/eriseutil -a $1 $2 -u -U
+	${path}/eriseutil -a $1 $2 $3 -u -U
 	
 else
-	echo "Usage:eriseadduser <user name> <password> <alias>"
-	echo "Usage:eriseadduser <user name> <alias>"
+	echo "Usage:eriseaddremoteuser <user name> <alias> <host>"
+	echo "Usage:eriseaddremoteuser <user name> <password> <alias> <host>"
 fi
 cd ${oldpwd}

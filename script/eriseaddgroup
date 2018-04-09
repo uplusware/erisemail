@@ -12,16 +12,12 @@ oldpwd=$(pwd)
 cd ${path}
 path=$(pwd)
 
-if [ $# = 3 ]
-then
-	${path}/eriseutil -a $1 $2 $3 -g -U
-elif [ $# = 2 ]
+if [ $# = 2 ]
 then
 	${path}/eriseutil -a $1 $2 -g -U
 	
 else
-	echo "Usage:eriseaddgroup groupname password alias"
-	echo "Usage:eriseaddgroup groupname alias"
+	echo "Usage:eriseaddgroup <group name> <alias>"
 fi
 
 cd ${oldpwd}

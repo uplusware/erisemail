@@ -2695,11 +2695,11 @@ public:
 				strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
 				strResp += "<erisemail><response errno=\"0\" reason=\"\">";
 				
-#ifdef _WITH_DISTRIBUTED_HOST_
-                strResp +="<cluster host=\"";
+				strResp +="<cluster host=\"";
                 strResp += CMailBase::m_localhostname;
                 strResp +="\" desc=\"local host\"/>";
-                
+				
+#ifdef _WITH_DISTRIBUTED_HOST_
                 string strline;
                 ifstream clustersfilein(CMailBase::m_clusters_list_file.c_str(), ios_base::binary);
                 if(clustersfilein.is_open())
