@@ -235,25 +235,15 @@
 <tr><td>
     <div id="STATUS_TABS">
     <ul>
-    <li><a href="#tabs-1"><img src="statusinfo.gif" />存储</a></li>
-    <li><a href="#tabs-2"><img src="statusinfo.gif" />基本</a></li>
-    <li><a href="#tabs-3"><img src="statusinfo.gif" />SMTP</a></li>
-    <li><a href="#tabs-4"><img src="statusinfo.gif" />POP3</a></li>
-    <li><a href="#tabs-5"><img src="statusinfo.gif" />IMAP</a></li>
-    <li><a href="#tabs-6"><img src="statusinfo.gif" />HTTP</a></li>
-    <li><a href="#tabs-7"><img src="statusinfo.gif" />XMPP</a></li>
+    <li><a href="#tabs-1">基本</a></li>
+    <li><a href="#tabs-2">存储</a></li>
+    <li><a href="#tabs-3">SMTP</a></li>
+    <li><a href="#tabs-4">POP3</a></li>
+    <li><a href="#tabs-5">IMAP</a></li>
+    <li><a href="#tabs-6">HTTP</a></li>
+    <li><a href="#tabs-7">XMPP</a></li>
     </ul>
     <div id="tabs-1">
-	
-	<table id="STORAGETBL" bgcolor="#fafafa" border="0" width="100%" bordercolorlight="#C0C0C0" cellspacing="0" cellpadding="1" bordercolordark="#FFFFFF" class="gray">
-		<tr bgcolor="#FFFFFF"><td class="gray" width="200" height="25" align="right">正常邮件总数:</td><td class="gray" width="660"><div border="0" id="commonMailNumber"></div></td></tr>
-		<tr bgcolor="#fafafa"><td class="gray" width="200" height="25" align="right">标记删除邮件总数:</td><td class="gray" width="660"><div border="0" id="deletedMailNumber"></div></td></tr>
-		<tr bgcolor="#FFFFFF"><td class="gray" width="200" height="25" align="right">正常邮件大小:</td><td class="gray" width="660"><div border="0" id="commonMailSize"></div></td></tr>
-		<tr bgcolor="#fafafa"><td class="gray" width="200" height="25" align="right">标记删除邮件大小:</td><td class="gray" width="660"><div border="0" id="deletedMailSize"></div></td></tr>
-	</table>
-	</div>
-    <div id="tabs-2">
-	
 	<table id="GLOBALTBL" bgcolor="#fafafa" border="0" width="100%" bordercolorlight="#C0C0C0" cellspacing="0" cellpadding="1" bordercolordark="#FFFFFF" class="gray">
 		<tr bgcolor="#FFFFFF"><td class="gray" width="200" height="25" align="right">存储编码格式:</td><td class="gray" width="660"><div border="0" id="Encoding"></div></td></tr>
 		<tr bgcolor="#fafafa"><td class="gray" width="200" height="25" align="right">邮件后缀:</td><td class="gray" width="660"><div border="0" id="EmailDomainName"></div></td></tr>
@@ -263,10 +253,18 @@
 		<tr bgcolor="#fafafa"><td class="gray" width="200" height="25" align="right">最大同时连接数:</td><td class="gray" width="660"><div border="0" id="MaxConnPerProtocal"> / 服务</div></td></tr>
 		<tr bgcolor="#FFFFFF"><td class="gray" width="200" height="25" align="right">邮件外发任务数:</td><td class="gray" width="660"><div border="0" id="RelayTaskNum"></div></td></tr>
 	</table>
+	</div>
     
+    <div id="tabs-2">
+	<table id="STORAGETBL" bgcolor="#fafafa" border="0" width="100%" bordercolorlight="#C0C0C0" cellspacing="0" cellpadding="1" bordercolordark="#FFFFFF" class="gray">
+		<tr bgcolor="#FFFFFF"><td class="gray" width="200" height="25" align="right">正常邮件总数:</td><td class="gray" width="660"><div border="0" id="commonMailNumber"></div></td></tr>
+		<tr bgcolor="#fafafa"><td class="gray" width="200" height="25" align="right">标记删除邮件总数:</td><td class="gray" width="660"><div border="0" id="deletedMailNumber"></div></td></tr>
+		<tr bgcolor="#FFFFFF"><td class="gray" width="200" height="25" align="right">正常邮件大小:</td><td class="gray" width="660"><div border="0" id="commonMailSize"></div></td></tr>
+		<tr bgcolor="#fafafa"><td class="gray" width="200" height="25" align="right">标记删除邮件大小:</td><td class="gray" width="660"><div border="0" id="deletedMailSize"></div></td></tr>
+	</table>
     </div>
+    
     <div id="tabs-3">
-	
 	<table id="SMTPTBL"  bgcolor="#fafafa" border="0" width="100%" bordercolorlight="#C0C0C0" cellspacing="0" cellpadding="1" bordercolordark="#FFFFFF" class="gray">
 		<tr bgcolor="#fafafa"><td class="gray" width="200" height="25" align="right">中继转发:</td><td class="gray" width="660"><div border="0" id="EnableRelay"></div></td></tr>
 		<tr bgcolor="#FFFFFF"><td class="gray" width="200" height="25" align="right">域名反查:</td><td class="gray" width="660"><div border="0" id="SMTPHostNameCheck"></div></td></tr>
@@ -276,10 +274,9 @@
 		<tr bgcolor="#FFFFFF"><td class="gray" width="200" height="25" align="right">SMTP-SSL服务:</td><td class="gray" width="660"><div border="0" id="SMTPSEnable"></div></td></tr>
 		<tr bgcolor="#fafafa"><td class="gray" width="200" height="25" align="right">SMTP-SSL端口号:</td><td class="gray" width="660"><div border="0" id="SMTPSPort"></div></td></tr>
 	</table>
-    
     </div>
+    
     <div id="tabs-4">
-	
 	<table id="POP3TBL"  bgcolor="#fafafa" border="0" width="100%" bordercolorlight="#C0C0C0" cellspacing="0" cellpadding="1" bordercolordark="#FFFFFF" class="gray">
 		<tr bgcolor="#FFFFFF"><td class="gray" width="200" height="25" align="right">POP3服务:</td><td class="gray" width="660"><div border="0" id="POP3Enable"></div></td></tr>
 		<tr bgcolor="#fafafa"><td class="gray" width="200" height="25" align="right">POP3端口号:</td><td class="gray" width="660"><div border="0" id="POP3Port"></div></td></tr>
@@ -288,8 +285,8 @@
 		<tr bgcolor="#FFFFFF"><td class="gray" width="200" height="25" align="right">POP3-SSL端口号:</td><td class="gray" width="660"><div border="0" id="POP3SPort"></div></td></tr>
 	</table>
     </div>
+    
     <div id="tabs-5">
-	
 	<table id="IMAPTBL" bgcolor="#fafafa" border="0" width="100%" bordercolorlight="#C0C0C0" cellspacing="0" cellpadding="1" bordercolordark="#FFFFFF" class="gray">
 		<tr bgcolor="#fafafa"><td class="gray" width="200" height="25" align="right">IMAP服务:</td><td class="gray" width="660"><div border="0" id="IMAPEnable"></div></td></tr>
 		<tr bgcolor="#FFFFFF"><td class="gray" width="200" height="25" align="right">IMAP端口号:</td><td class="gray" width="660"><div border="0" id="IMAPPort"></div></td></tr>
@@ -298,8 +295,8 @@
 		<tr bgcolor="#fafafa"><td class="gray" width="200" height="25" align="right">IMAP-SSL端口号:</td><td class="gray" width="660"><div border="0" id="IMAPSPort"></div></td></tr>
 	</table>
     </div>
+    
     <div id="tabs-6">
-	
 	<table id="HTTPTBL" bgcolor="#fafafa" border="0" width="100%" bordercolorlight="#C0C0C0" cellspacing="0" cellpadding="1" bordercolordark="#FFFFFF" class="gray">
 		<tr bgcolor="#FFFFFF"><td class="gray" width="200" height="25" align="right">HTTP服务:</td><td class="gray" width="660"><div border="0" id="HTTPEnable"></div></td></tr>
 		<tr bgcolor="#fafafa"><td class="gray" width="200" height="25" align="right">HTTP端口号:</td><td class="gray" width="660"><div border="0" id="HTTPPort"></div></td></tr>
@@ -307,8 +304,8 @@
 		<tr bgcolor="#fafafa"><td class="gray" width="200" height="25" align="right">HTTPS端口号:</td><td class="gray" width="660"><div border="0" id="HTTPSPort"></div></td></tr>
 	</table>
 	</div>
+    
     <div id="tabs-7">
-	
 	<table id="XMPPTBL" bgcolor="#fafafa" border="0" width="100%" bordercolorlight="#C0C0C0" cellspacing="0" cellpadding="1" bordercolordark="#FFFFFF" class="gray">
 		<tr bgcolor="#FFFFFF"><td class="gray" width="200" height="25" align="right">XMPP服务:</td><td class="gray" width="660"><div border="0" id="XMPPEnable"></div></td></tr>
 		<tr bgcolor="#fafafa"><td class="gray" width="200" height="25" align="right">XMPP端口号:</td><td class="gray" width="660"><div border="0" id="XMPPPort"></div></td></tr>
@@ -316,6 +313,7 @@
         <tr bgcolor="#fafafa"><td class="gray" width="200" height="25" align="right">XMPP工作线程数:</td><td class="gray" width="660"><div border="0" id="XMPPWorkerThreadNum"></div></td></tr>
 	</table>
     </div>
+    
 	<div border="0" id="STATUS"></div>
 </td></tr>
 </table>

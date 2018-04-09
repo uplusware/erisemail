@@ -238,7 +238,7 @@ void fbuffer::bufcat(const char* buf, int len)
 		}
 		else
 		{
-			char tfile[256];
+			char tfile[1024];
 			sprintf(tfile, "%s/tmp/%08x_%08x_%016lx_%08x.fbf", CMailBase::m_private_path.c_str(), time(NULL), getpid(), pthread_self(), random());
 			m_tmpfile = tfile;
 			

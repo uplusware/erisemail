@@ -1300,6 +1300,7 @@ public:
 			string strUserName;
 			string strUserPwd;
 			string strAlias;
+            string strHost;
 			string strType;
 			string strLevel;
 			
@@ -1308,7 +1309,11 @@ public:
 			m_session->parse_urlencode_value("NEW_ALIAS", strAlias);
 			m_session->parse_urlencode_value("NEW_TYPE", strType);
 			m_session->parse_urlencode_value("NEW_LEVEL", strLevel);
-
+#ifdef _WITH_DISTRIBUTED_HOST_
+            m_session->parse_urlencode_value("NEW_HOST", strHost);
+#else
+            strHost = "";
+#endif /* _WITH_DISTRIBUTED_HOST_ */
 			code_convert_ex("UTF-8", CMailBase::m_encoding.c_str(), strAlias.c_str(), strAlias);
 
 			//POST DATA is UTF-8 format
@@ -1324,7 +1329,7 @@ public:
 			
 			strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
 			unsigned int lid;
-			if(m_mailStg && m_mailStg->AddID(strUserName.c_str(), strUserPwd.c_str(), strAlias.c_str(), strType == "member" ? utMember : utGroup, urGeneralUser, 5000, atoi(strLevel.c_str())) == 0)
+			if(m_mailStg && m_mailStg->AddID(strUserName.c_str(), strUserPwd.c_str(), strAlias.c_str(), strHost.c_str(), strType == "member" ? utMember : utGroup, urGeneralUser, 5000, atoi(strLevel.c_str())) == 0)
 			{
 				strResp += "<erisemail><response errno=\"0\" reason=\"\"></response></erisemail>";
 				
@@ -1467,6 +1472,7 @@ public:
 		{
 			string strUserName;
 			string strAlias;
+            string strHost;
 			string strLevel;
 			string strStatus;
 			
@@ -1474,7 +1480,11 @@ public:
 			m_session->parse_urlencode_value("EDIT_ALIAS", strAlias);
 			m_session->parse_urlencode_value("EDIT_LEVEL", strLevel);
 			m_session->parse_urlencode_value("EDIT_USER_STATUS", strStatus);
-
+#ifdef _WITH_DISTRIBUTED_HOST_
+            m_session->parse_urlencode_value("EDIT_HOST", strHost);
+#else
+            strHost = "";
+#endif /* _WITH_DISTRIBUTED_HOST_ */
 			code_convert_ex("UTF-8", CMailBase::m_encoding.c_str(), strAlias.c_str(), strAlias);
 			
 			strResp = RSP_200_OK_XML;
@@ -1488,7 +1498,7 @@ public:
 			
 			strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
 			unsigned int lid;
-			if(m_mailStg && m_mailStg->UpdateID(strUserName.c_str(), strAlias.c_str(), strStatus == "Active" ? usActive : usDisabled, atoi(strLevel.c_str())) == 0)
+			if(m_mailStg && m_mailStg->UpdateID(strUserName.c_str(), strAlias.c_str(), strHost.c_str(), strStatus == "Active" ? usActive : usDisabled, atoi(strLevel.c_str())) == 0)
 			{
 				strResp += "<erisemail><response errno=\"0\" reason=\"\"></response></erisemail>";
 				
@@ -2560,6 +2570,195 @@ public:
 	
 };
 
+class ApiListCluster : public doc, public storage
+{
+public:
+	ApiListCluster(CHttp* session)  : doc(session), storage(session->GetStorageEngine())
+	{}
+	
+	virtual ~ApiListCluster() {}
+	
+	virtual void Response()
+	{
+		string strResp;
+		
+		//Check Admin IPs
+		BOOL access_result = FALSE;
+		for(int x = 0; x < CMailBase::m_webadmin_list.size(); x++)
+		{
+			if(strmatch(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
+			{
+				access_result = TRUE;
+				break;
+			}
+		}
+		if(CMailBase::m_webadmin_list.size() == 0)
+			access_result = TRUE;
+		if(!access_result)
+		{
+			strResp = RSP_404_NOT_FOUND;
+			m_session->HttpSend(strResp.c_str(), strResp.length());
+			
+			return;
+		}
+		
+		string strauth;
+		m_session->parse_cookie_value("AUTH_TOKEN", strauth);
+		
+		string username, password;
+		if(Security::Decrypt(strauth.c_str(), strauth.length(), strauth, CMailBase::DESKey()) == -1)
+        {
+            strResp = RSP_200_OK_XML;
+			string strHTTPDate;
+			OutHTTPDateString(time(NULL), strHTTPDate);
+			strResp += "Date: ";
+			strResp += strHTTPDate;
+			strResp += "\r\n";
+			
+			strResp +="\r\n";
+			
+			strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+			strResp += "<erisemail>"
+				"<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+				"</erisemail>";
+            m_session->HttpSend(strResp.c_str(), strResp.length());
+            
+            return;
+        }
+		
+		strcut(strauth.c_str(), NULL, ":", username);
+        for(int x = 0; x < username.length(); x++)
+        {
+            if((username[x] >= 'a' && username[x] <= 'z') 
+                || (username[x] >= 'A' && username[x] <= 'Z')
+                || (username[x] >= '0' && username[x] <= '9')
+                || (username[x] == '_' || username[x] == '.'))
+            {
+                //works fine
+            }
+            else
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
+		strcut(strauth.c_str(), ":", NULL, password);
+        for(int x = 0; x < password.length(); x++)
+        {
+            if(password[x] > 126 || password[x] < 32)
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                strResp +="\r\n";
+
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+                    "</erisemail>";
+                m_session->HttpSend(strResp.c_str(), strResp.length());
+                return;
+            }
+        }
+		
+		if(m_mailStg && m_mailStg->CheckAdmin(username.c_str(), password.c_str()) == 0)
+		{	
+			vector <Level_Info> litbl;
+			
+			if(m_mailStg && m_mailStg->ListLevel(litbl) == 0)
+			{
+				strResp = RSP_200_OK_XML;
+				string strHTTPDate;
+				OutHTTPDateString(time(NULL), strHTTPDate);
+				strResp += "Date: ";
+				strResp += strHTTPDate;
+				strResp += "\r\n";
+				
+				strResp +="\r\n";
+				strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+				strResp += "<erisemail><response errno=\"0\" reason=\"\">";
+				
+#ifdef _WITH_DISTRIBUTED_HOST_
+                strResp +="<cluster host=\"";
+                strResp += CMailBase::m_localhostname;
+                strResp +="\" desc=\"local mode\"/>";
+                
+                string strline;
+                ifstream clustersfilein(CMailBase::m_clusters_list_file.c_str(), ios_base::binary);
+                if(clustersfilein.is_open())
+                {
+                    while(getline(clustersfilein, strline))
+                    {
+                        strtrim(strline);
+                        
+                        string strHost;
+                        string strDesc;
+                        
+                        if(strline != "" && strncmp(strline.c_str(), "#", 1) != 0)
+                        {
+                            strcut(strline.c_str(), NULL, ":", strHost);
+                            strcut(strline.c_str(), ":", NULL, strDesc);
+                            if(strcasecmp(strHost.c_str(), CMailBase::m_localhostname.c_str()) != 0)
+                            {
+                                to_safty_xmlstring(strHost);
+                                to_safty_xmlstring(strDesc);
+                                strResp +="<cluster host=\"";
+                                strResp += strHost;
+                                strResp +="\" desc=\"";
+                                strResp += strDesc;
+                                strResp +="\" />";
+                            }
+                        }
+                    }
+                }
+                clustersfilein.close();
+#endif /* _WITH_DISTRIBUTED_HOST_ */
+				strResp += "</response>"
+					"</erisemail>";
+			}
+			else
+			{
+				strResp = RSP_500_SYS_ERR;
+			}		
+		}
+		else
+		{
+			strResp = RSP_200_OK_XML;
+			string strHTTPDate;
+			OutHTTPDateString(time(NULL), strHTTPDate);
+			strResp += "Date: ";
+			strResp += strHTTPDate;
+			strResp += "\r\n";
+			
+			strResp +="\r\n";
+			
+			strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+			strResp += "<erisemail>"
+				"<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+				"</erisemail>";
+		}
+		m_session->HttpSend(strResp.c_str(), strResp.length());
+	}
+	
+};
+
 class ApiListUsers : public doc, public storage
 {
 public:
@@ -2683,6 +2882,8 @@ public:
 					strResp += CMailBase::m_email_domain;
 					strResp += "\" alias=\"";
 					strResp += listtbl[x].alias;
+                    strResp += "\" host=\"";
+					strResp += listtbl[x].host;
 					strResp +="\" type=\"";
 					strResp += uType[listtbl[x].type];
 					strResp +="\" role=\"";
@@ -4680,7 +4881,7 @@ public:
 				string domain;
 				string id;
 				strcut(mailaddr.c_str(), "@", NULL, domain);
-				char newuid[256];
+				char newuid[1024];
 				MailLetter * pLetter = NULL;
 				if(CMailBase::Is_Local_Domain(domain.c_str()))
 				{
@@ -4698,11 +4899,11 @@ public:
 							usermaxsize = 5000*1024;
 						}
 						
-                        string host;
+                        string mail_host;
                 
-                        if(m_mailStg->GetHost(id.c_str(), host) == -1)
+                        if(m_mailStg->GetHost(id.c_str(), mail_host) == -1)
                         {
-                            host = "";
+                            mail_host = "";
                         }
                 
 						pLetter = new MailLetter(m_mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_session->GetMemCached(), newuid, usermaxsize);
@@ -4713,7 +4914,7 @@ public:
                             letter_info->mail_from = "";
 							letter_info->mail_to = "";
                             
-                            if(host == "" || strcasecmp(host.c_str(), CMailBase::m_localhostname.c_str()) == 0)
+                            if(mail_host == "" || strcasecmp(mail_host.c_str(), CMailBase::m_localhostname.c_str()) == 0)
                             {
                                 letter_info->mail_type = mtLocal;
                                 letter_info->host = "";
@@ -5454,7 +5655,7 @@ public:
 					(strcasecmp(todir_owner.c_str(), username.c_str()) == 0))
 				{
 					
-					char newuid[256];
+					char newuid[1024];
 					sprintf(newuid, "%08x_%08x_%016lx_%08x_%s", time(NULL), getpid(), pthread_self(), random(), CMailBase::m_localhostname.c_str());
 					
 					unsigned long long usermaxsize;
@@ -5664,7 +5865,7 @@ public:
 					(strcasecmp(todir_owner.c_str(), username.c_str()) == 0))
 				{
 					
-					char newuid[256];
+					char newuid[1024];
 					sprintf(newuid, "%08x_%08x_%016lx_%08x_%s", time(NULL), getpid(), pthread_self(), random(), CMailBase::m_localhostname.c_str());
 					
 					unsigned long long usermaxsize;
@@ -6365,14 +6566,14 @@ public:
 					strcut(strFrom.c_str(), NULL, "@", strUserID);
 					if(CMailBase::Is_Local_Domain(strDomain.c_str()))
 					{
-                        string host;
+                        string mail_host;
                 
-                        if(m_mailStg->GetHost(strUserID.c_str(), host) == -1)
+                        if(m_mailStg->GetHost(strUserID.c_str(), mail_host) == -1)
                         {
-                            host = "";
+                            mail_host = "";
                         }
                         
-                        if(host == "" || strcasecmp(host.c_str(), CMailBase::m_localhostname.c_str()) == 0)
+                        if(mail_host == "" || strcasecmp(mail_host.c_str(), CMailBase::m_localhostname.c_str()) == 0)
                         {
                            strHost = "";
                            isLocal = TRUE;
@@ -6380,7 +6581,7 @@ public:
                         }
                         else
                         {
-                            strHost = host;
+                            strHost = mail_host;
                             isLocal = FALSE;
                             nToDirID = -1;
                         }						
@@ -6394,7 +6595,7 @@ public:
 					char szTmp[128];
 					unsigned int mstatus;
 					
-					char newuid[256];
+					char newuid[1024];
 					sprintf(newuid, "%08x_%08x_%016lx_%08x_%s", time(NULL), getpid(), pthread_self(), random(), CMailBase::m_localhostname.c_str());
 					
 					unsigned long long usermaxsize;
@@ -7938,7 +8139,7 @@ public:
 			code_convert_ex("UTF-8", CMailBase::m_encoding.c_str(), strAttachFiles.c_str(), strAttachFiles);
 			
 			
-			char newuid[256];
+			char newuid[1024];
 			sprintf(newuid, "%08x_%08x_%016lx_%08x_%s", time(NULL), getpid(), pthread_self(), random(), CMailBase::m_localhostname.c_str());
 			int DraftID;
 			if(strDraftID == "")
@@ -8209,7 +8410,7 @@ public:
 
 			code_convert_ex("UTF-8", CMailBase::m_encoding.c_str(), strAttachFiles.c_str(), strAttachFiles);
 			
-			char newuid[256];
+			char newuid[1024];
 			sprintf(newuid, "%08x_%08x_%016lx_%08x_%s", time(NULL), getpid(), pthread_self(), random(), CMailBase::m_localhostname.c_str());
 			int DraftID;
 			if(strDraftID == "")

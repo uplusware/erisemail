@@ -113,6 +113,7 @@ string	CMailBase::m_permit_list_file = PERMIT_FILE_PATH;
 string	CMailBase::m_reject_list_file = REJECT_FILE_PATH;
 string	CMailBase::m_domain_list_file = DOMAIN_FILE_PATH;
 string	CMailBase::m_webadmin_list_file = WEBADMIN_FILE_PATH;
+string	CMailBase::m_clusters_list_file = CLUSTERS_FILE_PATH;
 
 vector<stReject> CMailBase::m_reject_list;
 vector<string> CMailBase::m_permit_list;
@@ -816,6 +817,8 @@ BOOL CMailBase::LoadList()
 		sem_post(plock);
 		sem_close(plock);
 	}
+    
+    return TRUE;
 }
 
 BOOL CMailBase::UnLoadList()

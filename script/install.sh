@@ -73,6 +73,9 @@ chmod a-x /etc/erisemail/reject.list
 test -x /etc/erisemail/webadmin.list || cp -f ${path}/webadmin.list /etc/erisemail/webadmin.list
 chmod a-x /etc/erisemail/webadmin.list
 
+test -x /etc/erisemail/clusters.list || cp -f ${path}/clusters.list /etc/erisemail/clusters.list
+chmod a-x /etc/erisemail/clusters.list
+
 test -x /etc/erisemail/mfilter.xml || cp -f ${path}/mfilter.xml /etc/erisemail/mfilter.xml
 chmod a-x /etc/erisemail/mfilter.xml
 

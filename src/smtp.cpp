@@ -1420,7 +1420,7 @@ void CMailSmtp::On_Data_Handler(char* text)
 	
 	m_status = m_status|STATUS_SUPOSE_DATAING;
 
-	char uid[256];
+	char uid[1024];
 	int vlen = m_letter_obj_vector.size();
 	for(int x =0; x< vlen; x++)
 	{
@@ -1449,18 +1449,18 @@ void CMailSmtp::On_Data_Handler(char* text)
 					usermaxsize = 5000*1024;
 				}
 				
-                string host;
+                string mail_host;
                 
-                if(mailStg->GetHost(rcpttoid.c_str(), host) == -1)
+                if(mailStg->GetHost(rcpttoid.c_str(), mail_host) == -1)
 				{
-					host = "";
+					mail_host = "";
 				}
                 
 				m_letter_obj_vector[x]->letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, uid, usermaxsize);
 
 				m_letter_obj_vector[x]->letter_info.mail_from = m_mailfrom.c_str();
                 
-                if(host == "" || strcasecmp(host.c_str(), CMailBase::m_localhostname.c_str()) == 0)
+                if(mail_host == "" || strcasecmp(mail_host.c_str(), CMailBase::m_localhostname.c_str()) == 0)
                 {
                     m_letter_obj_vector[x]->letter_info.mail_type = mtLocal;
                     m_letter_obj_vector[x]->letter_info.host = "";
@@ -1468,7 +1468,7 @@ void CMailSmtp::On_Data_Handler(char* text)
                 else
                 {
                     m_letter_obj_vector[x]->letter_info.mail_type = mtExtern;
-                    m_letter_obj_vector[x]->letter_info.host = host;
+                    m_letter_obj_vector[x]->letter_info.host = mail_host;
                 }
 				m_letter_obj_vector[x]->letter_info.mail_uniqueid = uid;
 				m_letter_obj_vector[x]->letter_info.mail_dirid = DirID;
@@ -1489,16 +1489,16 @@ void CMailSmtp::On_Data_Handler(char* text)
 					usermaxsize = 5000*1024;
 				}
 				
-                string host;
+                string mail_host;
                 
-                if(mailStg->GetHost(rcpttoid.c_str(), host) == -1)
+                if(mailStg->GetHost(rcpttoid.c_str(), mail_host) == -1)
 				{
-					host = "";
+					mail_host = "";
 				}
                 
 				m_letter_obj_vector[x]->letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, uid, usermaxsize);
                 
-                if(host == "" || strcasecmp(host.c_str(), CMailBase::m_localhostname.c_str()) == 0)
+                if(mail_host == "" || strcasecmp(mail_host.c_str(), CMailBase::m_localhostname.c_str()) == 0)
                 {
                     m_letter_obj_vector[x]->letter_info.mail_type = mtLocal;
                     m_letter_obj_vector[x]->letter_info.host = "";
@@ -1506,7 +1506,7 @@ void CMailSmtp::On_Data_Handler(char* text)
                 else
                 {
                     m_letter_obj_vector[x]->letter_info.mail_type = mtExtern;
-                    m_letter_obj_vector[x]->letter_info.host = host;
+                    m_letter_obj_vector[x]->letter_info.host = mail_host;
                 }
                 
 				m_letter_obj_vector[x]->letter_info.mail_from = m_mailfrom.c_str();

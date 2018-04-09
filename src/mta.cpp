@@ -589,11 +589,11 @@ BOOL MailTransferAgent::SendMail(MailStorage* mailStg, memcached_st * memcached,
 }
 
 
-BOOL MailTransferAgent::RelayMail(MailStorage* mailStg, memcached_st * memcached, int mid, const char* uniqid, const char *mail_from, const char *rcpt_to, const char * host, string& errormsg)
+BOOL MailTransferAgent::RelayMail(MailStorage* mailStg, memcached_st * memcached, int mid, const char* uniqid, const char *mail_from, const char *rcpt_to, const char * mail_host, string& errormsg)
 {
     vector<DNSQry_List> list;
     
-    if(strcmp(host, "") == 0 )
+    if(strcmp(mail_host, "") == 0 )
     {
         string svraddr;
         strcut(rcpt_to, "@", NULL, svraddr);
@@ -617,10 +617,10 @@ BOOL MailTransferAgent::RelayMail(MailStorage* mailStg, memcached_st * memcached
     }
     else 
     {
-        if(strcasecmp(host, CMailBase::m_localhostname.c_str()) != 0) //not self-host
+        if(strcasecmp(mail_host, CMailBase::m_localhostname.c_str()) != 0) //not self-host
         {
             DNSQry_List ml;
-            strcpy(ml.address, host);
+            strcpy(ml.address, mail_host);
             ml.priority = 0;
             list.push_back(ml);
         }

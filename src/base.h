@@ -12,6 +12,7 @@
 #define REJECT_FILE_PATH	"/etc/erisemail/reject.list"
 #define DOMAIN_FILE_PATH	"/etc/erisemail/domain.list"
 #define WEBADMIN_FILE_PATH	"/etc/erisemail/webadmin.list"
+#define CLUSTERS_FILE_PATH	"/etc/erisemail/clusters.list"
 
 #include <openssl/rsa.h>
 #include <openssl/crypto.h>
@@ -927,6 +928,7 @@ public:
 	static string	m_reject_list_file;
 	static string	m_domain_list_file;
 	static string	m_webadmin_list_file;
+    static string   m_clusters_list_file;
 
 
 	static vector<stReject> m_reject_list;

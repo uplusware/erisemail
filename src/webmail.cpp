@@ -96,6 +96,12 @@ void Webmail::Response()
         pDoc->Response();
         delete pDoc;
     }
+    else if(strQueryPage == "api/listcluster.xml")
+    {
+        ApiListCluster* pDoc = new ApiListCluster(m_session);
+        pDoc->Response();
+        delete pDoc;
+    }
     else if(strQueryPage == "api/createlevel.xml")
     {
         ApiCreateLevel* pDoc = new ApiCreateLevel(m_session);

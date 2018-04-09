@@ -51,12 +51,46 @@
 			}
 		}
 	}
-	
+	function load_clusters_to_option(selobj)
+	{
+		var qUrl = "/api/listcluster.xml";
+		var xmlHttp = initxmlhttp();
+		xmlHttp.open("GET", qUrl , false);
+		xmlHttp.send("");
+
+		if(xmlHttp.status== 200)
+		{
+			var xmldom = xmlHttp.responseXML;
+			xmldom.documentElement.normalize();
+			var responseNode = xmldom.documentElement.childNodes.item(0);
+			if(responseNode.tagName == "response")
+			{
+				var errno = responseNode.getAttribute("errno")
+				if(errno == "0" || errno == 0)
+				{
+					var strTmp;
+					var clusterList = responseNode.childNodes;
+					
+					for(var i = 0; i < clusterList.length; i++)
+					{
+						if(clusterList.item(i).tagName == "cluster")
+						{
+							var varItem = new Option(clusterList.item(i).getAttribute("host"), clusterList.item(i).getAttribute("host"));
+					        selobj.options.add(varItem);
+					    }
+					}
+
+					_$_("STATUS").innerHTML = "";
+					_$_("STATUS").style.display = "none";
+				}
+			}
+		}
+	}	
 	function show_edituser_div(username, obj)
 	{
         $("#EDIT_USER_DIV").dialog({
-		  height: 300,
-		  width: 300,
+		  height: 380,
+		  width: 360,
 		  modal: false,
 		  title: '编辑账号',
 		  buttons: {                  
@@ -72,6 +106,7 @@
 		if(_$_('EDIT_USER_DIV').getAttribute("loaded") != "true")
 		{
 			load_levels_to_option(_$_('EDIT_LEVEL'));
+            load_clusters_to_option(_$_('EDIT_HOST'));
 			_$_('EDIT_USER_DIV').setAttribute("loaded", "true")
 		}
 
@@ -87,14 +122,26 @@
         	}        
 
 		}
+        
+        for (var i = 0; i < _$_('EDIT_HOST').options.length; i++) 
+		{
+			if (_$_('EDIT_HOST').options[i].value == obj.getAttribute("host"))
+			{
+				_$_('EDIT_HOST').options[i].selected = true;            
+            	break;        
+        	}        
 
+		}
+        
 		if(obj.getAttribute("type") == "Group" || obj.getAttribute("type") == "group")
 		{
 			_$_('EDIT_LEVEL').disabled = true;
+            _$_('EDIT_HOST').disabled = true;
 		}
 		else
 		{
 			_$_('EDIT_LEVEL').disabled = false;
+            _$_('EDIT_HOST').disabled = false;
 		}
 		
 		_$_('EDIT_USER_STATUS').checked = (obj.getAttribute("status") == "Active") ? false : true;
@@ -105,8 +152,8 @@
 	function show_newuser_div()
 	{
         $("#NEW_USER_DIV").dialog({
-		  height: 300,
-		  width: 300,
+		  height: 380,
+		  width: 360,
 		  modal: false,
 		  title: '新增账号',
 		  buttons: {                  
@@ -136,6 +183,7 @@
 		if(_$_('NEW_USER_DIV').getAttribute("loaded") != "true")
 		{
 			load_levels_to_option(_$_('NEW_LEVEL'));
+            load_clusters_to_option(_$_('NEW_HOST'));
 			_$_('NEW_USER_DIV').setAttribute("loaded", "true")
 		}
 
@@ -397,6 +445,7 @@
 		strPostData += "&NEW_ALIAS=" + encodeURIComponent(_$_('NEW_ALIAS').value);
 		strPostData += "&NEW_TYPE=" + encodeURIComponent(strType);
 		strPostData += "&NEW_LEVEL=" + encodeURIComponent(_$_('NEW_LEVEL').value);
+        strPostData += "&NEW_HOST=" + encodeURIComponent(_$_('NEW_HOST').value);
 		var xmlHttp = initxmlhttp();
 	    xmlHttp.onreadystatechange = function()
 		{
@@ -437,6 +486,7 @@
 		var strPostData = "EDIT_USERNAME=" + encodeURIComponent(_$_('EDIT_USERNAME').value);
 		strPostData += "&EDIT_ALIAS=" + encodeURIComponent(_$_('EDIT_ALIAS').value);
 		strPostData += "&EDIT_LEVEL=" + encodeURIComponent(_$_('EDIT_LEVEL').value);
+        strPostData += "&EDIT_HOST=" + encodeURIComponent(_$_('EDIT_HOST').value);
 		strPostData += "&EDIT_USER_STATUS=" + encodeURIComponent(_$_('EDIT_USER_STATUS').checked == true ? "Disable" : "Active");
 		var xmlHttp = initxmlhttp();
 		
@@ -491,6 +541,7 @@
 			_$_('NEW_USERPWD2').disabled = false;
 
 			_$_('NEW_LEVEL').disabled = false;
+            _$_('NEW_HOST').disabled = false;
 
 			_$_('NEW_USERPWD').value = "";
 			_$_('NEW_USERPWD2').value = "";
@@ -503,6 +554,7 @@
 			_$_('NEW_USERPWD2').disabled = true;
 
 			_$_('NEW_LEVEL').disabled = true;
+            _$_('NEW_HOST').disabled = true;
 
 			_$_('NEW_USERPWD').value = randpwd();
 			_$_('NEW_USERPWD2').value = _$_('NEW_USERPWD').value;
@@ -543,6 +595,10 @@
 		<td class="gray" align="right">策略组:</td>
 		<td class="gray" align="left"><select nam="NEW_LEVEL" id="NEW_LEVEL"></select></td>
 		</tr>
+        <tr>
+		<td class="gray" align="right">主机域:</td>
+		<td class="gray" align="left"><select name="NEW_HOST" id="NEW_HOST"></select></td>
+        </tr>
 		</table>
 	</td><tr>
 	</table>
@@ -565,6 +621,10 @@
 		<td class="gray" align="right">策略组:</td>
 		<td class="gray" align="left"><select name="EDIT_LEVEL" id="EDIT_LEVEL"></select></td>
 		</tr>
+         <tr>
+		<td class="gray" align="right">主机域:</td>
+		<td class="gray" align="left"><select name="EDIT_HOST" id="EDIT_HOST"></select></td>
+        </tr>
 		<tr>
 		<td class="gray" align="right">禁用:</td>
 		<td class="gray" align="left"><input type="checkbox" name="EDIT_USER_STATUS" id="EDIT_USER_STATUS"></td>

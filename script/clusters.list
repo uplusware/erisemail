@@ -1,0 +1,5 @@
+#cluster list
+dev1:dev #1 node
+dev2:dev #2 node
+dev3:dev #3 node
+dev4:dev #4 node

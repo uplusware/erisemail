@@ -123,10 +123,10 @@
 
 <div id="ACCESS_TABS">
 <ul>
-<li><a href="#tabs-1"><img src="list.gif" />黑名单</a></li>
-<li><a href="#tabs-2"><img src="list.gif" />白名单</a></li>
-<li><a href="#tabs-3"><img src="list.gif" />附加域</a></li>
-<li><a href="#tabs-4"><img src="list.gif" />Web后台允许IP</a></li>
+<li><a href="#tabs-1">黑名单</a></li>
+<li><a href="#tabs-2">白名单</a></li>
+<li><a href="#tabs-3">WebAdmin允许IP</a></li>
+<li><a href="#tabs-4">附加域</a></li>
 </ul>
 <div id="tabs-1">    
 <div id="GLOBAL_REJECT_LIST_DIV" border="0">
@@ -166,24 +166,6 @@
 </div>
 </div>
 <div id="tabs-3">
-<div id="DOMAIN_PERMIT_LIST_DIV" border="0">
-	<table border="0" width="100%" bordercolorlight="#C0C0C0" cellpadding="2" cellspacing="0" bordercolordark="#FFFFFF" class="gray">
-		<tr>
-			<td class="gray">
-				<textarea style="height:170px; width:700px;" id="DOMAIN_PERMIT_LIST" name="DOMAIN_PERMIT_LIST" onChange=""></textarea>
-			</td>
-		</tr>
-
-		<tr>
-			<td class="gray" valign="bottom">
-				<button id="SAVE3" name="SAVE" class="ui-button ui-corner-all ui-widget" onclick="save_config_file('DOMAIN_PERMIT_LIST', _$_('DOMAIN_PERMIT_LIST'), _$_('DOMAIN_PERMIT_LIST_STATUS'));">保存</button>
-			</td>
-		</tr>
-	</table>
-	<div id="DOMAIN_PERMIT_LIST_STATUS"></div>
-</div>
-</div>
-<div id="tabs-4">
 <div id="WEBADMIN_PERMIT_LIST_DIV" border="0">
 	<table border="0" width="100%" bordercolorlight="#C0C0C0" cellpadding="2" cellspacing="0" bordercolordark="#FFFFFF" class="gray">
 		<tr>
@@ -199,6 +181,24 @@
 		</tr>
 	</table>
 	<div id="WEBADMIN_PERMIT_LIST_STATUS"></div>
+</div>
+</div>
+<div id="tabs-4">
+<div id="DOMAIN_PERMIT_LIST_DIV" border="0">
+	<table border="0" width="100%" bordercolorlight="#C0C0C0" cellpadding="2" cellspacing="0" bordercolordark="#FFFFFF" class="gray">
+		<tr>
+			<td class="gray">
+				<textarea style="height:170px; width:700px;" id="DOMAIN_PERMIT_LIST" name="DOMAIN_PERMIT_LIST" onChange=""></textarea>
+			</td>
+		</tr>
+
+		<tr>
+			<td class="gray" valign="bottom">
+				<button id="SAVE3" name="SAVE" class="ui-button ui-corner-all ui-widget" onclick="save_config_file('DOMAIN_PERMIT_LIST', _$_('DOMAIN_PERMIT_LIST'), _$_('DOMAIN_PERMIT_LIST_STATUS'));">保存</button>
+			</td>
+		</tr>
+	</table>
+	<div id="DOMAIN_PERMIT_LIST_STATUS"></div>
 </div>
 </div>
 </p>
