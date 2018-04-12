@@ -21,6 +21,7 @@ BOOL CMailBase::m_prod_type = PROD_EMAIL;
 
 BOOL CMailBase::m_close_stderr = TRUE;
 string CMailBase::m_encoding = "UTF-8";
+string CMailBase::m_master_hostname = "";
 
 #ifdef _WITH_HDFS_
     string CMailBase::m_hdfs_host = "hdfs://localhost";
@@ -214,6 +215,13 @@ BOOL CMailBase::LoadConfig()
 				strcut(strline.c_str(), "=", NULL, m_encoding);
 				strtrim(m_encoding);
 			}
+#ifdef _WITH_DIST_			
+			else if(strcasecmp(strKey.c_str(), "ClusterMasterHostname") == 0)
+			{
+				strcut(strline.c_str(), "=", NULL, m_master_hostname);
+				strtrim(m_master_hostname);
+			}
+#endif /* _WITH_DIST_ */
             else if(strcasecmp(strKey.c_str(), "CloseStderr") == 0)
 			{
 				string close_stderr;

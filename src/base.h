@@ -834,6 +834,9 @@ public:
     static unsigned int m_prod_type;
     
     static BOOL     m_close_stderr;
+	
+	static BOOL	m_is_master;
+	static string	m_master_hostname;
 #ifdef _WITH_HDFS_
     static string   m_java_home;
     static string   m_hadoop_home;
@@ -907,8 +910,7 @@ public:
 	static string	m_db_password;
     static string	m_db_sock_file;
 	static unsigned int m_db_max_conn;
-      
-    static BOOL	m_is_master;
+	
     static string	m_master_db_host;
     static unsigned short	m_master_db_port;
 	static string	m_master_db_name;

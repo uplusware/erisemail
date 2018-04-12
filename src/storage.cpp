@@ -103,8 +103,7 @@ int MailStorage::Connect(const char * host, const char* username, const char* pa
     m_password = password;
     m_port = port;
     m_sock_file = sock_file;
-    if(database != NULL)
-        m_database = database;
+    m_database = database != NULL ? database: "";
     
     if(!m_is_inited)
     {
@@ -176,7 +175,7 @@ void MailStorage::KeepLive()
 	if(Ping() != 0)
 	{
 		Close();
-		Connect(m_host.c_str(), m_username.c_str(), m_password.c_str(), m_database.c_str(), m_port, m_sock_file.c_str());
+		Connect(m_host.c_str(), m_username.c_str(), m_password.c_str(), m_database.c_str(), m_port, m_sock_file == "" ? NULL : m_sock_file.c_str());
 	}
 }
 
@@ -565,8 +564,11 @@ int MailStorage::Install(const char* database)
         RollbackTransaction();
 		return -1;
 	}	
-
+#ifdef _WITH_DIST_
+	if(AddID("admin", "admin", "Administrator", CMailBase::m_master_hostname.c_str(), utMember, urAdministrator, MAX_EMAIL_LEN, -1) == -1)
+#else
 	if(AddID("admin", "admin", "Administrator", "", utMember, urAdministrator, MAX_EMAIL_LEN, -1) == -1)
+#endif /*  _WITH_DIST_ */
 	{
         printf("Add admin id wrong\n");
         RollbackTransaction();
@@ -2606,7 +2608,6 @@ int MailStorage::ListID(vector<User_Info>& listtbl, string orderby, BOOL desc)
 	sprintf(sqlcmd, "SELECT uname, ualias, utype, urole, usize, ustatus, ulevel FROM usertbl ORDER BY %s %s", orderby == "" ? "utime" : orderby.c_str(), desc ? "desc" : "");
 #endif /* _WITH_DIST_ */
 
-	
 	if(Query(sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *query_result;

@@ -309,80 +309,54 @@
 									td2.height="25";
 									setStyle(td2, "TD.gray");
 							        td2.innerHTML = userList.item(i).getAttribute("alias");
-
+									
 									var td3 = tr.insertCell(3);
 									td3.valign="middle";
 									td3.align="left";
 									td3.height="25";
 									setStyle(td3, "TD.gray");
-							        td3.innerHTML = userList.item(i).getAttribute("lname");
+							        td3.innerHTML = userList.item(i).getAttribute("alias");
 									
 									var td4 = tr.insertCell(4);
 									td4.valign="middle";
-									td4.align="center";
-									td4.width="50";
+									td4.align="left";
 									td4.height="25";
 									setStyle(td4, "TD.gray");
-							        td4.innerHTML = userList.item(i).getAttribute("type") == "Group" ? "Group" : "User" ;
-
+							        td4.innerHTML = userList.item(i).getAttribute("lname");
+									
 									var td5 = tr.insertCell(5);
 									td5.valign="middle";
 									td5.align="center";
+									td5.width="50";
 									td5.height="25";
 									setStyle(td5, "TD.gray");
-							        td5.innerHTML = userList.item(i).getAttribute("role") == "Administrator" ? "Administrator" : "General User" ;
-									
+							        td5.innerHTML = userList.item(i).getAttribute("type") == "Group" ? "Group" : "User" ;
+
 									var td6 = tr.insertCell(6);
 									td6.valign="middle";
 									td6.align="center";
 									td6.height="25";
 									setStyle(td6, "TD.gray");
-							        td6.innerHTML = userList.item(i).getAttribute("status") == "Active" ? "Active" : "Disabled";
-
+							        td6.innerHTML = userList.item(i).getAttribute("role") == "Administrator" ? "Administrator" : "General User" ;
+									
 									var td7 = tr.insertCell(7);
 									td7.valign="middle";
 									td7.align="center";
 									td7.height="25";
-									
-									td7.setAttribute("username", userList.item(i).getAttribute("name"));
-							        td7.innerHTML = "<img src=\"edit.gif\">";
-
-									td7.onclick = function()
-									{
-										show_edituser_div(this.getAttribute("username"), this.parentNode);
-									}
-									
-									td7.onmouseover = function()
-									{
-										this.mousepoint = 99;
-										this.style.cursor ="pointer";
-										
-										this.setAttribute("imagesrc", this.style.backgroundImage);
-										this.style.backgroundImage = "url('activebg.gif')";
-									}
-									
-									td7.onmouseout = function()
-									{
-										this.mousepoint = 99;
-										this.style.cursor ="default";
-
-										this.style.backgroundImage = this.getAttribute("imagesrc");
-									}
-
 									setStyle(td7, "TD.gray");
-									
+							        td7.innerHTML = userList.item(i).getAttribute("status") == "Active" ? "Active" : "Disabled";
+
 									var td8 = tr.insertCell(8);
 									td8.valign="middle";
 									td8.align="center";
 									td8.height="25";
-									setStyle(td8, "TD.gray");
+									
 									td8.setAttribute("username", userList.item(i).getAttribute("name"));
-							        td8.innerHTML = "<img src=\"delete.gif\">";
+							        td8.innerHTML = "<img src=\"edit.gif\">";
 
 									td8.onclick = function()
 									{
-										if(confirm("Sure to remove?") ==  true)
-											do_delete_user(this.parentNode.getAttribute('username'));
+										show_edituser_div(this.getAttribute("username"), this.parentNode);
 									}
 									
 									td8.onmouseover = function()
@@ -395,6 +369,39 @@
 									}
 									
 									td8.onmouseout = function()
+									{
+										this.mousepoint = 99;
+										this.style.cursor ="default";
+
+										this.style.backgroundImage = this.getAttribute("imagesrc");
+									}
+
+									setStyle(td8, "TD.gray");
+									
+									var td9 = tr.insertCell(9);
+									td9.valign="middle";
+									td9.align="center";
+									td9.height="25";
+									setStyle(td9, "TD.gray");
+									td9.setAttribute("username", userList.item(i).getAttribute("name"));
+							        td9.innerHTML = "<img src=\"delete.gif\">";
+
+									td9.onclick = function()
+									{
+										if(confirm("Sure to remove?") ==  true)
+											do_delete_user(this.parentNode.getAttribute('username'));
+									}
+									
+									td9.onmouseover = function()
+									{
+										this.mousepoint = 99;
+										this.style.cursor ="pointer";
+										
+										this.setAttribute("imagesrc", this.style.backgroundImage);
+										this.style.backgroundImage = "url('activebg.gif')";
+									}
+									
+									td9.onmouseout = function()
 									{
 										this.mousepoint = 99;
 										this.style.cursor ="default";
@@ -650,6 +657,7 @@
 				<td width="22" class="blue" align="center" valign="middle" height="25"><img src="book.gif"></td>
 				<td height="25" align="center" class="blue" onMouseOver="this.mousepoint = 99;this.style.cursor = 'pointer';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onClick="sort_users('uname')"><font color="#FFFFFF"><b>ID</b></font></td>
 				<td height="25" align="center" class="blue" onMouseOver="this.mousepoint = 99;this.style.cursor = 'pointer';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onClick="sort_users('ualias')"><font color="#FFFFFF"><b>Alias</b></font></td>
+				<td height="25" align="center" class="blue" onMouseOver="this.mousepoint = 99;this.style.cursor = 'pointer';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onClick="sort_users('uhost')"><font color="#FFFFFF"><b>Host</b></font></td>
 				<td height="25" align="center" class="blue" onMouseOver="this.mousepoint = 99;this.style.cursor = 'pointer';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onClick="sort_users('ulevel')"><font color="#FFFFFF"><b>Policy</b></font></td>
 				<td height="25" align="center" class="blue" onMouseOver="this.mousepoint = 99;this.style.cursor = 'pointer';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onClick="sort_users('utype')"><font color="#FFFFFF"><b>Type</b></font></td>
 				<td height="25" align="center" class="blue" onMouseOver="this.mousepoint = 99;this.style.cursor = 'pointer';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onClick="sort_users('urole')"><font color="#FFFFFF"><b>Role</b></font></td>
