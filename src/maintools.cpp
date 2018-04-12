@@ -13,13 +13,13 @@ void usage()
 {
 	printf("Usage:eriseutil --install\n");
 	printf("Usage:eriseutil --uninstall\n");
-#ifdef _WITH_DISTRIBUTED_HOST_
+#ifdef _WITH_DIST_
     printf("Usage:eriseutil -a <user name> <password> <alias> <host> -u [-A|-U]\n");
     printf("Usage:eriseutil -a <user name> <alias> <host> -u [-A|-U]\n");
 #else
 	printf("Usage:eriseutil -a <user name> <password> <alias> -u [-A|-U]\n");
     printf("Usage:eriseutil -a <user name> <alias> -u [-A|-U]\n");
-#endif /* _WITH_DISTRIBUTED_HOST_ */
+#endif /* _WITH_DIST_ */
     printf("Usage:eriseutil -a <group name> <alias> -g\n");
 	printf("Usage:eriseutil -d <user|group name>\n");
 	printf("Usage:eriseutil -p <user name>\n");
@@ -33,9 +33,9 @@ void usage()
 	printf("Usage:eriseutil -l --group <group name>\n");
 	printf("Usage:eriseutil --disable <user|group name>\n");
 	printf("Usage:eriseutil --enable <user|group name>\n");
-#ifdef _WITH_DISTRIBUTED_HOST_
+#ifdef _WITH_DIST_
     printf("Usage:eriseutil --host <user name>\n");
-#endif /* _WITH_DISTRIBUTED_HOST_ */
+#endif /* _WITH_DIST_ */
 	printf("Usage:eriseutil --encode\n");
 }
 
@@ -55,7 +55,7 @@ int run(int argc, char* argv[])
 				{
 					unsigned int lid;
 					
-					if(mailStg && mailStg->Connect(CMailBase::m_db_host.c_str(), CMailBase::m_db_username.c_str(), CMailBase::m_db_password.c_str(), CMailBase::m_db_name.c_str(), CMailBase::m_db_port, CMailBase::m_db_sock_file.c_str()) == 0)
+					if(mailStg && mailStg->Connect(CMailBase::m_master_db_host.c_str(), CMailBase::m_master_db_username.c_str(), CMailBase::m_master_db_password.c_str(), CMailBase::m_master_db_name.c_str(), CMailBase::m_master_db_port, CMailBase::m_master_db_sock_file.c_str()) == 0)
 					{
 						mailStg->AddLevel(argv[3], argv[4], atoi(argv[5]), atoi(argv[6]), strcasecmp(argv[7], "yes") == 0 ? eaTrue : eaFalse, atoi(argv[8]), atoi(argv[9]), lid);
 						printf("Done.\n");
@@ -79,7 +79,7 @@ int run(int argc, char* argv[])
 		}
         else if(argc == 8)
 		{
-#ifdef _WITH_DISTRIBUTED_HOST_
+#ifdef _WITH_DIST_
             if(strcmp(argv[1], "-a") == 0)
 			{
 				UserType type;
@@ -101,7 +101,7 @@ int run(int argc, char* argv[])
 				
 				int lid;
 				
-				if(mailStg && mailStg->Connect(CMailBase::m_db_host.c_str(), CMailBase::m_db_username.c_str(), CMailBase::m_db_password.c_str(), CMailBase::m_db_name.c_str(), CMailBase::m_db_port, CMailBase::m_db_sock_file.c_str()) == 0)
+				if(mailStg && mailStg->Connect(CMailBase::m_master_db_host.c_str(), CMailBase::m_master_db_username.c_str(), CMailBase::m_master_db_password.c_str(), CMailBase::m_master_db_name.c_str(), CMailBase::m_master_db_port, CMailBase::m_master_db_sock_file.c_str()) == 0)
 				{
 					mailStg->GetDefaultLevel(lid);
 					if(mailStg->AddID(argv[2], argv[3], argv[4], argv[5], type, role, 5000*1024, lid) == -1)
@@ -127,11 +127,11 @@ int run(int argc, char* argv[])
 #else
             usage();
             return -1;
-#endif /* _WITH_DISTRIBUTED_HOST_ */
+#endif /* _WITH_DIST_ */
         }
 		else if(argc == 7)
 		{
-#ifdef _WITH_DISTRIBUTED_HOST_
+#ifdef _WITH_DIST_
             if(strcmp(argv[1], "-a") == 0)
 			{
                 UserType type;
@@ -156,7 +156,7 @@ int run(int argc, char* argv[])
 					 	role = urGeneralUser;
 					int lid;
 					
-					if(mailStg && mailStg->Connect(CMailBase::m_db_host.c_str(), CMailBase::m_db_username.c_str(), CMailBase::m_db_password.c_str(), CMailBase::m_db_name.c_str(), CMailBase::m_db_port, CMailBase::m_db_sock_file.c_str()) == 0)
+					if(mailStg && mailStg->Connect(CMailBase::m_master_db_host.c_str(), CMailBase::m_master_db_username.c_str(), CMailBase::m_master_db_password.c_str(), CMailBase::m_master_db_name.c_str(), CMailBase::m_master_db_port, CMailBase::m_master_db_sock_file.c_str()) == 0)
 					{
 										
 						mailStg->GetDefaultLevel(lid);
@@ -207,7 +207,7 @@ int run(int argc, char* argv[])
 				
 				int lid;
 				
-				if(mailStg && mailStg->Connect(CMailBase::m_db_host.c_str(), CMailBase::m_db_username.c_str(), CMailBase::m_db_password.c_str(), CMailBase::m_db_name.c_str(), CMailBase::m_db_port, CMailBase::m_db_sock_file.c_str()) == 0)
+				if(mailStg && mailStg->Connect(CMailBase::m_master_db_host.c_str(), CMailBase::m_master_db_username.c_str(), CMailBase::m_master_db_password.c_str(), CMailBase::m_master_db_name.c_str(), CMailBase::m_master_db_port, CMailBase::m_master_db_sock_file.c_str()) == 0)
 				{
 					mailStg->GetDefaultLevel(lid);
 					if(mailStg->AddID(argv[2], argv[3],argv[4], "", type, role, 5000*1024, lid) == -1)
@@ -231,11 +231,11 @@ int run(int argc, char* argv[])
 				usage();
                 return -1;
 			}
-#endif /* _WITH_DISTRIBUTED_HOST_ */
+#endif /* _WITH_DIST_ */
 		}
 		else if(argc == 6)
 		{
-#ifdef _WITH_DISTRIBUTED_HOST_
+#ifdef _WITH_DIST_
             usage();
             return -1;
 #else
@@ -263,7 +263,7 @@ int run(int argc, char* argv[])
 					 	role = urGeneralUser;
 					int lid;
 					
-					if(mailStg && mailStg->Connect(CMailBase::m_db_host.c_str(), CMailBase::m_db_username.c_str(), CMailBase::m_db_password.c_str(), CMailBase::m_db_name.c_str(), CMailBase::m_db_port, CMailBase::m_db_sock_file.c_str()) == 0)
+					if(mailStg && mailStg->Connect(CMailBase::m_master_db_host.c_str(), CMailBase::m_master_db_username.c_str(), CMailBase::m_master_db_password.c_str(), CMailBase::m_master_db_name.c_str(), CMailBase::m_master_db_port, CMailBase::m_master_db_sock_file.c_str()) == 0)
 					{
 										
 						mailStg->GetDefaultLevel(lid);
@@ -293,7 +293,7 @@ int run(int argc, char* argv[])
 				usage();
                 return -1;
 			}
-#endif /* _WITH_DISTRIBUTED_HOST_ */
+#endif /* _WITH_DIST_ */
 		}
 		else if(argc == 5)
 		{
@@ -315,7 +315,7 @@ int run(int argc, char* argv[])
 				
 				int lid;
 				
-				if(mailStg && mailStg->Connect(CMailBase::m_db_host.c_str(), CMailBase::m_db_username.c_str(), CMailBase::m_db_password.c_str(), CMailBase::m_db_name.c_str(), CMailBase::m_db_port, CMailBase::m_db_sock_file.c_str()) == 0)
+				if(mailStg && mailStg->Connect(CMailBase::m_master_db_host.c_str(), CMailBase::m_master_db_username.c_str(), CMailBase::m_master_db_password.c_str(), CMailBase::m_master_db_name.c_str(), CMailBase::m_master_db_port, CMailBase::m_master_db_sock_file.c_str()) == 0)
 				{
 					mailStg->GetDefaultLevel(lid);
                     
@@ -343,7 +343,7 @@ int run(int argc, char* argv[])
 			{
 				if(strcmp(argv[2], "--level") == 0)
 				{					
-					if(mailStg && mailStg->Connect(CMailBase::m_db_host.c_str(), CMailBase::m_db_username.c_str(), CMailBase::m_db_password.c_str(), CMailBase::m_db_name.c_str(), CMailBase::m_db_port, CMailBase::m_db_sock_file.c_str()) == 0)
+					if(mailStg && mailStg->Connect(CMailBase::m_master_db_host.c_str(), CMailBase::m_master_db_username.c_str(), CMailBase::m_master_db_password.c_str(), CMailBase::m_master_db_name.c_str(), CMailBase::m_master_db_port, CMailBase::m_master_db_sock_file.c_str()) == 0)
 					{
 						mailStg->SetUserLevel(argv[3], atoi(argv[4]));
 						
@@ -372,7 +372,7 @@ int run(int argc, char* argv[])
 			if(strcmp(argv[1], "-A") == 0)
 			{
 				
-				if(mailStg && mailStg->Connect(CMailBase::m_db_host.c_str(), CMailBase::m_db_username.c_str(), CMailBase::m_db_password.c_str(), CMailBase::m_db_name.c_str(), CMailBase::m_db_port, CMailBase::m_db_sock_file.c_str()) == 0)
+				if(mailStg && mailStg->Connect(CMailBase::m_master_db_host.c_str(), CMailBase::m_master_db_username.c_str(), CMailBase::m_master_db_password.c_str(), CMailBase::m_master_db_name.c_str(), CMailBase::m_master_db_port, CMailBase::m_master_db_sock_file.c_str()) == 0)
 				{
 										
 					if(mailStg->AppendUserToGroup(argv[2], argv[3])== -1)
@@ -395,7 +395,7 @@ int run(int argc, char* argv[])
 			else if(strcmp(argv[1], "-D") == 0)
 			{
 				
-				if(mailStg && mailStg->Connect(CMailBase::m_db_host.c_str(), CMailBase::m_db_username.c_str(), CMailBase::m_db_password.c_str(), CMailBase::m_db_name.c_str(), CMailBase::m_db_port, CMailBase::m_db_sock_file.c_str()) == 0)
+				if(mailStg && mailStg->Connect(CMailBase::m_master_db_host.c_str(), CMailBase::m_master_db_username.c_str(), CMailBase::m_master_db_password.c_str(), CMailBase::m_master_db_name.c_str(), CMailBase::m_master_db_port, CMailBase::m_master_db_sock_file.c_str()) == 0)
 				{
 										
 					if(mailStg->RemoveUserFromGroup(argv[2], argv[3])== -1)
@@ -419,7 +419,7 @@ int run(int argc, char* argv[])
 				if(strcmp(argv[2], "--group") == 0)
 				{
 					
-					if(mailStg && mailStg->Connect(CMailBase::m_db_host.c_str(), CMailBase::m_db_username.c_str(), CMailBase::m_db_password.c_str(), CMailBase::m_db_name.c_str(), CMailBase::m_db_port, CMailBase::m_db_sock_file.c_str()) == 0)
+					if(mailStg && mailStg->Connect(CMailBase::m_master_db_host.c_str(), CMailBase::m_master_db_username.c_str(), CMailBase::m_master_db_password.c_str(), CMailBase::m_master_db_name.c_str(), CMailBase::m_master_db_port, CMailBase::m_master_db_sock_file.c_str()) == 0)
 					{
 												
 						vector < User_Info > listtbl;
@@ -456,7 +456,7 @@ int run(int argc, char* argv[])
 				if(strcmp(argv[2], "--defaultlevel") == 0)
 				{
 					
-					if(mailStg && mailStg->Connect(CMailBase::m_db_host.c_str(), CMailBase::m_db_username.c_str(), CMailBase::m_db_password.c_str(), CMailBase::m_db_name.c_str(), CMailBase::m_db_port, CMailBase::m_db_sock_file.c_str()) == 0)
+					if(mailStg && mailStg->Connect(CMailBase::m_master_db_host.c_str(), CMailBase::m_master_db_username.c_str(), CMailBase::m_master_db_password.c_str(), CMailBase::m_master_db_name.c_str(), CMailBase::m_master_db_port, CMailBase::m_master_db_sock_file.c_str()) == 0)
 					{
 											
 						if(mailStg->SetDefaultLevel(atoi(argv[3])) == -1)
@@ -482,7 +482,7 @@ int run(int argc, char* argv[])
             else if(strcmp(argv[1], "--host") == 0)
 			{
 				
-				if(mailStg && mailStg->Connect(CMailBase::m_db_host.c_str(), CMailBase::m_db_username.c_str(), CMailBase::m_db_password.c_str(), CMailBase::m_db_name.c_str(), CMailBase::m_db_port, CMailBase::m_db_sock_file.c_str()) == 0)
+				if(mailStg && mailStg->Connect(CMailBase::m_master_db_host.c_str(), CMailBase::m_master_db_username.c_str(), CMailBase::m_master_db_password.c_str(), CMailBase::m_master_db_name.c_str(), CMailBase::m_master_db_port, CMailBase::m_master_db_sock_file.c_str()) == 0)
 				{
 									
 					mailStg->Host(argv[2], argv[3]);
@@ -512,7 +512,7 @@ int run(int argc, char* argv[])
 				}
 
 				
-				if(mailStg && mailStg->Connect(CMailBase::m_db_host.c_str(), CMailBase::m_db_username.c_str(), CMailBase::m_db_password.c_str(), CMailBase::m_db_name.c_str(), CMailBase::m_db_port, CMailBase::m_db_sock_file.c_str()) == 0)
+				if(mailStg && mailStg->Connect(CMailBase::m_master_db_host.c_str(), CMailBase::m_master_db_username.c_str(), CMailBase::m_master_db_password.c_str(), CMailBase::m_master_db_name.c_str(), CMailBase::m_master_db_port, CMailBase::m_master_db_sock_file.c_str()) == 0)
 				{
 										
 					if(mailStg->DelID(argv[2]) == -1)
@@ -539,7 +539,7 @@ int run(int argc, char* argv[])
 				if(strpwd1 == strpwd2)
 				{
 					
-					if(mailStg && mailStg->Connect(CMailBase::m_db_host.c_str(), CMailBase::m_db_username.c_str(), CMailBase::m_db_password.c_str(), CMailBase::m_db_name.c_str(), CMailBase::m_db_port, CMailBase::m_db_sock_file.c_str()) == 0)
+					if(mailStg && mailStg->Connect(CMailBase::m_master_db_host.c_str(), CMailBase::m_master_db_username.c_str(), CMailBase::m_master_db_password.c_str(), CMailBase::m_master_db_name.c_str(), CMailBase::m_master_db_port, CMailBase::m_master_db_sock_file.c_str()) == 0)
 					{
 											
 						if(mailStg->Passwd(argv[2], strpwd1.c_str()) == -1)
@@ -570,7 +570,7 @@ int run(int argc, char* argv[])
 					const char* szUserRole[] = {NULL, "User", "Administrator", NULL};
 					const char* szUserStatus[] = {"Active", "Disabled", NULL};
 					
-					if(mailStg && mailStg->Connect(CMailBase::m_db_host.c_str(), CMailBase::m_db_username.c_str(), CMailBase::m_db_password.c_str(), CMailBase::m_db_name.c_str(), CMailBase::m_db_port, CMailBase::m_db_sock_file.c_str()) == 0)
+					if(mailStg && mailStg->Connect(CMailBase::m_master_db_host.c_str(), CMailBase::m_master_db_username.c_str(), CMailBase::m_master_db_password.c_str(), CMailBase::m_master_db_name.c_str(), CMailBase::m_master_db_port, CMailBase::m_master_db_sock_file.c_str()) == 0)
 					{
 											
 						vector < User_Info > listtbl;
@@ -597,7 +597,7 @@ int run(int argc, char* argv[])
 				else if(strcmp(argv[2], "--level") == 0)
 				{
 					
-					if(mailStg && mailStg->Connect(CMailBase::m_db_host.c_str(), CMailBase::m_db_username.c_str(), CMailBase::m_db_password.c_str(), CMailBase::m_db_name.c_str(), CMailBase::m_db_port, CMailBase::m_db_sock_file.c_str()) == 0)
+					if(mailStg && mailStg->Connect(CMailBase::m_master_db_host.c_str(), CMailBase::m_master_db_username.c_str(), CMailBase::m_master_db_password.c_str(), CMailBase::m_master_db_name.c_str(), CMailBase::m_master_db_port, CMailBase::m_master_db_sock_file.c_str()) == 0)
 					{
 											
 						vector <Level_Info> listtbl;
@@ -627,7 +627,7 @@ int run(int argc, char* argv[])
 			else if(strcmp(argv[1], "--enable") == 0)
 			{
 				
-				if(mailStg && mailStg->Connect(CMailBase::m_db_host.c_str(), CMailBase::m_db_username.c_str(), CMailBase::m_db_password.c_str(), CMailBase::m_db_name.c_str(), CMailBase::m_db_port, CMailBase::m_db_sock_file.c_str()) == 0)
+				if(mailStg && mailStg->Connect(CMailBase::m_master_db_host.c_str(), CMailBase::m_master_db_username.c_str(), CMailBase::m_master_db_password.c_str(), CMailBase::m_master_db_name.c_str(), CMailBase::m_master_db_port, CMailBase::m_master_db_sock_file.c_str()) == 0)
 				{
 									
 					mailStg->SetUserStatus(argv[2], usActive);
@@ -642,7 +642,7 @@ int run(int argc, char* argv[])
 			else if(strcmp(argv[1], "--disable") == 0)
 			{
 				
-				if(mailStg && mailStg->Connect(CMailBase::m_db_host.c_str(), CMailBase::m_db_username.c_str(), CMailBase::m_db_password.c_str(), CMailBase::m_db_name.c_str(), CMailBase::m_db_port, CMailBase::m_db_sock_file.c_str()) == 0)
+				if(mailStg && mailStg->Connect(CMailBase::m_master_db_host.c_str(), CMailBase::m_master_db_username.c_str(), CMailBase::m_master_db_password.c_str(), CMailBase::m_master_db_name.c_str(), CMailBase::m_master_db_port, CMailBase::m_master_db_sock_file.c_str()) == 0)
 				{
 									
 					mailStg->SetUserStatus(argv[2], usDisabled);
@@ -695,7 +695,7 @@ int run(int argc, char* argv[])
 					{
 						
 					
-						if(mailStg->Connect(CMailBase::m_db_host.c_str(), CMailBase::m_db_username.c_str(), CMailBase::m_db_password.c_str(), CMailBase::m_db_name.c_str(), CMailBase::m_db_port, CMailBase::m_db_sock_file.c_str()) == 0
+						if(mailStg->Connect(CMailBase::m_master_db_host.c_str(), CMailBase::m_master_db_username.c_str(), CMailBase::m_master_db_password.c_str(), CMailBase::m_master_db_name.c_str(), CMailBase::m_master_db_port, CMailBase::m_master_db_sock_file.c_str()) == 0
                             && mailStg->CheckLogin("admin",strpwd.c_str()) == 0)
 						{
 							if(mailStg->Uninstall(CMailBase::m_db_name.c_str()) == -1)

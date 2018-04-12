@@ -907,6 +907,27 @@ public:
 	static string	m_db_password;
     static string	m_db_sock_file;
 	static unsigned int m_db_max_conn;
+      
+    static BOOL	m_is_master;
+    static string	m_master_db_host;
+    static unsigned short	m_master_db_port;
+	static string	m_master_db_name;
+	static string	m_master_db_username;
+	static string	m_master_db_password;
+    static string	m_master_db_sock_file;
+
+#ifdef _WITH_LDAP_
+	static string	m_ldap_sever_uri;
+	static int		m_ldap_sever_version;
+	static string	m_ldap_manager;
+	static string	m_ldap_manager_passwd;
+	static string	m_ldap_search_base;
+	static string	m_ldap_search_filter_user;
+	static string	m_ldap_search_attribute_user_password;
+	static string	m_ldap_search_filter_group;
+	static string	m_ldap_search_attribute_group_member;
+    static string	m_ldap_user_dn;
+#endif /* _WITH_LDAP_ */
 
     static BOOL m_enablemta;
 	static unsigned int 	m_mta_relaythreadnum;

@@ -5,12 +5,12 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include "storage.h"
 #include "util/general.h"
 #include "base.h"
 #include "util/md5.h"
 #include "util/trace.h"
-#include <time.h>
 #include "letter.h"
 #include "posixname.h"
 
@@ -42,9 +42,6 @@ int inline _mysql_real_query_(MYSQL *mysql, const char *stmt_str, unsigned long 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Class MailStorage
 
-
-/* Static member variable */
-BOOL MailStorage::m_userpwd_cache_updated = TRUE;
 BOOL MailStorage::m_lib_inited = FALSE;
 
 void MailStorage::LibInit()
@@ -76,19 +73,19 @@ void MailStorage::SqlSafetyString(string& strInOut)
 
 MailStorage::MailStorage(const char* encoding, const char* private_path, memcached_st * memcached)
 {
-    pthread_rwlock_init(&m_userpwd_cache_lock, NULL);
-    m_userpwd_cache.clear();
-    m_userpwd_cache_update_time = 0;
-    m_userpwd_cache_updated = TRUE;
     m_encoding = encoding;
     m_private_path = private_path;
     
-    m_bOpened = FALSE;
-    m_isInited = FALSE;
+    m_is_opened = FALSE;
+    m_is_inited = FALSE;
+    m_is_in_transcation = FALSE;
     m_memcached = memcached;
     srandom(time(NULL));
-    
-    m_inTranscation = FALSE;
+
+#ifdef _WITH_LDAP_    
+    m_ldap = NULL;
+    m_is_ldap_binded = FALSE;
+#endif /*_WITH_LDAP_*/ 
 }
 
 MailStorage::~MailStorage()
@@ -109,49 +106,69 @@ int MailStorage::Connect(const char * host, const char* username, const char* pa
     if(database != NULL)
         m_database = database;
     
-    if(!m_isInited)
+    if(!m_is_inited)
     {
         mysql_init(&m_hMySQL);
-        m_isInited = TRUE;
+        m_is_inited = TRUE;
     }
-    
     mysql_optionsv(&m_hMySQL, MYSQL_OPT_CONNECT_TIMEOUT, (const void*)&timeout_val);
     mysql_optionsv(&m_hMySQL, MYSQL_OPT_READ_TIMEOUT, (const void*)&timeout_val);
     mysql_optionsv(&m_hMySQL, MYSQL_OPT_WRITE_TIMEOUT, (const void*)&timeout_val);
-        
+
     if(mysql_real_connect(&m_hMySQL, host, username, password, database, port, sock_file && sock_file[0] != '\0' ? sock_file : NULL, 0) != NULL)
     {
-        m_bOpened = TRUE;
-        return 0;
+        m_is_opened = TRUE;
     }
     else
     {
         show_error(&m_hMySQL, "CONNECT", "Connect: ");
         return -1;	
     }
+    
+#ifdef _WITH_LDAP_
+    m_ldap_server_uri = CMailBase::m_ldap_sever_uri;
+    
+    ldap_initialize(&m_ldap, m_ldap_server_uri.c_str());
+    
+    int protocol_version = CMailBase::m_ldap_sever_version;
+    int rc = ldap_set_option(m_ldap, LDAP_OPT_PROTOCOL_VERSION, &protocol_version);
+    if (rc != LDAP_SUCCESS)
+    {
+        fprintf(stderr, "ldap_set_option: %s\n", ldap_err2string(rc));
+        return(1);
+    }
+#endif /*_WITH_LDAP_*/ 
+
+    return 0;
 }
 
 void MailStorage::Close()
 {
-    if(m_isInited)
+    if(m_is_inited)
     {
         mysql_close(&m_hMySQL);
-        m_isInited = FALSE;
+        m_is_inited = FALSE;
     }
-    m_bOpened = FALSE;
+    m_is_opened = FALSE;
+#ifdef _WITH_LDAP_
+    if(m_ldap)
+    {
+        ldap_unbind(m_ldap);
+        m_ldap = NULL;
+        m_is_ldap_binded = FALSE;
+    }
+#endif /*_WITH_LDAP_*/ 
 }
 
 int MailStorage::Ping()
 {
-	if(m_bOpened)
+	if(m_is_opened)
 	{
 	    int rc = mysql_ping(&m_hMySQL);
 		return rc;
 	}
-	else
-	{
-		return -1;
-	}
+    
+    return 0;
 }
 
 void MailStorage::KeepLive()
@@ -165,13 +182,13 @@ void MailStorage::KeepLive()
 
 int MailStorage::Query(const char *stmt_str, unsigned long length)
 {
-	if(m_bOpened)
+	if(m_is_opened)
 	{
 	    KeepLive();
         
         int r_val = _mysql_real_query_(&m_hMySQL, stmt_str, length);
 		
-        if(r_val != 0 && m_inTranscation
+        if(r_val != 0 && m_is_in_transcation
             && strncasecmp(stmt_str, "BEGIN", 5) != 0
             && strncasecmp(stmt_str, "START TRANSACTION", 17) != 0
             && strncasecmp(stmt_str, "COMMIT", 6) != 0
@@ -190,11 +207,11 @@ int MailStorage::Query(const char *stmt_str, unsigned long length)
 
 int MailStorage::StartTransaction()
 {
-    if(m_bOpened)
+    if(m_is_opened)
 	{
 	    KeepLive();
         
-        if(!m_inTranscation)
+        if(!m_is_in_transcation)
         {
             if(_mysql_real_query_(&m_hMySQL, "BEGIN", 5) != 0)
             {
@@ -202,7 +219,7 @@ int MailStorage::StartTransaction()
                 return -1;
             }
             
-            m_inTranscation = TRUE;
+            m_is_in_transcation = TRUE;
         }
         return 0;
 	}
@@ -214,13 +231,13 @@ int MailStorage::StartTransaction()
 
 int MailStorage::CommitTransaction()
 {
-    if(m_bOpened)
+    if(m_is_opened)
 	{
 	    KeepLive();
         
-        if(m_inTranscation)
+        if(m_is_in_transcation)
         {
-            m_inTranscation = FALSE;
+            m_is_in_transcation = FALSE;
             
             if(_mysql_real_query_(&m_hMySQL, "COMMIT", 6) != 0)
             {
@@ -239,13 +256,13 @@ int MailStorage::CommitTransaction()
 
 int MailStorage::RollbackTransaction()
 {
-    if(m_bOpened)
+    if(m_is_opened)
 	{
 	    KeepLive();
         
-        if(m_inTranscation)
+        if(m_is_in_transcation)
         {
-            m_inTranscation = FALSE;
+            m_is_in_transcation = FALSE;
             
             if(_mysql_real_query_(&m_hMySQL, "ROLLBACK", 8) != 0)
             {
@@ -631,18 +648,25 @@ int MailStorage::SetMailSize(unsigned int mid, unsigned int msize)
 
 int MailStorage::CheckAdmin(const char* username, const char* password)
 {
+#ifdef _WITH_DIST_
+    if(!CMailBase::m_is_master)
+    {
+        return -1;
+    }
+#endif /* _WITH_DIST_ */
+    
     if(strcmp(username, "") == 0 || strcmp(password, "") == 0)
         return -1;
 	char sqlcmd[1024];
 	string strSafetyUsername = username;
 	SqlSafetyString(strSafetyUsername);
-#ifdef _WITH_DISTRIBUTED_HOST_ 
+#ifdef _WITH_DIST_ 
     string strSafetyHost = CMailBase::m_localhostname;
     SqlSafetyString(strSafetyHost);
 	sprintf(sqlcmd, "SELECT uname FROM usertbl WHERE uname='%s' AND DECODE(upasswd,'%s') = '%s' AND ustatus = %d AND urole=%d AND utype = %d and uhost IN ('%s', '')", strSafetyUsername.c_str(), CODE_KEY, password, usActive, urAdministrator, utMember, strSafetyHost.c_str());
 #else
     sprintf(sqlcmd, "SELECT uname FROM usertbl WHERE uname='%s' AND DECODE(upasswd,'%s') = '%s' AND ustatus = %d AND urole=%d AND utype = %d", strSafetyUsername.c_str(), CODE_KEY, password, usActive, urAdministrator, utMember);
-#endif /* _WITH_DISTRIBUTED_HOST_ */
+#endif /* _WITH_DIST_ */
 	
 	if(Query(sqlcmd, strlen(sqlcmd)) == 0)
 	{
@@ -681,67 +705,115 @@ int MailStorage::CheckLogin(const char* username, const char* password)
 	string strSafetyUsername = username;
 	SqlSafetyString(strSafetyUsername);
     
-    pthread_rwlock_rdlock(&m_userpwd_cache_lock);
-    if(m_userpwd_cache.size() == 0 || time(NULL) - m_userpwd_cache_update_time > 300 || m_userpwd_cache_updated == TRUE)
-    {
-        pthread_rwlock_unlock(&m_userpwd_cache_lock); //release read
-        pthread_rwlock_wrlock(&m_userpwd_cache_lock); //acquire write
-        m_userpwd_cache.clear();
-#ifdef _WITH_DISTRIBUTED_HOST_ 
-		string strSafetyHost = CMailBase::m_localhostname;
-		SqlSafetyString(strSafetyHost);
-		sprintf(sqlcmd, "SELECT uname, DECODE(upasswd,'%s') FROM usertbl WHERE ustatus = %d AND utype = %d and uhost IN ('%s', '')", CODE_KEY, usActive, utMember, strSafetyHost.c_str());
-#else
-        sprintf(sqlcmd, "SELECT uname, DECODE(upasswd,'%s') FROM usertbl WHERE ustatus = %d AND utype = %d", CODE_KEY, usActive, utMember);
-#endif /* _WITH_DISTRIBUTED_HOST_ */
-        
-        if(Query(sqlcmd, strlen(sqlcmd)) == 0)
-        {
-            MYSQL_RES *query_result;
-            MYSQL_ROW row;
-            
-            query_result = mysql_store_result(&m_hMySQL);
-            
-            if(query_result)
-            {           
-                while((row = mysql_fetch_row(query_result)))
-                {
-                    m_userpwd_cache.insert(make_pair<string, string>(row[0], row[1]));
-                }
-
-                mysql_free_result(query_result);
-                
-                m_userpwd_cache_update_time = time(NULL);
-                m_userpwd_cache_updated = FALSE;
-                pthread_rwlock_unlock(&m_userpwd_cache_lock); //release write
-                pthread_rwlock_rdlock(&m_userpwd_cache_lock); //acquire read
-        
-            }
-            else
-            {
-                pthread_rwlock_unlock(&m_userpwd_cache_lock);
-                return -1;
-            }
-        }
-        else
-        {
-            show_error(&m_hMySQL, sqlcmd);
-            pthread_rwlock_unlock(&m_userpwd_cache_lock);
-            return -1;
-        }
+#ifdef _WITH_LDAP_
+	if(!m_is_ldap_binded)
+	{
+		int rc = ldap_simple_bind(m_ldap, CMailBase::m_ldap_manager.c_str(), CMailBase::m_ldap_manager_passwd.c_str());
+		
+		if(rc == -1)
+		{
+			fprintf(stderr, "ldap_simple_bind: %s\n", ldap_err2string(rc));
+			return -1;
+		}
 	}
 	
-	map<string, string>::iterator it = m_userpwd_cache.find(username);
-	if(it != m_userpwd_cache.end() && it->second == password)
-    {
-        pthread_rwlock_unlock(&m_userpwd_cache_lock);
-        return 0;
-    }
-    else
-    {
-        pthread_rwlock_unlock(&m_userpwd_cache_lock);
-        return -1;
-    }
+	m_is_ldap_binded = TRUE;
+	
+	int msgid = -1;
+	
+	const char* attrs[2];
+	attrs[0] = CMailBase::m_ldap_search_attribute_user_password.c_str();
+	attrs[1] = 0;
+	
+	char szFilter[1025];
+	snprintf(szFilter, 1024, CMailBase::m_ldap_search_filter_user.c_str(), username);
+	szFilter[1024] = '\0';
+	
+	int rc = ldap_search_ext(m_ldap, CMailBase::m_ldap_search_base.c_str(), LDAP_SCOPE_SUBTREE, szFilter, NULL, 0, NULL, NULL, NULL, 1, &msgid);
+	
+	if( rc != LDAP_SUCCESS )
+	{
+		fprintf(stderr, "ldap_search_ext_s: %s\n", ldap_err2string(rc));
+		return( rc );
+	}
+	
+	struct berval  ** uid_password = NULL;
+	LDAPMessage *search_result = NULL;
+	ldap_result(m_ldap, msgid, 0, NULL, &search_result);
+	
+	int entries = ldap_count_entries(m_ldap, search_result);
+
+	if(search_result && entries > 0)
+	{
+		for( LDAPMessage * single_entry = ldap_first_entry( m_ldap, search_result ); single_entry != NULL; single_entry = ldap_next_entry( m_ldap, search_result ))
+		{
+			uid_password = ldap_get_values_len(m_ldap, single_entry, CMailBase::m_ldap_search_attribute_user_password.c_str());
+			if(uid_password && *uid_password)
+			{
+				char* ldap_password = (char*)malloc((*uid_password)->bv_len + 1);
+				memcpy(ldap_password, (*uid_password)->bv_val, (*uid_password)->bv_len);
+				ldap_password[(*uid_password)->bv_len] = '\0';
+				ldap_value_free_len(uid_password);
+                
+				if(strcmp(password, ldap_password) == 0)
+				{
+					free(ldap_password);
+                    return 0;
+				}
+				else
+				{
+					free(ldap_password);
+					return -1;
+				}
+			}
+		}
+		ldap_msgfree(search_result);
+	}
+	else
+	{
+		return -1;
+	}
+#endif /* _WITH_LDAP_ */
+	
+#ifdef _WITH_DIST_ 
+	string strSafetyHost = CMailBase::m_localhostname;
+	SqlSafetyString(strSafetyHost);
+	sprintf(sqlcmd, "SELECT DECODE(upasswd,'%s') FROM usertbl WHERE uname = '%s' AND ustatus = %d AND utype = %d and uhost IN ('%s', '')",
+		CODE_KEY, username, usActive, utMember, strSafetyHost.c_str());
+#else
+	sprintf(sqlcmd, "SELECT DECODE(upasswd,'%s') FROM usertbl WHERE ustatus = %d AND utype = %d", CODE_KEY, username, usActive, utMember);
+#endif /* _WITH_DIST_ */
+	
+	if(Query(sqlcmd, strlen(sqlcmd)) == 0)
+	{
+		MYSQL_RES *query_result;
+		MYSQL_ROW row;
+		
+		query_result = mysql_store_result(&m_hMySQL);
+		
+		if(query_result)
+		{
+			if((row = mysql_fetch_row(query_result)) && strcmp(row[0], password) == 0)
+			{
+				mysql_free_result(query_result);
+				return 0;
+			}
+			else
+			{
+				mysql_free_result(query_result);
+				return -1;
+			}
+		}
+		else
+		{
+			return -1;
+		}
+	}
+	else
+	{
+		show_error(&m_hMySQL, sqlcmd);
+		return -1;
+	}
 }
 
 int MailStorage::GetPassword(const char* username, string& password)
@@ -750,13 +822,13 @@ int MailStorage::GetPassword(const char* username, string& password)
 	char sqlcmd[1024];
 	string strSafetyUsername = username;
 	SqlSafetyString(strSafetyUsername);
-#ifdef _WITH_DISTRIBUTED_HOST_ 
+#ifdef _WITH_DIST_ 
 	string strSafetyHost = CMailBase::m_localhostname;
 	SqlSafetyString(strSafetyHost);
 	sprintf(sqlcmd, "SELECT DECODE(upasswd,'%s') FROM usertbl WHERE uname='%s' AND utype=%d AND uhost='%s'", CODE_KEY, strSafetyUsername.c_str(), utMember, strSafetyHost.c_str());
 #else
     sprintf(sqlcmd, "SELECT DECODE(upasswd,'%s') FROM usertbl WHERE uname='%s' AND utype=%d", CODE_KEY, strSafetyUsername.c_str(), utMember);
-#endif /* _WITH_DISTRIBUTED_HOST_ */	
+#endif /* _WITH_DIST_ */	
 	if(Query(sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *query_result;
@@ -776,6 +848,68 @@ int MailStorage::GetPassword(const char* username, string& password)
 				else
 				{
 					password = row[0];
+#ifdef _WITH_LDAP_
+					if(!m_is_ldap_binded)
+					{
+						int rc = ldap_simple_bind(m_ldap, CMailBase::m_ldap_manager.c_str(), CMailBase::m_ldap_manager_passwd.c_str());
+						
+						if(rc == -1)
+						{
+							fprintf(stderr, "ldap_simple_bind: %s\n", ldap_err2string(rc));
+							return -1;
+						}
+					}
+					
+					m_is_ldap_binded = TRUE;
+					
+					int msgid = -1;
+					
+					const char* attrs[2];
+					attrs[0] = CMailBase::m_ldap_search_attribute_user_password.c_str();
+					attrs[1] = 0;
+					
+					char szFilter[1025];
+					snprintf(szFilter, 1024, CMailBase::m_ldap_search_filter_user.c_str(), username);
+					szFilter[1024] = '\0';
+					
+					int rc = ldap_search_ext(m_ldap, CMailBase::m_ldap_search_base.c_str(), LDAP_SCOPE_SUBTREE, szFilter, NULL, 0, NULL, NULL, NULL, 1, &msgid);
+					
+					if( rc != LDAP_SUCCESS )
+					{
+						fprintf(stderr, "ldap_search_ext_s: %s\n", ldap_err2string(rc));
+						return( rc );
+					}
+
+					
+					struct berval  ** uid_password = NULL;
+					LDAPMessage *search_result = NULL;
+					ldap_result(m_ldap, msgid, 0, NULL, &search_result);
+					
+					int entries = ldap_count_entries(m_ldap, search_result);
+
+					if(search_result && entries > 0)
+					{
+						for( LDAPMessage * single_entry = ldap_first_entry( m_ldap, search_result ); single_entry != NULL; single_entry = ldap_next_entry( m_ldap, search_result ))
+						{
+							uid_password = ldap_get_values_len(m_ldap, single_entry, CMailBase::m_ldap_search_attribute_user_password.c_str());
+							if(uid_password && *uid_password)
+							{
+								char* ldap_password = (char*)malloc((*uid_password)->bv_len + 1);
+								memcpy(ldap_password, (*uid_password)->bv_val, (*uid_password)->bv_len);
+								ldap_password[(*uid_password)->bv_len] = '\0';
+								ldap_value_free_len(uid_password);
+								
+								password = ldap_password;
+								free(ldap_password);
+							}
+						}
+						ldap_msgfree(search_result);
+					}
+					else
+					{
+						return -1;
+					}
+#endif /* _WITH_LDAP_ */
 					mysql_free_result(query_result);
 					return 0;
 				}
@@ -799,7 +933,7 @@ int MailStorage::GetPassword(const char* username, string& password)
 
 int MailStorage::GetHost(const char* username, string& host)
 {
-#ifdef _WITH_DISTRIBUTED_HOST_    
+#ifdef _WITH_DIST_    
 	string strpwd;
 	char sqlcmd[1024];
 	string strSafetyUsername = username;
@@ -848,7 +982,7 @@ int MailStorage::GetHost(const char* username, string& host)
 #else
     host = "";
     return 0;
-#endif /*_WITH_DISTRIBUTED_HOST_ */
+#endif /*_WITH_DIST_ */
 }
 
 int MailStorage::VerifyUser(const char* username)
@@ -1348,7 +1482,7 @@ int MailStorage::AddID(const char* username, const char* password, const char* a
             if(StartTransaction() != 0)
                 return -1;
             
-#ifdef _WITH_DISTRIBUTED_HOST_
+#ifdef _WITH_DIST_
             string strSafetyHost;  
 			strSafetyHost = host;
 			SqlSafetyString(strSafetyHost);
@@ -1359,7 +1493,7 @@ int MailStorage::AddID(const char* username, const char* password, const char* a
 #else
             sprintf(sqlcmd, "INSERT INTO usertbl(uname, upasswd, ualias, utype, urole, usize, ustatus, ulevel, utime) VALUES('%s', ENCODE('%s','%s'), '%s', %d, %d, %d, 0, %d, %d)",
 				strSafetyUsername.c_str(), strSafetyPassword.c_str(), CODE_KEY, strSafetyAlias.c_str(), type, role, size, defaultLevel, time(NULL));
-#endif /* _WITH_DISTRIBUTED_HOST_ */
+#endif /* _WITH_DIST_ */
 				
 			if(Query(sqlcmd, strlen(sqlcmd)) != 0)
 			{
@@ -1412,9 +1546,6 @@ int MailStorage::AddID(const char* username, const char* password, const char* a
             
             if(CommitTransaction() != 0)
                 return -1;
-    
-            m_userpwd_cache_update_time = 0;
-            m_userpwd_cache_updated = TRUE;
             
             return 0;
 		}
@@ -1456,7 +1587,7 @@ int MailStorage::UpdateID(const char* username, const char* alias, const char* h
 	else
 		realLevel = level;
 
-#ifdef _WITH_DISTRIBUTED_HOST_
+#ifdef _WITH_DIST_
     string strSafetyHost;          
     strSafetyHost = host;
     SqlSafetyString(strSafetyHost);
@@ -1466,7 +1597,7 @@ int MailStorage::UpdateID(const char* username, const char* alias, const char* h
 #else
     sprintf(sqlcmd, "UPDATE usertbl SET ualias='%s', ustatus=%d, ulevel=%d WHERE uname='%s'",
         strSafetyAlias.c_str(), status, realLevel, strSafetyUsername.c_str());
-#endif /* _WITH_DISTRIBUTED_HOST_ */
+#endif /* _WITH_DIST_ */
 
 
 	if(Query(sqlcmd, strlen(sqlcmd)) == 0)
@@ -1624,9 +1755,6 @@ int MailStorage::DelID(const char* username)
         
         if(CommitTransaction() != 0)
             return -1;
-    
-		m_userpwd_cache_update_time = 0;
-		m_userpwd_cache_updated = TRUE;
         
 		return 0;
 	}
@@ -1882,7 +2010,6 @@ int MailStorage::InsertMailIndex(const char* mfrom, const char* mto, const char*
 		}
 		else
 		{
-            // printf("%s\n", sqlcmd);
 			free(sqlcmd);
 			show_error(&m_hMySQL, sqlcmd);
 			return -1;
@@ -2325,13 +2452,13 @@ int MailStorage::ListAvailableExternMail(vector<Mail_Info>& listtbl, unsigned in
 {
 	listtbl.clear();
 	char sqlcmd[1024];
-#ifdef _WITH_DISTRIBUTED_HOST_  
+#ifdef _WITH_DIST_  
 	sprintf(sqlcmd, "SELECT mfrom, mto, mhost, muniqid, mid FROM extmailtbl WHERE mtx='%d' AND mstatus&%d<>%d AND mstatus&%d<>%d AND mid%%%d=%d and TIMESTAMPDIFF(SECOND, next_fwd_time, CURRENT_TIMESTAMP) > 0 and tried_count<%d ORDER BY mid",
         mtExtern, MSG_ATTR_DELETED, MSG_ATTR_DELETED, MSG_ATTR_UNAUDITED, MSG_ATTR_UNAUDITED, mta_count, mta_index, MAX_TRY_FORWARD_COUNT);
 #else
     sprintf(sqlcmd, "SELECT mfrom, mto, muniqid, mid FROM extmailtbl WHERE mtx='%d' AND mstatus&%d<>%d AND mstatus&%d<>%d AND mid%%%d=%d and TIMESTAMPDIFF(SECOND, next_fwd_time, CURRENT_TIMESTAMP) > 0 and tried_count<%d ORDER BY mid",
         mtExtern, MSG_ATTR_DELETED, MSG_ATTR_DELETED, MSG_ATTR_UNAUDITED, MSG_ATTR_UNAUDITED, mta_count, mta_index, MAX_TRY_FORWARD_COUNT);
-#endif /* _WITH_DISTRIBUTED_HOST_ */
+#endif /* _WITH_DIST_ */
     max_num = (max_num == 0 ? 0x7FFFFFFFFU : max_num);
 	if(Query(sqlcmd, strlen(sqlcmd)) == 0)
 	{
@@ -2347,7 +2474,7 @@ int MailStorage::ListAvailableExternMail(vector<Mail_Info>& listtbl, unsigned in
                 if(max_num == 0)
                     break;
 				Mail_Info mi;
-#ifdef _WITH_DISTRIBUTED_HOST_  
+#ifdef _WITH_DIST_  
                 mi.mailfrom = row[0];
 				mi.rcptto = row[1];
                 mi.host = row[2];
@@ -2359,7 +2486,7 @@ int MailStorage::ListAvailableExternMail(vector<Mail_Info>& listtbl, unsigned in
                 mi.host = "";
 				strcpy(mi.uniqid, row[2]);
 				mi.mid = atoi(row[3]);
-#endif /* _WITH_DISTRIBUTED_HOST_ */
+#endif /* _WITH_DIST_ */
 				listtbl.push_back(mi);
                 max_num--;
 			}
@@ -2473,11 +2600,11 @@ int MailStorage::ListID(vector<User_Info>& listtbl, string orderby, BOOL desc)
 {
 	listtbl.clear();
 	char sqlcmd[1024];
-#ifdef _WITH_DISTRIBUTED_HOST_
+#ifdef _WITH_DIST_
     sprintf(sqlcmd, "SELECT uname, ualias, utype, urole, usize, ustatus, ulevel, uhost FROM usertbl ORDER BY %s %s", orderby == "" ? "utime" : orderby.c_str(), desc ? "desc" : "");
 #else
 	sprintf(sqlcmd, "SELECT uname, ualias, utype, urole, usize, ustatus, ulevel FROM usertbl ORDER BY %s %s", orderby == "" ? "utime" : orderby.c_str(), desc ? "desc" : "");
-#endif /* _WITH_DISTRIBUTED_HOST_ */
+#endif /* _WITH_DIST_ */
 
 	
 	if(Query(sqlcmd, strlen(sqlcmd)) == 0)
@@ -2499,11 +2626,11 @@ int MailStorage::ListID(vector<User_Info>& listtbl, string orderby, BOOL desc)
 				ui.size = atoi(row[4]);
 				ui.status = (UserStatus)atoi(row[5]);
 				ui.level = atoi(row[6]);
-#ifdef _WITH_DISTRIBUTED_HOST_
+#ifdef _WITH_DIST_
                 strcpy(ui.host, row[7]);
 #else
                 strcpy(ui.host, CMailBase::m_localhostname.c_str());
-#endif /* _WITH_DISTRIBUTED_HOST_ */
+#endif /* _WITH_DIST_ */
 				listtbl.push_back(ui);
 			}
 			mysql_free_result(query_result);
@@ -2664,8 +2791,58 @@ int MailStorage::Passwd(const char* uname, const char* password)
 		sprintf(sqlcmd, "UPDATE usertbl SET upasswd=ENCODE('%s','%s') WHERE uname='%s'", strSafetyPassword.c_str(), CODE_KEY, strSafetyUsername.c_str());
 		if(Query(sqlcmd, strlen(sqlcmd)) == 0)
 		{
-			m_userpwd_cache_update_time = 0;
-			m_userpwd_cache_updated = TRUE;
+#ifdef _WITH_LDAP_
+			if(!m_is_ldap_binded)
+			{
+				int rc = ldap_simple_bind(m_ldap, CMailBase::m_ldap_manager.c_str(), CMailBase::m_ldap_manager_passwd.c_str());
+				
+				if(rc == -1)
+				{
+					fprintf(stderr, "ldap_simple_bind: %s\n", ldap_err2string(rc));
+					return -1;
+				}
+			}
+			
+			m_is_ldap_binded = TRUE;
+			
+			int msgid = -1;
+			
+			char szDN[1025];
+			snprintf(szDN, 1024, CMailBase::m_ldap_user_dn.c_str(), uname);
+			szDN[1024] = '\0';
+			
+			char* passwd_attr = (char*) malloc(CMailBase::m_ldap_search_attribute_user_password.length() + 1);
+            strcpy(passwd_attr, CMailBase::m_ldap_search_attribute_user_password.c_str());
+            
+            char* passwd_val = (char*) malloc(strlen(password) + 1);
+            strcpy(passwd_val, password);
+            
+            LDAPMod mod;
+            mod.mod_op = LDAP_MOD_REPLACE;
+            mod.mod_type = passwd_attr;
+            
+            char* vals[2];
+            vals[0] = passwd_val;
+            vals[1] = NULL;
+            mod.mod_vals.modv_strvals = vals;
+             
+            LDAPMod* mods[2];
+            mods[0] = &mod;
+            mods[1] = NULL;
+            
+			int rc = ldap_modify_ext(m_ldap, szDN, mods, NULL, NULL, &msgid);
+			
+            free(passwd_attr);
+            free(passwd_val);
+            
+			if( rc != LDAP_SUCCESS )
+			{
+				fprintf(stderr, "ldap_search_ext_s: %s\n", ldap_err2string(rc));
+				return( rc );
+			}
+			
+#endif /* _WITH_LDAP_ */
+
 			return 0;
 		}
 		else
@@ -2706,7 +2883,7 @@ int MailStorage::Alias(const char* uname, const char* alias)
 
 int MailStorage::Host(const char* uname, const char* host)
 {
-#ifdef _WITH_DISTRIBUTED_HOST_ 
+#ifdef _WITH_DIST_ 
     if(VerifyUser(uname) == 0)
 	{
 		char sqlcmd[1024];
@@ -2731,7 +2908,7 @@ int MailStorage::Host(const char* uname, const char* host)
 		return -1;
 #else
     return 0;
-#endif /* _WITH_DISTRIBUTED_HOST_ */
+#endif /* _WITH_DIST_ */
 }
 
 int MailStorage::SetUserStatus(const char* uname, UserStatus status)
@@ -5249,8 +5426,6 @@ int MailStorage::InsertBuddy(const char* usr1, const char* usr2)
 		sprintf(sqlcmd, "INSERT INTO xmppbuddytbl(xusr1, xusr2) VALUES('%s','%s')",
 			strSafetyUser1.c_str(), strSafetyUser2.c_str());
             
-            // printf("%s\n", sqlcmd);
-            
 		if(Query(sqlcmd, strlen(sqlcmd)) == 0)
 		{
 			free(sqlcmd);
@@ -5282,7 +5457,6 @@ int MailStorage::RemoveBuddy(const char* usr1, const char* usr2)
 		sprintf(sqlcmd, "DELETE FROM xmppbuddytbl WHERE (xusr1 = '%s' AND xusr2 = '%s') OR (xusr1 = '%s' AND xusr2 = '%s') ",
 			strSafetyUser1.c_str(), strSafetyUser2.c_str(), strSafetyUser2.c_str(), strSafetyUser1.c_str());
             
-            // printf("%s\n", sqlcmd);
 		if(Query(sqlcmd, strlen(sqlcmd)) == 0)
 		{
 			free(sqlcmd);

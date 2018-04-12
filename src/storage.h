@@ -12,6 +12,13 @@
 #include <map>
 #include <string>
 #include <libmemcached/memcached.h>
+
+#ifdef _WITH_LDAP_
+    #define LDAP_DEPRECATED 1
+    #include <lber.h>
+    #include <ldap.h>
+#endif /*_WITH_LDAP_*/ 
+       
 #include "util/general.h"
 using namespace std; 
 
@@ -172,16 +179,25 @@ public:
 	virtual ~MailStorage();
 
 	//system
-	int Connect(const char * host, const char* username, const char* password, const char* database, unsigned short port, const char* sock_file);
-	void Close();
+    int Connect(const char * host, const char* username, const char* password, const char* database, unsigned short port, const char* sock_file); 
+
+	void Close();  
 	int Ping();
-	
 	void KeepLive();
-    
     int StartTransaction();
 	int Query(const char *stmt_str, unsigned long length);
     int CommitTransaction();
     int RollbackTransaction();
+    
+#ifdef _WITH_DIST_
+    int ConnectMaster(); 
+    int PingMaster();
+    void CloseMaster();
+    void KeepLiveMaster();
+    int QueryMaster(const char *stmt_str, unsigned long length);
+#endif /* _WITH_DIST_ */  
+
+
     
 	int Install(const char* database);
 	int Uninstall(const char* database);
@@ -347,30 +363,33 @@ public:
     int ListBuddys(const char* selfid, vector<string>& buddys);
     
 protected:
-    BOOL m_inTranscation;
 	MYSQL m_hMySQL;
-    memcached_st * m_memcached;
-    BOOL m_isInited;
-	BOOL m_bOpened;
-	void SqlSafetyString(string& strInOut);
-
+    BOOL m_is_in_transcation;
+    BOOL m_is_inited;
+	BOOL m_is_opened;
+    
 	string m_host;
 	string m_username;
 	string m_password;
 	string m_database;
 	unsigned short m_port;
     string m_sock_file;
-    
+
     string m_encoding;
     string m_private_path;
-    
+    memcached_st * m_memcached;
     map<string, string> m_userpwd_cache;
     pthread_rwlock_t m_userpwd_cache_lock;
     int m_userpwd_cache_update_time;
+#ifdef _WITH_LDAP_    
+    LDAP * m_ldap;
+    string m_ldap_server_uri;
+    
+    BOOL m_is_ldap_binded;
+#endif /* _WITH_LDAP_ */
 
+    void SqlSafetyString(string& strInOut);
 protected:
-    /* Static member variable */
-    static BOOL m_userpwd_cache_updated;
     static BOOL m_lib_inited;
 };
 

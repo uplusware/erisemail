@@ -44,6 +44,11 @@ INCDIR = -I../$(OPENSSL_DIR)/include -I/usr/local/include/mariadb/
 LDDIRS = -L. -L/usr/local/lib/mariadb/
 
 LDLIST_SVR = ../$(OPENSSL_DIR)/libssl.a ../$(OPENSSL_DIR)/libcrypto.a -lstdc++ -lrt -ldl -lpthread -lmemcached
+LDLIST_STG = -lstdc++ -lrt -lmariadb -lmemcached
+LDLIST_JKS = -lstdc++
+LDLIST_UTL = -lstdc++ -lpthread -ldl
+LDLIST_UDF = -lstdc++ -lpthread
+LDLIST_NTY = -lstdc++ -lpthread
 
 ifdef GSSAPI
     GSS_DEF = _WITH_GSSAPI_
@@ -61,17 +66,18 @@ else
     HDFS_DEF = _WITHOUT_HDFS_
 endif
 
-ifdef DISTR_HOST
-    DISTR_HOST_DEF = _WITH_DISTRIBUTED_HOST_
+ifdef DIST
+    DIST_DEF = _WITH_DIST_
 else
-    DISTR_HOST_DEF = _WITHOUT_DISTRIBUTED_HOST_
+    DIST_DEF = _WITHOUT_DIST_
 endif
 
-LDLIST_STG = -lstdc++ -lrt -lmariadb -lmemcached
-LDLIST_JKS = -lstdc++
-LDLIST_UTL = -lstdc++ -lpthread -ldl
-LDLIST_UDF = -lstdc++ -lpthread
-LDLIST_NTY = -lstdc++ -lpthread
+ifdef LDAP
+    LDAP_DEF = _WITH_LDAP_
+    LDLIST_STG := $(LDLIST_STG) -lldap -llber
+else
+    LDAP_DEF = _WITHOUT_LDAP_
+endif
 
 FLAGS = -O2 -fPIC -w
 
@@ -103,7 +109,7 @@ $(EXENTY): $(OBJNTY)
 	$(CC) -o $@ $(OBJNTY) $(LDDIRS) $(LDLIST_NTY)
 	
 %.o : %.cpp
-	$(CC) -D$(MDEF) -D$(GSS_DEF) -D$(HDFS_DEF) -D$(DISTR_HOST_DEF) $(INCDIR) $(FLAGS) -c $< -o $@
+	$(CC) -D$(MDEF) -D$(GSS_DEF) -D$(HDFS_DEF) -D$(DIST_DEF) -D$(LDAP_DEF) $(INCDIR) $(FLAGS) -c $< -o $@
 
 clean:
 	-rm -f $(LIBSTG) $(LIBJKS) $(EXESVR) $(EXEUTL) $(SQLUDF) $(EXENTY) $(OBJSVR) $(OBJJKS) $(OBJSTG) $(OBJUDF) $(OBJNTY) *.elf *.gdb *.o *.a *.so

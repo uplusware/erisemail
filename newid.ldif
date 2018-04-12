@@ -1,0 +1,11 @@
+dn: cn=test1, dc=erisesoft, dc=com
+objectclass: top
+objectClass: posixAccount
+objectClass: inetOrgPerson
+cn: test1
+sn: test1
+uidNumber: 1001
+gidNumber: 1001
+uid: test1
+homeDirectory: /home/test1
+userPassword: test1

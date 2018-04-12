@@ -1309,11 +1309,11 @@ public:
 			m_session->parse_urlencode_value("NEW_ALIAS", strAlias);
 			m_session->parse_urlencode_value("NEW_TYPE", strType);
 			m_session->parse_urlencode_value("NEW_LEVEL", strLevel);
-#ifdef _WITH_DISTRIBUTED_HOST_
+#ifdef _WITH_DIST_
             m_session->parse_urlencode_value("NEW_HOST", strHost);
 #else
             strHost = "";
-#endif /* _WITH_DISTRIBUTED_HOST_ */
+#endif /* _WITH_DIST_ */
 			code_convert_ex("UTF-8", CMailBase::m_encoding.c_str(), strAlias.c_str(), strAlias);
 
 			//POST DATA is UTF-8 format
@@ -1480,11 +1480,11 @@ public:
 			m_session->parse_urlencode_value("EDIT_ALIAS", strAlias);
 			m_session->parse_urlencode_value("EDIT_LEVEL", strLevel);
 			m_session->parse_urlencode_value("EDIT_USER_STATUS", strStatus);
-#ifdef _WITH_DISTRIBUTED_HOST_
+#ifdef _WITH_DIST_
             m_session->parse_urlencode_value("EDIT_HOST", strHost);
 #else
             strHost = "";
-#endif /* _WITH_DISTRIBUTED_HOST_ */
+#endif /* _WITH_DIST_ */
 			code_convert_ex("UTF-8", CMailBase::m_encoding.c_str(), strAlias.c_str(), strAlias);
 			
 			strResp = RSP_200_OK_XML;
@@ -2699,7 +2699,7 @@ public:
                 strResp += CMailBase::m_localhostname;
                 strResp +="\" desc=\"local host\"/>";
 				
-#ifdef _WITH_DISTRIBUTED_HOST_
+#ifdef _WITH_DIST_
                 string strline;
                 ifstream clustersfilein(CMailBase::m_clusters_list_file.c_str(), ios_base::binary);
                 if(clustersfilein.is_open())
@@ -2729,7 +2729,7 @@ public:
                     }
                 }
                 clustersfilein.close();
-#endif /* _WITH_DISTRIBUTED_HOST_ */
+#endif /* _WITH_DIST_ */
 				strResp += "</response>"
 					"</erisemail>";
 			}
@@ -8894,27 +8894,56 @@ public:
 		
 		if(m_mailStg && m_mailStg->CheckLogin(username.c_str(), strOldPwd.c_str()) == 0)
 		{
-			if(m_mailStg && m_mailStg->Passwd(username.c_str(), strNewPwd.c_str()) == 0)
-			{
-				strResp = RSP_200_OK_XML;
-				string strHTTPDate;
-				OutHTTPDateString(time(NULL), strHTTPDate);
-				strResp += "Date: ";
-				strResp += strHTTPDate;
-				strResp += "\r\n";
-				
-				strResp +="\r\n";
-				strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
-				strResp += "<erisemail>"
-					"<response errno=\"0\" reason=\"\"></response>"
-					"</erisemail>";
-			}
-			else
-			{
-				strResp = RSP_500_SYS_ERR;
-				
-			}
-			
+            MailStorage* master_storage;
+#ifdef _WITH_DIST_
+            master_storage = new MailStorage(CMailBase::m_encoding.c_str(), CMailBase::m_private_path.c_str(), m_memcached);
+            
+            if(master_storage->Connect(CMailBase::m_master_db_host.c_str(), CMailBase::m_master_db_username.c_str(), CMailBase::m_master_db_password.c_str(),
+                CMailBase::m_master_db_name.c_str(), CMailBase::m_master_db_port, CMailBase::m_master_db_sock_file.c_str()) != 0)
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                
+                strResp +="\r\n";
+                
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+                
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Couldn't connect master server\"></response>"
+                    "</erisemail>";
+            }
+                
+#else
+            master_storage = m_mailStg;
+#endif /* _WITH_DIST_ */
+            if(master_storage && master_storage->Passwd(username.c_str(), strNewPwd.c_str()) == 0)
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                
+                strResp +="\r\n";
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+                strResp += "<erisemail>"
+                    "<response errno=\"0\" reason=\"\"></response>"
+                    "</erisemail>";
+            }
+            else
+            {
+                strResp = RSP_500_SYS_ERR;
+                
+            }
+#ifdef _WITH_DIST_
+            if(master_storage)
+                delete master_storage;
+#endif /* _WITH_DIST_ */
 		}
 		else
 		{
@@ -9033,7 +9062,32 @@ public:
 		
 		if(m_mailStg && m_mailStg->CheckLogin(username.c_str(), password.c_str()) == 0)
 		{
-			if(m_mailStg && m_mailStg->Alias(username.c_str(), strAlias.c_str()) == 0)
+            MailStorage* master_storage;
+#ifdef _WITH_DIST_
+            master_storage = new MailStorage(CMailBase::m_encoding.c_str(), CMailBase::m_private_path.c_str(), m_memcached);
+            
+            if(master_storage->Connect(CMailBase::m_master_db_host.c_str(), CMailBase::m_master_db_username.c_str(), CMailBase::m_master_db_password.c_str(), CMailBase::m_master_db_name.c_str(), CMailBase::m_master_db_port, CMailBase::m_master_db_sock_file.c_str()) != 0)
+            {
+                strResp = RSP_200_OK_XML;
+                string strHTTPDate;
+                OutHTTPDateString(time(NULL), strHTTPDate);
+                strResp += "Date: ";
+                strResp += strHTTPDate;
+                strResp += "\r\n";
+                
+                strResp +="\r\n";
+                
+                strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+                
+                strResp += "<erisemail>"
+                    "<response errno=\"1\" reason=\"Couldn't connect master server\"></response>"
+                    "</erisemail>";
+            }
+                
+#else
+            master_storage = m_mailStg;
+#endif /* _WITH_DIST_ */
+			if(master_storage && master_storage->Alias(username.c_str(), strAlias.c_str()) == 0)
 			{
 				strResp = RSP_200_OK_XML;
 				string strHTTPDate;
@@ -9053,7 +9107,10 @@ public:
 				strResp = RSP_500_SYS_ERR;
 				
 			}
-			
+#ifdef _WITH_DIST_
+            if(master_storage)
+                delete master_storage;
+#endif /* _WITH_DIST_ */
 		}
 		else
 		{

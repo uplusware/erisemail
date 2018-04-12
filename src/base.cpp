@@ -98,6 +98,27 @@ string CMailBase::m_db_username = "root";
 string CMailBase::m_db_password = "";
 string CMailBase::m_db_sock_file = "/var/run/mysqld/mysqld.sock";
 
+BOOL   CMailBase::m_is_master = FALSE;
+string CMailBase::m_master_db_host = "localhost";
+unsigned short  CMailBase::m_master_db_port = 3306;
+string CMailBase::m_master_db_name = "erisemail_db";
+string CMailBase::m_master_db_username = "root";
+string CMailBase::m_master_db_password = "";
+string CMailBase::m_master_db_sock_file = "/var/run/mysqld/mysqld.sock";
+
+#ifdef _WITH_LDAP_
+	string	CMailBase::m_ldap_sever_uri = "ldap://localhost";
+	int		CMailBase::m_ldap_sever_version = 3;;
+	string	CMailBase::m_ldap_manager = "cn=admin,dc=erisesoft,dc=com";
+	string	CMailBase::m_ldap_manager_passwd = "dev";
+	string	CMailBase::m_ldap_search_base = "dc=erisesoft,dc=com";
+	string	CMailBase::m_ldap_search_filter_user = "(&(objectClass=posixAccount)(cn=%s))";
+	string	CMailBase::m_ldap_search_attribute_user_password = "userPassword";
+	string	CMailBase::m_ldap_search_filter_group = "(&(objectClass=posixGroup)(cn=%s))";
+	string	CMailBase::m_ldap_search_attribute_group_member = "memberUid";
+    string	CMailBase::m_ldap_user_dn = "cn=%s,dc=erisesoft,dc=com";
+#endif /* _WITH_LDAP_ */
+
 unsigned int CMailBase::m_db_max_conn = MAX_STORAGE_CONN;
 
 BOOL CMailBase::m_enablemta = TRUE;
@@ -183,14 +204,17 @@ BOOL CMailBase::LoadConfig()
 		if(strline == "")
 			continue;
 	    
-		if(strncasecmp(strline.c_str(), "#", sizeof("#") - 1) != 0)
+		if(strncasecmp(strline.c_str(), "#", 1) != 0)
 		{
-			if(strncasecmp(strline.c_str(), "Encoding", sizeof("Encoding") - 1) == 0)
+            string strKey;
+            strcut(strline.c_str(), NULL, "=", strKey);
+            strtrim(strKey);
+			if(strcasecmp(strKey.c_str(), "Encoding") == 0)
 			{
 				strcut(strline.c_str(), "=", NULL, m_encoding);
 				strtrim(m_encoding);
 			}
-            else if(strncasecmp(strline.c_str(), "CloseStderr", sizeof("CloseStderr") - 1) == 0)
+            else if(strcasecmp(strKey.c_str(), "CloseStderr") == 0)
 			{
 				string close_stderr;
 				strcut(strline.c_str(), "=", NULL, close_stderr );
@@ -198,45 +222,45 @@ BOOL CMailBase::LoadConfig()
 				m_close_stderr = (strcasecmp(close_stderr.c_str(), "yes")) == 0 ? TRUE : FALSE;
 			}
 #ifdef _WITH_HDFS_
-            else if(strncasecmp(strline.c_str(), "HDFSHost", sizeof("HDFSHost") - 1) == 0)
+            else if(strcasecmp(strKey.c_str(), "HDFSHost") == 0)
 			{
 				strcut(strline.c_str(), "=", NULL, m_hdfs_host);
 				strtrim(m_hdfs_host);
 			}
-            else if(strncasecmp(strline.c_str(), "HDFSPort", sizeof("HDFSPort") - 1) == 0)
+            else if(strcasecmp(strKey.c_str(), "HDFSPort") == 0)
 			{
 				string hdfs_port;
 				strcut(strline.c_str(), "=", NULL, hdfs_port);
 				strtrim(hdfs_port);
 				m_hdfs_port = atoi(hdfs_port.c_str());
 			}
-            else if(strncasecmp(strline.c_str(), "HDFSUser", sizeof("HDFSUser") - 1) == 0)
+            else if(strcasecmp(strKey.c_str(), "HDFSUser") == 0)
 			{
 				strcut(strline.c_str(), "=", NULL, m_hdfs_user);
 				strtrim(m_hdfs_user);
 			}
-            else if(strncasecmp(strline.c_str(), "HDFSPath", sizeof("HDFSPath") - 1) == 0)
+            else if(strcasecmp(strKey.c_str(), "HDFSPath") == 0)
 			{
 				strcut(strline.c_str(), "=", NULL, m_hdfs_path);
 				strtrim(m_hdfs_path);
 			}
 #endif /* _WITH_HDFS_ */
-			else if(strncasecmp(strline.c_str(), "PrivatePath", sizeof("PrivatePath") - 1) == 0)
+			else if(strcasecmp(strKey.c_str(), "PrivatePath") == 0)
 			{
 				strcut(strline.c_str(), "=", NULL, m_private_path);
 				strtrim(m_private_path);
 			}
-			else if(strncasecmp(strline.c_str(), "HTMLPath", sizeof("HTMLPath") - 1) == 0)
+			else if(strcasecmp(strKey.c_str(), "HTMLPath") == 0)
 			{
 				strcut(strline.c_str(), "=", NULL, m_html_path);
 				strtrim(m_html_path);
 			}
-			else if(strncasecmp(strline.c_str(), "LocalHostName", sizeof("LocalHostName") - 1) == 0)
+			else if(strcasecmp(strKey.c_str(), "LocalHostName") == 0)
 			{
 				strcut(strline.c_str(), "=", NULL, m_localhostname );
 				strtrim(m_localhostname);
 			}
-			else if(strncasecmp(strline.c_str(), "EmailDomainName", sizeof("EmailDomainName") - 1) == 0)
+			else if(strcasecmp(strKey.c_str(), "EmailDomainName") == 0)
 			{
 				strcut(strline.c_str(), "=", NULL, m_email_domain );
 				strtrim(m_email_domain);
@@ -245,250 +269,250 @@ BOOL CMailBase::LoadConfig()
 				m_domain_list.push_back(m_email_domain);
 				
 			}
-			else if(strncasecmp(strline.c_str(), "HostIP", sizeof("HostIP") - 1) == 0)
+			else if(strcasecmp(strKey.c_str(), "HostIP") == 0)
 			{
 				strcut(strline.c_str(), "=", NULL, m_hostip );
 				strtrim(m_hostip);
 			}
-			else if(strncasecmp(strline.c_str(), "DNSServer", sizeof("DNSServer") - 1) == 0)
+			else if(strcasecmp(strKey.c_str(), "DNSServer") == 0)
 			{
 				strcut(strline.c_str(), "=", NULL, m_dns_server );
 				strtrim(m_dns_server);
 			}
-			else if(strncasecmp(strline.c_str(), "MDAMaxCocurrentConnNum", sizeof("MDAMaxCocurrentConnNum") - 1) == 0)
+			else if(strcasecmp(strKey.c_str(), "MDAMaxCocurrentConnNum") == 0)
 			{
 				string maxconn;
 				strcut(strline.c_str(), "=", NULL, maxconn );
 				strtrim(maxconn);
 				m_mda_max_conn= atoi(maxconn.c_str());
 			}
-            else if(strncasecmp(strline.c_str(), "SMTPEnable", sizeof("SMTPEnable") - 1) == 0)
+            else if(strcasecmp(strKey.c_str(), "SMTPEnable") == 0)
 			{
 				string enable_smtp;
 				strcut(strline.c_str(), "=", NULL, enable_smtp );
 				strtrim(enable_smtp);
 				m_enablesmtp = (strcasecmp(enable_smtp.c_str(), "yes")) == 0 ? TRUE : FALSE;
 			}
-			else if(strncasecmp(strline.c_str(), "SMTPPort", sizeof("SMTPPort") - 1) == 0)
+			else if(strcasecmp(strKey.c_str(), "SMTPPort") == 0)
 			{
 				string smtpport;
 				strcut(strline.c_str(), "=", NULL, smtpport );
 				strtrim(smtpport);
 				m_smtpport = atoi(smtpport.c_str());
 			}
-			else if(strncasecmp(strline.c_str(), "EnableSMTPTLS", sizeof("EnableSMTPTLS") - 1) == 0)
+			else if(strcasecmp(strKey.c_str(), "EnableSMTPTLS") == 0)
 			{
 				string EnableSMTPTLS;
 				strcut(strline.c_str(), "=", NULL, EnableSMTPTLS );
 				strtrim(EnableSMTPTLS);
 				m_enablesmtptls = (strcasecmp(EnableSMTPTLS.c_str(), "yes")) == 0 ? TRUE : FALSE;
 			}
-			else if(strncasecmp(strline.c_str(), "EnableRelay", sizeof("EnableRelay") - 1) == 0)
+			else if(strcasecmp(strKey.c_str(), "EnableRelay") == 0)
 			{
 				string EnableRelay;
 				strcut(strline.c_str(), "=", NULL, EnableRelay );
 				strtrim(EnableRelay);
 				m_enablerelay = (strcasecmp(EnableRelay.c_str(), "yes")) == 0 ? TRUE : FALSE;
 			}
-			else if(strncasecmp(strline.c_str(), "POP3Enable", sizeof("POP3Enable") - 1) == 0)
+			else if(strcasecmp(strKey.c_str(), "POP3Enable") == 0)
 			{
 				string POP3Enable;
 				strcut(strline.c_str(), "=", NULL, POP3Enable );
 				strtrim(POP3Enable);
 				m_enablepop3= (strcasecmp(POP3Enable.c_str(), "yes")) == 0 ? TRUE : FALSE;
 			}
-			else if(strncasecmp(strline.c_str(), "POP3Port", sizeof("POP3Port") - 1) == 0)
+			else if(strcasecmp(strKey.c_str(), "POP3Port") == 0)
 			{
 				string pop3port;
 				strcut(strline.c_str(), "=", NULL, pop3port );
 				strtrim(pop3port);
 				m_pop3port = atoi(pop3port.c_str());
 			}
-			else if(strncasecmp(strline.c_str(), "EnablePOP3TLS", sizeof("EnablePOP3TLS") - 1) == 0)
+			else if(strcasecmp(strKey.c_str(), "EnablePOP3TLS") == 0)
 			{
 				string EnablePOP3TLS;
 				strcut(strline.c_str(), "=", NULL, EnablePOP3TLS );
 				strtrim(EnablePOP3TLS);
 				m_enablepop3tls= (strcasecmp(EnablePOP3TLS.c_str(), "yes")) == 0 ? TRUE : FALSE;
 			}
-			else if(strncasecmp(strline.c_str(), "IMAPEnable", sizeof("IMAPEnable") - 1) == 0)
+			else if(strcasecmp(strKey.c_str(), "IMAPEnable") == 0)
 			{
 				string IMAPEnable;
 				strcut(strline.c_str(), "=", NULL, IMAPEnable );
 				strtrim(IMAPEnable);
 				m_enableimap= (strcasecmp(IMAPEnable.c_str(), "yes")) == 0 ? TRUE : FALSE;
 			}
-			else if(strncasecmp(strline.c_str(), "IMAPPort", sizeof("IMAPPort") - 1) == 0)
+			else if(strcasecmp(strKey.c_str(), "IMAPPort") == 0)
 			{
 				string imapport;
 				strcut(strline.c_str(), "=", NULL, imapport );
 				strtrim(imapport);
 				m_imapport= atoi(imapport.c_str());
 			}
-			else if(strncasecmp(strline.c_str(), "EnableIMAPTLS", sizeof("EnableIMAPTLS") - 1) == 0)
+			else if(strcasecmp(strKey.c_str(), "EnableIMAPTLS") == 0)
 			{
 				string EnableIMAPTLS;
 				strcut(strline.c_str(), "=", NULL, EnableIMAPTLS );
 				strtrim(EnableIMAPTLS);
 				m_enableimaptls= (strcasecmp(EnableIMAPTLS.c_str(), "yes")) == 0 ? TRUE : FALSE;
 			}
-			else if(strncasecmp(strline.c_str(), "SMTPSEnable", sizeof("SMTPSEnable") - 1) == 0)
+			else if(strcasecmp(strKey.c_str(), "SMTPSEnable") == 0)
 			{
 				string SMTPSEnable;
 				strcut(strline.c_str(), "=", NULL, SMTPSEnable );
 				strtrim(SMTPSEnable);
 				m_enablesmtps= (strcasecmp(SMTPSEnable.c_str(), "yes")) == 0 ? TRUE : FALSE;
 			}
-			else if(strncasecmp(strline.c_str(), "SMTPSPort", sizeof("SMTPSPort") - 1) == 0)
+			else if(strcasecmp(strKey.c_str(), "SMTPSPort") == 0)
 			{
 				string smtpsport;
 				strcut(strline.c_str(), "=", NULL, smtpsport );
 				strtrim(smtpsport);
 				m_smtpsport = atoi(smtpsport.c_str());
 			}
-			else if(strncasecmp(strline.c_str(), "POP3SEnable", sizeof("POP3SEnable") - 1) == 0)
+			else if(strcasecmp(strKey.c_str(), "POP3SEnable") == 0)
 			{
 				string POP3SEnable;
 				strcut(strline.c_str(), "=", NULL, POP3SEnable );
 				strtrim(POP3SEnable);
 				m_enablepop3s= (strcasecmp(POP3SEnable.c_str(), "yes")) == 0 ? TRUE : FALSE;
 			}
-			else if(strncasecmp(strline.c_str(), "POP3SPort", sizeof("POP3SPort") - 1) == 0)
+			else if(strcasecmp(strKey.c_str(), "POP3SPort") == 0)
 			{
 				string pop3sport;
 				strcut(strline.c_str(), "=", NULL, pop3sport );
 				strtrim(pop3sport);
 				m_pop3sport = atoi(pop3sport.c_str());
 			}
-			else if(strncasecmp(strline.c_str(), "IMAPSEnable", sizeof("IMAPSEnable") - 1) == 0)
+			else if(strcasecmp(strKey.c_str(), "IMAPSEnable") == 0)
 			{
 				string IMAPSEnable;
 				strcut(strline.c_str(), "=", NULL, IMAPSEnable );
 				strtrim(IMAPSEnable);
 				m_enableimaps= (strcasecmp(IMAPSEnable.c_str(), "yes")) == 0 ? TRUE : FALSE;
 			}
-			else if(strncasecmp(strline.c_str(), "IMAPSPort", sizeof("IMAPSPort") - 1) == 0)
+			else if(strcasecmp(strKey.c_str(), "IMAPSPort") == 0)
 			{
 				string imapsport;
 				strcut(strline.c_str(), "=", NULL, imapsport );
 				strtrim(imapsport);
 				m_imapsport= atoi(imapsport.c_str());
 			}
-			else if(strncasecmp(strline.c_str(), "HTTPEnable", sizeof("HTTPEnable") - 1) == 0)
+			else if(strcasecmp(strKey.c_str(), "HTTPEnable") == 0)
 			{
 				string HTTPEnable;
 				strcut(strline.c_str(), "=", NULL, HTTPEnable );
 				strtrim(HTTPEnable);
 				m_enablehttp= (strcasecmp(HTTPEnable.c_str(), "yes")) == 0 ? TRUE : FALSE;
 			}
-			else if(strncasecmp(strline.c_str(), "HTTPPort", sizeof("HTTPPort") - 1) == 0)
+			else if(strcasecmp(strKey.c_str(), "HTTPPort") == 0)
 			{
 				string httpport;
 				strcut(strline.c_str(), "=", NULL, httpport );
 				strtrim(httpport);
 				m_httpport = atoi(httpport.c_str());
 			}
-			else if(strncasecmp(strline.c_str(), "HTTPSEnable", sizeof("HTTPSEnable") - 1) == 0)
+			else if(strcasecmp(strKey.c_str(), "HTTPSEnable") == 0)
 			{
 				string HTTPSEnable;
 				strcut(strline.c_str(), "=", NULL, HTTPSEnable );
 				strtrim(HTTPSEnable);
 				m_enablehttps= (strcasecmp(HTTPSEnable.c_str(), "yes")) == 0 ? TRUE : FALSE;
 			}
-			else if(strncasecmp(strline.c_str(), "HTTPSPort", sizeof("HTTPSPort") - 1) == 0)
+			else if(strcasecmp(strKey.c_str(), "HTTPSPort") == 0)
 			{
 				string httpsport;
 				strcut(strline.c_str(), "=", NULL, httpsport );
 				strtrim(httpsport);
 				m_httpsport = atoi(httpsport.c_str());
 			}
-            else if(strncasecmp(strline.c_str(), "XMPPEnable", sizeof("XMPPEnable") - 1) == 0)
+            else if(strcasecmp(strKey.c_str(), "XMPPEnable") == 0)
 			{
 				string XMPPEnable;
 				strcut(strline.c_str(), "=", NULL, XMPPEnable );
 				strtrim(XMPPEnable);
 				m_enablexmpp= (strcasecmp(XMPPEnable.c_str(), "yes")) == 0 ? TRUE : FALSE;
 			}
-			else if(strncasecmp(strline.c_str(), "XMPPPort", sizeof("XMPPPort") - 1) == 0)
+			else if(strcasecmp(strKey.c_str(), "XMPPPort") == 0)
 			{
 				string xmppport;
 				strcut(strline.c_str(), "=", NULL, xmppport );
 				strtrim(xmppport);
 				m_xmppport = atoi(xmppport.c_str());
 			}
-            else if(strncasecmp(strline.c_str(), "XMPPSPort", sizeof("XMPPSPort") - 1) == 0)
+            else if(strcasecmp(strKey.c_str(), "XMPPSPort") == 0)
 			{
 				string xmppsport;
 				strcut(strline.c_str(), "=", NULL, xmppsport );
 				strtrim(xmppsport);
 				m_xmppsport = atoi(xmppsport.c_str());
 			}
-            else if(strncasecmp(strline.c_str(), "XMPPFederationEnable", sizeof("XMPPFederationEnable") - 1) == 0)
+            else if(strcasecmp(strKey.c_str(), "XMPPFederationEnable") == 0)
 			{
 				string XMPPFederationEnable;
 				strcut(strline.c_str(), "=", NULL, XMPPFederationEnable );
 				strtrim(XMPPFederationEnable);
 				m_enablexmppfederation= (strcasecmp(XMPPFederationEnable.c_str(), "yes")) == 0 ? TRUE : FALSE;
 			}
-            else if(strncasecmp(strline.c_str(), "XMPPSrvToSrvPort", sizeof("XMPPSrvToSrvPort") - 1) == 0)
+            else if(strcasecmp(strKey.c_str(), "XMPPSrvToSrvPort") == 0)
 			{
 				string xmpps2sport;
 				strcut(strline.c_str(), "=", NULL, xmpps2sport );
 				strtrim(xmpps2sport);
 				m_xmpps2sport = atoi(xmpps2sport.c_str());
 			}
-			else if(strncasecmp(strline.c_str(), "XMPPFederationSecret", sizeof("XMPPFederationSecret") - 1) == 0)
+			else if(strcasecmp(strKey.c_str(), "XMPPFederationSecret") == 0)
 			{
 				strcut(strline.c_str(), "=", NULL, m_xmpp_federation_secret);
 				strtrim(m_xmpp_federation_secret);
 			}
-            else if(strncasecmp(strline.c_str(), "EncryptXMPP", sizeof("EncryptXMPP") - 1) == 0)
+            else if(strcasecmp(strKey.c_str(), "EncryptXMPP") == 0)
 			{
 				string encryptxmpp;
 				strcut(strline.c_str(), "=", NULL, encryptxmpp );
 				strtrim(encryptxmpp);
 				m_encryptxmpp = atoi(encryptxmpp.c_str());
 			}
-            else if(strncasecmp(strline.c_str(), "XMPPWorkerThreadNum", sizeof("XMPPWorkerThreadNum") - 1) == 0)
+            else if(strcasecmp(strKey.c_str(), "XMPPWorkerThreadNum") == 0)
 			{
 				string XMPPWorkerThreadNum;
 				strcut(strline.c_str(), "=", NULL, XMPPWorkerThreadNum );
 				strtrim(XMPPWorkerThreadNum);
 				m_xmpp_worker_thread_num = atoi(XMPPWorkerThreadNum.c_str());
 			}
-			else if(strncasecmp(strline.c_str(), "CAVerifyClient", sizeof("CAVerifyClient") - 1) == 0)
+			else if(strcasecmp(strKey.c_str(), "CAVerifyClient") == 0)
 			{
 				string ca_verify_client;
 				strcut(strline.c_str(), "=", NULL, ca_verify_client);
 				strtrim(ca_verify_client);
 				m_ca_verify_client = (strcasecmp(ca_verify_client.c_str(), "yes")) == 0 ? TRUE : FALSE;
 			}
-			else if(strncasecmp(strline.c_str(), "CARootCrt", sizeof("CARootCrt") - 1) == 0)
+			else if(strcasecmp(strKey.c_str(), "CARootCrt") == 0)
 			{
 				strcut(strline.c_str(), "=", NULL, m_ca_crt_root);
 				strtrim(m_ca_crt_root);
 			}
-			else if(strncasecmp(strline.c_str(), "CAServerCrt", sizeof("CAServerCrt") - 1) == 0)
+			else if(strcasecmp(strKey.c_str(), "CAServerCrt") == 0)
 			{
 				strcut(strline.c_str(), "=", NULL, m_ca_crt_server);
 				strtrim(m_ca_crt_server);
 			}
-			else if(strncasecmp(strline.c_str(), "CAServerKey", sizeof("CAServerKey") - 1) == 0)
+			else if(strcasecmp(strKey.c_str(), "CAServerKey") == 0)
 			{
 				strcut(strline.c_str(), "=", NULL, m_ca_key_server);
 				strtrim(m_ca_key_server);
 			}
-			else if(strncasecmp(strline.c_str(), "CAClientCrt", sizeof("CAClientCrt") - 1) == 0)
+			else if(strcasecmp(strKey.c_str(), "CAClientCrt") == 0)
 			{
 				strcut(strline.c_str(), "=", NULL, m_ca_crt_client);
 				strtrim(m_ca_crt_client);
 			}
-			else if(strncasecmp(strline.c_str(), "CAClientKey", sizeof("CAClientKey") - 1) == 0)
+			else if(strcasecmp(strKey.c_str(), "CAClientKey") == 0)
 			{
 				strcut(strline.c_str(), "=", NULL, m_ca_key_client);
 				strtrim(m_ca_key_client);
 			}
-			else if(strncasecmp(strline.c_str(), "CAPassword", sizeof("CAPassword") - 1) == 0)
+			else if(strcasecmp(strKey.c_str(), "CAPassword") == 0)
 			{
 				m_ca_password = "";
 				
@@ -498,13 +522,13 @@ BOOL CMailBase::LoadConfig()
 
 				Security::Decrypt(strEncoded.c_str(), strEncoded.length(), m_ca_password);
 			}
-            else if(strncasecmp(strline.c_str(), "CAClientBaseDir", sizeof("CAClientBaseDir") - 1) == 0)
+            else if(strcasecmp(strKey.c_str(), "CAClientBaseDir") == 0)
 			{
 				strcut(strline.c_str(), "=", NULL, m_ca_client_base_dir);
 				strtrim(m_ca_client_base_dir);
 			}
 #ifdef _WITH_GSSAPI_              
-            else if(strncasecmp(strline.c_str(), "KRB5_KTNAME", sizeof("KRB5_KTNAME") - 1) == 0)
+            else if(strcasecmp(strKey.c_str(), "KRB5_KTNAME") == 0)
 			{
 				strcut(strline.c_str(), "=", NULL, m_krb5_ktname);
 				strtrim(m_krb5_ktname);
@@ -512,29 +536,29 @@ BOOL CMailBase::LoadConfig()
 				setenv("KRB5_KTNAME", m_krb5_ktname.c_str(), 1);
 			}
 #endif /* _WITH_GSSAPI_ */            
-			else if(strncasecmp(strline.c_str(), "DBHost", sizeof("DBHost") - 1) == 0)
+			else if(strcasecmp(strKey.c_str(), "DBHost") == 0)
 			{
 				strcut(strline.c_str(), "=", NULL, m_db_host );
 				strtrim(m_db_host);
 			}
-            else if(strncasecmp(strline.c_str(), "DBPort", sizeof("DBPort") - 1) == 0)
+            else if(strcasecmp(strKey.c_str(), "DBPort") == 0)
 			{
 				string dbport;
 				strcut(strline.c_str(), "=", NULL, dbport );
 				strtrim(dbport);
 				m_db_port = atoi(dbport.c_str());
 			}
-			else if(strncasecmp(strline.c_str(), "DBName", sizeof("DBName") - 1) == 0)
+			else if(strcasecmp(strKey.c_str(), "DBName") == 0)
 			{
 				strcut(strline.c_str(), "=", NULL, m_db_name );
 				strtrim(m_db_name);
 			}
-			else if(strncasecmp(strline.c_str(), "DBUser", sizeof("DBUser") - 1) == 0)
+			else if(strcasecmp(strKey.c_str(), "DBUser") == 0)
 			{
 				strcut(strline.c_str(), "=", NULL, m_db_username );
 				strtrim(m_db_username);
 			}
-			else if(strncasecmp(strline.c_str(), "DBPassword", sizeof("DBPassword") - 1) == 0)
+			else if(strcasecmp(strKey.c_str(), "DBPassword") == 0)
 			{
 				m_db_password = "";
 				
@@ -545,33 +569,140 @@ BOOL CMailBase::LoadConfig()
 				Security::Decrypt(strEncoded.c_str(), strEncoded.length(), m_db_password);
 				
 			}
-            else if(strncasecmp(strline.c_str(), "DBSockFile", sizeof("DBSockFile") - 1) == 0)
+            else if(strcasecmp(strKey.c_str(), "DBSockFile") == 0)
 			{
 				strcut(strline.c_str(), "=", NULL, m_db_sock_file );
 				strtrim(m_db_sock_file);
 			}
-			else if(strncasecmp(strline.c_str(), "DBMaxConn", sizeof("DBMaxConn") - 1) == 0)
+			else if(strcasecmp(strKey.c_str(), "DBMaxConn") == 0)
 			{
 				string DBMaxConn;
 				strcut(strline.c_str(), "=", NULL, DBMaxConn );
 				strtrim(DBMaxConn);
 				m_db_max_conn = atoi(DBMaxConn.c_str());
 			}
-            else if(strncasecmp(strline.c_str(), "MTAEnable", sizeof("MTAEnable") - 1) == 0)
+            
+            else if(strcasecmp(strKey.c_str(), "ClusterMaster") == 0)
+			{
+				string is_master;
+				strcut(strline.c_str(), "=", NULL, is_master);
+				strtrim(is_master);
+				m_is_master = (strcasecmp(is_master.c_str(), "yes")) == 0 ? TRUE : FALSE;
+			}
+            else if(strcasecmp(strKey.c_str(), "MasterDBHost") == 0)
+			{
+				strcut(strline.c_str(), "=", NULL, m_master_db_host );
+				strtrim(m_master_db_host);
+			}
+            else if(strcasecmp(strKey.c_str(), "MasterDBPort") == 0)
+			{
+				string dbport;
+				strcut(strline.c_str(), "=", NULL, dbport );
+				strtrim(dbport);
+				m_master_db_port = atoi(dbport.c_str());
+			}
+			else if(strcasecmp(strKey.c_str(), "MasterDBName") == 0)
+			{
+				strcut(strline.c_str(), "=", NULL, m_master_db_name );
+				strtrim(m_master_db_name);
+			}
+			else if(strcasecmp(strKey.c_str(), "MasterDBUser") == 0)
+			{
+				strcut(strline.c_str(), "=", NULL, m_master_db_username );
+				strtrim(m_master_db_username);
+			}
+			else if(strcasecmp(strKey.c_str(), "MasterDBPassword") == 0)
+			{
+				m_master_db_password = "";
+				
+				string strEncoded;
+				strcut(strline.c_str(), "=", NULL, strEncoded);
+				strtrim(strEncoded);
+
+				Security::Decrypt(strEncoded.c_str(), strEncoded.length(), m_master_db_password);
+				
+			}
+            else if(strcasecmp(strKey.c_str(), "MasterDBSockFile") == 0)
+			{
+				strcut(strline.c_str(), "=", NULL, m_master_db_sock_file );
+				strtrim(m_master_db_sock_file);
+			}
+
+#ifdef _WITH_LDAP_
+			else if(strcasecmp(strKey.c_str(), "LDAPServerURI") == 0)
+			{
+				strcut(strline.c_str(), "=", NULL, m_ldap_sever_uri );
+				strtrim(m_ldap_sever_uri);
+			}
+			else if(strcasecmp(strKey.c_str(), "LDAPServerVersion") == 0)
+			{
+				string LDAPServerVersion;
+				strcut(strline.c_str(), "=", NULL, LDAPServerVersion );
+				strtrim(LDAPServerVersion);
+				m_ldap_sever_version = atoi(LDAPServerVersion.c_str());
+			}
+			else if(strcasecmp(strKey.c_str(), "LDAPManager") == 0)
+			{
+				strcut(strline.c_str(), "=", NULL, m_ldap_manager );
+				strtrim(m_ldap_manager);
+			}
+			else if(strcasecmp(strKey.c_str(), "LDAPManagerPassword") == 0)
+			{
+				m_ldap_manager_passwd = "";
+				
+				string strEncoded;
+				strcut(strline.c_str(), "=", NULL, strEncoded);
+				strtrim(strEncoded);
+
+				Security::Decrypt(strEncoded.c_str(), strEncoded.length(), m_ldap_manager_passwd);
+			}
+			else if(strcasecmp(strKey.c_str(), "LDAPSearchBase") == 0)
+			{
+				strcut(strline.c_str(), "=", NULL, m_ldap_search_base );
+				strtrim(m_ldap_search_base);
+			}
+			
+			else if(strcasecmp(strKey.c_str(), "LDAPSearchAttribute_User_Password") == 0)
+			{
+				strcut(strline.c_str(), "=", NULL, m_ldap_search_attribute_user_password );
+				strtrim(m_ldap_search_attribute_user_password);
+			}
+			else if(strcasecmp(strKey.c_str(), "LDAPSearchFilter_User") == 0)
+			{
+				strcut(strline.c_str(), "=", NULL, m_ldap_search_filter_user );
+				strtrim(m_ldap_search_filter_user);
+			}
+			else if(strcasecmp(strKey.c_str(), "LDAPSearchFilter_Group") == 0)
+			{
+				strcut(strline.c_str(), "=", NULL, m_ldap_search_filter_group );
+				strtrim(m_ldap_search_filter_group);
+			}
+			else if(strcasecmp(strKey.c_str(), "LDAPSearchAttribute_Group_Memeber") == 0)
+			{
+				strcut(strline.c_str(), "=", NULL, m_ldap_search_attribute_group_member );
+				strtrim(m_ldap_search_attribute_group_member);
+			}
+            else if(strcasecmp(strKey.c_str(), "LDAPUserDN") == 0)
+			{
+				strcut(strline.c_str(), "=", NULL, m_ldap_user_dn );
+				strtrim(m_ldap_user_dn);
+			}
+#endif /* _WITH_LDAP_ */
+            else if(strcasecmp(strKey.c_str(), "MTAEnable") == 0)
 			{
 				string enable_mta;
 				strcut(strline.c_str(), "=", NULL, enable_mta );
 				strtrim(enable_mta);
 				m_enablemta = (strcasecmp(enable_mta.c_str(), "yes")) == 0 ? TRUE : FALSE;
 			}
-			else if(strncasecmp(strline.c_str(), "MTARelayThreadNum", sizeof("MTARelayThreadNum") - 1) == 0)
+			else if(strcasecmp(strKey.c_str(), "MTARelayThreadNum") == 0)
 			{
 				string mta_relaythreadnum;
 				strcut(strline.c_str(), "=", NULL, mta_relaythreadnum );
 				strtrim(mta_relaythreadnum);
 				m_mta_relaythreadnum = atoi(mta_relaythreadnum.c_str());
 			}
-			else if(strncasecmp(strline.c_str(), "MTARelayCheckInterval", sizeof("MTARelayCheckInterval") - 1) == 0)
+			else if(strcasecmp(strKey.c_str(), "MTARelayCheckInterval") == 0)
 			{
 				string mta_relaycheckinterval;
 				strcut(strline.c_str(), "=", NULL, mta_relaycheckinterval );
@@ -580,49 +711,49 @@ BOOL CMailBase::LoadConfig()
                 if(m_mta_relaycheckinterval <= 0)
                     m_mta_relaycheckinterval = 5;
 			}
-			else if(strncasecmp(strline.c_str(), "SMTPHostNameCheck", sizeof("SMTPHostNameCheck") - 1) == 0)
+			else if(strcasecmp(strKey.c_str(), "SMTPHostNameCheck") == 0)
 			{
 				string SMTPHostNameCheck;
 				strcut(strline.c_str(), "=", NULL, SMTPHostNameCheck );
 				strtrim(SMTPHostNameCheck);
 				m_enablesmtphostnamecheck = (strcasecmp(SMTPHostNameCheck.c_str(), "yes")) == 0 ? TRUE : FALSE;
 			}
-            else if(strncasecmp(strline.c_str(), "ConnectionIdleTimeout", sizeof("ConnectionIdleTimeout") - 1) == 0)
+            else if(strcasecmp(strKey.c_str(), "ConnectionIdleTimeout") == 0)
 			{
 				string connection_idle_timeout;
 				strcut(strline.c_str(), "=", NULL, connection_idle_timeout );
 				strtrim(connection_idle_timeout);
 				m_connection_idle_timeout = atoi(connection_idle_timeout.c_str());
 			}
-            else if(strncasecmp(strline.c_str(), "ServiceIdleTimeout", sizeof("ServiceIdleTimeout") - 1) == 0)
+            else if(strcasecmp(strKey.c_str(), "ServiceIdleTimeout") == 0)
 			{
 				string service_idle_timeout;
 				strcut(strline.c_str(), "=", NULL, service_idle_timeout );
 				strtrim(service_idle_timeout);
 				m_service_idle_timeout = atoi(service_idle_timeout.c_str());
 			}
-            else if(strncasecmp(strline.c_str(), "ConnectionSyncTimeout", sizeof("ConnectionSyncTimeout") - 1) == 0)
+            else if(strcasecmp(strKey.c_str(), "ConnectionSyncTimeout") == 0)
 			{
 				string connection_sync_timeout;
 				strcut(strline.c_str(), "=", NULL, connection_sync_timeout );
 				strtrim(connection_sync_timeout);
 				m_connection_sync_timeout = atoi(connection_sync_timeout.c_str());
 			}
-            else if(strncasecmp(strline.c_str(), "MaxServiceRequestNum", sizeof("MaxServiceRequestNum") - 1) == 0)
+            else if(strcasecmp(strKey.c_str(), "MaxServiceRequestNum") == 0)
 			{
 				string max_service_request_num;
 				strcut(strline.c_str(), "=", NULL, max_service_request_num );
 				strtrim(max_service_request_num);
 				m_max_service_request_num = atoi(max_service_request_num.c_str());
 			}
-            else if(strncasecmp(strline.c_str(), "ThreadIncreaseStep", sizeof("ThreadIncreaseStep") - 1) == 0)
+            else if(strcasecmp(strKey.c_str(), "ThreadIncreaseStep") == 0)
 			{
 				string thread_increase_step;
 				strcut(strline.c_str(), "=", NULL, thread_increase_step );
 				strtrim(thread_increase_step);
 				m_thread_increase_step = atoi(thread_increase_step.c_str());
 			}
-			else if(strncasecmp(strline.c_str(), "MEMCACHEDList", sizeof("MEMCACHEDList") - 1) == 0)
+			else if(strcasecmp(strKey.c_str(), "MEMCACHEDList") == 0)
 			{
 				string memc_list;
 				strcut(strline.c_str(), "=", NULL, memc_list );
