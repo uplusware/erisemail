@@ -364,7 +364,7 @@ BOOL CMailSmtp::On_Mail_Handler(char* text)
 
 	string fromdomain;
 	strcut(m_mailfrom.c_str(), "@", NULL, fromdomain);
-		
+    
 	if((m_status&STATUS_AUTHED) == STATUS_AUTHED)
 	{
 		if(CMailBase::Is_Local_Domain(fromdomain.c_str()))

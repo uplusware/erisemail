@@ -260,7 +260,6 @@ public:
 	int SetUserSize(const char* uname, unsigned int size);
 
 	int GetUserSize(const char* uname, unsigned long long& size);
-		
 
 	int DumpMailToFile(int mid, string& dumpfile);
 	int DelMail(const char* username, int mid, unsigned int mtx = mtLocal);
@@ -301,6 +300,8 @@ public:
 	int GetDirParentID(const char* username, int dirid, int& parentid);
 	int GetDirParentID(const char* username, const char* dirref, vector<int>& vparentid);
 
+    int CheckRequiredDir(const char* username);
+    
 	int GetInboxID(const char* username, int &dirid);
 	int GetSentID(const char* username, int &dirid);
 	int GetDraftsID(const char* username, int &dirid);

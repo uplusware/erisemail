@@ -4864,6 +4864,10 @@ public:
 				}
 			}
 			
+            string mailfrom = username;
+            mailfrom += "@";
+            mailfrom += CMailBase::m_email_domain;
+                    
 			for(int i = 0; i < allAddr.size(); i++)
 			{
 				string mailaddr = allAddr[i];
@@ -4911,18 +4915,19 @@ public:
 						Letter_Info* letter_info = new Letter_Info;
 						if(pLetter && letter_info)
 						{
-                            letter_info->mail_from = "";
-							letter_info->mail_to = "";
+                            letter_info->mail_from = mailfrom;
                             
                             if(mail_host == "" || strcasecmp(mail_host.c_str(), CMailBase::m_localhostname.c_str()) == 0)
                             {
+                                letter_info->mail_to = "";
                                 letter_info->mail_type = mtLocal;
                                 letter_info->host = "";
                             }
                             else
                             {
+                                letter_info->mail_to = mailaddr.c_str();
                                 letter_info->mail_type = mtExtern;
-                                letter_info->host = "";
+                                letter_info->host = mail_host;
                             }
                             
 							letter_info->mail_uniqueid = newuid;
@@ -4958,10 +4963,6 @@ public:
 					{
 						usermaxsize = 5000*1024;
 					}
-					
-					string mailfrom = username;
-					mailfrom += "@";
-					mailfrom += CMailBase::m_email_domain;
 
 							
 					pLetter = new MailLetter(m_mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_session->GetMemCached(), newuid, usermaxsize);

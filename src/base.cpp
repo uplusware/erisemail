@@ -147,7 +147,7 @@ unsigned int	CMailBase::m_connection_idle_timeout = 20;
 unsigned int    CMailBase::m_connection_sync_timeout = 3;
 unsigned int    CMailBase::m_max_service_request_num = 65536;
 
-unsigned int    CMailBase::m_service_idle_timeout = 600;
+unsigned int    CMailBase::m_service_idle_timeout = 7200;
 
 unsigned int	CMailBase::m_thread_increase_step = 8;
 

@@ -759,6 +759,7 @@ int MailStorage::CheckLogin(const char* username, const char* password)
                 
 				if(strcmp(password, ldap_password) == 0)
 				{
+                    CheckRequiredDir(username);
 					free(ldap_password);
                     return 0;
 				}
@@ -798,6 +799,7 @@ int MailStorage::CheckLogin(const char* username, const char* password)
 			if((row = mysql_fetch_row(query_result)) && strcmp(row[0], password) == 0)
 			{
 				mysql_free_result(query_result);
+                CheckRequiredDir(username);
 				return 0;
 			}
 			else
@@ -1413,6 +1415,55 @@ int MailStorage::GetLevel(int lid, Level_Info& linfo)
 		
 }
 
+int MailStorage::CheckRequiredDir(const char* username)
+{
+    char sqlcmd[2048];
+    string strSafetyUsername;
+    strSafetyUsername = username;
+    SqlSafetyString(strSafetyUsername);
+
+    sprintf(sqlcmd, "INSERT INTO dirtbl(dname, downer, dparent , dstatus, dusage, dtime) SELECT 'Inbox','%s',-1, %d, %d, %d FROM dual WHERE NOT EXISTS (SELECT did FROM dirtbl WHERE downer='%s' AND dusage=%d)",
+        strSafetyUsername.c_str(), DIR_ATTR_MARKED|DIR_ATTR_SUBSCRIBED, duInbox, time(NULL), strSafetyUsername.c_str(), duInbox);
+    if(Query(sqlcmd, strlen(sqlcmd)) != 0)
+    {
+        show_error(&m_hMySQL, sqlcmd);
+        return -1;
+    }
+        
+    sprintf(sqlcmd, "INSERT INTO dirtbl(dname, downer, dparent , dstatus, dusage, dtime) SELECT 'Sent','%s',-1, %d, %d, %d FROM dual WHERE NOT EXISTS (SELECT did FROM dirtbl WHERE downer='%s' AND dusage=%d)",
+        strSafetyUsername.c_str(), DIR_ATTR_MARKED|DIR_ATTR_SUBSCRIBED, duSent, time(NULL), strSafetyUsername.c_str(), duSent);
+    if(Query(sqlcmd, strlen(sqlcmd)) != 0)
+    {
+        show_error(&m_hMySQL, sqlcmd);
+        return -1;
+    }
+
+    sprintf(sqlcmd, "INSERT INTO dirtbl(dname, downer, dparent , dstatus, dusage, dtime) SELECT 'Drafts','%s',-1, %d, %d, %d FROM dual WHERE NOT EXISTS (SELECT did FROM dirtbl WHERE downer='%s' AND dusage=%d)",
+        strSafetyUsername.c_str(), DIR_ATTR_MARKED|DIR_ATTR_SUBSCRIBED, duDrafts, time(NULL), strSafetyUsername.c_str(), duDrafts);
+    if(Query(sqlcmd, strlen(sqlcmd)) != 0)
+    {
+        show_error(&m_hMySQL, sqlcmd);
+        return -1;
+    }
+
+    sprintf(sqlcmd, "INSERT INTO dirtbl(dname, downer, dparent , dstatus, dusage, dtime) SELECT 'Trash','%s',-1, %d, %d, %d FROM dual WHERE NOT EXISTS (SELECT did FROM dirtbl WHERE downer='%s' AND dusage=%d)",
+        strSafetyUsername.c_str(), DIR_ATTR_MARKED|DIR_ATTR_SUBSCRIBED, duTrash, time(NULL), strSafetyUsername.c_str(), duTrash);
+    if(Query(sqlcmd, strlen(sqlcmd)) != 0)
+    {
+        show_error(&m_hMySQL, sqlcmd);
+        return -1;
+    }
+
+    sprintf(sqlcmd, "INSERT INTO dirtbl(dname, downer, dparent , dstatus, dusage, dtime) SELECT 'Junk','%s',-1, %d, %d, %d FROM dual WHERE NOT EXISTS (SELECT did FROM dirtbl WHERE downer='%s' AND dusage=%d)",
+        strSafetyUsername.c_str(), DIR_ATTR_MARKED|DIR_ATTR_SUBSCRIBED, duJunk, time(NULL), strSafetyUsername.c_str(), duJunk);
+    if(Query(sqlcmd, strlen(sqlcmd)) != 0)
+    {
+        show_error(&m_hMySQL, sqlcmd);
+        return -1;
+    }
+    
+    return 0;
+}
 
 int MailStorage::AddID(const char* username, const char* password, const char* alias, const char* host, UserType type, UserRole role, unsigned int size, int level)
 {
@@ -1443,7 +1494,7 @@ int MailStorage::AddID(const char* username, const char* password, const char* a
         
 		if((VerifyUser(username) == -1) && (VerifyGroup(username) == -1))
 		{
-			char sqlcmd[1024];
+			char sqlcmd[2048];
 
 			string strSafetyUsername;
 			strSafetyUsername = username;
@@ -1501,49 +1552,6 @@ int MailStorage::AddID(const char* username, const char* password, const char* a
 			{
 				show_error(&m_hMySQL, sqlcmd);
 				return -1;
-			}
-			
-			if(type == utMember)
-			{
-				sprintf(sqlcmd, "INSERT INTO dirtbl(dname, downer, dparent , dstatus, dusage, dtime) VALUES('Inbox','%s',-1, %d, %d, %d)",
-					strSafetyUsername.c_str(), DIR_ATTR_MARKED|DIR_ATTR_SUBSCRIBED, duInbox, time(NULL));
-				if(Query(sqlcmd, strlen(sqlcmd)) != 0)
-                {
-                    show_error(&m_hMySQL, sqlcmd);
-                    return -1;
-                }
-					
-				sprintf(sqlcmd, "INSERT INTO dirtbl(dname, downer, dparent , dstatus, dusage, dtime) VALUES('Sent','%s',-1, %d, %d, %d)",
-					strSafetyUsername.c_str(), DIR_ATTR_MARKED|DIR_ATTR_SUBSCRIBED, duSent, time(NULL));
-				if(Query(sqlcmd, strlen(sqlcmd)) != 0)
-                {
-                    show_error(&m_hMySQL, sqlcmd);
-                    return -1;
-                }
-
-				sprintf(sqlcmd, "INSERT INTO dirtbl(dname, downer, dparent , dstatus, dusage, dtime) VALUES('Drafts','%s',-1, %d, %d, %d)",
-					strSafetyUsername.c_str(), DIR_ATTR_MARKED|DIR_ATTR_SUBSCRIBED, duDrafts, time(NULL));
-				if(Query(sqlcmd, strlen(sqlcmd)) != 0)
-                {
-                    show_error(&m_hMySQL, sqlcmd);
-                    return -1;
-                }
-
-				sprintf(sqlcmd, "INSERT INTO dirtbl(dname, downer, dparent , dstatus, dusage, dtime) VALUES('Trash','%s',-1, %d, %d, %d)",
-					strSafetyUsername.c_str(), DIR_ATTR_MARKED|DIR_ATTR_SUBSCRIBED, duTrash, time(NULL));
-				if(Query(sqlcmd, strlen(sqlcmd)) != 0)
-                {
-                    show_error(&m_hMySQL, sqlcmd);
-                    return -1;
-                }
-
-				sprintf(sqlcmd, "INSERT INTO dirtbl(dname, downer, dparent , dstatus, dusage, dtime) VALUES('Junk','%s',-1, %d, %d, %d)",
-					strSafetyUsername.c_str(), DIR_ATTR_MARKED|DIR_ATTR_SUBSCRIBED, duJunk, time(NULL));
-				if(Query(sqlcmd, strlen(sqlcmd)) != 0)
-                {
-                    show_error(&m_hMySQL, sqlcmd);
-                    return -1;
-                }
 			}
             
             if(CommitTransaction() != 0)
@@ -1988,6 +1996,7 @@ int MailStorage::InsertMailIndex(const char* mfrom, const char* mto, const char*
 	char* sqlcmd = (char*)malloc(strSafetyBody.length() + strSafetyTo.length() + strSafetyFrom.length() + 1024);
 	if(sqlcmd)
 	{
+        
         if(strcmp(mhost, "") == 0 || strcasecmp(mhost, CMailBase::m_localhostname.c_str()) == 0)
         {
             sprintf(sqlcmd, "INSERT INTO %s.%s (mfrom,mto,mtime,mtx,muniqid,mdirid,mstatus,mbody,msize) VALUES('%s','%s',%u,%u,'%s',%d,%u,'%s','%u')", m_database.c_str(),
@@ -2003,7 +2012,7 @@ int MailStorage::InsertMailIndex(const char* mfrom, const char* mto, const char*
                 mtx == mtExtern ? "extmailtbl" : "mailtbl",
                 strSafetyFrom.c_str(), strSafetyTo.c_str(), strSafetyHost.c_str(), mtime, mtx, muniqid, mdirid, mstatus, strSafetyBody.c_str(), msize);
         }
-
+        
 		if(Query(sqlcmd, strlen(sqlcmd) + 1) == 0)
 		{
 			mailid = mysql_insert_id(&m_hMySQL);
