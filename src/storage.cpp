@@ -963,7 +963,7 @@ int MailStorage::GetHost(const char* username, string& host)
 				}
 				else
 				{
-					host = row[0];
+					host = row[0] ? row[0] : "";
 					mysql_free_result(query_result);
 					return 0;
 				}
@@ -2471,8 +2471,11 @@ int MailStorage::ListAvailableExternMail(vector<Mail_Info>& listtbl, unsigned in
         mtExtern, MSG_ATTR_DELETED, MSG_ATTR_DELETED, MSG_ATTR_UNAUDITED, MSG_ATTR_UNAUDITED, mta_count, mta_index, MAX_TRY_FORWARD_COUNT);
 #endif /* _WITH_DIST_ */
     max_num = (max_num == 0 ? 0x7FFFFFFFFU : max_num);
+	
+	
 	if(Query(sqlcmd, strlen(sqlcmd)) == 0)
 	{
+		
 		MYSQL_RES *query_result;
 		MYSQL_ROW row;
 		
@@ -2480,15 +2483,16 @@ int MailStorage::ListAvailableExternMail(vector<Mail_Info>& listtbl, unsigned in
 		
 		if(query_result)
 		{
+			
 			while((row = mysql_fetch_row(query_result)))
 			{
                 if(max_num == 0)
                     break;
 				Mail_Info mi;
-#ifdef _WITH_DIST_  
-                mi.mailfrom = row[0];
+#ifdef _WITH_DIST_
+				mi.mailfrom = row[0];	
 				mi.rcptto = row[1];
-                mi.host = row[2];
+				mi.host = row[2] ? row[2] : "";
 				strcpy(mi.uniqid, row[3]);
 				mi.mid = atoi(row[4]);
 #else
@@ -2506,6 +2510,7 @@ int MailStorage::ListAvailableExternMail(vector<Mail_Info>& listtbl, unsigned in
 		}
 		else
         {
+			show_error(&m_hMySQL, sqlcmd);
             return -1;
         }
 	}
@@ -2637,7 +2642,7 @@ int MailStorage::ListID(vector<User_Info>& listtbl, string orderby, BOOL desc)
 				ui.status = (UserStatus)atoi(row[5]);
 				ui.level = atoi(row[6]);
 #ifdef _WITH_DIST_
-                strcpy(ui.host, row[7]);
+                strcpy(ui.host, row[7] ? row[7] : "");
 #else
                 strcpy(ui.host, CMailBase::m_localhostname.c_str());
 #endif /* _WITH_DIST_ */

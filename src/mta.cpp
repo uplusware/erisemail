@@ -592,11 +592,11 @@ BOOL MailTransferAgent::SendMail(MailStorage* mailStg, memcached_st * memcached,
 BOOL MailTransferAgent::RelayMail(MailStorage* mailStg, memcached_st * memcached, int mid, const char* uniqid, const char *mail_from, const char *rcpt_to, const char * mail_host, string& errormsg)
 {
     vector<DNSQry_List> list;
-    
     if(strcmp(mail_host, "") == 0 )
     {
         string svraddr;
         strcut(rcpt_to, "@", NULL, svraddr);
+		
         udpdns dns(CMailBase::m_dns_server.c_str());
 
         int y;
@@ -859,6 +859,7 @@ int MailTransferAgent::Run(int fd)
                 
 				if(mta_count > 0 && mailStg->ListAvailableExternMail(mitbl, mta_index, mta_count, CMailBase::m_mta_relaythreadnum) == 0)
 				{
+					
                     for(int x = 0; x < mitbl.size(); x++)
                     {
                         last_idle_time = time(NULL);
