@@ -565,15 +565,21 @@ int MailStorage::Install(const char* database)
 		return -1;
 	}	
 #ifdef _WITH_DIST_
-	if(AddID("admin", "admin", "Administrator", CMailBase::m_master_hostname.c_str(), utMember, urAdministrator, MAX_EMAIL_LEN, -1) == -1)
-#else
-	if(AddID("admin", "admin", "Administrator", "", utMember, urAdministrator, MAX_EMAIL_LEN, -1) == -1)
-#endif /*  _WITH_DIST_ */
+	if(CMailBase::m_is_master)
 	{
-        printf("Add admin id wrong\n");
-        RollbackTransaction();
-		return -1;
+		if(AddID("admin", "admin", "Administrator", CMailBase::m_master_hostname.c_str(), utMember, urAdministrator, MAX_EMAIL_LEN, -1) == -1)
+#else
+		if(AddID("admin", "admin", "Administrator", "", utMember, urAdministrator, MAX_EMAIL_LEN, -1) == -1)
+#endif /*  _WITH_DIST_ */
+		{
+			printf("Add admin id wrong\n");
+			RollbackTransaction();
+			return -1;
+		}
+#ifdef _WITH_DIST_
 	}
+#endif /*  _WITH_DIST_ */
+
 #ifdef POSTMAIL_NOTIFY    
 	sprintf(sqlcmd, "DROP FUNCTION IF EXISTS post_notify");
 	if(Query(sqlcmd, strlen(sqlcmd)) != 0)
