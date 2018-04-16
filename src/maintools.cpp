@@ -695,7 +695,7 @@ int run(int argc, char* argv[])
                         if(mailMasterStg && mailMasterStg->Connect(CMailBase::m_master_db_host.c_str(), CMailBase::m_master_db_username.c_str(), CMailBase::m_master_db_password.c_str(),
                             CMailBase::m_master_db_name.c_str(), CMailBase::m_master_db_port, CMailBase::m_master_db_sock_file.c_str()) == 0)
                         {
-                            string local_admin = "admin/";
+                            string local_admin = "admin#";
                             local_admin += CMailBase::m_localhostname.c_str();
                             if(mailMasterStg->StartTransaction() == -1 || mailMasterStg->AddID(local_admin.c_str(), "admin", "Local Administrator", CMailBase::m_localhostname.c_str(), utMember, urAdministrator, MAX_EMAIL_LEN, -1, usDisabled) == -1)
                             {

@@ -1540,7 +1540,7 @@ int MailStorage::AddID(const char* username, const char* password, const char* a
             if((username[x] >= 'a' && username[x] <= 'z') 
                 || (username[x] >= 'A' && username[x] <= 'Z')
                 || (username[x] >= '0' && username[x] <= '9')
-                || (username[x] == '_' || username[x] == '.'))
+                || (username[x] == '_' || username[x] == '.' || username[x] == '#'))
             {
                 //works fine
             }
@@ -1615,8 +1615,6 @@ int MailStorage::AddID(const char* username, const char* password, const char* a
             {
                  sprintf(sqlcmd, "INSERT INTO usertbl(uname, upasswd, ualias, uhost, utype, urole, usize, ustatus, ulevel, utime) VALUES('%s', ENCODE('%s','%s'), '%s', (select uhost from (select uhost, min(C) from (select uhost, count(*) as C from usertbl as A group by uhost order by C) as B) as C), %d, %d, %d, %d, %d, %d)",
                     strSafetyUsername.c_str(), strSafetyPassword.c_str(), CODE_KEY, strSafetyAlias.c_str(), type, role, size, status, defaultLevel, time(NULL));
-                    
-                 fprintf(stderr, sqlcmd);
             }
                 
 #else
