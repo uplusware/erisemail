@@ -1,4 +1,4 @@
-### eRisemail - Scalable distributed Mail/XMPP Server/Federation based on the Linux/MySQL/Hadoop/Ldap
+### eRisemail - Scalable distributed Mail/XMPP Server/Federation based on the Linux/MySQL/Hadoop/LDAP
 * Support SMTP, POP3, IMAP4, HTTP, XMPP and SSL/TLS
 * Support WebMail and WebAdmin based on built-in web server
 * Support CRAM-MD5, DIGEST-MD5, APOP, External/TLS-Certification and GSSAPI/Kerberos
