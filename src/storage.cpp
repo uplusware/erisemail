@@ -552,7 +552,29 @@ int MailStorage::Install(const char* database)
 		show_error(&m_hMySQL, sqlcmd, "Install: ", TRUE);
 		return -1;
 	}
+#ifdef _WITH_DIST_
+	if(CMailBase::m_is_master)
+	{
+        unsigned int lid;
+        if(AddLevel("default", "The system's default level", 5000*1024, 500000*1024, eaFalse, 5000*1024, 5000*1024, lid) == 0)
+        {
+            SetDefaultLevel(lid);
+        }
+        else
+        {
+            printf("Add level wrong\n");
+            RollbackTransaction();
+            return -1;
+        }	
     
+		if(AddID("admin", "admin", "Cluster Administrator", CMailBase::m_master_hostname.c_str(), utMember, urAdministrator, MAX_EMAIL_LEN, -1) == -1)
+        {
+            printf("Add cluster admin id wrong\n");
+			RollbackTransaction();
+			return -1;
+        }
+	}
+#else
     unsigned int lid;
 	if(AddLevel("default", "The system's default level", 5000*1024, 500000*1024, eaFalse, 5000*1024, 5000*1024, lid) == 0)
 	{
@@ -564,20 +586,13 @@ int MailStorage::Install(const char* database)
         RollbackTransaction();
 		return -1;
 	}	
-#ifdef _WITH_DIST_
-	if(CMailBase::m_is_master)
-	{
-		if(AddID("admin", "admin", "Administrator", CMailBase::m_master_hostname.c_str(), utMember, urAdministrator, MAX_EMAIL_LEN, -1) == -1)
-#else
-		if(AddID("admin", "admin", "Administrator", "", utMember, urAdministrator, MAX_EMAIL_LEN, -1) == -1)
-#endif /*  _WITH_DIST_ */
-		{
-			printf("Add admin id wrong\n");
-			RollbackTransaction();
-			return -1;
-		}
-#ifdef _WITH_DIST_
-	}
+    
+    if(AddID("admin", "admin", "Administrator", "", utMember, urAdministrator, MAX_EMAIL_LEN, -1) == -1)
+    {
+        printf("Add admin id wrong\n");
+        RollbackTransaction();
+        return -1;
+    }
 #endif /*  _WITH_DIST_ */
 
 #ifdef POSTMAIL_NOTIFY    
@@ -1191,14 +1206,59 @@ int MailStorage::SetDefaultLevel(unsigned int lid)
 
 int MailStorage::GetUserLevel(const char* username, Level_Info& linfo)
 {
-	User_Info uinfo;
-	if(GetID(username, uinfo) == -1)
+	char sqlcmd[1024];
+	if(username && username[0] != '\0')
+	{
+		sprintf(sqlcmd, "SELECT A.lid, A.lname, A.ldescription, A.lmailmaxsize, A.lboxmaxsize, A.lenableaudit, A.lmailsizethreshold, A.lattachsizethreshold, A.ldefault, A.ltime FROM leveltbl as A, usertbl as B WHERE A.lid=B.ulevel and B.uname = '%s'", username);
+	}
+	else
+	{
 		return -1;
-
-	if(GetLevel(uinfo.level, linfo) == -1)
+	}
+	
+	
+	if(Query(sqlcmd, strlen(sqlcmd)) == 0)
+	{		
+		MYSQL_RES *query_result;
+		MYSQL_ROW row;
+		
+		query_result = mysql_store_result(&m_hMySQL);
+		
+		if(query_result)
+		{
+			row = mysql_fetch_row(query_result);
+			if(row)
+			{
+				linfo.lid = atoi(row[0]);
+				linfo.lname = row[1];
+				linfo.ldescription = row[2];
+				linfo.mailmaxsize = atollu(row[3]);
+				linfo.boxmaxsize = atollu(row[4]);
+				linfo.enableaudit = (EnableAudit)atoi(row[5]);
+				linfo.mailsizethreshold = atoi(row[6]);
+				linfo.attachsizethreshold = atoi(row[7]);
+				linfo.ldefault = (LevelDeault)atoi(row[8]);
+				linfo.ltime = atoi(row[9]);
+			}
+			else
+			{
+				mysql_free_result(query_result);
+				return -1;
+			}
+			mysql_free_result(query_result);
+			return 0;
+		}
+		else
+		{
+			return -1;
+		}
+	}
+	else
+	{
+	    
+		show_error(&m_hMySQL, sqlcmd);
 		return -1;
-
-	return 0;
+	}
 }
 
 int MailStorage::SetUserLevel(const char* username, int lid)
@@ -1471,7 +1531,7 @@ int MailStorage::CheckRequiredDir(const char* username)
     return 0;
 }
 
-int MailStorage::AddID(const char* username, const char* password, const char* alias, const char* host, UserType type, UserRole role, unsigned int size, int level)
+int MailStorage::AddID(const char* username, const char* password, const char* alias, const char* host, UserType type, UserRole role, unsigned int size, int level, int status)
 {
 	if(strcasecmp(username, "postmaster") != 0)
 	{
@@ -1542,16 +1602,26 @@ int MailStorage::AddID(const char* username, const char* password, const char* a
                 return -1;
             
 #ifdef _WITH_DIST_
-            string strSafetyHost;  
-			strSafetyHost = host;
-			SqlSafetyString(strSafetyHost);
-            
-            sprintf(sqlcmd, "INSERT INTO usertbl(uname, upasswd, ualias, uhost, utype, urole, usize, ustatus, ulevel, utime) VALUES('%s', ENCODE('%s','%s'), '%s', '%s', %d, %d, %d, 0, %d, %d)",
-				strSafetyUsername.c_str(), strSafetyPassword.c_str(), CODE_KEY, strSafetyAlias.c_str(), strSafetyHost.c_str(), type, role, size, defaultLevel, time(NULL));
+            if(host && host[0] != '\0')
+            {
+                string strSafetyHost;  
+                strSafetyHost = host;
+                SqlSafetyString(strSafetyHost);
+                
+                sprintf(sqlcmd, "INSERT INTO usertbl(uname, upasswd, ualias, uhost, utype, urole, usize, ustatus, ulevel, utime) VALUES('%s', ENCODE('%s','%s'), '%s', '%s', %d, %d, %d, %d, %d, %d)",
+                    strSafetyUsername.c_str(), strSafetyPassword.c_str(), CODE_KEY, strSafetyAlias.c_str(), strSafetyHost.c_str(), type, role, size, status, defaultLevel, time(NULL));
+            }
+            else
+            {
+                 sprintf(sqlcmd, "INSERT INTO usertbl(uname, upasswd, ualias, uhost, utype, urole, usize, ustatus, ulevel, utime) VALUES('%s', ENCODE('%s','%s'), '%s', (select uhost from (select uhost, min(C) from (select uhost, count(*) as C from usertbl as A group by uhost order by C) as B) as C), %d, %d, %d, %d, %d, %d)",
+                    strSafetyUsername.c_str(), strSafetyPassword.c_str(), CODE_KEY, strSafetyAlias.c_str(), type, role, size, status, defaultLevel, time(NULL));
+                    
+                 fprintf(stderr, sqlcmd);
+            }
                 
 #else
-            sprintf(sqlcmd, "INSERT INTO usertbl(uname, upasswd, ualias, utype, urole, usize, ustatus, ulevel, utime) VALUES('%s', ENCODE('%s','%s'), '%s', %d, %d, %d, 0, %d, %d)",
-				strSafetyUsername.c_str(), strSafetyPassword.c_str(), CODE_KEY, strSafetyAlias.c_str(), type, role, size, defaultLevel, time(NULL));
+            sprintf(sqlcmd, "INSERT INTO usertbl(uname, upasswd, ualias, utype, urole, usize, ustatus, ulevel, utime) VALUES('%s', ENCODE('%s','%s'), '%s', %d, %d, %d, %d, %d, %d)",
+				strSafetyUsername.c_str(), strSafetyPassword.c_str(), CODE_KEY, strSafetyAlias.c_str(), type, role, size, status, defaultLevel, time(NULL));
 #endif /* _WITH_DIST_ */
 				
 			if(Query(sqlcmd, strlen(sqlcmd)) != 0)

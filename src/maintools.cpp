@@ -34,7 +34,7 @@ void usage()
 	printf("Usage:eriseutil --disable <user|group name>\n");
 	printf("Usage:eriseutil --enable <user|group name>\n");
 #ifdef _WITH_DIST_
-    printf("Usage:eriseutil --host <user name>\n");
+    printf("Usage:eriseutil --host <user name> <host name>\n");
 #endif /* _WITH_DIST_ */
 	printf("Usage:eriseutil --encode\n");
 }
@@ -654,6 +654,21 @@ int run(int argc, char* argv[])
 					printf("Ops..., system error!\n");
 				}
 			}
+            else if(strcmp(argv[1], "--host") == 0)
+			{
+				
+				if(mailStg && mailStg->Connect(CMailBase::m_master_db_host.c_str(), CMailBase::m_master_db_username.c_str(), CMailBase::m_master_db_password.c_str(), CMailBase::m_master_db_name.c_str(), CMailBase::m_master_db_port, CMailBase::m_master_db_sock_file.c_str()) == 0)
+				{
+					string host;
+					mailStg->GetHost(argv[2], host);
+					
+					printf("%s\n", host.c_str());
+				}
+				else
+				{
+					printf("Ops..., system error!\n");
+				}
+			}
 			else
 			{
 				usage();
@@ -664,7 +679,6 @@ int run(int argc, char* argv[])
 		{
 			if(strcasecmp(argv[1], "--install") == 0)
 			{
-				
 				if(mailStg && mailStg->Connect(CMailBase::m_db_host.c_str(), CMailBase::m_db_username.c_str(), CMailBase::m_db_password.c_str(), NULL, CMailBase::m_db_port, CMailBase::m_db_sock_file.c_str()) ==  0)
 				{
 					if(mailStg->Install(CMailBase::m_db_name.c_str()) == -1)
@@ -674,7 +688,32 @@ int run(int argc, char* argv[])
 						break;
 					}
 					else
+                    {
+#ifdef _WITH_DIST_                        
+                        MailStorage* mailMasterStg;
+                        mailMasterStg = new MailStorage(CMailBase::m_encoding.c_str(), CMailBase::m_private_path.c_str(), NULL);
+                        if(mailMasterStg && mailMasterStg->Connect(CMailBase::m_master_db_host.c_str(), CMailBase::m_master_db_username.c_str(), CMailBase::m_master_db_password.c_str(),
+                            CMailBase::m_master_db_name.c_str(), CMailBase::m_master_db_port, CMailBase::m_master_db_sock_file.c_str()) == 0)
+                        {
+                            string local_admin = "admin/";
+                            local_admin += CMailBase::m_localhostname.c_str();
+                            if(mailMasterStg->StartTransaction() == -1 || mailMasterStg->AddID(local_admin.c_str(), "admin", "Local Administrator", CMailBase::m_localhostname.c_str(), utMember, urAdministrator, MAX_EMAIL_LEN, -1, usDisabled) == -1)
+                            {
+                                printf("Add local admin id wrong\n");
+                                mailMasterStg->RollbackTransaction();
+                                return -1;
+                            }
+                        }
+                        else
+                        {
+                            printf("Add local admin id wrong\n");
+                        }
+        
+                        if(mailMasterStg)
+                            delete mailMasterStg;
+#endif _WITH_DIST_
 						printf("Database is ready.\n");
+                    }
 				}
 				else
 				{

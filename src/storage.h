@@ -208,7 +208,7 @@ public:
 	int CheckLogin(const char* username, const char* password);
 	int VerifyUser(const char* username);
 	int VerifyGroup(const char* groupname);
-	int AddID(const char* username, const char* password, const char* alias, const char* host, UserType type, UserRole role, unsigned int size, int level);
+	int AddID(const char* username, const char* password, const char* alias, const char* host, UserType type, UserRole role, unsigned int size, int level, int status = usActive);
 	int UpdateID(const char* username, const char* alias, const char* host, UserStatus status, int level);
 	int DelID(const char* username);	
 	int DelAllMailOfDir(int mdirid);
