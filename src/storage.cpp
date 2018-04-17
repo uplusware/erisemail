@@ -552,6 +552,7 @@ int MailStorage::Install(const char* database)
 		show_error(&m_hMySQL, sqlcmd, "Install: ", TRUE);
 		return -1;
 	}
+    
 #ifdef _WITH_DIST_
 	if(CMailBase::m_is_master)
 	{
@@ -1530,6 +1531,56 @@ int MailStorage::CheckRequiredDir(const char* username)
     
     return 0;
 }
+
+#ifdef _WITH_DIST_
+    int MailStorage::AddSlavePlaceholderID()
+    {
+        char sqlcmd[2048];
+        //start a transaction
+        if(StartTransaction() != 0)
+            return -1;
+        
+        static char PWD_CHAR_TBL[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890=/~!@#$%^&*()_+=-?<>,.;:\"'\\|`";
+        
+        srand(time(NULL));
+        
+        char nonce[15];
+		sprintf(nonce, "%c%c%c%08x%c%c%c",
+			PWD_CHAR_TBL[random()%(sizeof(PWD_CHAR_TBL)-1)],
+			PWD_CHAR_TBL[random()%(sizeof(PWD_CHAR_TBL)-1)],
+			PWD_CHAR_TBL[random()%(sizeof(PWD_CHAR_TBL)-1)],
+			(unsigned int)time(NULL),
+			PWD_CHAR_TBL[random()%(sizeof(PWD_CHAR_TBL)-1)],
+			PWD_CHAR_TBL[random()%(sizeof(PWD_CHAR_TBL)-1)],
+			PWD_CHAR_TBL[random()%(sizeof(PWD_CHAR_TBL)-1)]);
+            
+        string strSafetyPassword;
+		strSafetyPassword = nonce;
+		SqlSafetyString(strSafetyPassword);
+            
+        string strSafetyAlias;
+		strSafetyAlias = "DON'T enable/active this ID.";
+		SqlSafetyString(strSafetyAlias);
+            
+        string strSafetyHost;  
+        strSafetyHost = CMailBase::m_localhostname.c_str();
+        SqlSafetyString(strSafetyHost);
+        
+        sprintf(sqlcmd, "INSERT INTO usertbl(uname, upasswd, ualias, uhost, utype, urole, usize, ustatus, ulevel, utime) VALUES('%s#%s', ENCODE('%s','%s'), '%s', '%s', %d, %d, %d, %d, %d, %d)",
+            "placeholder", strSafetyHost.c_str(), strSafetyPassword.c_str(), CODE_KEY, strSafetyAlias.c_str(), strSafetyHost.c_str(), utMember, urDisabled, 0, usDisabled, -1, time(NULL));
+            
+        if(Query(sqlcmd, strlen(sqlcmd)) != 0)
+        {
+            show_error(&m_hMySQL, sqlcmd);
+            return -1;
+        }
+        
+        if(CommitTransaction() != 0)
+            return -1;
+        
+        return 0;
+    }
+#endif /* _WITH_DIST_ */  
 
 int MailStorage::AddID(const char* username, const char* password, const char* alias, const char* host, UserType type, UserRole role, unsigned int size, int level, int status)
 {

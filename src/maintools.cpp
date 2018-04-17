@@ -689,28 +689,29 @@ int run(int argc, char* argv[])
 					}
 					else
                     {
-#ifdef _WITH_DIST_                        
-                        MailStorage* mailMasterStg;
-                        mailMasterStg = new MailStorage(CMailBase::m_encoding.c_str(), CMailBase::m_private_path.c_str(), NULL);
-                        if(mailMasterStg && mailMasterStg->Connect(CMailBase::m_master_db_host.c_str(), CMailBase::m_master_db_username.c_str(), CMailBase::m_master_db_password.c_str(),
-                            CMailBase::m_master_db_name.c_str(), CMailBase::m_master_db_port, CMailBase::m_master_db_sock_file.c_str()) == 0)
+#ifdef _WITH_DIST_ 
+                        if(!CMailBase::m_is_master)
                         {
-                            string local_admin = "admin#";
-                            local_admin += CMailBase::m_localhostname.c_str();
-                            if(mailMasterStg->StartTransaction() == -1 || mailMasterStg->AddID(local_admin.c_str(), "admin", "Local Administrator", CMailBase::m_localhostname.c_str(), utMember, urAdministrator, MAX_EMAIL_LEN, -1, usDisabled) == -1)
+                            MailStorage* mailMasterStg;
+                            mailMasterStg = new MailStorage(CMailBase::m_encoding.c_str(), CMailBase::m_private_path.c_str(), NULL);
+                            if(mailMasterStg && mailMasterStg->Connect(CMailBase::m_master_db_host.c_str(), CMailBase::m_master_db_username.c_str(), CMailBase::m_master_db_password.c_str(),
+                                CMailBase::m_master_db_name.c_str(), CMailBase::m_master_db_port, CMailBase::m_master_db_sock_file.c_str()) == 0)
                             {
-                                printf("Add local admin id wrong\n");
-                                mailMasterStg->RollbackTransaction();
-                                return -1;
+                                if(mailMasterStg->AddSlavePlaceholderID() == -1)
+                                {
+                                    printf("Add slave placeholder id is wrong. It may effect the new ID auto-assign.\n");
+                                    mailMasterStg->RollbackTransaction();
+                                    return -1;
+                                }
                             }
+                            else
+                            {
+                                printf("Add slave placeholder id is wrong. . It may effect the new ID auto-assign.\n");
+                            }
+            
+                            if(mailMasterStg)
+                                delete mailMasterStg;
                         }
-                        else
-                        {
-                            printf("Add local admin id wrong\n");
-                        }
-        
-                        if(mailMasterStg)
-                            delete mailMasterStg;
 #endif _WITH_DIST_
 						printf("Database is ready.\n");
                     }

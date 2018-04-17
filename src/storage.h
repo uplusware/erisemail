@@ -190,11 +190,7 @@ public:
     int RollbackTransaction();
     
 #ifdef _WITH_DIST_
-    int ConnectMaster(); 
-    int PingMaster();
-    void CloseMaster();
-    void KeepLiveMaster();
-    int QueryMaster(const char *stmt_str, unsigned long length);
+    int AddSlavePlaceholderID();
 #endif /* _WITH_DIST_ */  
 
 
