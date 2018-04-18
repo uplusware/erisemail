@@ -864,7 +864,6 @@ int MailStorage::CheckLogin(const char* username, const char* password)
                                     
                                     if(strcmp(password, ldap_password) == 0)
                                     {
-                                        CheckRequiredDir(username);
                                         ldap_rt_val = 0;
                                     }
                                     free(ldap_password);
@@ -872,7 +871,6 @@ int MailStorage::CheckLogin(const char* username, const char* password)
                                 break;
                             }
 #else
-                            CheckRequiredDir(username);
                             ldap_rt_val = 0;
 #endif /* _LDAP_PLIAN_PASSWORD_CHECK_ */
                         }
@@ -911,6 +909,49 @@ int MailStorage::CheckLogin(const char* username, const char* password)
         ldap_unbind_ext(m_ldap, NULL, NULL);
         m_ldap = NULL;
     }
+	
+	if(ldap_rt_val == 0)
+	{
+#ifdef _WITH_DIST_ 
+		string strSafetyHost = CMailBase::m_localhostname;
+		SqlSafetyString(strSafetyHost);
+		sprintf(sqlcmd, "SELECT uname FROM usertbl WHERE uname = '%s' AND ustatus = %d AND utype = %d and uhost IN ('%s', '')",
+			CODE_KEY, username, usActive, utMember, strSafetyHost.c_str());
+#else
+		sprintf(sqlcmd, "SELECT uname FROM usertbl WHERE ustatus = %d AND utype = %d", CODE_KEY, username, usActive, utMember);
+#endif /* _WITH_DIST_ */
+		
+		if(Query(sqlcmd, strlen(sqlcmd)) == 0)
+		{
+			MYSQL_RES *query_result;
+			MYSQL_ROW row;
+			
+			query_result = mysql_store_result(&m_hMySQL);
+			
+			if(query_result)
+			{
+				if((row = mysql_fetch_row(query_result)))
+				{
+					mysql_free_result(query_result);
+					CheckRequiredDir(username);
+				}
+				else
+				{
+					mysql_free_result(query_result);
+					ldap_rt_val =  -1;
+				}
+			}
+			else
+			{
+				ldap_rt_val = -1;
+			}
+		}
+		else
+		{
+			show_error(&m_hMySQL, sqlcmd);
+			ldap_rt_val = -1;
+		}
+	}
     return ldap_rt_val;
 #endif /* _WITH_LDAP_ */
 	
