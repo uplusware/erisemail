@@ -106,7 +106,7 @@ int run(int argc, char* argv[])
 					mailStg->GetDefaultLevel(lid);
 					if(mailStg->AddID(argv[2], argv[3], argv[4], argv[5], type, role, 5000*1024, lid) == -1)
 					{
-						printf("Add the user Failed\n");
+						printf("Add the user failed\n");
 						retVal = -1;
 						break;
 					}
@@ -162,7 +162,7 @@ int run(int argc, char* argv[])
 						mailStg->GetDefaultLevel(lid);
 						if(mailStg->AddID(argv[2], strpwd1.c_str(), argv[3], argv[4], type, role, 5000*1024, lid) == -1)
 						{
-					 		printf("Add the user Failed\n");
+					 		printf("Add the user failed\n");
 							retVal = -1;
 							break;
 						}
@@ -212,7 +212,7 @@ int run(int argc, char* argv[])
 					mailStg->GetDefaultLevel(lid);
 					if(mailStg->AddID(argv[2], argv[3],argv[4], "", type, role, 5000*1024, lid) == -1)
 					{
-						printf("Add the user Failed\n");
+						printf("Add the user failed\n");
 						retVal = -1;
 						break;
 					}
@@ -269,7 +269,7 @@ int run(int argc, char* argv[])
 						mailStg->GetDefaultLevel(lid);
 						if(mailStg->AddID(argv[2], strpwd1.c_str(),argv[3], "", type, role, 5000*1024, lid) == -1)
 						{
-					 		printf("Add the user Failed\n");
+					 		printf("Add the user failed\n");
 							retVal = -1;
 							break;
 						}
@@ -319,13 +319,23 @@ int run(int argc, char* argv[])
 				{
 					mailStg->GetDefaultLevel(lid);
                     
-                    char newpwd[1024];
+                    static char PWD_CHAR_TBL[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890=/~!@#$%^&*()_+=-?<>,.;:\"'\\|`";
+        
                     srand(time(NULL));
-                    sprintf(newpwd, "%016lx%08X", pthread_self(), random());
                     
-					if(mailStg->AddID(argv[2], newpwd, argv[3], "", type, role, 5000*1024, lid) == -1)
+                    char nonce[15];
+                    sprintf(nonce, "%c%c%c%08x%c%c%c",
+                        PWD_CHAR_TBL[random()%(sizeof(PWD_CHAR_TBL)-1)],
+                        PWD_CHAR_TBL[random()%(sizeof(PWD_CHAR_TBL)-1)],
+                        PWD_CHAR_TBL[random()%(sizeof(PWD_CHAR_TBL)-1)],
+                        (unsigned int)time(NULL),
+                        PWD_CHAR_TBL[random()%(sizeof(PWD_CHAR_TBL)-1)],
+                        PWD_CHAR_TBL[random()%(sizeof(PWD_CHAR_TBL)-1)],
+                        PWD_CHAR_TBL[random()%(sizeof(PWD_CHAR_TBL)-1)]);
+                    
+					if(mailStg->AddID(argv[2], nonce, argv[3], "", type, role, 5000*1024, lid) == -1)
 					{
-						printf("Add the user Failed\n");
+						printf("Add the group failed\n");
 						retVal = -1;
 						break;
 					}

@@ -84,7 +84,6 @@ MailStorage::MailStorage(const char* encoding, const char* private_path, memcach
 
 #ifdef _WITH_LDAP_    
     m_ldap = NULL;
-    m_is_ldap_binded = FALSE;
 #endif /*_WITH_LDAP_*/ 
 }
 
@@ -126,16 +125,6 @@ int MailStorage::Connect(const char * host, const char* username, const char* pa
     
 #ifdef _WITH_LDAP_
     m_ldap_server_uri = CMailBase::m_ldap_sever_uri;
-    
-    ldap_initialize(&m_ldap, m_ldap_server_uri.c_str());
-    
-    int protocol_version = CMailBase::m_ldap_sever_version;
-    int rc = ldap_set_option(m_ldap, LDAP_OPT_PROTOCOL_VERSION, &protocol_version);
-    if (rc != LDAP_SUCCESS)
-    {
-        fprintf(stderr, "ldap_set_option: %s\n", ldap_err2string(rc));
-        return(1);
-    }
 #endif /*_WITH_LDAP_*/ 
 
     return 0;
@@ -152,9 +141,8 @@ void MailStorage::Close()
 #ifdef _WITH_LDAP_
     if(m_ldap)
     {
-        ldap_unbind(m_ldap);
+        ldap_unbind_ext(m_ldap, NULL, NULL);
         m_ldap = NULL;
-        m_is_ldap_binded = FALSE;
     }
 #endif /*_WITH_LDAP_*/ 
 }
@@ -719,7 +707,90 @@ int MailStorage::CheckAdmin(const char* username, const char* password)
 		return -1;
 	}
 }
-
+#ifdef _WITH_LDAP_
+int MailStorage::GetLDAPUserDN(const char* username, string & dn)
+{
+    int ldap_rt_val = -1;
+    
+    ldap_initialize(&m_ldap, m_ldap_server_uri.c_str());
+    
+    int protocol_version = CMailBase::m_ldap_sever_version;
+    int rc = ldap_set_option(m_ldap, LDAP_OPT_PROTOCOL_VERSION, &protocol_version);
+    if (rc == LDAP_SUCCESS)
+    {
+        int bind_msgid = -1;
+        struct berval bind_pwd;
+        bind_pwd.bv_len = CMailBase::m_ldap_manager_passwd.length();
+        bind_pwd.bv_val = ber_strdup(CMailBase::m_ldap_manager_passwd.c_str());
+        int rc = ldap_sasl_bind(m_ldap, CMailBase::m_ldap_manager.c_str(), LDAP_SASL_SIMPLE, &bind_pwd, NULL, NULL, &bind_msgid);
+        
+        if(rc != -1)
+        {
+            int msgid = -1;
+        
+            const char* attrs[2];
+            attrs[0] = CMailBase::m_ldap_search_attribute_user_password.c_str();
+            attrs[1] = 0;
+            
+            char szFilter[1025];
+            snprintf(szFilter, 1024, CMailBase::m_ldap_search_filter_user.c_str(), username);
+            szFilter[1024] = '\0';
+            
+            rc = ldap_search_ext(m_ldap, CMailBase::m_ldap_search_base.c_str(), LDAP_SCOPE_SUBTREE, szFilter, NULL, 0, NULL, NULL, NULL, 1, &msgid);
+            
+            if( rc == LDAP_SUCCESS )
+            {
+                struct berval  ** uid_password = NULL;
+                char* uid_dn;
+                LDAPMessage *search_result = NULL;
+                rc = ldap_result(m_ldap, msgid, 0, NULL, &search_result);
+                if(rc != -1)
+                {
+                    if(search_result)
+                    {
+                        if(ldap_count_entries(m_ldap, search_result) == 1)
+                        {
+                            for( LDAPMessage * single_entry = ldap_first_entry( m_ldap, search_result ); single_entry != NULL; single_entry = ldap_next_entry( m_ldap, search_result ))
+                            {
+                                uid_dn = ldap_get_dn(m_ldap, single_entry);
+                                dn = uid_dn;
+                                break;
+                            }
+                        }
+                        ldap_msgfree(search_result);
+                    }
+                    else
+                    {
+                        fprintf(stderr, "search_result: %p\n", search_result);
+                    }
+                }
+                else
+                {
+                    fprintf(stderr, "ldap_result: %s\n", ldap_err2string(rc));
+                }
+            }
+            else
+            {
+                fprintf(stderr, "ldap_search_ext_s: %s\n", ldap_err2string(rc));
+            }            
+        }
+        else
+        {
+            fprintf(stderr, "ldap_simple_bind: %s\n", ldap_err2string(rc));
+        }
+    }
+    else
+    {
+        fprintf(stderr, "ldap_set_option: %s\n", ldap_err2string(rc));  
+    }
+    if(m_ldap)
+    {
+        ldap_unbind_ext(m_ldap, NULL, NULL);
+        m_ldap = NULL;
+    }
+    return ldap_rt_val;
+}
+#endif /* _WITH_LDAP_ */
 int MailStorage::CheckLogin(const char* username, const char* password)
 {
     if(strcmp(username, "") == 0 || strcmp(password, "") == 0)
@@ -730,74 +801,117 @@ int MailStorage::CheckLogin(const char* username, const char* password)
 	SqlSafetyString(strSafetyUsername);
     
 #ifdef _WITH_LDAP_
-	if(!m_is_ldap_binded)
-	{
-		int rc = ldap_simple_bind(m_ldap, CMailBase::m_ldap_manager.c_str(), CMailBase::m_ldap_manager_passwd.c_str());
-		
-		if(rc == -1)
-		{
-			fprintf(stderr, "ldap_simple_bind: %s\n", ldap_err2string(rc));
-			return -1;
-		}
-	}
-	
-	m_is_ldap_binded = TRUE;
-	
-	int msgid = -1;
-	
-	const char* attrs[2];
-	attrs[0] = CMailBase::m_ldap_search_attribute_user_password.c_str();
-	attrs[1] = 0;
-	
-	char szFilter[1025];
-	snprintf(szFilter, 1024, CMailBase::m_ldap_search_filter_user.c_str(), username);
-	szFilter[1024] = '\0';
-	
-	int rc = ldap_search_ext(m_ldap, CMailBase::m_ldap_search_base.c_str(), LDAP_SCOPE_SUBTREE, szFilter, NULL, 0, NULL, NULL, NULL, 1, &msgid);
-	
-	if( rc != LDAP_SUCCESS )
-	{
-		fprintf(stderr, "ldap_search_ext_s: %s\n", ldap_err2string(rc));
-		return( rc );
-	}
-	
-	struct berval  ** uid_password = NULL;
-	LDAPMessage *search_result = NULL;
-	ldap_result(m_ldap, msgid, 0, NULL, &search_result);
-	
-	int entries = ldap_count_entries(m_ldap, search_result);
 
-	if(search_result && entries > 0)
-	{
-		for( LDAPMessage * single_entry = ldap_first_entry( m_ldap, search_result ); single_entry != NULL; single_entry = ldap_next_entry( m_ldap, search_result ))
-		{
-			uid_password = ldap_get_values_len(m_ldap, single_entry, CMailBase::m_ldap_search_attribute_user_password.c_str());
-			if(uid_password && *uid_password)
-			{
-				char* ldap_password = (char*)malloc((*uid_password)->bv_len + 1);
-				memcpy(ldap_password, (*uid_password)->bv_val, (*uid_password)->bv_len);
-				ldap_password[(*uid_password)->bv_len] = '\0';
-				ldap_value_free_len(uid_password);
-                
-				if(strcmp(password, ldap_password) == 0)
-				{
-                    CheckRequiredDir(username);
-					free(ldap_password);
-                    return 0;
-				}
-				else
-				{
-					free(ldap_password);
-					return -1;
-				}
-			}
-		}
-		ldap_msgfree(search_result);
-	}
-	else
-	{
-		return -1;
-	}
+    string user_dn;
+    GetLDAPUserDN(username, user_dn);
+    if(user_dn == "")
+        return -1;
+    
+    int ldap_rt_val = -1;
+    
+    ldap_initialize(&m_ldap, m_ldap_server_uri.c_str());
+    
+    int protocol_version = CMailBase::m_ldap_sever_version;
+    int rc = ldap_set_option(m_ldap, LDAP_OPT_PROTOCOL_VERSION, &protocol_version);
+    if (rc == LDAP_SUCCESS)
+    {
+        int bind_msgid = -1;
+        struct berval bind_pwd;
+        bind_pwd.bv_len = strlen(password);
+        bind_pwd.bv_val = ber_strdup(password);
+        int rc = ldap_sasl_bind(m_ldap, user_dn.c_str(), LDAP_SASL_SIMPLE, &bind_pwd, NULL, NULL, &bind_msgid);
+        
+        if(rc != -1)
+        {
+            int msgid = -1;
+        
+            const char* attrs[2];
+            attrs[0] = CMailBase::m_ldap_search_attribute_user_password.c_str();
+            attrs[1] = 0;
+            
+            string user_cn;
+            strcut(user_dn.c_str(), "cn=", ",", user_cn);
+            strtrim(user_cn);
+            
+            char szFilter[1025];
+            snprintf(szFilter, 1024, "cn=%s", user_cn.c_str());
+            szFilter[1024] = '\0';
+            
+            rc = ldap_search_ext(m_ldap, CMailBase::m_ldap_search_base.c_str(), LDAP_SCOPE_SUBTREE, szFilter, NULL, 0, NULL, NULL, NULL, 1, &msgid);
+            
+            if( rc == LDAP_SUCCESS )
+            {
+                struct berval  ** uid_password = NULL;
+                char* uid_dn;
+                LDAPMessage *search_result = NULL;
+                rc = ldap_result(m_ldap, msgid, 0, NULL, &search_result);
+                if(rc != -1)
+                {
+                    if(search_result)
+                    {
+                        if(ldap_count_entries(m_ldap, search_result) == 1)
+                        {
+#ifdef _LDAP_PLIAN_PASSWORD_CHECK_
+                            for( LDAPMessage * single_entry = ldap_first_entry( m_ldap, search_result ); single_entry != NULL; single_entry = ldap_next_entry( m_ldap, search_result ))
+                            {
+                                uid_password = ldap_get_values_len(m_ldap, single_entry, CMailBase::m_ldap_search_attribute_user_password.c_str());
+                                if(uid_password && *uid_password)
+                                {
+                                    char* ldap_password = (char*)malloc((*uid_password)->bv_len + 1);
+                                    memcpy(ldap_password, (*uid_password)->bv_val, (*uid_password)->bv_len);
+                                    ldap_password[(*uid_password)->bv_len] = '\0';
+                                    ldap_value_free_len(uid_password);
+                                    
+                                    if(strcmp(password, ldap_password) == 0)
+                                    {
+                                        CheckRequiredDir(username);
+                                        ldap_rt_val = 0;
+                                    }
+                                    free(ldap_password);
+                                }
+                                break;
+                            }
+#else
+                            CheckRequiredDir(username);
+                            ldap_rt_val = 0;
+#endif /* _LDAP_PLIAN_PASSWORD_CHECK_ */
+                        }
+                        else
+                        {
+                            printf("zero\n");
+                        }
+                        ldap_msgfree(search_result);
+                    }
+                    else
+                    {
+                        fprintf(stderr, "search_result: %p\n", search_result);
+                    }
+                }
+                else
+                {
+                    fprintf(stderr, "ldap_result: %s\n", ldap_err2string(rc));
+                }
+            }
+            else
+            {
+                fprintf(stderr, "ldap_search_ext_s: %s\n", ldap_err2string(rc));
+            }            
+        }
+        else
+        {
+            fprintf(stderr, "ldap_simple_bind: %s\n", ldap_err2string(rc));
+        }
+    }
+    else
+    {
+        fprintf(stderr, "ldap_set_option: %s\n", ldap_err2string(rc));  
+    }
+    if(m_ldap)
+    {
+        ldap_unbind_ext(m_ldap, NULL, NULL);
+        m_ldap = NULL;
+    }
+    return ldap_rt_val;
 #endif /* _WITH_LDAP_ */
 	
 #ifdef _WITH_DIST_ 
@@ -844,6 +958,101 @@ int MailStorage::CheckLogin(const char* username, const char* password)
 
 int MailStorage::GetPassword(const char* username, string& password)
 {
+#ifdef _WITH_LDAP_
+    int ldap_rt_val = -1;
+    
+    string user_dn;
+    GetLDAPUserDN(username, user_dn);
+    if(user_dn == "")
+        return -1;
+    
+    ldap_initialize(&m_ldap, m_ldap_server_uri.c_str());
+    
+    int protocol_version = CMailBase::m_ldap_sever_version;
+    int rc = ldap_set_option(m_ldap, LDAP_OPT_PROTOCOL_VERSION, &protocol_version);
+    if (rc == LDAP_SUCCESS)
+    {
+        int bind_msgid = -1;
+        struct berval bind_pwd;
+        bind_pwd.bv_len = CMailBase::m_ldap_manager_passwd.length();
+        bind_pwd.bv_val = (char*)CMailBase::m_ldap_manager_passwd.c_str();
+        int rc = ldap_sasl_bind(m_ldap, CMailBase::m_ldap_manager.c_str(), LDAP_SASL_SIMPLE, &bind_pwd, NULL, NULL, &bind_msgid);
+        
+        if(rc != -1)
+        {
+            int msgid = -1;
+        
+            const char* attrs[2];
+            attrs[0] = CMailBase::m_ldap_search_attribute_user_password.c_str();
+            attrs[1] = 0;
+            
+            char szFilter[1025];
+            snprintf(szFilter, 1024, CMailBase::m_ldap_search_filter_user.c_str(), username);
+            szFilter[1024] = '\0';
+            
+            int rc = ldap_search_ext(m_ldap, CMailBase::m_ldap_search_base.c_str(), LDAP_SCOPE_SUBTREE, szFilter, NULL, 0, NULL, NULL, NULL, 1, &msgid);
+            
+            if( rc == LDAP_SUCCESS )
+            {
+                struct berval  ** uid_password = NULL;
+                LDAPMessage *search_result = NULL;
+                rc = ldap_result(m_ldap, msgid, 0, NULL, &search_result);
+                if(rc != -1)
+                {
+                    if(search_result)
+                    {
+                        //int entries = ldap_count_entries(m_ldap, search_result);
+                        
+                        for( LDAPMessage * single_entry = ldap_first_entry( m_ldap, search_result ); single_entry != NULL; single_entry = ldap_next_entry( m_ldap, search_result ))
+                        {
+                            uid_password = ldap_get_values_len(m_ldap, single_entry, CMailBase::m_ldap_search_attribute_user_password.c_str());
+                            if(uid_password && *uid_password)
+                            {
+                                char* ldap_password = (char*)malloc((*uid_password)->bv_len + 1);
+                                memcpy(ldap_password, (*uid_password)->bv_val, (*uid_password)->bv_len);
+                                ldap_password[(*uid_password)->bv_len] = '\0';
+                                ldap_value_free_len(uid_password);
+                                
+                                password = ldap_password;
+                                free(ldap_password);
+                                ldap_rt_val = 0;
+                            }
+                            break;
+                        }
+                        ldap_msgfree(search_result);
+                    }
+                    else
+                    {
+                        fprintf(stderr, "search_result: %p\n", search_result);
+                    }
+                }
+                else
+                {
+                    fprintf(stderr, "ldap_result: %s\n", ldap_err2string(rc));
+                }
+            }
+            else
+            {
+                fprintf(stderr, "ldap_search_ext_s: %s\n", ldap_err2string(rc));
+            }            
+        }
+        else
+        {
+            fprintf(stderr, "ldap_simple_bind: %s\n", ldap_err2string(rc));
+        }
+    }
+    else
+    {
+        fprintf(stderr, "ldap_set_option: %s\n", ldap_err2string(rc));  
+    }
+    if(m_ldap)
+    {
+        ldap_unbind_ext(m_ldap, NULL, NULL);
+        m_ldap = NULL;
+    }
+    return ldap_rt_val;
+#endif /* _WITH_LDAP_ */
+
 	string strpwd;
 	char sqlcmd[1024];
 	string strSafetyUsername = username;
@@ -874,68 +1083,6 @@ int MailStorage::GetPassword(const char* username, string& password)
 				else
 				{
 					password = row[0];
-#ifdef _WITH_LDAP_
-					if(!m_is_ldap_binded)
-					{
-						int rc = ldap_simple_bind(m_ldap, CMailBase::m_ldap_manager.c_str(), CMailBase::m_ldap_manager_passwd.c_str());
-						
-						if(rc == -1)
-						{
-							fprintf(stderr, "ldap_simple_bind: %s\n", ldap_err2string(rc));
-							return -1;
-						}
-					}
-					
-					m_is_ldap_binded = TRUE;
-					
-					int msgid = -1;
-					
-					const char* attrs[2];
-					attrs[0] = CMailBase::m_ldap_search_attribute_user_password.c_str();
-					attrs[1] = 0;
-					
-					char szFilter[1025];
-					snprintf(szFilter, 1024, CMailBase::m_ldap_search_filter_user.c_str(), username);
-					szFilter[1024] = '\0';
-					
-					int rc = ldap_search_ext(m_ldap, CMailBase::m_ldap_search_base.c_str(), LDAP_SCOPE_SUBTREE, szFilter, NULL, 0, NULL, NULL, NULL, 1, &msgid);
-					
-					if( rc != LDAP_SUCCESS )
-					{
-						fprintf(stderr, "ldap_search_ext_s: %s\n", ldap_err2string(rc));
-						return( rc );
-					}
-
-					
-					struct berval  ** uid_password = NULL;
-					LDAPMessage *search_result = NULL;
-					ldap_result(m_ldap, msgid, 0, NULL, &search_result);
-					
-					int entries = ldap_count_entries(m_ldap, search_result);
-
-					if(search_result && entries > 0)
-					{
-						for( LDAPMessage * single_entry = ldap_first_entry( m_ldap, search_result ); single_entry != NULL; single_entry = ldap_next_entry( m_ldap, search_result ))
-						{
-							uid_password = ldap_get_values_len(m_ldap, single_entry, CMailBase::m_ldap_search_attribute_user_password.c_str());
-							if(uid_password && *uid_password)
-							{
-								char* ldap_password = (char*)malloc((*uid_password)->bv_len + 1);
-								memcpy(ldap_password, (*uid_password)->bv_val, (*uid_password)->bv_len);
-								ldap_password[(*uid_password)->bv_len] = '\0';
-								ldap_value_free_len(uid_password);
-								
-								password = ldap_password;
-								free(ldap_password);
-							}
-						}
-						ldap_msgfree(search_result);
-					}
-					else
-					{
-						return -1;
-					}
-#endif /* _WITH_LDAP_ */
 					mysql_free_result(query_result);
 					return 0;
 				}
@@ -2932,55 +3079,67 @@ int MailStorage::Passwd(const char* uname, const char* password)
 		if(Query(sqlcmd, strlen(sqlcmd)) == 0)
 		{
 #ifdef _WITH_LDAP_
-			if(!m_is_ldap_binded)
-			{
-				int rc = ldap_simple_bind(m_ldap, CMailBase::m_ldap_manager.c_str(), CMailBase::m_ldap_manager_passwd.c_str());
-				
-				if(rc == -1)
-				{
-					fprintf(stderr, "ldap_simple_bind: %s\n", ldap_err2string(rc));
-					return -1;
-				}
-			}
-			
-			m_is_ldap_binded = TRUE;
-			
-			int msgid = -1;
-			
-			char szDN[1025];
-			snprintf(szDN, 1024, CMailBase::m_ldap_user_dn.c_str(), uname);
-			szDN[1024] = '\0';
-			
-			char* passwd_attr = (char*) malloc(CMailBase::m_ldap_search_attribute_user_password.length() + 1);
-            strcpy(passwd_attr, CMailBase::m_ldap_search_attribute_user_password.c_str());
+            int ldap_rt_val = -1;
+            ldap_initialize(&m_ldap, m_ldap_server_uri.c_str());
             
-            char* passwd_val = (char*) malloc(strlen(password) + 1);
-            strcpy(passwd_val, password);
-            
-            LDAPMod mod;
-            mod.mod_op = LDAP_MOD_REPLACE;
-            mod.mod_type = passwd_attr;
-            
-            char* vals[2];
-            vals[0] = passwd_val;
-            vals[1] = NULL;
-            mod.mod_vals.modv_strvals = vals;
-             
-            LDAPMod* mods[2];
-            mods[0] = &mod;
-            mods[1] = NULL;
-            
-			int rc = ldap_modify_ext(m_ldap, szDN, mods, NULL, NULL, &msgid);
+            int protocol_version = CMailBase::m_ldap_sever_version;
+            int rc = ldap_set_option(m_ldap, LDAP_OPT_PROTOCOL_VERSION, &protocol_version);
+            if (rc == LDAP_SUCCESS)
+            {
+                int bind_msgid = -1;
+                struct berval bind_pwd;
+                bind_pwd.bv_len = CMailBase::m_ldap_manager_passwd.length();
+                bind_pwd.bv_val = (char*)CMailBase::m_ldap_manager_passwd.c_str();
+                int rc = ldap_sasl_bind(m_ldap, CMailBase::m_ldap_manager.c_str(), LDAP_SASL_SIMPLE, &bind_pwd, NULL, NULL, &bind_msgid);
+                
+                if(rc != -1)
+                {
+                    int msgid = -1;
 			
-            free(passwd_attr);
-            free(passwd_val);
-            
-			if( rc != LDAP_SUCCESS )
-			{
-				fprintf(stderr, "ldap_search_ext_s: %s\n", ldap_err2string(rc));
-				return( rc );
-			}
-			
+                    char szDN[1025];
+                    snprintf(szDN, 1024, CMailBase::m_ldap_user_dn.c_str(), uname);
+                    szDN[1024] = '\0';
+                    
+                    char* passwd_attr = (char*) malloc(CMailBase::m_ldap_search_attribute_user_password.length() + 1);
+                    strcpy(passwd_attr, CMailBase::m_ldap_search_attribute_user_password.c_str());
+                    
+                    char* passwd_val = (char*) malloc(strlen(password) + 1);
+                    strcpy(passwd_val, password);
+                    
+                    LDAPMod mod;
+                    mod.mod_op = LDAP_MOD_REPLACE;
+                    mod.mod_type = passwd_attr;
+                    
+                    char* vals[2];
+                    vals[0] = passwd_val;
+                    vals[1] = NULL;
+                    mod.mod_vals.modv_strvals = vals;
+                     
+                    LDAPMod* mods[2];
+                    mods[0] = &mod;
+                    mods[1] = NULL;
+                    
+                    rc = ldap_modify_ext(m_ldap, szDN, mods, NULL, NULL, &msgid);
+                    
+                    free(passwd_attr);
+                    free(passwd_val);
+                    
+                    if( rc == LDAP_SUCCESS )
+                    {
+                        ldap_rt_val = 0;
+                    }
+                    else
+                    {
+                        fprintf(stderr, "ldap_search_ext_s: %s\n", ldap_err2string(rc));
+                    }
+                }
+            }
+            if(m_ldap)
+            {
+                ldap_unbind_ext(m_ldap, NULL, NULL);
+                m_ldap = NULL;
+            }
+            return ldap_rt_val;
 #endif /* _WITH_LDAP_ */
 
 			return 0;

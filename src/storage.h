@@ -382,7 +382,7 @@ protected:
     LDAP * m_ldap;
     string m_ldap_server_uri;
     
-    BOOL m_is_ldap_binded;
+    int GetLDAPUserDN(const char* username, string & dn);
 #endif /* _WITH_LDAP_ */
 
     void SqlSafetyString(string& strInOut);
