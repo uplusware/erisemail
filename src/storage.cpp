@@ -851,17 +851,16 @@ int MailStorage::CheckLogin(const char* username, const char* password)
                     {
                         if(ldap_count_entries(m_ldap, search_result) == 1)
                         {
-#ifdef _LDAP_PLIAN_PASSWORD_CHECK_
                             for( LDAPMessage * single_entry = ldap_first_entry( m_ldap, search_result ); single_entry != NULL; single_entry = ldap_next_entry( m_ldap, search_result ))
                             {
                                 uid_password = ldap_get_values_len(m_ldap, single_entry, CMailBase::m_ldap_search_attribute_user_password.c_str());
                                 if(uid_password && *uid_password)
                                 {
+                                    
                                     char* ldap_password = (char*)malloc((*uid_password)->bv_len + 1);
                                     memcpy(ldap_password, (*uid_password)->bv_val, (*uid_password)->bv_len);
                                     ldap_password[(*uid_password)->bv_len] = '\0';
                                     ldap_value_free_len(uid_password);
-                                    
                                     if(strcmp(password, ldap_password) == 0)
                                     {
                                         ldap_rt_val = 0;
@@ -870,13 +869,6 @@ int MailStorage::CheckLogin(const char* username, const char* password)
                                 }
                                 break;
                             }
-#else
-                            ldap_rt_val = 0;
-#endif /* _LDAP_PLIAN_PASSWORD_CHECK_ */
-                        }
-                        else
-                        {
-                            printf("zero\n");
                         }
                         ldap_msgfree(search_result);
                     }
@@ -916,9 +908,9 @@ int MailStorage::CheckLogin(const char* username, const char* password)
 		string strSafetyHost = CMailBase::m_localhostname;
 		SqlSafetyString(strSafetyHost);
 		sprintf(sqlcmd, "SELECT uname FROM usertbl WHERE uname = '%s' AND ustatus = %d AND utype = %d and uhost IN ('%s', '')",
-			CODE_KEY, username, usActive, utMember, strSafetyHost.c_str());
+			username, usActive, utMember, strSafetyHost.c_str());
 #else
-		sprintf(sqlcmd, "SELECT uname FROM usertbl WHERE ustatus = %d AND utype = %d", CODE_KEY, username, usActive, utMember);
+		sprintf(sqlcmd, "SELECT uname FROM usertbl WHERE uname = '%s' AND ustatus = %d AND utype = %d", username, usActive, utMember);
 #endif /* _WITH_DIST_ */
 		
 		if(Query(sqlcmd, strlen(sqlcmd)) == 0)
@@ -961,7 +953,7 @@ int MailStorage::CheckLogin(const char* username, const char* password)
 	sprintf(sqlcmd, "SELECT DECODE(upasswd,'%s') FROM usertbl WHERE uname = '%s' AND ustatus = %d AND utype = %d and uhost IN ('%s', '')",
 		CODE_KEY, username, usActive, utMember, strSafetyHost.c_str());
 #else
-	sprintf(sqlcmd, "SELECT DECODE(upasswd,'%s') FROM usertbl WHERE ustatus = %d AND utype = %d", CODE_KEY, username, usActive, utMember);
+	sprintf(sqlcmd, "SELECT DECODE(upasswd,'%s') FROM usertbl WHERE uname = '%s' AND ustatus = %d AND utype = %d", CODE_KEY, username, usActive, utMember);
 #endif /* _WITH_DIST_ */
 	
 	if(Query(sqlcmd, strlen(sqlcmd)) == 0)
@@ -1042,23 +1034,24 @@ int MailStorage::GetPassword(const char* username, string& password)
                 {
                     if(search_result)
                     {
-                        //int entries = ldap_count_entries(m_ldap, search_result);
-                        
-                        for( LDAPMessage * single_entry = ldap_first_entry( m_ldap, search_result ); single_entry != NULL; single_entry = ldap_next_entry( m_ldap, search_result ))
+                        if(ldap_count_entries(m_ldap, search_result) == 1)
                         {
-                            uid_password = ldap_get_values_len(m_ldap, single_entry, CMailBase::m_ldap_search_attribute_user_password.c_str());
-                            if(uid_password && *uid_password)
+                            for( LDAPMessage * single_entry = ldap_first_entry( m_ldap, search_result ); single_entry != NULL; single_entry = ldap_next_entry( m_ldap, search_result ))
                             {
-                                char* ldap_password = (char*)malloc((*uid_password)->bv_len + 1);
-                                memcpy(ldap_password, (*uid_password)->bv_val, (*uid_password)->bv_len);
-                                ldap_password[(*uid_password)->bv_len] = '\0';
-                                ldap_value_free_len(uid_password);
-                                
-                                password = ldap_password;
-                                free(ldap_password);
-                                ldap_rt_val = 0;
+                                uid_password = ldap_get_values_len(m_ldap, single_entry, CMailBase::m_ldap_search_attribute_user_password.c_str());
+                                if(uid_password && *uid_password)
+                                {
+                                    char* ldap_password = (char*)malloc((*uid_password)->bv_len + 1);
+                                    memcpy(ldap_password, (*uid_password)->bv_val, (*uid_password)->bv_len);
+                                    ldap_password[(*uid_password)->bv_len] = '\0';
+                                    ldap_value_free_len(uid_password);
+                                    
+                                    password = ldap_password;
+                                    free(ldap_password);
+                                    ldap_rt_val = 0;
+                                }
+                                break;
                             }
-                            break;
                         }
                         ldap_msgfree(search_result);
                     }
@@ -2934,7 +2927,6 @@ int MailStorage::ListID(vector<User_Info>& listtbl, string orderby, BOOL desc)
 #else
 	sprintf(sqlcmd, "SELECT uname, ualias, utype, urole, usize, ustatus, ulevel FROM usertbl ORDER BY %s %s", orderby == "" ? "utime" : orderby.c_str(), desc ? "desc" : "");
 #endif /* _WITH_DIST_ */
-
 	if(Query(sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *query_result;
