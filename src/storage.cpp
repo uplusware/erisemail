@@ -1298,7 +1298,10 @@ int MailStorage::AddLevel(const char* lname, const char* ldescription, unsigned 
 	}
 }
 
-int MailStorage::UpdateLevel(unsigned int lid, const char* lname, const char* ldescription, unsigned long long mailmaxsize, unsigned long long boxmaxsize, EnableAudit lenableaudit, unsigned int mailsizethreshold, unsigned int attachsizethreshold)
+int MailStorage::UpdateLevel(unsigned int lid, const char* lname, const char* ldescription,
+    unsigned long long mailmaxsize, unsigned long long boxmaxsize,
+    EnableAudit lenableaudit,
+    unsigned int mailsizethreshold, unsigned int attachsizethreshold)
 {
 	char sqlcmd[1024];
 	string strSafetyLevelname;

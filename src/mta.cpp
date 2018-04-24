@@ -532,6 +532,14 @@ BOOL MailTransferAgent::SendMail(MailStorage* mailStg, memcached_st * memcached,
 			return FALSE;
 
 		}
+        
+        //re-ehlo/helo
+        if(!pClientSmtp->Do_Ehlo_Command(NULL, errormsg))
+        {
+            delete pClientSmtp;
+            close(transfer_sockfd);
+            return FALSE;
+        }
 	}	
 	if(!pClientSmtp->Do_Mail_Command(fromaddr, errormsg))
 	{
