@@ -834,6 +834,7 @@ public:
     static unsigned int m_prod_type;
     
     static BOOL     m_close_stderr;
+    static BOOL     m_smtp_client_trace;
 	
 	static BOOL	m_is_master;
 	static string	m_master_hostname;

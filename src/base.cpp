@@ -19,7 +19,9 @@ string CMailBase::m_sw_version = ERISEMAIL_VERSION;
 //Global
 BOOL CMailBase::m_prod_type = PROD_EMAIL;
 
-BOOL CMailBase::m_close_stderr = TRUE;
+BOOL CMailBase::m_close_stderr = FALSE;
+BOOL CMailBase::m_smtp_client_trace = FALSE;
+
 string CMailBase::m_encoding = "UTF-8";
 string CMailBase::m_master_hostname = "";
 
@@ -228,6 +230,13 @@ BOOL CMailBase::LoadConfig()
 				strcut(strline.c_str(), "=", NULL, close_stderr );
 				strtrim(close_stderr);
 				m_close_stderr = (strcasecmp(close_stderr.c_str(), "yes")) == 0 ? TRUE : FALSE;
+			}
+            else if(strcasecmp(strKey.c_str(), "SmtpClientTrace") == 0)
+			{
+				string smtp_client_trace;
+				strcut(strline.c_str(), "=", NULL, smtp_client_trace );
+				strtrim(smtp_client_trace);
+				m_smtp_client_trace = (strcasecmp(smtp_client_trace.c_str(), "yes")) == 0 ? TRUE : FALSE;
 			}
 #ifdef _WITH_HDFS_
             else if(strcasecmp(strKey.c_str(), "HDFSHost") == 0)

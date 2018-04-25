@@ -463,7 +463,8 @@ BOOL SmtpClient::Do_Quit_Command(string& strmsg)
 
 int SmtpClient::SendCmd(int sockfd, const char * buf, unsigned int buf_len)
 {
-    //fprintf(stderr, "%s\n", buf);
+    if(CMailBase::m_smtp_client_trace)
+        fprintf(stderr, "%s", buf);
     
 	if(m_bInTLS)
 		if(m_ssl)
@@ -500,7 +501,8 @@ BOOL SmtpClient::RecvReply(char* reply_code, string &strmsg)
 			strmsg += str;
 			if(str[3] == ' ')
 			{
-                // fprintf(stderr, "%s\n", strmsg.c_str());
+                if(CMailBase::m_smtp_client_trace)
+                    fprintf(stderr, "%s", strmsg.c_str());
                 
 				reply_code[0] = str[0];
 				reply_code[1] = str[1];
