@@ -16,7 +16,7 @@ filedaddr::filedaddr(const char* sAddr)
 	string strAddr;
 	strcut(sAddr, ":", NULL, strAddr);
 	strtrim(strAddr);
-	m_strfiled = strAddr;
+	DecodeMIMEString(strAddr.c_str(), m_strfiled);
 	vector<string> addrList;
 	vSplitString(strAddr,addrList,",;");
 	for(int x = 0; x < addrList.size(); x++)
@@ -38,7 +38,13 @@ filedaddr::filedaddr(const char* sAddr)
 			strcut(addrList[x].c_str(), NULL, "<", addr.pName);
 			strtrim(addr.pName, "\" \t");
 			if(addr.pName == "")
+			{
 				addr.pName = addr.mName;
+			}
+			else
+			{
+				DecodeMIMEString(addr.pName.c_str(), addr.pName);
+			}
 			m_addrs.push_back(addr);
 		}
 		else
