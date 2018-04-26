@@ -926,7 +926,9 @@ public:
 	static string	m_ldap_manager_passwd;
 	static string	m_ldap_search_base;
 	static string	m_ldap_search_filter_user;
+    static string	m_ldap_search_attribute_user_id;
 	static string	m_ldap_search_attribute_user_password;
+    static string	m_ldap_search_attribute_user_alias;
 	static string	m_ldap_search_filter_group;
 	static string	m_ldap_search_attribute_group_member;
     static string	m_ldap_user_dn;

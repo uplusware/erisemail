@@ -13,15 +13,20 @@ void usage()
 {
 	printf("Usage:eriseutil --install\n");
 	printf("Usage:eriseutil --uninstall\n");
-#ifdef _WITH_DIST_
-    printf("Usage:eriseutil -a <user name> <password> <alias> <host> -u [-A|-U]\n");
-    printf("Usage:eriseutil -a <user name> <alias> <host> -u [-A|-U]\n");
+#ifdef _WITH_LDAP_
+    printf("Usage:eriseutil --ldapsync\n");
 #else
-	printf("Usage:eriseutil -a <user name> <password> <alias> -u [-A|-U]\n");
-    printf("Usage:eriseutil -a <user name> <alias> -u [-A|-U]\n");
-#endif /* _WITH_DIST_ */
+    #ifdef _WITH_DIST_
+        printf("Usage:eriseutil -a <user name> <password> <alias> <host> -u [-A|-U]\n");
+        printf("Usage:eriseutil -a <user name> <alias> <host> -u [-A|-U]\n");
+    #else
+        printf("Usage:eriseutil -a <user name> <password> <alias> -u [-A|-U]\n");
+        printf("Usage:eriseutil -a <user name> <alias> -u [-A|-U]\n");
+    #endif /* _WITH_DIST_ */
+    printf("Usage:eriseutil -d <user name>\n");
+#endif /* _WITH_LDAP_ */
     printf("Usage:eriseutil -a <group name> <alias> -g\n");
-	printf("Usage:eriseutil -d <user|group name>\n");
+	printf("Usage:eriseutil -d <group name>\n");
 	printf("Usage:eriseutil -p <user name>\n");
 	printf("Usage:eriseutil -A <user name> <group name>\n");
 	printf("Usage:eriseutil -D <user name> <group name>\n");
@@ -773,6 +778,34 @@ int run(int argc, char* argv[])
 					printf("Abort the command\n");
 				}
 			}
+#ifdef _WITH_LDAP_
+            else if(strcasecmp(argv[1], "--ldapsync") == 0)
+			{
+				if(mailStg)
+                {
+                    if(mailStg->Connect(CMailBase::m_master_db_host.c_str(), CMailBase::m_master_db_username.c_str(), CMailBase::m_master_db_password.c_str(), CMailBase::m_master_db_name.c_str(), CMailBase::m_master_db_port, CMailBase::m_master_db_sock_file.c_str()) == 0)
+                    {
+                        if(mailStg->LdapSync() == 0)
+                        {
+                             printf("Ldap Sync successfully.\n");
+                            break;
+                        }
+                        else
+                            printf("Ldap Sync failed.\n");
+                    }
+                    else
+                    {
+                        printf("Cannot connect to database.\n");
+                        retVal = -1;
+                        break;
+                    }
+                }
+                else
+                {
+                    printf("Ops..., system error!\n");
+                }
+			}
+#endif /* _WITH_LDAP_ */
 			else if(strcmp(argv[1], "--encode") == 0)
 			{
 				string strpwd = getpass("Input: ");

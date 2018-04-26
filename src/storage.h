@@ -194,6 +194,9 @@ public:
 #endif /* _WITH_DIST_ */  
 
 
+#ifdef _WITH_LDAP_
+    int LdapSync();
+#endif /* _WITH_LDAP_ */  
     
 	int Install(const char* database);
 	int Uninstall(const char* database);

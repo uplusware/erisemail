@@ -114,7 +114,6 @@ void __inline__ DecodeMIMEString(const char* szMIMEString, string& strDeocoded)
 			
 			free(tmpbuf);
 			
-			//DecodeMIMEString(strDeocoded.c_str(), strDeocoded);
 			strMIMEString = strDeocoded.c_str();
 				
 		}
@@ -144,7 +143,6 @@ void __inline__ DecodeMIMEString(const char* szMIMEString, string& strDeocoded)
 			
 			free(tmpbuf);
 			
-			//DecodeMIMEString(strDeocoded.c_str(), strDeocoded);
 			strMIMEString = strDeocoded.c_str();
 		}
 		else

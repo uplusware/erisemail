@@ -93,6 +93,217 @@ MailStorage::~MailStorage()
     pthread_rwlock_destroy(&m_userpwd_cache_lock);
 }
 
+#ifdef _WITH_LDAP_   
+int MailStorage::LdapSync()
+{
+    int ret_val = 0;
+    ldap_initialize(&m_ldap, m_ldap_server_uri.c_str());
+    
+    int protocol_version = CMailBase::m_ldap_sever_version;
+    int rc = ldap_set_option(m_ldap, LDAP_OPT_PROTOCOL_VERSION, &protocol_version);
+    if (rc == LDAP_SUCCESS)
+    {
+        int bind_msgid = -1;
+        struct berval bind_pwd;
+        bind_pwd.bv_len = CMailBase::m_ldap_manager_passwd.length();
+        bind_pwd.bv_val = ber_strdup(CMailBase::m_ldap_manager_passwd.c_str());
+        int rc = ldap_sasl_bind(m_ldap, CMailBase::m_ldap_manager.c_str(), LDAP_SASL_SIMPLE, &bind_pwd, NULL, NULL, &bind_msgid);
+        
+        if(rc != -1)
+        {
+            int msgid = -1;
+        
+            const char* attrs[2];
+            attrs[0] = CMailBase::m_ldap_search_attribute_user_password.c_str();
+            attrs[1] = 0;
+            
+            char szFilter[1025];
+            snprintf(szFilter, 1024, CMailBase::m_ldap_search_filter_user.c_str(), "*");
+            szFilter[1024] = '\0';
+            
+            rc = ldap_search_ext(m_ldap, CMailBase::m_ldap_search_base.c_str(), LDAP_SCOPE_SUBTREE, szFilter, NULL, 0, NULL, NULL, NULL, 0, &msgid);
+            
+            if( rc == LDAP_SUCCESS )
+            {
+                struct berval  ** uid_cn = NULL;
+                struct berval  ** uid = NULL;
+                char* uid_dn;
+                LDAPMessage *search_result = NULL;
+                rc = ldap_result(m_ldap, msgid, LDAP_MSG_ALL, NULL, &search_result);
+                if(rc != -1)
+                {
+                    if(search_result)
+                    {
+                        time_t ldap_update_time = time(NULL);
+                        char sqlcmd[4096];
+                        StartTransaction();
+                        int c = ldap_count_entries(m_ldap, search_result);
+                        
+                        for( LDAPMessage * single_entry = ldap_first_entry( m_ldap, search_result ); single_entry != NULL && c > 0; single_entry = ldap_next_entry( m_ldap, search_result ), c--)
+                        {
+                            char* ldap_cn;
+                            char* ldap_uid;
+                             
+                            uid_cn = ldap_get_values_len(m_ldap, single_entry, CMailBase::m_ldap_search_attribute_user_alias.c_str());
+                            if(uid_cn && *uid_cn)
+                            {
+                                ldap_cn = (char*)malloc((*uid_cn)->bv_len + 1);
+                                memcpy(ldap_cn, (*uid_cn)->bv_val, (*uid_cn)->bv_len);
+                                ldap_cn[(*uid_cn)->bv_len] = '\0';
+                                ldap_value_free_len(uid_cn);
+
+                            }
+                            
+                            uid = ldap_get_values_len(m_ldap, single_entry, CMailBase::m_ldap_search_attribute_user_id.c_str());
+                            if(uid && *uid)
+                            {
+                               ldap_uid = (char*)malloc((*uid)->bv_len + 1);
+                                memcpy(ldap_uid, (*uid)->bv_val, (*uid)->bv_len);
+                                ldap_uid[(*uid)->bv_len] = '\0';
+                                ldap_value_free_len(uid);
+                                
+                                
+                                
+                            }
+                            
+                            static char PWD_CHAR_TBL[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890=/~!@#$%^&*()_+=-?<>,.;:\"'\\|`";
+        
+                            srand(time(NULL));
+                            
+                            char nonce[15];
+                            sprintf(nonce, "%c%c%c%08x%c%c%c",
+                                PWD_CHAR_TBL[random()%(sizeof(PWD_CHAR_TBL)-1)],
+                                PWD_CHAR_TBL[random()%(sizeof(PWD_CHAR_TBL)-1)],
+                                PWD_CHAR_TBL[random()%(sizeof(PWD_CHAR_TBL)-1)],
+                                (unsigned int)time(NULL),
+                                PWD_CHAR_TBL[random()%(sizeof(PWD_CHAR_TBL)-1)],
+                                PWD_CHAR_TBL[random()%(sizeof(PWD_CHAR_TBL)-1)],
+                                PWD_CHAR_TBL[random()%(sizeof(PWD_CHAR_TBL)-1)]);
+                                
+                            string strSafetyPassword;
+                            strSafetyPassword = nonce;
+                            SqlSafetyString(strSafetyPassword);
+        
+                            string strSafetyUsername;
+                            strSafetyUsername = ldap_uid;
+                            SqlSafetyString(strSafetyUsername);
+            
+                            string strSafetyAlias;
+                            strSafetyAlias = ldap_cn;
+                            SqlSafetyString(strSafetyAlias);
+                            
+#ifdef _WITH_DIST_
+                            sprintf(sqlcmd, "INSERT INTO usertbl(uname, upasswd, ualias, uhost, utype, urole, usize, ustatus, ulevel, utime) select '%s', ENCODE('%s','%s'), '%s', (select uhost from (select uhost, min(C) from (select uhost, count(*) as C from usertbl as A group by uhost order by C) as B) as C), %d, %d, %d, %d, %d, %d FROM dual WHERE NOT EXISTS (SELECT uid FROM usertbl WHERE uname='%s')",
+                                    strSafetyUsername.c_str(), strSafetyPassword.c_str(), CODE_KEY, strSafetyAlias.c_str(), utMember, urGeneralUser, 5000*1024, usActive, -1, ldap_update_time, strSafetyUsername.c_str());                
+#else
+                            sprintf(sqlcmd, "INSERT INTO usertbl(uname, upasswd, ualias, utype, urole, usize, ustatus, ulevel, utime) SELECT '%s', ENCODE('%s','%s'), '%s', %d, %d, %d, %d, %d, %d FROM dual WHERE NOT EXISTS (SELECT uid FROM usertbl WHERE uname='%s')",
+                                    strSafetyUsername.c_str(), strSafetyPassword.c_str(), CODE_KEY, strSafetyAlias.c_str(), utMember, urGeneralUser, 5000*1024, usActive, -1, ldap_update_time, strSafetyUsername.c_str());
+#endif /* _WITH_DIST_ */
+                            //fprintf(stderr, "%s\n", sqlcmd);
+                            if(Query(sqlcmd, strlen(sqlcmd)) != 0)
+                            {
+                                show_error(&m_hMySQL, sqlcmd);
+                                ret_val = -1;
+                                free(ldap_uid);
+                                free(ldap_cn);
+                            
+                                break;
+                            }
+                            
+                            sprintf(sqlcmd, "UPDATE usertbl SET ualias='%s', utime=%d where uname='%s' AND utype=%d AND urole=%d",
+                                    strSafetyAlias.c_str(), ldap_update_time, strSafetyUsername.c_str(), utMember, urGeneralUser);
+                            //fprintf(stderr,"%s\n", sqlcmd);
+                            if(Query(sqlcmd, strlen(sqlcmd)) != 0)
+                            {
+                                show_error(&m_hMySQL, sqlcmd);
+                                ret_val = -1;
+                                
+                                free(ldap_uid);
+                                free(ldap_cn);
+                            
+                                break;
+                            }
+                            
+                            
+                            free(ldap_uid);
+                            free(ldap_cn);
+    
+                        }
+                        ldap_msgfree(search_result);
+                        
+                        sprintf(sqlcmd, "DELETE FROM usertbl where utime<%d AND utype=%d AND urole=%d", ldap_update_time, utMember, urGeneralUser);
+                        //fprintf(stderr,"%s\n", sqlcmd);
+                        if(Query(sqlcmd, strlen(sqlcmd)) != 0)
+                        {
+                            show_error(&m_hMySQL, sqlcmd);
+                            ret_val = -1;
+                        }
+                        
+                        sprintf(sqlcmd, "DELETE FROM grouptbl where membername NOT IN (SELECT uname FROM usertbl where utype=%d)", utMember);
+                        //fprintf(stderr,"%s\n", sqlcmd);
+                        if(Query(sqlcmd, strlen(sqlcmd)) != 0)
+                        {
+                            show_error(&m_hMySQL, sqlcmd);
+                            ret_val = -1;
+                        }
+                        
+                        sprintf(sqlcmd, "DELETE FROM dirtbl WHERE downer NOT IN (SELECT uname FROM usertbl)");
+                        //fprintf(stderr,"%s\n", sqlcmd);
+                        if(Query(sqlcmd, strlen(sqlcmd)) != 0)
+                        {
+                            show_error(&m_hMySQL, sqlcmd);
+                            ret_val = -1;
+                        }
+                        
+                        sprintf(sqlcmd, "UPDATE mailtbl SET mstatus=(mstatus|%d) WHERE mdirid NOT IN (SELECT did FROM dirtbl)", MSG_ATTR_DELETED);
+                        fprintf(stderr,"%s\n", sqlcmd);
+                        if(Query(sqlcmd, strlen(sqlcmd)) != 0)
+                        {
+                            show_error(&m_hMySQL, sqlcmd);
+                            ret_val = -1;
+                        }
+                    }
+                    else
+                    {
+                        fprintf(stderr, "search_result: %p\n", search_result);
+                    }
+                }
+                else
+                {
+                    fprintf(stderr, "ldap_result: %s\n", ldap_err2string(rc));
+                }
+            }
+            else
+            {
+                fprintf(stderr, "ldap_search_ext_s: %s\n", ldap_err2string(rc));
+            }            
+        }
+        else
+        {
+            fprintf(stderr, "ldap_simple_bind: %s\n", ldap_err2string(rc));
+        }
+    }
+    else
+    {
+        fprintf(stderr, "ldap_set_option: %s\n", ldap_err2string(rc));  
+    }
+    if(m_ldap)
+    {
+        ldap_unbind_ext(m_ldap, NULL, NULL);
+        m_ldap = NULL;
+    }
+    if(ret_val == 0)
+    {
+        CommitTransaction();
+    }
+    else
+    {
+        RollbackTransaction();
+    }
+    return ret_val;
+}
+#endif /*_WITH_LDAP_*/ 
+
 static unsigned int timeout_val = MYSQL_TIMEOUT;
 
 int MailStorage::Connect(const char * host, const char* username, const char* password, const char* database, unsigned short port, const char* sock_file)
@@ -1962,38 +2173,11 @@ int MailStorage::DelAllMailOfDir(int mdirid)
 
 int MailStorage::DelAllMailOfID(const char* username)
 {
-	char sqlcmd[1024];
-    
-	sprintf(sqlcmd, "SELECT did FROM dirtbl WHERE downer='%s'", username);
+    char sqlcmd[1024];
+	sprintf(sqlcmd, "UPDATE mailtbl SET mstatus=(mstatus|%d) WHERE mdirid IN (SELECT did FROM dirtbl WHERE downer='%s')", MSG_ATTR_DELETED, username);
 	
 	if(Query(sqlcmd, strlen(sqlcmd)) == 0)
 	{
-		MYSQL_RES *query_result;
-		MYSQL_ROW row;
-		
-		query_result = mysql_store_result(&m_hMySQL);
-		
-		if(query_result)
-		{
-            //start a transaction
-            if(StartTransaction() != 0)
-                return -1;
-    
-			while((row = mysql_fetch_row(query_result)))
-			{
-				DelAllMailOfDir(atoi(row[0]));
-			}
-            
-            if(CommitTransaction() != 0)
-                return -1;
-    
-			mysql_free_result(query_result);
-		}
-		else
-		{
-			show_error(&m_hMySQL, sqlcmd);
-			return -1;
-		}
 		return 0;
 	}
 	else

@@ -115,8 +115,10 @@ string CMailBase::m_master_db_sock_file = "/var/run/mysqld/mysqld.sock";
 	string	CMailBase::m_ldap_manager = "cn=admin,dc=erisesoft,dc=com";
 	string	CMailBase::m_ldap_manager_passwd = "dev";
 	string	CMailBase::m_ldap_search_base = "dc=erisesoft,dc=com";
-	string	CMailBase::m_ldap_search_filter_user = "(&(objectClass=posixAccount)(cn=%s))";
+	string	CMailBase::m_ldap_search_filter_user = "(&(objectClass=posixAccount)(uid=%s))";
+    string	CMailBase::m_ldap_search_attribute_user_id = "uid";
 	string	CMailBase::m_ldap_search_attribute_user_password = "userPassword";
+    string	CMailBase::m_ldap_search_attribute_user_alias = "cn";
 	string	CMailBase::m_ldap_search_filter_group = "(&(objectClass=posixGroup)(cn=%s))";
 	string	CMailBase::m_ldap_search_attribute_group_member = "memberUid";
     string	CMailBase::m_ldap_user_dn = "cn=%s,dc=erisesoft,dc=com";
@@ -678,11 +680,20 @@ BOOL CMailBase::LoadConfig()
 				strcut(strline.c_str(), "=", NULL, m_ldap_search_base );
 				strtrim(m_ldap_search_base);
 			}
-			
+			else if(strcasecmp(strKey.c_str(), "LDAPSearchAttribute_User_ID") == 0)
+			{
+				strcut(strline.c_str(), "=", NULL, m_ldap_search_attribute_user_id );
+				strtrim(m_ldap_search_attribute_user_id);
+			}
 			else if(strcasecmp(strKey.c_str(), "LDAPSearchAttribute_User_Password") == 0)
 			{
 				strcut(strline.c_str(), "=", NULL, m_ldap_search_attribute_user_password );
 				strtrim(m_ldap_search_attribute_user_password);
+			}
+            else if(strcasecmp(strKey.c_str(), "LDAPSearchAttribute_User_Alias") == 0)
+			{
+				strcut(strline.c_str(), "=", NULL, m_ldap_search_attribute_user_alias );
+				strtrim(m_ldap_search_attribute_user_alias);
 			}
 			else if(strcasecmp(strKey.c_str(), "LDAPSearchFilter_User") == 0)
 			{
