@@ -193,11 +193,11 @@ int MailStorage::LdapSync()
                             SqlSafetyString(strSafetyAlias);
                             
 #ifdef _WITH_DIST_
-                            sprintf(sqlcmd, "INSERT INTO usertbl(uname, upasswd, ualias, uhost, utype, urole, usize, ustatus, ulevel, utime) select '%s', ENCODE('%s','%s'), '%s', (select uhost from (select uhost, min(C) from (select uhost, count(*) as C from usertbl as A group by uhost order by C) as B) as C), %d, %d, %d, %d, %d, %d FROM dual WHERE NOT EXISTS (SELECT uid FROM usertbl WHERE uname='%s')",
-                                    strSafetyUsername.c_str(), strSafetyPassword.c_str(), CODE_KEY, strSafetyAlias.c_str(), utMember, urGeneralUser, 5000*1024, usActive, -1, ldap_update_time, strSafetyUsername.c_str());                
+                            sprintf(sqlcmd, "INSERT INTO usertbl(uname, upasswd, ualias, uhost, utype, urole, usize, ustatus, ulevel, utime) select '%s', ENCODE('%s','%s'), '%s', (select uhost from (select uhost, min(C) from (select uhost, count(*) as C from usertbl as A group by uhost order by C) as B) as C), %d, %d, %d, %d, (SELECT lid FROM leveltbl WHERE ldefault = %d), %d FROM dual WHERE NOT EXISTS (SELECT uid FROM usertbl WHERE uname='%s')",
+                                    strSafetyUsername.c_str(), strSafetyPassword.c_str(), CODE_KEY, strSafetyAlias.c_str(), utMember, urGeneralUser, 5000*1024, usActive, ldTrue, ldap_update_time, strSafetyUsername.c_str());                
 #else
-                            sprintf(sqlcmd, "INSERT INTO usertbl(uname, upasswd, ualias, utype, urole, usize, ustatus, ulevel, utime) SELECT '%s', ENCODE('%s','%s'), '%s', %d, %d, %d, %d, %d, %d FROM dual WHERE NOT EXISTS (SELECT uid FROM usertbl WHERE uname='%s')",
-                                    strSafetyUsername.c_str(), strSafetyPassword.c_str(), CODE_KEY, strSafetyAlias.c_str(), utMember, urGeneralUser, 5000*1024, usActive, -1, ldap_update_time, strSafetyUsername.c_str());
+                            sprintf(sqlcmd, "INSERT INTO usertbl(uname, upasswd, ualias, utype, urole, usize, ustatus, ulevel, utime) SELECT '%s', ENCODE('%s','%s'), '%s', %d, %d, %d, %d, (SELECT lid FROM leveltbl WHERE ldefault = %d), %d FROM dual WHERE NOT EXISTS (SELECT uid FROM usertbl WHERE uname='%s')",
+                                    strSafetyUsername.c_str(), strSafetyPassword.c_str(), CODE_KEY, strSafetyAlias.c_str(), utMember, urGeneralUser, 5000*1024, usActive, ldTrue, ldap_update_time, strSafetyUsername.c_str());
 #endif /* _WITH_DIST_ */
                             //fprintf(stderr, "%s\n", sqlcmd);
                             if(Query(sqlcmd, strlen(sqlcmd)) != 0)
@@ -210,8 +210,8 @@ int MailStorage::LdapSync()
                                 break;
                             }
                             
-                            sprintf(sqlcmd, "UPDATE usertbl SET ualias='%s', utime=%d where uname='%s' AND utype=%d AND urole=%d",
-                                    strSafetyAlias.c_str(), ldap_update_time, strSafetyUsername.c_str(), utMember, urGeneralUser);
+                            sprintf(sqlcmd, "UPDATE usertbl SET utime=%d where uname='%s' AND utype=%d AND urole=%d",
+                                    ldap_update_time, strSafetyUsername.c_str(), utMember, urGeneralUser);
                             //fprintf(stderr,"%s\n", sqlcmd);
                             if(Query(sqlcmd, strlen(sqlcmd)) != 0)
                             {
@@ -256,7 +256,7 @@ int MailStorage::LdapSync()
                         }
                         
                         sprintf(sqlcmd, "UPDATE mailtbl SET mstatus=(mstatus|%d) WHERE mdirid NOT IN (SELECT did FROM dirtbl)", MSG_ATTR_DELETED);
-                        fprintf(stderr,"%s\n", sqlcmd);
+                        //fprintf(stderr,"%s\n", sqlcmd);
                         if(Query(sqlcmd, strlen(sqlcmd)) != 0)
                         {
                             show_error(&m_hMySQL, sqlcmd);
