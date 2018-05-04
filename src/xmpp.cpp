@@ -571,7 +571,7 @@ BOOL CXmpp::SendOfflineMessage()
     return TRUE;
 }
     
-BOOL CXmpp::Parse(char* text)
+BOOL CXmpp::Parse(char* text, int len)
 {
     BOOL result = TRUE;
    

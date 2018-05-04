@@ -235,7 +235,7 @@ BOOL Xmpp_Session_Group::Poll()
                         {
                             str_left = pSessionInstance->RecvBuf().substr(0, new_line + 1);
                             pSessionInstance->RecvBuf() = pSessionInstance->RecvBuf().substr(new_line + 1, pSessionInstance->RecvBuf().length() - 1 - new_line);
-                            if(!pSessionInstance->GetProtocol()->Parse((char*)str_left.c_str()))
+                            if(!pSessionInstance->GetProtocol()->Parse((char*)str_left.c_str(), str_left.length()))
                             {
                                 // destory the xmpp session
                                 struct epoll_event ev;

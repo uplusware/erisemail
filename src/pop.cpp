@@ -1460,7 +1460,7 @@ void CMailPop::On_Auth_Handler(char* text)
 	
 }
 
-BOOL CMailPop::Parse(char* text)
+BOOL CMailPop::Parse(char* text, int len)
 {
 	/* printf("%s\n", text); */
 	BOOL result = TRUE;

@@ -44,7 +44,7 @@ public:
         StorageEngine* storage_engine, memcached_st * memcached, BOOL isSSL = FALSE);
 	virtual ~CMailImap();
 
-	virtual BOOL Parse(char* text);
+	virtual BOOL Parse(char* text, int len);
 	virtual int ProtRecv(char* buf, int len);
 	virtual int ProtSend(const char* buf, int len) { return ImapSend(buf, len); };
     

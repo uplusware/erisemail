@@ -144,7 +144,7 @@ public:
         StorageEngine* storage_engine, memory_cache* ch, memcached_st * memcached, BOOL isSSL = FALSE);
 	virtual ~CHttp();
 
-	virtual BOOL Parse(char* text);
+	virtual BOOL Parse(char* text, int len);
 	virtual int ProtRecv(char* buf, int len);
     virtual int ProtSend(const char* buf, int len) { return HttpSend(buf, len); };
 

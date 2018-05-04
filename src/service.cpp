@@ -653,7 +653,7 @@ int Service::Run(int fd, vector<service_param_t> & server_params)
         INIT_THREAD_POOL_HANDLER, BEGIN_THREAD_POOL_HANDLER, NULL, 0, EXIT_THREAD_POOL_HANDLER,
             GetInstanceMaxThreadNum() > CMailBase::m_thread_increase_step ? CMailBase::m_thread_increase_step : GetInstanceMaxThreadNum());
 	
-    int max_service_request_num = 0;
+    unsigned int max_service_request_num = 0;
     
     time_t last_service_idle_time = time(NULL);
 	
@@ -906,7 +906,7 @@ void Watcher::Stop()
 	printf("Stop Service Watcher OK\n");
 }
 
-int Watcher::Run(int fd, vector<service_param_t> & server_params, vector<service_param_t> & xmpp_params)
+int Watcher::Run(int fd, vector<service_param_t> & server_params, vector<service_param_t> & xmpp_params, vector<service_param_t> & ldap_params)
 {	
 	string strqueue = ERISEMAIL_POSIX_PREFIX;
 	strqueue += m_watcher_name;
@@ -1093,6 +1093,44 @@ int Watcher::Run(int fd, vector<service_param_t> & server_params, vector<service
                     else
                     {
                         printf("Start %s Service Failed. \t\t\t[Error]\n", XMPP_SERVICE_NAME);
+                    }
+                    close(pfd[0]);
+                }                  
+            }
+            
+            sprintf(szFlag, "/tmp/erisemail/%s.pid", LDAP_SERVICE_NAME);
+            if(!try_single_on(szFlag) && ldap_params.size() > 0)   
+            {
+                printf("%s Service stopped.\n", LDAP_SERVICE_NAME);
+                pipe(pfd);
+                int ldap_pid = fork();
+                if(ldap_pid == 0)
+                {                   
+                    close(pfd[0]);
+                    if(check_single_on(szFlag)) 
+                    {
+                        printf("%s Service is aready runing.\n", LDAP_SERVICE_NAME);   
+                        exit(-1);
+                    }
+                    Service xmpp_svr(LDAP_SERVICE_NAME);
+                    if(check_single_on(szFlag)) 
+                    {
+                        printf("%s Service is aready runing.\n", LDAP_SERVICE_NAME);   
+                        exit(-1);
+                    }
+                    xmpp_svr.Run(pfd[1], ldap_params);
+                    exit(0);
+                }
+                else if(ldap_pid > 0)
+                {
+                    unsigned int result;
+                    close(pfd[1]);
+                    read(pfd[0], &result, sizeof(unsigned int));
+                    if(result == 0)
+                        printf("Start %s Service OK \t\t\t[%u]\n", LDAP_SERVICE_NAME, ldap_pid);
+                    else
+                    {
+                        printf("Start %s Service Failed. \t\t\t[Error]\n", LDAP_SERVICE_NAME);
                     }
                     close(pfd[0]);
                 }                  

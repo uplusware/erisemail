@@ -69,6 +69,10 @@ void Session::Process()
             {
                 protocol_instance = new CHttp(m_sockfd, m_ssl, m_ssl_ctx, m_clientip.c_str(), m_storageEngine, m_cache, m_memcached, m_is_ssl);
             }
+            else if(m_st == stLDAP)
+            {
+                protocol_instance = new CLdap(m_sockfd, m_ssl, m_ssl_ctx, m_clientip.c_str(), m_storageEngine, m_memcached, m_is_ssl);
+            }
             else
             {
                 return;
@@ -94,35 +98,46 @@ void Session::Process()
             try
             {
                 result = protocol_instance->ProtRecv(szmsg, 4096 + 1024);
-                if(result <= 0)
-                {
-                    bQuitSession = true;
-                    break;
-                }
-                else
-                {
-                    szmsg[result] = '\0';
-                    
-                    str_line += szmsg;
-                    
-                    do 
-                    {
-                        new_line = str_line.find(protocol_instance->GetProtEndingChar());
-                        
-                        string str_left;
-        
-                        if(new_line != std::string::npos)
-                        {
-                            str_left = str_line.substr(0, new_line + 1);
-                            str_line = str_line.substr(new_line + 1, str_line.length() - 1 - new_line);
-                            if(!protocol_instance->Parse((char*)str_left.c_str()))
-                            {
-                                bQuitSession = true;
-                                break;
-                            }
-                        }
-                    } while(new_line != std::string::npos);
-                }
+				if(result <= 0)
+				{
+					bQuitSession = true;
+					break;
+				}
+				else
+				{
+					szmsg[result] = '\0';
+					
+					if(protocol_instance->GetProtEndingChar() == -1)
+					{
+						if(!protocol_instance->Parse(szmsg, result))
+						{
+							bQuitSession = true;
+							break;
+						}
+					}
+					else
+					{
+						str_line += szmsg;
+						
+						do 
+						{
+							new_line = str_line.find(protocol_instance->GetProtEndingChar());
+							
+							string str_left;
+			
+							if(new_line != std::string::npos)
+							{
+								str_left = str_line.substr(0, new_line + 1);
+								str_line = str_line.substr(new_line + 1, str_line.length() - 1 - new_line);
+								if(!protocol_instance->Parse((char*)str_left.c_str(), str_left.length()))
+								{
+									bQuitSession = true;
+									break;
+								}
+							}
+						} while(new_line != std::string::npos);
+					}
+				}
             }
             catch(string* e)
             {

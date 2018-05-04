@@ -56,7 +56,7 @@ public:
 	CMailSmtp(int socket, SSL * ssl, SSL_CTX * ssl_ctx, const char* clientip,
         StorageEngine* storage_engine, memcached_st * memcached, BOOL isSSL = FALSE);
 	virtual ~CMailSmtp();
-	virtual BOOL Parse(char* text);
+	virtual BOOL Parse(char* text, int len);
 	virtual int ProtRecv(char* buf, int len);
 	virtual int ProtSend(const char* buf, int len) { return SmtpSend(buf, len); };
     

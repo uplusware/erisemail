@@ -109,7 +109,7 @@ int CHttp::ProtRecv(char* buf, int len)
 		return m_lsockfd->lrecv(buf, len, CMailBase::m_connection_idle_timeout);
 }
 
-BOOL CHttp::Parse(char* text)
+BOOL CHttp::Parse(char* text, int len)
 {
 	string strtext = text;
 	strtrim(strtext);

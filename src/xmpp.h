@@ -240,7 +240,7 @@ public:
 
     //virtual function
     virtual BOOL IsEnabledKeepAlive() { return FALSE; }
-	virtual BOOL Parse(char* text);
+	virtual BOOL Parse(char* text, int len);
 	virtual int ProtRecv(char* buf, int len);
     virtual int ProtSend(const char* buf, int len) { return XmppSend(buf, len); };
     virtual int ProtRecvNoWait(char* buf, int len);

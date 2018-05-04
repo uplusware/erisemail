@@ -1,5 +1,6 @@
 CC = gcc
 
+LIBLDAPASN1 = libldapasn1.so
 LIBSTG = liberisestorage.so
 OBJSTG = storage.o util/trace.o
 
@@ -8,7 +9,7 @@ OBJJKS = antispam.o
 
 EXESVR = erisemaild
 OBJSVR = mainsrv.o sslapi.o service.o session.o xmpp_sessions.o base.o smtp.o pop.o imap.o xmpp.o calendar.o \
-	letter.o smtpclient.o mime.o mta.o fstring.o http.o dns.o email.o webmail.o cache.o stgengine.o pool.o postnotify.o \
+	letter.o smtpclient.o mime.o mta.o fstring.o http.o simple_ldap.o asn_1.o dns.o email.o webmail.o cache.o stgengine.o pool.o postnotify.o \
 	util/md5.o	\
 	util/DES.o	\
 	util/escape.o	\
@@ -40,7 +41,7 @@ OPENSSL_DIR = openssl
 HADOOP_DIR = hadoop
 LIBJVM_DIR = /usr/lib/jvm/default-java/jre/lib/amd64/server/
 
-INCDIR = -I../$(OPENSSL_DIR)/include -I/usr/local/include/mariadb/
+INCDIR = -I../$(OPENSSL_DIR)/include -I/usr/local/include/mariadb/ -I./ldap_asn1/
 LDDIRS = -L. -L/usr/local/lib/mariadb/
 
 LDLIST_SVR = ../$(OPENSSL_DIR)/libssl.a ../$(OPENSSL_DIR)/libcrypto.a -lstdc++ -lrt -ldl -lpthread -lmemcached
@@ -81,7 +82,7 @@ endif
 
 FLAGS = -O2 -fPIC -w
 
-all: stg svr utl jks udf nty
+all: stg svr utl jks udf nty 
 
 svr: $(EXESVR)
 utl: $(EXEUTL)
@@ -97,7 +98,7 @@ $(LIBJKS): $(OBJJKS)
 	$(CC) -shared -W -fPIC -o $@ $(OBJJKS) $(LDLIST_JKS)
 	
 $(EXESVR): $(OBJSVR)
-	$(CC) -o $@ $(OBJSVR) $(LDDIRS) $(LIBSTG) $(LDLIST_SVR)
+	$(CC) -o $@ $(OBJSVR) $(LDDIRS) $(LIBSTG) $(LIBLDAPASN1) $(LDLIST_SVR)
 	
 $(EXEUTL): $(OBJUTL)
 	$(CC) -o $@ $(OBJUTL) $(LDDIRS) $(LIBSTG) $(LDLIST_UTL)
@@ -112,4 +113,4 @@ $(EXENTY): $(OBJNTY)
 	$(CC) -D$(MDEF) -D$(GSS_DEF) -D$(HDFS_DEF) -D$(DIST_DEF) -D$(LDAP_DEF) $(INCDIR) $(FLAGS) -c $< -o $@
 
 clean:
-	-rm -f $(LIBSTG) $(LIBJKS) $(EXESVR) $(EXEUTL) $(SQLUDF) $(EXENTY) $(OBJSVR) $(OBJJKS) $(OBJSTG) $(OBJUDF) $(OBJNTY) *.elf *.gdb *.o *.a *.so
+	-rm -f $(LIBSTG) $(LIBJKS) $(EXESVR) $(EXEUTL) $(SQLUDF) $(EXENTY) $(OBJSVR) $(OBJJKS) $(OBJSTG) $(OBJUDF) $(OBJNTY) *.elf *.gdb *.o *.a

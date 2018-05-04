@@ -892,6 +892,11 @@ public:
     static unsigned int	m_xmpp_worker_thread_num;
     static string m_xmpp_federation_secret;
 	
+    static BOOL		m_enable_local_ldap;
+	static unsigned short	m_local_ldapport;
+    static unsigned short	m_local_ldapsport;
+    static BOOL		m_encrypt_local_ldap;
+    
 	static BOOL 	m_ca_verify_client;
 	static string	m_ca_crt_root;
 	static string	m_ca_crt_server;
@@ -985,7 +990,7 @@ public:
     static const char* DESKey() { return m_des_key; }
 
 	/* Pure virual function	*/
-	virtual BOOL Parse(char* text) = 0;
+	virtual BOOL Parse(char* text, int len) = 0;
 	virtual int ProtRecv(char* buf, int len) = 0;
     
     /* Non-pure virtual function */
@@ -1130,6 +1135,7 @@ typedef enum
 	stIMAP,
 	stHTTP,
     stXMPP,
+    stLDAP,
 	stMTA
 } Service_Type;
 
@@ -1137,5 +1143,6 @@ typedef enum
 #define MDA_SERVICE_NAME        "MDA"
 #define WATCHER_SERVICE_NAME    "WATCHER"
 #define XMPP_SERVICE_NAME       "XMPP"
+#define LDAP_SERVICE_NAME       "LDAP"
 
 #endif /* _MAILSYS_H_ */

@@ -4379,7 +4379,7 @@ void CMailImap::ParseCommand(const char* text, vector<string>& vDst)
 	}
 }
 
-BOOL CMailImap::Parse(char* text)
+BOOL CMailImap::Parse(char* text, int len)
 {
 	//printf("%s", text);
 	string strNotag;

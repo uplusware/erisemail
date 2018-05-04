@@ -82,6 +82,11 @@ unsigned int	CMailBase::m_encryptxmpp = XMPP_TLS_OPTIONAL; /* 0: Non-encrypted o
 unsigned int	CMailBase::m_xmpp_worker_thread_num = 8;
 string CMailBase::m_xmpp_federation_secret = "s3cr3tf0rd14lb4ck";
 
+BOOL		CMailBase::m_enable_local_ldap = TRUE;
+unsigned short	CMailBase::m_local_ldapport = 8389;
+unsigned short	CMailBase::m_local_ldapsport = 8636;
+BOOL	CMailBase::m_encrypt_local_ldap = FALSE;
+
 BOOL   CMailBase::m_ca_verify_client = FALSE;
 string CMailBase::m_ca_crt_root = "/var/erisemail/cert/ca.crt";
 string CMailBase::m_ca_crt_server = "/var/erisemail/cert/server.crt";
@@ -492,6 +497,38 @@ BOOL CMailBase::LoadConfig()
 				strtrim(encryptxmpp);
 				m_encryptxmpp = atoi(encryptxmpp.c_str());
 			}
+           
+            else if(strcasecmp(strKey.c_str(), "LDAPEnable") == 0)
+			{
+				string LDAPEnable;
+				strcut(strline.c_str(), "=", NULL, LDAPEnable );
+				strtrim(LDAPEnable);
+				m_enable_local_ldap= (strcasecmp(LDAPEnable.c_str(), "yes")) == 0 ? TRUE : FALSE;
+			}
+			else if(strcasecmp(strKey.c_str(), "LDAPPort") == 0)
+			{
+				string ldapport;
+				strcut(strline.c_str(), "=", NULL, ldapport );
+				strtrim(ldapport);
+				m_local_ldapport = atoi(ldapport.c_str());
+			}
+            else if(strcasecmp(strKey.c_str(), "LDAPSPort") == 0)
+			{
+				string ldapsport;
+				strcut(strline.c_str(), "=", NULL, ldapsport );
+				strtrim(ldapsport);
+				m_local_ldapsport = atoi(ldapsport.c_str());
+			}
+            else if(strcasecmp(strKey.c_str(), "EncryptLDAP") == 0)
+			{
+				string encryptldap;
+				strcut(strline.c_str(), "=", NULL, encryptldap );
+				strtrim(encryptldap);
+                
+				m_encrypt_local_ldap = (strcasecmp(encryptldap.c_str(), "yes")) == 0 ? TRUE : FALSE;
+			}
+            
+            
             else if(strcasecmp(strKey.c_str(), "XMPPWorkerThreadNum") == 0)
 			{
 				string XMPPWorkerThreadNum;

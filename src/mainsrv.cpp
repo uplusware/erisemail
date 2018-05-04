@@ -316,7 +316,67 @@ int Run()
                 break;
             }
         }
+        
+        //LDAP
+        vector<service_param_t> ldap_params;
 
+        if(CMailBase::m_enable_local_ldap)
+        {
+            //for jabber:client
+            service_param_t service_param1;
+            service_param1.st = stLDAP;
+            service_param1.host_ip = CMailBase::m_hostip.c_str();
+            service_param1.host_port = CMailBase::m_encrypt_local_ldap == TRUE ? CMailBase::m_local_ldapsport : CMailBase::m_local_ldapport;
+            service_param1.is_ssl = CMailBase::m_encrypt_local_ldap == TRUE ? TRUE : FALSE;
+            service_param1.sockfd = -1;
+            ldap_params.push_back(service_param1);
+        }
+        
+        if(CMailBase::m_enable_local_ldap)
+        {
+            int ldap_pid = -1;
+            pipe(pfd);
+            ldap_pid = fork();
+            if(ldap_pid == 0)
+            {
+                char szFlag[128];
+                sprintf(szFlag, "/tmp/erisemail/%s.pid", LDAP_SERVICE_NAME);
+                if(check_single_on(szFlag))
+                {
+                    printf("%s is aready runing.\n", LDAP_SERVICE_NAME);
+                    exit(-1);
+                }
+
+                close(pfd[0]);
+                daemon_init();
+                Service ldap_svr(LDAP_SERVICE_NAME);
+                ldap_svr.Run(pfd[1], ldap_params);
+                close(pfd[1]);
+                exit(0);
+
+            }
+            else if(ldap_pid > 0)
+            {
+                unsigned int result;
+                close(pfd[1]);
+                read(pfd[0], &result, sizeof(unsigned int));
+                if(result == 0)
+                    printf("Start %s Service OK \t\t\t[%u]\n", LDAP_SERVICE_NAME, ldap_pid);
+                else
+                {
+
+                    printf("Start %s Service Failed. \t\t\t[Error]\n", LDAP_SERVICE_NAME);
+                }
+                close(pfd[0]);
+            }
+            else
+            {
+                close(pfd[0]);
+                close(pfd[1]);
+                retVal = -1;
+                break;
+            }
+        }
 		//Watcher
 		int watcher_pids;
 		pipe(pfd);
@@ -334,7 +394,7 @@ int Run()
 			close(pfd[0]);
 			daemon_init();
 			Watcher watcher;
-			watcher.Run(pfd[1], server_params, xmpp_params);
+			watcher.Run(pfd[1], server_params, xmpp_params, ldap_params);
             close(pfd[1]);
 			exit(0);
 		}
@@ -375,6 +435,9 @@ static int Stop()
     Service xmpp_svr(XMPP_SERVICE_NAME);
 	xmpp_svr.Stop();
 
+    Service ldap_svr(LDAP_SERVICE_NAME);
+	ldap_svr.Stop();
+    
 	Service mda_svr;
 	mda_svr.Stop();
 

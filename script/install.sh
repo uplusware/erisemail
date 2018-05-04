@@ -79,13 +79,16 @@ chmod a-x /etc/erisemail/mfilter.xml
 if uname -o | grep -i cygwin;
 then
   cp -f ${path}/liberisestorage.so /usr/bin/liberisestorage.so
+  cp -f ${path}/libldapasn1.so /usr/bin/libldapasn1.so
   cp -f ${path}/liberiseantispam.so /usr/bin/liberiseantispam.so
 else
   if [ -x /usr/lib ]; then 
     cp -f ${path}/liberisestorage.so /usr/lib/liberisestorage.so
+    cp -f ${path}/libldapasn1.so /usr/lib/libldapasn1.so
     cp -f ${path}/liberiseantispam.so /usr/lib/liberiseantispam.so
   elif [ -x /usr/lib64 ]; then
     cp -f ${path}/liberisestorage.so /usr/lib64/liberisestorage.so
+    cp -f ${path}/libldapasn1.so /usr/lib64/libldapasn1.so
     cp -f ${path}/liberiseantispam.so /usr/lib64/liberiseantispam.so
   else
     exit -1

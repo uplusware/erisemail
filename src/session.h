@@ -17,6 +17,7 @@
 #include "imap.h"
 #include "http.h"
 #include "xmpp.h"
+#include "simple_ldap.h"
 #include "cache.h"
 
 class Session

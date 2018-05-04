@@ -220,7 +220,7 @@ int CMailSmtp::ProtRecv(char* buf, int len)
 			return m_lsockfd->lrecv(buf, len, CMailBase::m_connection_idle_timeout);
 }
 
-BOOL CMailSmtp::Parse(char* text)
+BOOL CMailSmtp::Parse(char* text, int len)
 {
 	//printf("%s",text);
 	BOOL result = TRUE;

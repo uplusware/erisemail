@@ -105,7 +105,7 @@ class Watcher
 public:
 	Watcher();
 	virtual ~Watcher();
-	int Run(int fd, vector<service_param_t> & server_params, vector<service_param_t> & xmpp_params);
+	int Run(int fd, vector<service_param_t> & server_params, vector<service_param_t> & xmpp_params, vector<service_param_t> & ldap_params);
 	void Stop();
 protected:
 	mqd_t m_watcher_qid;
