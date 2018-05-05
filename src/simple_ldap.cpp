@@ -179,18 +179,7 @@ BOOL CLdap::Parse(char* text, int len)
 		}
         
 		if(m_data_len >= asn1_len + asn1_len_buf_len + 1 /*tag len*/)
-		{
-            /* printf("%d\n", m_data_len);
-            
-           
-            for(int c = 0; c < m_data_len; c++)
-            {
-                if(c % 15 == 0)
-                    printf("\n");
-                printf("%02x", m_buf[c]);
-            }
-            printf("\n"); */
-            
+		{            
             LDAPMessage_t * ldap_msg = NULL;
             asn_dec_rval_t rval;
             rval = ber_decode(0, &asn_DEF_LDAPMessage, (void**)&ldap_msg, m_buf, m_data_len);
@@ -200,7 +189,6 @@ BOOL CLdap::Parse(char* text, int len)
                 return FALSE;
             }
             
-            //printf("%d %d\n", ldap_msg->messageID, ldap_msg->protocolOp.present);
             if(ProtocolOp_PR_bindRequest == ldap_msg->protocolOp.present)
             {
                 if(ldap_msg->protocolOp.choice.bindRequest.authentication.present != AuthenticationChoice_PR_simple)
@@ -210,15 +198,14 @@ BOOL CLdap::Parse(char* text, int len)
                 char* name = (char*)malloc(ldap_msg->protocolOp.choice.bindRequest.name.size + 1);
                 memcpy(name, ldap_msg->protocolOp.choice.bindRequest.name.buf, ldap_msg->protocolOp.choice.bindRequest.name.size);
                 name[ldap_msg->protocolOp.choice.bindRequest.name.size] = '\0';
-                //printf("%s\n", name);
                 
                 char* password = (char*)malloc(ldap_msg->protocolOp.choice.bindRequest.authentication.choice.simple.size + 1);
                 memcpy(password, ldap_msg->protocolOp.choice.bindRequest.authentication.choice.simple.buf, ldap_msg->protocolOp.choice.bindRequest.authentication.choice.simple.size);
                 password[ldap_msg->protocolOp.choice.bindRequest.authentication.choice.simple.size] = '\0';
-                //printf("%s\n", password);
                 
                 string auth_name = name;
                 string auth_pwd = password;
+                
                 free(password);
                 free(name);
                 
@@ -227,8 +214,6 @@ BOOL CLdap::Parse(char* text, int len)
                 strtrim(auth_name);
                 MailStorage* mailStg;
                 StorageEngineInstance stgengine_instance(m_storageEngine, &mailStg);
-                
-                //printf("[%s] [%s]\n", auth_name.c_str(), auth_pwd.c_str());
                 
                 if(mailStg && mailStg->CheckLogin(auth_name.c_str(), auth_pwd.c_str()) == 0)
                 {
@@ -271,7 +256,7 @@ BOOL CLdap::Parse(char* text, int len)
                 char* baseObject = (char*)malloc(ldap_msg->protocolOp.choice.searchRequest.baseObject.size + 1);
                 memcpy(baseObject, ldap_msg->protocolOp.choice.searchRequest.baseObject.buf, ldap_msg->protocolOp.choice.searchRequest.baseObject.size);
                 baseObject[ldap_msg->protocolOp.choice.searchRequest.baseObject.size] = '\0';
-                //printf("baseObject: %s\n", baseObject);
+                
                 MailStorage* mailStg;
                 StorageEngineInstance stgengine_instance(m_storageEngine, &mailStg);
                 vector <User_Info> listtbl;
@@ -291,10 +276,38 @@ BOOL CLdap::Parse(char* text, int len)
                         
                         OCTET_STRING_fromString(&search_entry_response->protocolOp.choice.searchResEntry.objectName, object_name.c_str());
                         
+                        struct PartialAttributeList__Member* new_attr0 = (struct PartialAttributeList__Member*)calloc(1, sizeof(struct PartialAttributeList__Member));
+                        
+                        OCTET_STRING_fromString(&new_attr0->type, "objectClass");
+                        
+                        AttributeValue_t new_value0_0;
+                        memset(&new_value0_0, 0, sizeof(AttributeValue_t));
+                        OCTET_STRING_fromString(&new_value0_0, "top");
+                        ASN_SET_ADD(&new_attr0->vals.list, &new_value0_0);
+                        
+                        
+                        AttributeValue_t new_value0_1;
+                        memset(&new_value0_1, 0, sizeof(AttributeValue_t));
+                        OCTET_STRING_fromString(&new_value0_1, "person");
+                        ASN_SET_ADD(&new_attr0->vals.list, &new_value0_1);
+                        
+                        
+                        AttributeValue_t new_value0_2;
+                        memset(&new_value0_2, 0, sizeof(AttributeValue_t));
+                        OCTET_STRING_fromString(&new_value0_2, "organizationalPerson");
+                        ASN_SET_ADD(&new_attr0->vals.list, &new_value0_2);
+
+                        AttributeValue_t new_value0_3;
+                        memset(&new_value0_3, 0, sizeof(AttributeValue_t));
+                        OCTET_STRING_fromString(&new_value0_3, "inetOrgPerson");
+                        ASN_SET_ADD(&new_attr0->vals.list, &new_value0_3);
+                        
+                        
+                        ASN_SEQUENCE_ADD(&search_entry_response->protocolOp.choice.searchResEntry.attributes.list, new_attr0);
+                        
                         struct PartialAttributeList__Member* new_attr1 = (struct PartialAttributeList__Member*)calloc(1, sizeof(struct PartialAttributeList__Member));
                         
-                        
-                        OCTET_STRING_fromString(&new_attr1->type, "alias");
+                        OCTET_STRING_fromString(&new_attr1->type, "displayName");
                         
                         AttributeValue_t new_value1;
                         memset(&new_value1, 0, sizeof(AttributeValue_t));
@@ -303,11 +316,9 @@ BOOL CLdap::Parse(char* text, int len)
                         ASN_SET_ADD(&new_attr1->vals.list, &new_value1);
                         
                         ASN_SEQUENCE_ADD(&search_entry_response->protocolOp.choice.searchResEntry.attributes.list, new_attr1);
-                        
-                        
+
                         struct PartialAttributeList__Member* new_attr2 = (struct PartialAttributeList__Member*)calloc(1, sizeof(struct PartialAttributeList__Member));
-                        
-                        
+
                         OCTET_STRING_fromString(&new_attr2->type, "mail");
                         
                         string mail_addr = listtbl[x].username;
@@ -321,9 +332,21 @@ BOOL CLdap::Parse(char* text, int len)
                         
                         ASN_SEQUENCE_ADD(&search_entry_response->protocolOp.choice.searchResEntry.attributes.list, new_attr2);
                         
+                        struct PartialAttributeList__Member* new_attr3 = (struct PartialAttributeList__Member*)calloc(1, sizeof(struct PartialAttributeList__Member));
+
+                        OCTET_STRING_fromString(&new_attr3->type, "uid");
+                        
+                        string userid = listtbl[x].username;
+                        AttributeValue_t new_value3;
+                        memset(&new_value3, 0, sizeof(AttributeValue_t));
+                        OCTET_STRING_fromString(&new_value3, userid.c_str());
+                        
+                        ASN_SET_ADD(&new_attr3->vals.list, &new_value3);
+                        
+                        ASN_SEQUENCE_ADD(&search_entry_response->protocolOp.choice.searchResEntry.attributes.list, new_attr3);
+                        
+                        
                         //xer_fprint(stderr, &asn_DEF_LDAPMessage, search_entry_response);
-                        
-                        
                         
                         asn_enc_rval_t erv;
                         erv = der_encode(&asn_DEF_LDAPMessage, search_entry_response, write_out, this);
@@ -331,8 +354,10 @@ BOOL CLdap::Parse(char* text, int len)
                         {
                             return FALSE;
                         }
+                        free(new_attr0);
                         free(new_attr1);
                         free(new_attr2);
+                        free(new_attr3);
                         free(search_entry_response);
                     }
                 }

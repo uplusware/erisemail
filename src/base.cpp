@@ -497,29 +497,28 @@ BOOL CMailBase::LoadConfig()
 				strtrim(encryptxmpp);
 				m_encryptxmpp = atoi(encryptxmpp.c_str());
 			}
-           
-            else if(strcasecmp(strKey.c_str(), "LDAPEnable") == 0)
+            else if(strcasecmp(strKey.c_str(), "LocalLDAPEnable") == 0)
 			{
 				string LDAPEnable;
 				strcut(strline.c_str(), "=", NULL, LDAPEnable );
 				strtrim(LDAPEnable);
 				m_enable_local_ldap= (strcasecmp(LDAPEnable.c_str(), "yes")) == 0 ? TRUE : FALSE;
 			}
-			else if(strcasecmp(strKey.c_str(), "LDAPPort") == 0)
+			else if(strcasecmp(strKey.c_str(), "LocalLDAPPort") == 0)
 			{
 				string ldapport;
 				strcut(strline.c_str(), "=", NULL, ldapport );
 				strtrim(ldapport);
 				m_local_ldapport = atoi(ldapport.c_str());
 			}
-            else if(strcasecmp(strKey.c_str(), "LDAPSPort") == 0)
+            else if(strcasecmp(strKey.c_str(), "LocalLDAPSPort") == 0)
 			{
 				string ldapsport;
 				strcut(strline.c_str(), "=", NULL, ldapsport );
 				strtrim(ldapsport);
 				m_local_ldapsport = atoi(ldapsport.c_str());
 			}
-            else if(strcasecmp(strKey.c_str(), "EncryptLDAP") == 0)
+            else if(strcasecmp(strKey.c_str(), "EncryptLocalLDAP") == 0)
 			{
 				string encryptldap;
 				strcut(strline.c_str(), "=", NULL, encryptldap );
@@ -527,8 +526,6 @@ BOOL CMailBase::LoadConfig()
                 
 				m_encrypt_local_ldap = (strcasecmp(encryptldap.c_str(), "yes")) == 0 ? TRUE : FALSE;
 			}
-            
-            
             else if(strcasecmp(strKey.c_str(), "XMPPWorkerThreadNum") == 0)
 			{
 				string XMPPWorkerThreadNum;
