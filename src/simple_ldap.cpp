@@ -285,7 +285,6 @@ BOOL CLdap::Parse(char* text, int len)
                         OCTET_STRING_fromString(&new_value0_0, "top");
                         ASN_SET_ADD(&new_attr0->vals.list, &new_value0_0);
                         
-                        
                         AttributeValue_t new_value0_1;
                         memset(&new_value0_1, 0, sizeof(AttributeValue_t));
                         OCTET_STRING_fromString(&new_value0_1, "person");
@@ -305,45 +304,70 @@ BOOL CLdap::Parse(char* text, int len)
                         
                         ASN_SEQUENCE_ADD(&search_entry_response->protocolOp.choice.searchResEntry.attributes.list, new_attr0);
                         
+                        
                         struct PartialAttributeList__Member* new_attr1 = (struct PartialAttributeList__Member*)calloc(1, sizeof(struct PartialAttributeList__Member));
                         
-                        OCTET_STRING_fromString(&new_attr1->type, "displayName");
+                        OCTET_STRING_fromString(&new_attr1->type, "cn");
                         
                         AttributeValue_t new_value1;
                         memset(&new_value1, 0, sizeof(AttributeValue_t));
-                        OCTET_STRING_fromString(&new_value1, listtbl[x].alias);
+                        OCTET_STRING_fromString(&new_value1, listtbl[x].username);
                         
                         ASN_SET_ADD(&new_attr1->vals.list, &new_value1);
                         
                         ASN_SEQUENCE_ADD(&search_entry_response->protocolOp.choice.searchResEntry.attributes.list, new_attr1);
-
-                        struct PartialAttributeList__Member* new_attr2 = (struct PartialAttributeList__Member*)calloc(1, sizeof(struct PartialAttributeList__Member));
-
-                        OCTET_STRING_fromString(&new_attr2->type, "mail");
                         
-                        string mail_addr = listtbl[x].username;
-                        mail_addr += "@";
-                        mail_addr += CMailBase::m_email_domain;
+                        struct PartialAttributeList__Member* new_attr2 = (struct PartialAttributeList__Member*)calloc(1, sizeof(struct PartialAttributeList__Member));
+                        
+                        OCTET_STRING_fromString(&new_attr2->type, "sn");
+                        
                         AttributeValue_t new_value2;
                         memset(&new_value2, 0, sizeof(AttributeValue_t));
-                        OCTET_STRING_fromString(&new_value2, mail_addr.c_str());
+                        OCTET_STRING_fromString(&new_value2, "N/A");
                         
                         ASN_SET_ADD(&new_attr2->vals.list, &new_value2);
                         
                         ASN_SEQUENCE_ADD(&search_entry_response->protocolOp.choice.searchResEntry.attributes.list, new_attr2);
                         
                         struct PartialAttributeList__Member* new_attr3 = (struct PartialAttributeList__Member*)calloc(1, sizeof(struct PartialAttributeList__Member));
-
-                        OCTET_STRING_fromString(&new_attr3->type, "uid");
                         
-                        string userid = listtbl[x].username;
+                        OCTET_STRING_fromString(&new_attr3->type, "displayName");
+                        
                         AttributeValue_t new_value3;
                         memset(&new_value3, 0, sizeof(AttributeValue_t));
-                        OCTET_STRING_fromString(&new_value3, userid.c_str());
+                        OCTET_STRING_fromString(&new_value3, listtbl[x].alias);
                         
                         ASN_SET_ADD(&new_attr3->vals.list, &new_value3);
                         
                         ASN_SEQUENCE_ADD(&search_entry_response->protocolOp.choice.searchResEntry.attributes.list, new_attr3);
+
+                        struct PartialAttributeList__Member* new_attr4 = (struct PartialAttributeList__Member*)calloc(1, sizeof(struct PartialAttributeList__Member));
+
+                        OCTET_STRING_fromString(&new_attr4->type, "mail");
+                        
+                        string mail_addr = listtbl[x].username;
+                        mail_addr += "@";
+                        mail_addr += CMailBase::m_email_domain;
+                        AttributeValue_t new_value4;
+                        memset(&new_value4, 0, sizeof(AttributeValue_t));
+                        OCTET_STRING_fromString(&new_value4, mail_addr.c_str());
+                        
+                        ASN_SET_ADD(&new_attr4->vals.list, &new_value4);
+                        
+                        ASN_SEQUENCE_ADD(&search_entry_response->protocolOp.choice.searchResEntry.attributes.list, new_attr4);
+                        
+                        struct PartialAttributeList__Member* new_attr5 = (struct PartialAttributeList__Member*)calloc(1, sizeof(struct PartialAttributeList__Member));
+
+                        OCTET_STRING_fromString(&new_attr5->type, "uid");
+                        
+                        string userid = listtbl[x].username;
+                        AttributeValue_t new_value5;
+                        memset(&new_value5, 0, sizeof(AttributeValue_t));
+                        OCTET_STRING_fromString(&new_value5, userid.c_str());
+                        
+                        ASN_SET_ADD(&new_attr5->vals.list, &new_value5);
+                        
+                        ASN_SEQUENCE_ADD(&search_entry_response->protocolOp.choice.searchResEntry.attributes.list, new_attr5);
                         
                         
                         //xer_fprint(stderr, &asn_DEF_LDAPMessage, search_entry_response);
@@ -358,6 +382,8 @@ BOOL CLdap::Parse(char* text, int len)
                         free(new_attr1);
                         free(new_attr2);
                         free(new_attr3);
+                        free(new_attr4);
+                        free(new_attr5);
                         free(search_entry_response);
                     }
                 }
@@ -384,7 +410,9 @@ BOOL CLdap::Parse(char* text, int len)
                 {
                     return FALSE;
                 }
-                    
+                
+                //xer_fprint(stderr, &asn_DEF_LDAPMessage, search_done_response);
+                
                 free(search_done_response);
                 
             }
