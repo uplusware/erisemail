@@ -82,14 +82,18 @@ endif
 
 FLAGS = -O2 -fPIC -w
 
-all: stg svr utl jks udf nty 
+all: asn1 stg svr utl jks udf nty
 
+asn1: $(LIBLDAPASN1)
 svr: $(EXESVR)
 utl: $(EXEUTL)
 stg: $(LIBSTG)
 jks: $(LIBJKS)
 udf: $(SQLUDF)
 nty: $(EXENTY)
+
+$(LIBLDAPASN1):
+	$(MAKE) -C ldap_asn1/
 
 $(LIBSTG): $(OBJSTG)
 	$(CC) -shared -W -fPIC -o $@ $(OBJSTG) $(LDDIRS) $(LDLIST_STG)
@@ -113,4 +117,6 @@ $(EXENTY): $(OBJNTY)
 	$(CC) -D$(MDEF) -D$(GSS_DEF) -D$(HDFS_DEF) -D$(DIST_DEF) -D$(LDAP_DEF) $(INCDIR) $(FLAGS) -c $< -o $@
 
 clean:
-	-rm -f $(LIBSTG) $(LIBJKS) $(EXESVR) $(EXEUTL) $(SQLUDF) $(EXENTY) $(OBJSVR) $(OBJJKS) $(OBJSTG) $(OBJUDF) $(OBJNTY) *.elf *.gdb *.o *.a
+	$(MAKE) -C ldap_asn1/ clean
+	-rm -f $(LIBSTG) $(LIBJKS) $(EXESVR) $(EXEUTL) $(SQLUDF) $(EXENTY) $(OBJSVR) $(OBJJKS) $(OBJSTG) $(OBJUDF) $(OBJNTY) *.elf *.gdb *.o *.a *.so
+	

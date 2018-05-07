@@ -23,6 +23,8 @@ public:
 	virtual int ProtSend(const char* buf, int len) { return LdapSend(buf, len); };
 	virtual char GetProtEndingChar() { return -1; };
     int LdapSend(const char* buf, int len);
+    int LdapDecodedBuffer(const char* buf, int len);
+    int SendDecodedBuffer();
     
 protected:
 	int m_sockfd;
@@ -47,6 +49,10 @@ protected:
 	unsigned char* m_buf;
 	unsigned long long m_buf_len;
 	unsigned long long m_data_len;
+    
+    unsigned char* m_decoded_buffer;
+    unsigned int m_decoded_buffer_len;
+    unsigned int m_decoded_data_len;
 };
 #endif /* _SIMPLE_LDAP_H_ */
 

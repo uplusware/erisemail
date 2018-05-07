@@ -3153,6 +3153,64 @@ int MailStorage::ListID(vector<User_Info>& listtbl, string orderby, BOOL desc)
 	}
 }
 
+int MailStorage::FilterID(vector<User_Info>& listtbl, const char* filter, string orderby, BOOL desc)
+{
+    string sub_string = "%";
+    
+    if(filter && filter[0])
+    {
+        sub_string += filter;
+        sub_string += "%";
+    }
+    
+	listtbl.clear();
+	char sqlcmd[1024];
+#ifdef _WITH_DIST_
+    sprintf(sqlcmd, "SELECT uname, ualias, utype, urole, usize, ustatus, ulevel, uhost FROM usertbl WHERE uname LIKE '%s' OR ualias LIKE '%s' ORDER BY %s %s",
+        sub_string.c_str(), sub_string.c_str(), orderby == "" ? "utime" : orderby.c_str(), desc ? "desc" : "");
+#else
+	sprintf(sqlcmd, "SELECT uname, ualias, utype, urole, usize, ustatus, ulevel FROM usertbl WHERE uname LIKE '%s' OR ualias LIKE '%s' ORDER BY %s %s",
+        sub_string.c_str(), sub_string.c_str(), orderby == "" ? "utime" : orderby.c_str(), desc ? "desc" : "");
+#endif /* _WITH_DIST_ */
+	if(Query(sqlcmd, strlen(sqlcmd)) == 0)
+	{
+		MYSQL_RES *query_result;
+		MYSQL_ROW row;
+		
+		query_result = mysql_store_result(&m_hMySQL);
+		
+		if(query_result)
+		{
+			while((row = mysql_fetch_row(query_result)))
+			{
+				User_Info ui;
+				strcpy(ui.username, row[0]);
+				strcpy(ui.alias, row[1]);
+				ui.type = UserType(atoi(row[2]));
+				ui.role = UserRole(atoi(row[3]));
+				ui.size = atoi(row[4]);
+				ui.status = (UserStatus)atoi(row[5]);
+				ui.level = atoi(row[6]);
+#ifdef _WITH_DIST_
+                strcpy(ui.host, row[7] ? row[7] : "");
+#else
+                strcpy(ui.host, CMailBase::m_localhostname.c_str());
+#endif /* _WITH_DIST_ */
+				listtbl.push_back(ui);
+			}
+			mysql_free_result(query_result);
+			return 0;
+		}
+		else
+			return -1;
+	}
+	else
+	{
+	    show_error(&m_hMySQL, sqlcmd);
+		return -1;
+	}
+}
+
 int MailStorage::GetID(const char* uname, User_Info& uinfo)
 {
 	char sqlcmd[1024];

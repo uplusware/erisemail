@@ -241,6 +241,9 @@ public:
    	int ListAvailableExternMail(vector<Mail_Info>& listtbl, unsigned int mta_index = 0, unsigned int mta_count = 1, unsigned int max_num = 0);
 
 	int ListID(vector<User_Info>& listtbl, string orderby = "utime", BOOL desc = FALSE);
+    
+    int FilterID(vector<User_Info>& listtbl, const char* filter, string orderby = "utime", BOOL desc = FALSE);
+    
 	int ListGroup(vector<User_Info>& listtbl);
 	int ListMember(vector<User_Info>& listtbl);
 	

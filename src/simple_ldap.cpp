@@ -14,33 +14,13 @@
 #include "service.h"
 #include "LDAPMessage.h"
 
-int get_ber_val_len(const unsigned char * ber_len)
-{
-    if(*ber_len & 0x80 == 0x80)
-    {
-        unsigned long long val_len = 0;
-        int ber_len_bytes = *ber_len & (~0x80);
-        for(int x = 0; x < ber_len_bytes; x++)
-        {
-            val_len <<= 8;
-            val_len += ber_len[x + 1];
-        }
-        
-        return val_len;
-    }
-    else
-    {
-        return *ber_len;
-    }
-}
-
 /* Dump the buffer out to the specified FILE */
 static int write_out(const void *buffer, size_t size, void *key)
 {
     if(size > 0)
     {
         CLdap* ldap_session = (CLdap*)key;
-        return ldap_session->LdapSend((const char*)buffer, size) < 0 ? -1 : 0;
+        return (ldap_session->LdapSend((const char*)buffer, size) < 0) ? -1 : 0;
     }
     return 0;
 }
@@ -82,6 +62,10 @@ CLdap::CLdap(int sockfd, SSL * ssl, SSL_CTX * ssl_ctx, const char* clientip,
 	m_buf = NULL;
 	m_buf_len = 0;
 	m_data_len = 0;
+    
+    m_decoded_buffer = NULL;
+    m_decoded_buffer_len = 0;
+    m_decoded_data_len = 0;
 }
 
 CLdap::~CLdap()
@@ -96,15 +80,63 @@ CLdap::~CLdap()
 	
 	if(m_buf)
 		free(m_buf);
+    
+    if(m_decoded_buffer)
+        free(m_decoded_buffer);
+    
+    m_decoded_buffer_len = 0;
+    m_decoded_data_len = 0;
 }
 
 int CLdap::LdapSend(const char* buf, int len)
 {
-	/* printf("%s", buf); */
     if(m_ssl)
         return SSLWrite(m_sockfd, m_ssl, buf, len, CMailBase::m_connection_idle_timeout);
     else
         return Send(m_sockfd, buf, len, CMailBase::m_connection_idle_timeout);	
+}
+
+int CLdap::LdapDecodedBuffer(const char* buf, int len)
+{
+    if(!m_decoded_buffer)
+    {
+        m_decoded_buffer_len = len > 1024 ? len : 1024;
+        m_decoded_buffer = (unsigned char*)malloc(m_decoded_buffer_len);
+        m_decoded_data_len = 0;
+    }
+    else
+    {
+        if((m_decoded_data_len + len) > m_decoded_buffer_len)
+        {
+            m_decoded_buffer_len = m_decoded_data_len + len;
+            
+            unsigned char* new_buf = (unsigned char*)malloc(m_decoded_buffer_len);
+            memcpy(new_buf, m_decoded_buffer, m_decoded_data_len);
+            free(m_decoded_buffer);
+            m_decoded_buffer = new_buf;
+        }
+    }
+    
+    memcpy(m_decoded_buffer + m_decoded_data_len, buf, len);
+    
+    m_decoded_data_len += len;
+    
+    return 0;
+}
+
+
+int CLdap::SendDecodedBuffer()
+{
+    int s = 0;
+    if(m_decoded_buffer && m_decoded_data_len > 0)
+    {
+        s = LdapSend((const char*)m_decoded_buffer, m_decoded_data_len);
+        free(m_decoded_buffer);
+        m_decoded_buffer = NULL;
+        m_decoded_data_len = 0;
+        m_decoded_buffer_len = 0;
+    }
+    return s;
 }
 
 int CLdap::ProtRecv(char* buf, int len)
@@ -157,12 +189,12 @@ BOOL CLdap::Parse(char* text, int len)
 		
 		unsigned int asn1_len_buf_len = 1;
 		unsigned int asn1_len = 0;
-		if((m_buf[0] & 0x80) == 0x80)
+		if((m_buf[1] & 0x80) == 0x80)
 		{
-			asn1_len_buf_len = (m_buf[0] & (~0x80)) + 1;
+			asn1_len_buf_len = (m_buf[1] & (~0x80)) + 1;
 		}
 		
-		if(m_data_len >= asn1_len_buf_len + 1)
+		if(m_data_len >= (asn1_len_buf_len + 1))
 		{
 			if(asn1_len_buf_len == 1)
 			{
@@ -177,6 +209,10 @@ BOOL CLdap::Parse(char* text, int len)
 				}
 			}
 		}
+        else
+        {
+            return TRUE;
+        }
         
 		if(m_data_len >= asn1_len + asn1_len_buf_len + 1 /*tag len*/)
 		{            
@@ -203,14 +239,15 @@ BOOL CLdap::Parse(char* text, int len)
                 memcpy(password, ldap_msg->protocolOp.choice.bindRequest.authentication.choice.simple.buf, ldap_msg->protocolOp.choice.bindRequest.authentication.choice.simple.size);
                 password[ldap_msg->protocolOp.choice.bindRequest.authentication.choice.simple.size] = '\0';
                 
-                string auth_name = name;
+                string str_dn = name;
+                string auth_name;
                 string auth_pwd = password;
                 
                 free(password);
                 free(name);
                 
                 
-                strcut(auth_name.c_str(), "cn=", ",",auth_name);
+                strcut(str_dn.c_str(), "cn=", ",",auth_name);
                 strtrim(auth_name);
                 MailStorage* mailStg;
                 StorageEngineInstance stgengine_instance(m_storageEngine, &mailStg);
@@ -223,15 +260,11 @@ BOOL CLdap::Parse(char* text, int len)
                     bind_response->protocolOp.present = ProtocolOp_PR_bindResponse;
                     
                     asn_long2INTEGER(&bind_response->protocolOp.choice.bindResponse.resultCode, BindResponse__resultCode_success);
-                    bind_response->protocolOp.choice.bindResponse.matchedDN.size = 0;
-                    bind_response->protocolOp.choice.bindResponse.matchedDN.buf = NULL;
-                    bind_response->protocolOp.choice.bindResponse.errorMessage.size = 0;
-                    bind_response->protocolOp.choice.bindResponse.errorMessage.buf = NULL;
                     
-                    bind_response->protocolOp.choice.bindResponse.referral = NULL;
-                    bind_response->protocolOp.choice.bindResponse.serverSaslCreds = NULL;
+                    OCTET_STRING_fromString(&bind_response->protocolOp.choice.bindResponse.matchedDN, "");
+                    OCTET_STRING_fromString(&bind_response->protocolOp.choice.bindResponse.errorMessage, "");
                     
-                    bind_response->controls = NULL;
+                    //xer_fprint(stderr, &asn_DEF_LDAPMessage, bind_response);
                     
                     asn_enc_rval_t erv;
                     erv = der_encode(&asn_DEF_LDAPMessage, bind_response, write_out, this);
@@ -239,6 +272,7 @@ BOOL CLdap::Parse(char* text, int len)
                     {
                         return FALSE;
                     }
+                    //SendDecodedBuffer();
                     free(bind_response);
                 }
                 else
@@ -253,14 +287,48 @@ BOOL CLdap::Parse(char* text, int len)
             }
             else if(ProtocolOp_PR_searchRequest == ldap_msg->protocolOp.present)
             {
-                char* baseObject = (char*)malloc(ldap_msg->protocolOp.choice.searchRequest.baseObject.size + 1);
-                memcpy(baseObject, ldap_msg->protocolOp.choice.searchRequest.baseObject.buf, ldap_msg->protocolOp.choice.searchRequest.baseObject.size);
-                baseObject[ldap_msg->protocolOp.choice.searchRequest.baseObject.size] = '\0';
+                SearchRequest_t* search_request = &ldap_msg->protocolOp.choice.searchRequest;
+                char* baseObject = (char*)malloc(search_request->baseObject.size + 1);
+                memcpy(baseObject, search_request->baseObject.buf, search_request->baseObject.size);
+                baseObject[search_request->baseObject.size] = '\0';
                 
+                string str_filter = "";
+                Filter_t* current_filter = &search_request->filter;
+                while(current_filter->present == Filter_PR_and || current_filter->present == Filter_PR_or || current_filter->present == Filter_PR_substrings)
+                {
+                    if(current_filter->present == Filter_PR_and)
+                    {
+                        if(current_filter->choice.and_f.list.count > 0)
+                            current_filter = current_filter->choice.and_f.list.array[0];
+                        else
+                            break;
+                    }
+                    else if(current_filter->present == Filter_PR_or)
+                    {
+                        if(current_filter->choice.and_f.list.count > 0)
+                            current_filter = current_filter->choice.or_f.list.array[0];
+                        else
+                            break;
+                    }
+                    else if(current_filter->present == Filter_PR_substrings)
+                    {
+                        if(current_filter->choice.substrings.substrings.list.array[0]->present == SubstringFilter__substrings__Member_PR_any)
+                        {
+                            char* sz_filter = (char*)malloc(current_filter->choice.substrings.substrings.list.array[0]->choice.any.size + 1);
+                            memcpy(sz_filter, current_filter->choice.substrings.substrings.list.array[0]->choice.any.buf, current_filter->choice.substrings.substrings.list.array[0]->choice.any.size);
+                            sz_filter[current_filter->choice.substrings.substrings.list.array[0]->choice.any.size] = '\0';
+                            
+                            str_filter = sz_filter;
+                            free(sz_filter);
+                        }
+                        break;
+                    }
+                }
                 MailStorage* mailStg;
                 StorageEngineInstance stgengine_instance(m_storageEngine, &mailStg);
+                
                 vector <User_Info> listtbl;
-                if(mailStg && mailStg->ListID(listtbl, "uname", TRUE) == 0)
+                if(mailStg && mailStg->FilterID(listtbl, str_filter.c_str(), "uname", TRUE) == 0)
                 {
                     for(int x = 0; x< listtbl.size(); x++)
                     {
@@ -378,6 +446,8 @@ BOOL CLdap::Parse(char* text, int len)
                         {
                             return FALSE;
                         }
+                        //SendDecodedBuffer();
+                        
                         free(new_attr0);
                         free(new_attr1);
                         free(new_attr2);
@@ -411,6 +481,7 @@ BOOL CLdap::Parse(char* text, int len)
                     return FALSE;
                 }
                 
+                //SendDecodedBuffer();
                 //xer_fprint(stderr, &asn_DEF_LDAPMessage, search_done_response);
                 
                 free(search_done_response);
