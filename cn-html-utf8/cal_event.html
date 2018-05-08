@@ -8,7 +8,7 @@
 <link href="css.css" rel="stylesheet" type="text/css">
 <script type="text/javascript" src="inc.js"></script>
 
-<title>...:::»¶Ó­·ÃÎÊÒ×î£ÓÊ¼şÏµÍ³:::...</title>
+<title>...:::æ¬¢è¿è®¿é—® eRisemail é‚®ä»¶ç³»ç»Ÿ:::...</title>
 <script language="JavaScript">
 
 	function delmail(force)
@@ -287,7 +287,7 @@
 							_$_("mailto").innerHTML = "<input class=\"text3\" size=\"110\" type=\"text\" value=\"" + TextToHTML(strTo) + "\" readonly>";
 							_$_("mailcc").innerHTML = "<input class=\"text3\" size=\"110\" type=\"text\" value=\"" + TextToHTML(strCc) + "\" readonly>";
 							_$_("maildate").innerHTML = "<input class=\"text3\" size=\"110\" type=\"text\" value=\"" + TextToHTML(strDate) + "\" readonly>";
-							_$_("mailsubject").innerHTML = "<input class=\"text3\" size=\"110\" type=\"text\" value=\"" + (strSubject == "" ? "ÎŞÖ÷Ìâ" : TextToHTML(strSubject)) + "\" readonly>";
+							_$_("mailsubject").innerHTML = "<input class=\"text3\" size=\"110\" type=\"text\" value=\"" + (strSubject == "" ? "æ— ä¸»é¢˜" : TextToHTML(strSubject)) + "\" readonly>";
 							_$_("mailattach").innerHTML = strHrefAttach == "" ? "<img src=\"pad.gif\">" : strHrefAttach;
 
 							var strrpl = "/api/attachment.cgi?ID=";
@@ -327,13 +327,13 @@
 						}
 						else
 						{
-							_$_("mailcontent").innerHTML = "<table border=\"0\"><tr><td><img src=\"alert.gif\"></td><td>¼ÓÔØÊ§°Ü</td></tr></table>";
+							_$_("mailcontent").innerHTML = "<table border=\"0\"><tr><td><img src=\"alert.gif\"></td><td>åŠ è½½å¤±è´¥</td></tr></table>";
 						}
 					}
 				}
 				else
 				{
-					_$_("mailcontent").innerHTML = "<table border=\"0\"><tr><td><img src=\"alert.gif\"></td><td>¼ÓÔØÊ§°Ü</td></tr></table>";
+					_$_("mailcontent").innerHTML = "<table border=\"0\"><tr><td><img src=\"alert.gif\"></td><td>åŠ è½½å¤±è´¥</td></tr></table>";
 				}
 			}
 			else
@@ -471,31 +471,31 @@
 			</table>
           	<table border="1" width="100%" bordercolorlight="#C0C0C0" cellspacing="0" bordercolordark="#FFFFFF">
               <tr id="fromcol" height="30"> 
-                <td bgcolor="#EFEFEF"  width="95" align="right"><b>×éÖ¯Õß:</b></td>
+                <td bgcolor="#EFEFEF"  width="95" align="right"><b>ç»„ç»‡è€…:</b></td>
                 <td ><div id="mailfrom"></div></td>
               </tr>
               <tr id="tocol" height="30"> 
-                <td bgcolor="#EFEFEF"  width="95" align="right"><b>±ØĞë²ÎÓëÕß:</b></td>
+                <td bgcolor="#EFEFEF"  width="95" align="right"><b>å¿…é¡»å‚ä¸è€…:</b></td>
                 <td ><div id="mailto"></div></td>
               </tr>
               <tr id="cccol" height="30" > 
-                <td bgcolor="#EFEFEF"  width="95"  align="right"><b>×ÔÓÉ²ÎÓëÕß:</b></td>
+                <td bgcolor="#EFEFEF"  width="95"  align="right"><b>è‡ªç”±å‚ä¸è€…:</b></td>
                 <td ><div id="mailcc"></div></td>
               </tr>
               <tr id="timecol" height="30" > 
-                <td bgcolor="#EFEFEF"  width="95" align="right"><b>Ê±¼ä:</b></td>
+                <td bgcolor="#EFEFEF"  width="95" align="right"><b>æ—¶é—´:</b></td>
                 <td ><div id="maildate"></div></td>
               </tr>
               <tr id="subjectcol" height="30" > 
-                <td bgcolor="#EFEFEF"  width="95" align="right"><b>Ö÷Ìâ:</b></td>
+                <td bgcolor="#EFEFEF"  width="95" align="right"><b>ä¸»é¢˜:</b></td>
                 <td ><div id="mailsubject"></div></td>
               </tr>
               <tr id="subjectcol" height="30" > 
-                <td bgcolor="#EFEFEF"  width="95" align="right"><b>Î»ÖÃ:</b></td>
+                <td bgcolor="#EFEFEF"  width="95" align="right"><b>ä½ç½®:</b></td>
                 <td ><div id="eventlocation"></div></td>
               </tr>
               <tr id="attcol" height="30" > 
-                <td bgcolor="#EFEFEF" width="95"  align="right"><b>¸½¼ş:</b></td>
+                <td bgcolor="#EFEFEF" width="95"  align="right"><b>é™„ä»¶:</b></td>
                 <td>
                 	<table border="0" cellpadding="1" cellspacing="1">
                 		<tr>

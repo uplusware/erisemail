@@ -11,6 +11,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include "util/md5.h"
+#include <stack>
 #include "service.h"
 #include "LDAPMessage.h"
 
@@ -292,27 +293,40 @@ BOOL CLdap::Parse(char* text, int len)
                 memcpy(baseObject, search_request->baseObject.buf, search_request->baseObject.size);
                 baseObject[search_request->baseObject.size] = '\0';
                 
+                std::stack<Filter_t* > filter_stack;
                 string str_filter = "";
                 Filter_t* current_filter = &search_request->filter;
-                while(current_filter->present == Filter_PR_and || current_filter->present == Filter_PR_or || current_filter->present == Filter_PR_substrings)
+                while(current_filter->present == Filter_PR_and || current_filter->present == Filter_PR_or || current_filter->present == Filter_PR_substrings || filter_stack.size() > 0)
                 {
                     if(current_filter->present == Filter_PR_and)
                     {
                         if(current_filter->choice.and_f.list.count > 0)
+                        {
                             current_filter = current_filter->choice.and_f.list.array[0];
+                            for(int t = 1; t < current_filter->choice.and_f.list.count; t++)
+                            {
+                                filter_stack.push(current_filter->choice.and_f.list.array[t]);
+                            }
+                        }
                         else
                             break;
                     }
                     else if(current_filter->present == Filter_PR_or)
                     {
                         if(current_filter->choice.and_f.list.count > 0)
+                        {
                             current_filter = current_filter->choice.or_f.list.array[0];
+                            for(int t = 1; t < current_filter->choice.and_f.list.count; t++)
+                            {
+                                filter_stack.push(current_filter->choice.and_f.list.array[t]);
+                            }
+                        }
                         else
                             break;
                     }
                     else if(current_filter->present == Filter_PR_substrings)
                     {
-                        if(current_filter->choice.substrings.substrings.list.array[0]->present == SubstringFilter__substrings__Member_PR_any)
+                        if(current_filter->choice.substrings.substrings.list.count > 0 && current_filter->choice.substrings.substrings.list.array[0]->present == SubstringFilter__substrings__Member_PR_any)
                         {
                             char* sz_filter = (char*)malloc(current_filter->choice.substrings.substrings.list.array[0]->choice.any.size + 1);
                             memcpy(sz_filter, current_filter->choice.substrings.substrings.list.array[0]->choice.any.buf, current_filter->choice.substrings.substrings.list.array[0]->choice.any.size);
@@ -320,10 +334,18 @@ BOOL CLdap::Parse(char* text, int len)
                             
                             str_filter = sz_filter;
                             free(sz_filter);
+                            if(str_filter != "")
+                                break;
                         }
-                        break;
+                       
+                    }
+                    else
+                    {
+                        current_filter = filter_stack.top();
+                        filter_stack.pop();
                     }
                 }
+                
                 MailStorage* mailStg;
                 StorageEngineInstance stgengine_instance(m_storageEngine, &mailStg);
                 
@@ -344,98 +366,110 @@ BOOL CLdap::Parse(char* text, int len)
                         
                         OCTET_STRING_fromString(&search_entry_response->protocolOp.choice.searchResEntry.objectName, object_name.c_str());
                         
-                        struct PartialAttributeList__Member* new_attr0 = (struct PartialAttributeList__Member*)calloc(1, sizeof(struct PartialAttributeList__Member));
+                        struct PartialAttributeList__Member* new_attr_objectClass = (struct PartialAttributeList__Member*)calloc(1, sizeof(struct PartialAttributeList__Member));
                         
-                        OCTET_STRING_fromString(&new_attr0->type, "objectClass");
+                        OCTET_STRING_fromString(&new_attr_objectClass->type, "objectClass");
                         
-                        AttributeValue_t new_value0_0;
-                        memset(&new_value0_0, 0, sizeof(AttributeValue_t));
-                        OCTET_STRING_fromString(&new_value0_0, "top");
-                        ASN_SET_ADD(&new_attr0->vals.list, &new_value0_0);
+                        AttributeValue_t new_value_objectClass_top;
+                        memset(&new_value_objectClass_top, 0, sizeof(AttributeValue_t));
+                        OCTET_STRING_fromString(&new_value_objectClass_top, "top");
+                        ASN_SET_ADD(&new_attr_objectClass->vals.list, &new_value_objectClass_top);
                         
-                        AttributeValue_t new_value0_1;
-                        memset(&new_value0_1, 0, sizeof(AttributeValue_t));
-                        OCTET_STRING_fromString(&new_value0_1, "person");
-                        ASN_SET_ADD(&new_attr0->vals.list, &new_value0_1);
+                        AttributeValue_t new_value_objectClass_person;
+                        memset(&new_value_objectClass_person, 0, sizeof(AttributeValue_t));
+                        OCTET_STRING_fromString(&new_value_objectClass_person, "person");
+                        ASN_SET_ADD(&new_attr_objectClass->vals.list, &new_value_objectClass_person);
                         
                         
-                        AttributeValue_t new_value0_2;
-                        memset(&new_value0_2, 0, sizeof(AttributeValue_t));
-                        OCTET_STRING_fromString(&new_value0_2, "organizationalPerson");
-                        ASN_SET_ADD(&new_attr0->vals.list, &new_value0_2);
+                        AttributeValue_t new_value_objectClass_organizationalPerson;
+                        memset(&new_value_objectClass_organizationalPerson, 0, sizeof(AttributeValue_t));
+                        OCTET_STRING_fromString(&new_value_objectClass_organizationalPerson, "organizationalPerson");
+                        ASN_SET_ADD(&new_attr_objectClass->vals.list, &new_value_objectClass_organizationalPerson);
 
-                        AttributeValue_t new_value0_3;
-                        memset(&new_value0_3, 0, sizeof(AttributeValue_t));
-                        OCTET_STRING_fromString(&new_value0_3, "inetOrgPerson");
-                        ASN_SET_ADD(&new_attr0->vals.list, &new_value0_3);
+                        AttributeValue_t new_value_objectClass_inetOrgPerson;
+                        memset(&new_value_objectClass_inetOrgPerson, 0, sizeof(AttributeValue_t));
+                        OCTET_STRING_fromString(&new_value_objectClass_inetOrgPerson, "inetOrgPerson");
+                        ASN_SET_ADD(&new_attr_objectClass->vals.list, &new_value_objectClass_inetOrgPerson);
                         
                         
-                        ASN_SEQUENCE_ADD(&search_entry_response->protocolOp.choice.searchResEntry.attributes.list, new_attr0);
+                        ASN_SEQUENCE_ADD(&search_entry_response->protocolOp.choice.searchResEntry.attributes.list, new_attr_objectClass);
                         
                         
-                        struct PartialAttributeList__Member* new_attr1 = (struct PartialAttributeList__Member*)calloc(1, sizeof(struct PartialAttributeList__Member));
+                        struct PartialAttributeList__Member* new_attr_cn = (struct PartialAttributeList__Member*)calloc(1, sizeof(struct PartialAttributeList__Member));
                         
-                        OCTET_STRING_fromString(&new_attr1->type, "cn");
+                        OCTET_STRING_fromString(&new_attr_cn->type, "cn");
                         
-                        AttributeValue_t new_value1;
-                        memset(&new_value1, 0, sizeof(AttributeValue_t));
-                        OCTET_STRING_fromString(&new_value1, listtbl[x].username);
+                        AttributeValue_t new_value_cn;
+                        memset(&new_value_cn, 0, sizeof(AttributeValue_t));
+                        OCTET_STRING_fromString(&new_value_cn, listtbl[x].username);
                         
-                        ASN_SET_ADD(&new_attr1->vals.list, &new_value1);
+                        ASN_SET_ADD(&new_attr_cn->vals.list, &new_value_cn);
                         
-                        ASN_SEQUENCE_ADD(&search_entry_response->protocolOp.choice.searchResEntry.attributes.list, new_attr1);
+                        ASN_SEQUENCE_ADD(&search_entry_response->protocolOp.choice.searchResEntry.attributes.list, new_attr_cn);
                         
-                        struct PartialAttributeList__Member* new_attr2 = (struct PartialAttributeList__Member*)calloc(1, sizeof(struct PartialAttributeList__Member));
+                        struct PartialAttributeList__Member* new_attr_sn = (struct PartialAttributeList__Member*)calloc(1, sizeof(struct PartialAttributeList__Member));
                         
-                        OCTET_STRING_fromString(&new_attr2->type, "sn");
+                        OCTET_STRING_fromString(&new_attr_sn->type, "sn");
                         
-                        AttributeValue_t new_value2;
-                        memset(&new_value2, 0, sizeof(AttributeValue_t));
-                        OCTET_STRING_fromString(&new_value2, "N/A");
+                        AttributeValue_t new_value_sn;
+                        memset(&new_value_sn, 0, sizeof(AttributeValue_t));
+                        OCTET_STRING_fromString(&new_value_sn, "");
                         
-                        ASN_SET_ADD(&new_attr2->vals.list, &new_value2);
+                        ASN_SET_ADD(&new_attr_sn->vals.list, &new_value_sn);
                         
-                        ASN_SEQUENCE_ADD(&search_entry_response->protocolOp.choice.searchResEntry.attributes.list, new_attr2);
-                        
-                        struct PartialAttributeList__Member* new_attr3 = (struct PartialAttributeList__Member*)calloc(1, sizeof(struct PartialAttributeList__Member));
-                        
-                        OCTET_STRING_fromString(&new_attr3->type, "displayName");
-                        
-                        AttributeValue_t new_value3;
-                        memset(&new_value3, 0, sizeof(AttributeValue_t));
-                        OCTET_STRING_fromString(&new_value3, listtbl[x].alias);
-                        
-                        ASN_SET_ADD(&new_attr3->vals.list, &new_value3);
-                        
-                        ASN_SEQUENCE_ADD(&search_entry_response->protocolOp.choice.searchResEntry.attributes.list, new_attr3);
+                        ASN_SEQUENCE_ADD(&search_entry_response->protocolOp.choice.searchResEntry.attributes.list, new_attr_sn);
 
-                        struct PartialAttributeList__Member* new_attr4 = (struct PartialAttributeList__Member*)calloc(1, sizeof(struct PartialAttributeList__Member));
+                        struct PartialAttributeList__Member* new_attr_givenName = (struct PartialAttributeList__Member*)calloc(1, sizeof(struct PartialAttributeList__Member));
+                        
+                        OCTET_STRING_fromString(&new_attr_givenName->type, "givenName");
+                        
+                        AttributeValue_t new_value_givenName;
+                        memset(&new_value_givenName, 0, sizeof(AttributeValue_t));
+                        OCTET_STRING_fromString(&new_value_givenName, "");
+                        
+                        ASN_SET_ADD(&new_attr_givenName->vals.list, &new_value_givenName);
+                        
+                        ASN_SEQUENCE_ADD(&search_entry_response->protocolOp.choice.searchResEntry.attributes.list, new_attr_givenName);
+   
+                        struct PartialAttributeList__Member* new_attr_displayName = (struct PartialAttributeList__Member*)calloc(1, sizeof(struct PartialAttributeList__Member));
+                        
+                        OCTET_STRING_fromString(&new_attr_displayName->type, "displayName");
+                        
+                        AttributeValue_t new_value_displayName;
+                        memset(&new_value_displayName, 0, sizeof(AttributeValue_t));
+                        OCTET_STRING_fromString(&new_value_displayName, listtbl[x].alias);
+                        
+                        ASN_SET_ADD(&new_attr_displayName->vals.list, &new_value_displayName);
+                        
+                        ASN_SEQUENCE_ADD(&search_entry_response->protocolOp.choice.searchResEntry.attributes.list, new_attr_displayName);
 
-                        OCTET_STRING_fromString(&new_attr4->type, "mail");
+                        struct PartialAttributeList__Member* new_attr_mail = (struct PartialAttributeList__Member*)calloc(1, sizeof(struct PartialAttributeList__Member));
+
+                        OCTET_STRING_fromString(&new_attr_mail->type, "mail");
                         
                         string mail_addr = listtbl[x].username;
                         mail_addr += "@";
                         mail_addr += CMailBase::m_email_domain;
-                        AttributeValue_t new_value4;
-                        memset(&new_value4, 0, sizeof(AttributeValue_t));
-                        OCTET_STRING_fromString(&new_value4, mail_addr.c_str());
+                        AttributeValue_t new_value_mail;
+                        memset(&new_value_mail, 0, sizeof(AttributeValue_t));
+                        OCTET_STRING_fromString(&new_value_mail, mail_addr.c_str());
                         
-                        ASN_SET_ADD(&new_attr4->vals.list, &new_value4);
+                        ASN_SET_ADD(&new_attr_mail->vals.list, &new_value_mail);
                         
-                        ASN_SEQUENCE_ADD(&search_entry_response->protocolOp.choice.searchResEntry.attributes.list, new_attr4);
+                        ASN_SEQUENCE_ADD(&search_entry_response->protocolOp.choice.searchResEntry.attributes.list, new_attr_mail);
                         
-                        struct PartialAttributeList__Member* new_attr5 = (struct PartialAttributeList__Member*)calloc(1, sizeof(struct PartialAttributeList__Member));
+                        struct PartialAttributeList__Member* new_attr_uid = (struct PartialAttributeList__Member*)calloc(1, sizeof(struct PartialAttributeList__Member));
 
-                        OCTET_STRING_fromString(&new_attr5->type, "uid");
+                        OCTET_STRING_fromString(&new_attr_uid->type, "uid");
                         
                         string userid = listtbl[x].username;
-                        AttributeValue_t new_value5;
-                        memset(&new_value5, 0, sizeof(AttributeValue_t));
-                        OCTET_STRING_fromString(&new_value5, userid.c_str());
+                        AttributeValue_t new_value_uid;
+                        memset(&new_value_uid, 0, sizeof(AttributeValue_t));
+                        OCTET_STRING_fromString(&new_value_uid, userid.c_str());
                         
-                        ASN_SET_ADD(&new_attr5->vals.list, &new_value5);
+                        ASN_SET_ADD(&new_attr_uid->vals.list, &new_value_uid);
                         
-                        ASN_SEQUENCE_ADD(&search_entry_response->protocolOp.choice.searchResEntry.attributes.list, new_attr5);
+                        ASN_SEQUENCE_ADD(&search_entry_response->protocolOp.choice.searchResEntry.attributes.list, new_attr_uid);
                         
                         
                         //xer_fprint(stderr, &asn_DEF_LDAPMessage, search_entry_response);
@@ -448,12 +482,13 @@ BOOL CLdap::Parse(char* text, int len)
                         }
                         //SendDecodedBuffer();
                         
-                        free(new_attr0);
-                        free(new_attr1);
-                        free(new_attr2);
-                        free(new_attr3);
-                        free(new_attr4);
-                        free(new_attr5);
+                        free(new_attr_objectClass);
+                        free(new_attr_cn);
+                        free(new_attr_sn);
+                        free(new_attr_givenName);
+                        free(new_attr_displayName);
+                        free(new_attr_mail);
+                        free(new_attr_uid);
                         free(search_entry_response);
                     }
                 }
