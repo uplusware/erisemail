@@ -2665,11 +2665,13 @@ BOOL CXmpp::AuthTag(TiXmlDocument* xmlDoc)
             m_auth_method = AUTH_METHOD_GSSAPI;
             //TODO
             gss_buffer_desc buf_desc;
-            string str_buf_desc = "xmpp@";
-            str_buf_desc += m_localhostname.c_str();
+            string str_buf_desc = CMailBase::m_krb5_xmpp_service_name;
+            str_buf_desc += "@";
+            str_buf_desc += CMailBase::m_krb5_hostname.c_str();
             
-            buf_desc.value = (char *) str_buf_desc.c_str();
             buf_desc.length = str_buf_desc.length() + 1;
+            buf_desc.value =  malloc(buf_desc.length);
+            strcpy((char*)buf_desc.value, str_buf_desc.c_str());
             
             m_maj_stat = gss_import_name (&m_min_stat, &buf_desc,
                       GSS_C_NT_HOSTBASED_SERVICE, &m_server_name);
@@ -2683,6 +2685,8 @@ BOOL CXmpp::AuthTag(TiXmlDocument* xmlDoc)
                 ProtSendNoWait(xmpp_buf, strlen(xmpp_buf));
                 return FALSE;
             }
+            
+            free(buf_desc.value);
             
             gss_OID_set oid_set = GSS_C_NO_OID_SET;
             /*
@@ -2725,6 +2729,8 @@ BOOL CXmpp::AuthTag(TiXmlDocument* xmlDoc)
                 ProtSendNoWait(xmpp_buf, strlen(xmpp_buf));
                 return FALSE;
             }
+            gss_release_name (&m_min_stat, &m_server_name);
+            
             m_maj_stat = gss_release_oid_set(&m_min_stat, &oid_set);
             
             if (GSS_ERROR (m_maj_stat))

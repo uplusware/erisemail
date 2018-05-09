@@ -906,9 +906,15 @@ public:
 	static string	m_ca_password;
     
     static string   m_ca_client_base_dir;
-    
+#ifdef _WITH_GSSAPI_ 
     static string   m_krb5_ktname;
-
+    static string   m_krb5_hostname;
+    static string   m_krb5_smtp_service_name;
+    static string   m_krb5_pop3_service_name;
+    static string   m_krb5_imap_service_name;
+    static string   m_krb5_http_service_name;
+    static string   m_krb5_xmpp_service_name;
+#endif /* _WITH_GSSAPI_ */  
 	static string	m_db_host;
     static unsigned short	m_db_port;
 	static string	m_db_name;

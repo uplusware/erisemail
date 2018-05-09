@@ -97,8 +97,15 @@ string CMailBase::m_ca_client_base_dir = "/var/erisemail/cert/client";
 
 string CMailBase::m_ca_password = "";
 
-string   CMailBase::m_krb5_ktname = "/etc/erisemail/krb5.keytab";
-
+#ifdef _WITH_GSSAPI_ 
+    string   CMailBase::m_krb5_ktname = "/etc/erisemail/krb5.keytab";
+    string   CMailBase::m_krb5_hostname = "/localhost";
+    string   CMailBase::m_krb5_smtp_service_name = "smtp";
+    string   CMailBase::m_krb5_pop3_service_name = "pop";
+    string   CMailBase::m_krb5_imap_service_name = "imap";
+    string   CMailBase::m_krb5_http_service_name = "http";
+    string   CMailBase::m_krb5_xmpp_service_name = "xmpp";
+#endif /* _WITH_GSSAPI_ */
 string CMailBase::m_db_host = "localhost";
 unsigned short  CMailBase::m_db_port = 3306;
 string CMailBase::m_db_name = "erisemail_db";
@@ -587,6 +594,36 @@ BOOL CMailBase::LoadConfig()
 				strtrim(m_krb5_ktname);
               
 				setenv("KRB5_KTNAME", m_krb5_ktname.c_str(), 1);
+			}
+            else if(strcasecmp(strKey.c_str(), "KRB5_HOSTNAME") == 0)
+			{
+				strcut(strline.c_str(), "=", NULL, m_krb5_hostname);
+				strtrim(m_krb5_hostname);
+			}
+            else if(strcasecmp(strKey.c_str(), "KRB5_SMTP_SERVICE_NAME") == 0)
+			{
+				strcut(strline.c_str(), "=", NULL, m_krb5_smtp_service_name);
+				strtrim(m_krb5_smtp_service_name);
+			}
+            else if(strcasecmp(strKey.c_str(), "KRB5_POP3_SERVICE_NAME") == 0)
+			{
+				strcut(strline.c_str(), "=", NULL, m_krb5_pop3_service_name);
+				strtrim(m_krb5_pop3_service_name);
+			}
+            else if(strcasecmp(strKey.c_str(), "KRB5_IMAP_SERVICE_NAME") == 0)
+			{
+				strcut(strline.c_str(), "=", NULL, m_krb5_imap_service_name);
+				strtrim(m_krb5_imap_service_name);
+			}
+            else if(strcasecmp(strKey.c_str(), "KRB5_HTTP_SERVICE_NAME") == 0)
+			{
+				strcut(strline.c_str(), "=", NULL, m_krb5_http_service_name);
+				strtrim(m_krb5_http_service_name);
+			}
+            else if(strcasecmp(strKey.c_str(), "KRB5_XMPP_SERVICE_NAME") == 0)
+			{
+				strcut(strline.c_str(), "=", NULL, m_krb5_xmpp_service_name);
+				strtrim(m_krb5_xmpp_service_name);
 			}
 #endif /* _WITH_GSSAPI_ */            
 			else if(strcasecmp(strKey.c_str(), "DBHost") == 0)

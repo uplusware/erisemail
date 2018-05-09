@@ -1190,11 +1190,14 @@ void CMailPop::On_Auth_Handler(char* text)
         gss_name_t server_name = GSS_C_NO_NAME;
               
         gss_buffer_desc buf_desc;
-        string str_buf_desc = "pop@";
-        str_buf_desc += CMailBase::m_localhostname.c_str();
+        string str_buf_desc = CMailBase::m_krb5_pop3_service_name;
+        str_buf_desc += "@";
+            
+        str_buf_desc += CMailBase::m_krb5_hostname.c_str();
         
-        buf_desc.value = (char *) str_buf_desc.c_str();
         buf_desc.length = str_buf_desc.length() + 1;
+        buf_desc.value =  malloc(buf_desc.length);
+        strcpy((char*)buf_desc.value, str_buf_desc.c_str());
   
         maj_stat = gss_import_name (&min_stat, &buf_desc,
 			      GSS_C_NT_HOSTBASED_SERVICE, &server_name);
@@ -1205,6 +1208,8 @@ void CMailPop::On_Auth_Handler(char* text)
 			PopSend(cmd, strlen(cmd));
             return;
         }
+        
+        free(buf_desc.value);
         
         gss_OID_set oid_set = GSS_C_NO_OID_SET;
         /*
@@ -1238,6 +1243,8 @@ void CMailPop::On_Auth_Handler(char* text)
 			PopSend(cmd, strlen(cmd));
             return;
         }
+        gss_release_name (&min_stat, &server_name);
+        
         maj_stat = gss_release_oid_set(&min_stat, &oid_set);
         
         if (GSS_ERROR (maj_stat))
