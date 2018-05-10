@@ -32,6 +32,7 @@
 #include <mqueue.h>
 #include <semaphore.h>
 #include <fstream>
+#include <string>
 #include <list>
 #include <map>
 #include <pthread.h>
@@ -39,7 +40,7 @@
 
 #ifndef __ERISEUTIL__ 
 #ifdef _WITH_GSSAPI_
-    #include <gss.h>
+    #include <gssapi.h>
     #define GSS_SEC_LAYER_NONE          0x1
     #define GSS_SEC_LAYER_INTEGRITY     0x2
     #define GSS_SEC_LAYER_PRIVACY       0x4
@@ -117,6 +118,54 @@
       display_status_1 (msg, maj_stat, GSS_C_GSS_CODE);
       display_status_1 (msg, min_stat, GSS_C_MECH_CODE);
     }
+    
+    static void
+    print_name(const char *str, gss_name_t name)
+    {
+        OM_uint32 major_status, minor_status;
+        gss_buffer_desc buffer;
+        gss_OID nametype;
+        
+        major_status = gss_display_name(&minor_status, 
+                                        name,
+                                        &buffer,
+                                        &nametype);
+        if (major_status != GSS_S_COMPLETE)
+            display_status ("gss_display_name", major_status, minor_status);
+
+        printf("%s %.*s\n", str, (int)buffer.length, (char *)buffer.value);
+
+        gss_release_buffer(&minor_status, &buffer);
+        /* Doesn't need to free nametype, its a static variable */
+    }
+    
+    static void
+    acquire_name_string(gss_name_t name, std::string &str_name)
+    {
+        OM_uint32 major_status, minor_status;
+        gss_buffer_desc buffer;
+        gss_OID nametype;
+        
+        major_status = gss_display_name(&minor_status, 
+                                        name,
+                                        &buffer,
+                                        &nametype);
+        if (major_status != GSS_S_COMPLETE)
+            display_status ("gss_display_name", major_status, minor_status);
+        
+        
+        char* sz_client_name = (char*)malloc(buffer.length + 1);
+        memcpy(sz_client_name, buffer.value, buffer.length);
+        sz_client_name[buffer.length] = '\0';
+        str_name = sz_client_name;
+        free(sz_client_name);
+        
+        //printf("%.*s\n", (int)buffer.length, (char *)buffer.value);
+
+        gss_release_buffer(&minor_status, &buffer);
+        /* Doesn't need to free nametype, its a static variable */
+    }
+    
 #endif /* _WITH_GSSAPI_ */
 #endif /* __ERISEUTIL__ */
 
@@ -909,6 +958,7 @@ public:
 #ifdef _WITH_GSSAPI_ 
     static string   m_krb5_ktname;
     static string   m_krb5_hostname;
+    static string   m_krb5_realm;
     static string   m_krb5_smtp_service_name;
     static string   m_krb5_pop3_service_name;
     static string   m_krb5_imap_service_name;

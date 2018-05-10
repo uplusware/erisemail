@@ -99,7 +99,8 @@ string CMailBase::m_ca_password = "";
 
 #ifdef _WITH_GSSAPI_ 
     string   CMailBase::m_krb5_ktname = "/etc/erisemail/krb5.keytab";
-    string   CMailBase::m_krb5_hostname = "/localhost";
+    string   CMailBase::m_krb5_realm = "ERISESOFT.COM";
+    string   CMailBase::m_krb5_hostname = "localhost";
     string   CMailBase::m_krb5_smtp_service_name = "smtp";
     string   CMailBase::m_krb5_pop3_service_name = "pop";
     string   CMailBase::m_krb5_imap_service_name = "imap";
@@ -594,6 +595,11 @@ BOOL CMailBase::LoadConfig()
 				strtrim(m_krb5_ktname);
               
 				setenv("KRB5_KTNAME", m_krb5_ktname.c_str(), 1);
+			}
+            else if(strcasecmp(strKey.c_str(), "KRB5_REALM") == 0)
+			{
+				strcut(strline.c_str(), "=", NULL, m_krb5_realm);
+				strtrim(m_krb5_realm);
 			}
             else if(strcasecmp(strKey.c_str(), "KRB5_HOSTNAME") == 0)
 			{

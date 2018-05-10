@@ -53,7 +53,7 @@ LDLIST_NTY = -lstdc++ -lpthread
 
 ifdef GSSAPI
     GSS_DEF = _WITH_GSSAPI_
-    LDLIST_SVR := $(LDLIST_SVR) -lgss
+    LDLIST_SVR := $(LDLIST_SVR) -lgssapi_krb5
 else
     GSS_DEF = _WITHOUT_GSSAPI_
 endif

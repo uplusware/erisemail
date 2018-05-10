@@ -113,26 +113,26 @@ void CMailPop::On_Capa_Handler(char* text)
 {
 	char cmd[128];
 	sprintf(cmd,"+OK Capability list follows\r\n");
-	PopSend(cmd,strlen(cmd));
+	PopSend(cmd, strlen(cmd));
 	sprintf(cmd,"UIDL\r\n");
-	PopSend(cmd,strlen(cmd));
+	PopSend(cmd, strlen(cmd));
     sprintf(cmd,"APOP\r\n");
-	PopSend(cmd,strlen(cmd));
+	PopSend(cmd, strlen(cmd));
 	sprintf(cmd,"USER\r\n");
-	PopSend(cmd,strlen(cmd));
+	PopSend(cmd, strlen(cmd));
 	sprintf(cmd,"TOP\r\n");
-	PopSend(cmd,strlen(cmd));
+	PopSend(cmd, strlen(cmd));
 	sprintf(cmd,"STLS\r\n");
-	PopSend(cmd,strlen(cmd));
+	PopSend(cmd, strlen(cmd));
 #ifdef _WITH_GSSAPI_     
-    sprintf(cmd,"SASL PLAIN CRAM-MD5 DIGEST-MD5 %s GSSAPI\r\n", m_ca_verify_client ? "EXTERNAL" : "");
+    sprintf(cmd,"SASL PLAIN CRAM-MD5 DIGEST-MD5%s GSSAPI\r\n", m_ca_verify_client ? " EXTERNAL" : "");
 #else
-    sprintf(cmd,"SASL PLAIN CRAM-MD5 DIGEST-MD5 %s\r\n", m_ca_verify_client ? "EXTERNAL" : "");
+    sprintf(cmd,"SASL PLAIN CRAM-MD5 DIGEST-MD5%s\r\n", m_ca_verify_client ? " EXTERNAL" : "");
 #endif /* _WITH_GSSAPI_ */    
-	PopSend(cmd,strlen(cmd));
+	PopSend(cmd, strlen(cmd));
     
 	sprintf(cmd,".\r\n");
-	PopSend(cmd,strlen(cmd));
+	PopSend(cmd, strlen(cmd));
 }
 				
 void CMailPop::On_Apop_Handler(char* text)
@@ -1192,7 +1192,6 @@ void CMailPop::On_Auth_Handler(char* text)
         gss_buffer_desc buf_desc;
         string str_buf_desc = CMailBase::m_krb5_pop3_service_name;
         str_buf_desc += "@";
-            
         str_buf_desc += CMailBase::m_krb5_hostname.c_str();
         
         buf_desc.length = str_buf_desc.length() + 1;
@@ -1208,32 +1207,11 @@ void CMailPop::On_Auth_Handler(char* text)
 			PopSend(cmd, strlen(cmd));
             return;
         }
-        
         free(buf_desc.value);
         
         gss_OID_set oid_set = GSS_C_NO_OID_SET;
-        /*
-        maj_stat = gss_create_empty_oid_set(&min_stat, &oid_set);
-        if (GSS_ERROR (maj_stat))
-        {
-            display_status ("gss_create_empty_oid_set", maj_stat, min_stat);
-            sprintf(cmd,"-ERR User Logged Failed\r\n");
-			PopSend(cmd, strlen(cmd));
-            return;
-        }
-        
-        maj_stat = gss_add_oid_set_member (&min_stat, GSS_KRB5, &oid_set);
-        if (GSS_ERROR (maj_stat))
-        {
-            display_status ("gss_add_oid_set_member", maj_stat, min_stat);
-            maj_stat = gss_release_oid_set(&min_stat, &oid_set);
-            sprintf(cmd,"-ERR User Logged Failed\r\n");
-			PopSend(cmd, strlen(cmd));
-            return;
-        }
-        */
         maj_stat = gss_acquire_cred (&min_stat, server_name, GSS_C_INDEFINITE,
-			       GSS_C_NULL_OID_SET, GSS_C_ACCEPT,
+			       oid_set, GSS_C_ACCEPT,
 			       &server_creds, NULL, NULL);
         if (GSS_ERROR (maj_stat))
         {
@@ -1306,16 +1284,6 @@ void CMailPop::On_Auth_Handler(char* text)
                 PopSend(cmd, strlen(cmd));
                 return;
             }
-            
-            if(!gss_oid_equal(mech_type, GSS_KRB5))
-            {
-                printf("not GSS_KRB5\n");
-                if (context_hdl != GSS_C_NO_CONTEXT)
-                    gss_delete_sec_context(&min_stat, &context_hdl, GSS_C_NO_BUFFER);
-                sprintf(cmd,"-ERR User Logged Failed\r\n");
-                PopSend(cmd, strlen(cmd));
-                return;
-            }
                   
             if (output_token.length != 0)
             {
@@ -1359,7 +1327,7 @@ void CMailPop::On_Auth_Handler(char* text)
         input_message_buffer1.length = 4;
         input_message_buffer1.value = sec_data;
         int conf_state;
-        maj_stat = gss_wrap (&min_stat, context_hdl, 0, 0, &input_message_buffer1, &conf_state, &output_message_buffer1);
+        maj_stat = gss_wrap (&min_stat, context_hdl, 0, GSS_C_QOP_DEFAULT, &input_message_buffer1, &conf_state, &output_message_buffer1);
         if (GSS_ERROR(maj_stat))
         {
             if (context_hdl != GSS_C_NO_CONTEXT)
@@ -1373,9 +1341,7 @@ void CMailPop::On_Auth_Handler(char* text)
         char* tmp_encode = (char*)malloc(len_decode + 2);
         memset(tmp_encode, 0, len_decode);
         tmp_encode[0] = '+';
-        tmp_encode[1] = 'O';
-        tmp_encode[2] = 'K';
-        tmp_encode[3] = ' ';
+        tmp_encode[1] = ' ';
         int outlen_encode = len_decode;
         CBase64::Encode((char*)output_message_buffer1.value, output_message_buffer1.length, tmp_encode + 2, &outlen_encode);
 
@@ -1420,22 +1386,34 @@ void CMailPop::On_Auth_Handler(char* text)
         max_limit_size += sec_data[2] << 8;
         max_limit_size += sec_data[3];
         
+        string credential_owner;
         char* ptr_tmp = (char*)output_message_buffer2.value;
         for(int x = 4; x < output_message_buffer2.length; x++)
         {
-            m_username.push_back(ptr_tmp[x]);
+            credential_owner.push_back(ptr_tmp[x]);
         }
-        m_username.push_back('\0');
+        credential_owner.push_back('\0');
+        
         free(tmp_decode);
         gss_release_buffer(&min_stat, &output_message_buffer2);
         
-        gss_buffer_desc client_name_buff = GSS_C_EMPTY_BUFFER;
-        maj_stat = gss_export_name (&min_stat, client_name, &client_name_buff);
+        string str_client_principal, str_client_name,str_client_realm;
+        acquire_name_string(client_name, str_client_principal);
         
-        if(GSS_C_NO_NAME != client_name)
-            gss_release_name(&min_stat, &client_name);
+        strcut(str_client_principal.c_str(), NULL, "@", str_client_name);
+        strcut(str_client_principal.c_str(), "@", NULL, str_client_realm);
         
-        gss_release_buffer(&min_stat, &client_name_buff);
+        if(str_client_realm != CMailBase::m_krb5_realm)
+        {
+            if (context_hdl != GSS_C_NO_CONTEXT)
+                gss_delete_sec_context(&min_stat, &context_hdl, GSS_C_NO_BUFFER);
+            
+            sprintf(cmd,"-ERR User Logged Failed\r\n");
+            PopSend(cmd, strlen(cmd));
+            return;
+        }
+        
+        m_username = str_client_name;
         
         if (context_hdl != GSS_C_NO_CONTEXT)
             gss_delete_sec_context(&min_stat, &context_hdl, GSS_C_NO_BUFFER);
@@ -1469,7 +1447,6 @@ void CMailPop::On_Auth_Handler(char* text)
 
 BOOL CMailPop::Parse(char* text, int len)
 {
-	/* printf("%s\n", text); */
 	BOOL result = TRUE;
 	if((m_status&STATUS_AUTH_STEP1) == STATUS_AUTH_STEP1)
 	{

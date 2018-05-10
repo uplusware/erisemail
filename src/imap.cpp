@@ -636,7 +636,6 @@ BOOL CMailImap::On_Authenticate(char* text)
 	else if(strcasecmp(strAuthType.c_str(),"GSSAPI") == 0)
 	{        
 		m_authType = atGSSAPI;
-		
         ImapSend("+ \r\n", sizeof("+ \r\n") - 1);
 
         OM_uint32 maj_stat, min_stat;
@@ -663,30 +662,9 @@ BOOL CMailImap::On_Authenticate(char* text)
 			ImapSend(cmd, strlen(cmd));
             return FALSE;
         }
-        
         free(buf_desc.value);
         
         gss_OID_set oid_set = GSS_C_NO_OID_SET;
-        /*
-        maj_stat = gss_create_empty_oid_set(&min_stat, &oid_set);
-        if (GSS_ERROR (maj_stat))
-        {
-            display_status ("gss_create_empty_oid_set", maj_stat, min_stat);
-            sprintf(cmd,"%s NO User Logged Failed\r\n", strTag.c_str());
-			ImapSend(cmd, strlen(cmd));
-            return FALSE;
-        }
-        
-        maj_stat = gss_add_oid_set_member (&min_stat, GSS_KRB5, &oid_set);
-        if (GSS_ERROR (maj_stat))
-        {
-            display_status ("gss_add_oid_set_member", maj_stat, min_stat);
-            maj_stat = gss_release_oid_set(&min_stat, &oid_set);
-            sprintf(cmd,"%s NO User Logged Failed\r\n", strTag.c_str());
-			ImapSend(cmd, strlen(cmd));
-            return FALSE;
-        }
-        */
         maj_stat = gss_acquire_cred (&min_stat, server_name, 0,
 			       oid_set, GSS_C_ACCEPT,
 			       &server_creds, NULL, NULL);
@@ -698,7 +676,6 @@ BOOL CMailImap::On_Authenticate(char* text)
 			ImapSend(cmd, strlen(cmd));
             return FALSE;
         }
-        
         gss_release_name (&min_stat, &server_name);
         
         maj_stat = gss_release_oid_set(&min_stat, &oid_set);
@@ -762,16 +739,6 @@ BOOL CMailImap::On_Authenticate(char* text)
                 ImapSend(cmd, strlen(cmd));
                 return FALSE;
             }
-            
-            if(!gss_oid_equal(mech_type, GSS_KRB5))
-            {
-                printf("not GSS_KRB5\n");
-                if (context_hdl != GSS_C_NO_CONTEXT)
-                    gss_delete_sec_context(&min_stat, &context_hdl, GSS_C_NO_BUFFER);
-                sprintf(cmd,"%s NO User Logged Failed\r\n", strTag.c_str());
-                ImapSend(cmd, strlen(cmd));
-                return FALSE;
-            }
                   
             if (output_token.length != 0)
             {
@@ -816,7 +783,7 @@ BOOL CMailImap::On_Authenticate(char* text)
         input_message_buffer1.length = 4;
         input_message_buffer1.value = sec_data;
         int conf_state;
-        maj_stat = gss_wrap (&min_stat, context_hdl, 0, 0, &input_message_buffer1, &conf_state, &output_message_buffer1);
+        maj_stat = gss_wrap (&min_stat, context_hdl, 0, GSS_C_QOP_DEFAULT, &input_message_buffer1, &conf_state, &output_message_buffer1);
         if (GSS_ERROR(maj_stat))
         {
             if (context_hdl != GSS_C_NO_CONTEXT)
@@ -875,22 +842,34 @@ BOOL CMailImap::On_Authenticate(char* text)
         max_limit_size += sec_data[2] << 8;
         max_limit_size += sec_data[3];
         
+        string credential_owner;
         char* ptr_tmp = (char*)output_message_buffer2.value;
         for(int x = 4; x < output_message_buffer2.length; x++)
         {
-            m_username.push_back(ptr_tmp[x]);
+            credential_owner.push_back(ptr_tmp[x]);
         }
-        m_username.push_back('\0');
+        credential_owner.push_back('\0');
+        
         free(tmp_decode);
         gss_release_buffer(&min_stat, &output_message_buffer2);
         
-        gss_buffer_desc client_name_buff = GSS_C_EMPTY_BUFFER;
-        maj_stat = gss_export_name (&min_stat, client_name, &client_name_buff);
+        string str_client_principal, str_client_name,str_client_realm;
+        acquire_name_string(client_name, str_client_principal);
         
-        if(GSS_C_NO_NAME != client_name)
-            gss_release_name(&min_stat, &client_name);
+        strcut(str_client_principal.c_str(), NULL, "@", str_client_name);
+        strcut(str_client_principal.c_str(), "@", NULL, str_client_realm);
         
-        gss_release_buffer(&min_stat, &client_name_buff);
+        if(str_client_realm != CMailBase::m_krb5_realm)
+        {
+            if (context_hdl != GSS_C_NO_CONTEXT)
+                gss_delete_sec_context(&min_stat, &context_hdl, GSS_C_NO_BUFFER);
+            
+            sprintf(cmd,"%s NO User Logged Failed\r\n", strTag.c_str());
+            ImapSend(cmd, strlen(cmd));
+            return FALSE;
+        }
+        
+        m_username = str_client_name;
         
         if (context_hdl != GSS_C_NO_CONTEXT)
             gss_delete_sec_context(&min_stat, &context_hdl, GSS_C_NO_BUFFER);

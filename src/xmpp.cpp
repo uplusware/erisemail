@@ -2689,32 +2689,6 @@ BOOL CXmpp::AuthTag(TiXmlDocument* xmlDoc)
             free(buf_desc.value);
             
             gss_OID_set oid_set = GSS_C_NO_OID_SET;
-            /*
-            m_maj_stat = gss_create_empty_oid_set(&m_min_stat, &oid_set);
-            if (GSS_ERROR (m_maj_stat))
-            {
-                display_status ("gss_create_empty_oid_set", m_maj_stat, m_min_stat);
-                sprintf(xmpp_buf,
-                     "<failure xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>"
-                        "<not-authorized/>"
-                     "</failure>");
-                ProtSendNoWait(xmpp_buf, strlen(xmpp_buf));
-                return FALSE;
-            }
-            
-            m_maj_stat = gss_add_oid_set_member (&m_min_stat, GSS_KRB5, &oid_set);
-            if (GSS_ERROR (m_maj_stat))
-            {
-                display_status ("gss_add_oid_set_member", m_maj_stat, m_min_stat);
-                m_maj_stat = gss_release_oid_set(&m_min_stat, &oid_set);
-                sprintf(xmpp_buf,
-                     "<failure xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>"
-                        "<not-authorized/>"
-                     "</failure>");
-                ProtSendNoWait(xmpp_buf, strlen(xmpp_buf));
-                return FALSE;
-            }
-            */
             m_maj_stat = gss_acquire_cred (&m_min_stat, m_server_name, 0,
                        oid_set, GSS_C_ACCEPT,
                        &m_server_creds, NULL, NULL);
@@ -3143,22 +3117,6 @@ BOOL CXmpp::ResponseTag(TiXmlDocument* xmlDoc)
                     return FALSE;
                 }
                 
-                if(!gss_oid_equal(mech_type, GSS_KRB5))
-                {
-                    printf("not GSS_KRB5\n");
-                    if (m_context_hdl != GSS_C_NO_CONTEXT)
-                        gss_delete_sec_context(&m_min_stat, &m_context_hdl, GSS_C_NO_BUFFER);
-                    
-                    m_auth_step = AUTH_STEP_INIT;
-                    
-                    sprintf(xmpp_buf,
-                     "<failure xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>"
-                        "<not-authorized/>"
-                     "</failure>");
-                    ProtSendNoWait(xmpp_buf, strlen(xmpp_buf));
-                    return FALSE;
-                }
-                
                 if (output_token.length != 0)
                 {
                     ProtSendNoWait("<challenge xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>", strlen("<challenge xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>"));
@@ -3206,7 +3164,7 @@ BOOL CXmpp::ResponseTag(TiXmlDocument* xmlDoc)
                 input_message_buffer1.length = 4;
                 input_message_buffer1.value = sec_data;
                 int conf_state;
-                m_maj_stat = gss_wrap (&m_min_stat, m_context_hdl, 0, 0, &input_message_buffer1, &conf_state, &output_message_buffer1);
+                m_maj_stat = gss_wrap (&m_min_stat, m_context_hdl, 0, GSS_C_QOP_DEFAULT, &input_message_buffer1, &conf_state, &output_message_buffer1);
                 if (GSS_ERROR(m_maj_stat))
                 {
                     if (m_context_hdl != GSS_C_NO_CONTEXT)
@@ -3281,24 +3239,38 @@ BOOL CXmpp::ResponseTag(TiXmlDocument* xmlDoc)
                 max_limit_size += sec_data[2] << 8;
                 max_limit_size += sec_data[3];
                 
+                string credential_owner;
                 char* ptr_tmp = (char*)output_message_buffer2.value;
                 for(int x = 4; x < output_message_buffer2.length; x++)
                 {
-                    m_username.push_back(ptr_tmp[x]);
+                    credential_owner.push_back(ptr_tmp[x]);
                 }
-                m_username.push_back('\0');
+                credential_owner.push_back('\0');
                 
                 free(tmp1);
-                
                 gss_release_buffer(&m_min_stat, &output_message_buffer2);
                 
-                gss_buffer_desc client_name_buff = GSS_C_EMPTY_BUFFER;
-                m_maj_stat = gss_export_name (&m_min_stat, m_client_name, &client_name_buff);
+                string str_client_principal, str_client_name,str_client_realm;
+                acquire_name_string(m_client_name, str_client_principal);
                 
-                if(GSS_C_NO_NAME != m_client_name)
-                    gss_release_name(&m_min_stat, &m_client_name);
+                strcut(str_client_principal.c_str(), NULL, "@", str_client_name);
+                strcut(str_client_principal.c_str(), "@", NULL, str_client_realm);
                 
-                gss_release_buffer(&m_min_stat, &client_name_buff);
+                if(str_client_realm != CMailBase::m_krb5_realm)
+                {
+                    if (m_context_hdl != GSS_C_NO_CONTEXT)
+                        gss_delete_sec_context(&m_min_stat, &m_context_hdl, GSS_C_NO_BUFFER);
+                    
+                    m_auth_step = AUTH_STEP_INIT;
+                    sprintf(xmpp_buf,
+                         "<failure xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>"
+                            "<not-authorized/>"
+                         "</failure>");
+                    ProtSendNoWait(xmpp_buf, strlen(xmpp_buf));
+                    return FALSE;
+                }
+                
+                m_username = str_client_name;
                 
                 if (m_context_hdl != GSS_C_NO_CONTEXT)
                     gss_delete_sec_context(&m_min_stat, &m_context_hdl, GSS_C_NO_BUFFER);

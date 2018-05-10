@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # kFreeBSD do not accept scripts as interpreters, using #!/bin/sh and sourcing.
 ### BEGIN INIT INFO
 # Provides:          uplusware
