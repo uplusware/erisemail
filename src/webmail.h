@@ -349,7 +349,7 @@ protected:
                 strcut(decryted_username_role.c_str(), NULL, ":", decryted_username);
                 strcut(decryted_username_role.c_str(), ":", ":", decryted_role);
                 
-                if(plain_username == decryted_username && decryted_role == "U")
+                if(plain_username != "" && plain_username == decryted_username && decryted_role == "U")
                 {
                     username = plain_username;
                     return 0;
@@ -396,7 +396,7 @@ protected:
                 strcut(decryted_username_role.c_str(), NULL, ":", decryted_username);
                 strcut(decryted_username_role.c_str(), ":", ":", decryted_role);
                 
-                if(plain_username == decryted_username && decryted_role == "A")
+                if(plain_username != "" && plain_username == decryted_username && decryted_role == "A")
                 {
                     username = plain_username;
                     return 0;

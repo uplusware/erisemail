@@ -94,21 +94,21 @@
 
       msg_ctx = 0;
       do
-        {
+      {
           maj_stat = gss_display_status (&min_stat, code,
                          type, GSS_C_NO_OID, &msg_ctx, &msg);
-          if (GSS_ERROR (maj_stat))
-        printf ("GSS-API display_status failed on code %d type %d\n",
+          if(GSS_ERROR (maj_stat))
+            fprintf(stderr, "GSS-API display_status failed on code %d type %d\n",
             code, type);
           else
         {
-          printf ("GSS-API error %s (%s): %.*s\n",
+          fprintf(stderr, "GSS-API error %s (%s): %.*s\n",
               m, type == GSS_C_GSS_CODE ? "major" : "minor",
               (int) msg.length, (char *) msg.value);
 
           gss_release_buffer (&min_stat, &msg);
         }
-        }
+      }
       while (!GSS_ERROR (maj_stat) && msg_ctx);
     }
 
@@ -159,8 +159,6 @@
         sz_client_name[buffer.length] = '\0';
         str_name = sz_client_name;
         free(sz_client_name);
-        
-        //printf("%.*s\n", (int)buffer.length, (char *)buffer.value);
 
         gss_release_buffer(&minor_status, &buffer);
         /* Doesn't need to free nametype, its a static variable */
