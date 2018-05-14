@@ -17,29 +17,29 @@ void usage()
     printf("Usage:eriseutil --ldapsync\n");
 #else
     #ifdef _WITH_DIST_
-        printf("Usage:eriseutil -a <user name> <password> <alias> <host> -u [-A|-U]\n");
-        printf("Usage:eriseutil -a <user name> <alias> <host> -u [-A|-U]\n");
+    printf("Usage:eriseutil --add     --USER <user name> <password> <alias> <host> [--ADMIN|--STANDARD]\n");
+    printf("Usage:eriseutil --add     --USER <user name> <alias> <host> [--ADMIN|--STANDARD]\n");
     #else
-        printf("Usage:eriseutil -a <user name> <password> <alias> -u [-A|-U]\n");
-        printf("Usage:eriseutil -a <user name> <alias> -u [-A|-U]\n");
+    printf("Usage:eriseutil --add     --USER <user name> <password> <alias> [--ADMIN|--STANDARD]\n");
+    printf("Usage:eriseutil --add     --USER <user name> <alias> [--ADMIN|--STANDARD]\n");
     #endif /* _WITH_DIST_ */
-    printf("Usage:eriseutil -d <user name>\n");
+    printf("Usage:eriseutil --del     <user name>\n");
 #endif /* _WITH_LDAP_ */
-    printf("Usage:eriseutil -a <group name> <alias> -g\n");
-	printf("Usage:eriseutil -d <group name>\n");
-	printf("Usage:eriseutil -p <user name>\n");
-	printf("Usage:eriseutil -A <user name> <group name>\n");
-	printf("Usage:eriseutil -D <user name> <group name>\n");
-	printf("Usage:eriseutil -l --level\n");
-	printf("Usage:eriseutil -s --level <user name> <level id>\n");
-	printf("Usage:eriseutil -s --defaultlevel <level id>\n");
-	printf("Usage:eriseutil -a --level <level name>\n                           <level description>\n                           <max-size of per mail>\n                           <max-size of whole inbox>\n                           <audit [yes|no]>\n                           <threshold of whole mail size >\n                           <threshold of all attachments size>\n");
-	printf("Usage:eriseutil -l --user\n");
-	printf("Usage:eriseutil -l --group <group name>\n");
+    printf("Usage:eriseutil --add     --GROUP <group name> <alias>\n");
+	printf("Usage:eriseutil --del     <group name>\n");
+	printf("Usage:eriseutil --passwd  <user name>\n");
+	printf("Usage:eriseutil --append  <user name> <group name>\n");
+	printf("Usage:eriseutil --remove  <user name> <group name>\n");
+	printf("Usage:eriseutil --list    --LEVEL\n");
+	printf("Usage:eriseutil --apply   --LEVEL <user name> <level id>\n");
+	printf("Usage:eriseutil --set     --DEFAULT <level id>\n");
+	printf("Usage:eriseutil --add     --LEVEL <level name>\n                           <level description>\n                           <max-size of per mail>\n                           <max-size of whole inbox>\n                           <audit [yes|no]>\n                           <threshold of whole mail size >\n                           <threshold of all attachments size>\n");
+	printf("Usage:eriseutil --list    --USER\n");
+	printf("Usage:eriseutil --list    --GROUP <group name>\n");
 	printf("Usage:eriseutil --disable <user|group name>\n");
-	printf("Usage:eriseutil --enable <user|group name>\n");
+	printf("Usage:eriseutil --enable  <user|group name>\n");
 #ifdef _WITH_DIST_
-    printf("Usage:eriseutil --host <user name> <host name>\n");
+    printf("Usage:eriseutil --host    <user name> <host name>\n");
 #endif /* _WITH_DIST_ */
 	printf("Usage:eriseutil --encode\n");
 }
@@ -54,9 +54,9 @@ int run(int argc, char* argv[])
 	{
 		if(argc == 10)
 		{
-			if(strcmp(argv[1], "-a") == 0)
+			if(strcmp(argv[1], "--add") == 0)
 			{
-				if(strcmp(argv[2], "--level") == 0)
+				if(strcmp(argv[2], "--LEVEL") == 0)
 				{
 					unsigned int lid;
 					
@@ -86,11 +86,11 @@ int run(int argc, char* argv[])
         else if(argc == 8)
 		{
 #ifdef _WITH_DIST_
-            if(strcmp(argv[1], "-a") == 0)
+            if(strcmp(argv[1], "--add") == 0)
 			{
 				UserType type;
 				UserRole role;
-				if(strcmp(argv[6], "-u") == 0)
+				if(strcmp(argv[2], "--USER") == 0)
                 {
 					type = utMember;
                 }
@@ -100,9 +100,9 @@ int run(int argc, char* argv[])
                     return -1;
                 }
 
-				if(strcmp(argv[7], "-A") == 0)
+				if(strcmp(argv[7], "--ADMIN") == 0)
 				 	role = urAdministrator;
-				else if(strcmp(argv[7], "-U") == 0)
+				else if(strcmp(argv[7], "--STANDARD") == 0)
 				 	role = urGeneralUser;
 				
 				int lid;
@@ -111,7 +111,7 @@ int run(int argc, char* argv[])
                     CMailBase::m_master_db_name.c_str(), CMailBase::m_master_db_port, CMailBase::m_master_db_sock_file.c_str()) == 0)
 				{
 					mailStg->GetDefaultLevel(lid);
-					if(mailStg->AddID(argv[2], argv[3], argv[4], argv[5], type, role, 5000*1024, lid) == -1)
+					if(mailStg->AddID(argv[3], argv[4], argv[5], argv[6], type, role, 5000*1024, lid) == -1)
 					{
 						printf("Add the user failed\n");
 						retVal = -1;
@@ -139,11 +139,11 @@ int run(int argc, char* argv[])
 		else if(argc == 7)
 		{
 #ifdef _WITH_DIST_
-            if(strcmp(argv[1], "-a") == 0)
+            if(strcmp(argv[1], "--add") == 0)
 			{
                 UserType type;
                 UserRole role;
-                if(strcmp(argv[5], "-u") == 0)
+                if(strcmp(argv[2], "--USER") == 0)
                     type = utMember;
                 else
                 {
@@ -157,9 +157,9 @@ int run(int argc, char* argv[])
 				{
 					
 
-					if(strcmp(argv[6], "-A") == 0)
+					if(strcmp(argv[6], "--ADMIN") == 0)
 					 	role = urAdministrator;
-					else if(strcmp(argv[6], "-U") == 0)
+					else if(strcmp(argv[6], "--STANDARD") == 0)
 					 	role = urGeneralUser;
 					int lid;
 					
@@ -168,7 +168,7 @@ int run(int argc, char* argv[])
 					{
 										
 						mailStg->GetDefaultLevel(lid);
-						if(mailStg->AddID(argv[2], strpwd1.c_str(), argv[3], argv[4], type, role, 5000*1024, lid) == -1)
+						if(mailStg->AddID(argv[3], strpwd1.c_str(), argv[4], argv[5], type, role, 5000*1024, lid) == -1)
 						{
 					 		printf("Add the user failed\n");
 							retVal = -1;
@@ -194,11 +194,11 @@ int run(int argc, char* argv[])
 				usage();
 			}
 #else
-			if(strcmp(argv[1], "-a") == 0)
+			if(strcmp(argv[1], "--add") == 0)
 			{
 				UserType type;
 				UserRole role;
-				if(strcmp(argv[5], "-u") == 0)
+				if(strcmp(argv[2], "--USER") == 0)
                 {
 					type = utMember;
                 }
@@ -208,9 +208,9 @@ int run(int argc, char* argv[])
                     return -1;
                 }
 
-				if(strcmp(argv[6], "-A") == 0)
+				if(strcmp(argv[6], "--ADMIN") == 0)
 				 	role = urAdministrator;
-				else if(strcmp(argv[6], "-U") == 0)
+				else if(strcmp(argv[6], "--STANDARD") == 0)
 				 	role = urGeneralUser;
 				
 				int lid;
@@ -219,7 +219,7 @@ int run(int argc, char* argv[])
                     CMailBase::m_master_db_name.c_str(), CMailBase::m_master_db_port, CMailBase::m_master_db_sock_file.c_str()) == 0)
 				{
 					mailStg->GetDefaultLevel(lid);
-					if(mailStg->AddID(argv[2], argv[3],argv[4], "", type, role, 5000*1024, lid) == -1)
+					if(mailStg->AddID(argv[3], argv[4],argv[5], "", type, role, 5000*1024, lid) == -1)
 					{
 						printf("Add the user failed\n");
 						retVal = -1;
@@ -248,11 +248,11 @@ int run(int argc, char* argv[])
             usage();
             return -1;
 #else
-			if(strcmp(argv[1], "-a") == 0)
+			if(strcmp(argv[1], "--add") == 0)
 			{
                 UserType type;
                 UserRole role;
-                if(strcmp(argv[4], "-u") == 0)
+                if(strcmp(argv[2], "--USER") == 0)
                     type = utMember;
                 else
                 {
@@ -266,9 +266,9 @@ int run(int argc, char* argv[])
 				{
 					
 
-					if(strcmp(argv[5], "-A") == 0)
+					if(strcmp(argv[5], "--ADMIN") == 0)
 					 	role = urAdministrator;
-					else if(strcmp(argv[5], "-U") == 0)
+					else if(strcmp(argv[5], "--STANDARD") == 0)
 					 	role = urGeneralUser;
 					int lid;
 					
@@ -277,7 +277,7 @@ int run(int argc, char* argv[])
 					{
 										
 						mailStg->GetDefaultLevel(lid);
-						if(mailStg->AddID(argv[2], strpwd1.c_str(),argv[3], "", type, role, 5000*1024, lid) == -1)
+						if(mailStg->AddID(argv[3], strpwd1.c_str(),argv[4], "", type, role, 5000*1024, lid) == -1)
 						{
 					 		printf("Add the user failed\n");
 							retVal = -1;
@@ -307,11 +307,11 @@ int run(int argc, char* argv[])
 		}
 		else if(argc == 5)
 		{
-            if(strcmp(argv[1], "-a") == 0)
+            if(strcmp(argv[1], "--add") == 0)
 			{
 				UserType type;
 				UserRole role;
-				if(strcmp(argv[4], "-g") == 0)
+				if(strcmp(argv[2], "--GROUP") == 0)
                 {
 					type = utGroup;
                 }
@@ -344,7 +344,7 @@ int run(int argc, char* argv[])
                         PWD_CHAR_TBL[random()%(sizeof(PWD_CHAR_TBL)-1)],
                         PWD_CHAR_TBL[random()%(sizeof(PWD_CHAR_TBL)-1)]);
                     
-					if(mailStg->AddID(argv[2], nonce, argv[3], "", type, role, 5000*1024, lid) == -1)
+					if(mailStg->AddID(argv[3], nonce, argv[4], "", type, role, 5000*1024, lid) == -1)
 					{
 						printf("Add the group failed\n");
 						retVal = -1;
@@ -360,9 +360,9 @@ int run(int argc, char* argv[])
 				}
 				
 			}
-			else if(strcmp(argv[1], "-s") == 0)
+			else if(strcmp(argv[1], "--apply") == 0)
 			{
-				if(strcmp(argv[2], "--level") == 0)
+				if(strcmp(argv[2], "--LEVEL") == 0)
 				{					
 					if(mailStg && mailStg->Connect(CMailBase::m_master_db_host.c_str(), CMailBase::m_master_db_username.c_str(), CMailBase::m_master_db_password.c_str(),
                         CMailBase::m_master_db_name.c_str(), CMailBase::m_master_db_port, CMailBase::m_master_db_sock_file.c_str()) == 0)
@@ -391,7 +391,7 @@ int run(int argc, char* argv[])
 		}
 		else if(argc == 4)
 		{
-			if(strcmp(argv[1], "-A") == 0)
+			if(strcmp(argv[1], "--append") == 0)
 			{
 				
 				if(mailStg && mailStg->Connect(CMailBase::m_master_db_host.c_str(), CMailBase::m_master_db_username.c_str(), CMailBase::m_master_db_password.c_str(),
@@ -415,7 +415,7 @@ int run(int argc, char* argv[])
 				}
 				
 			}
-			else if(strcmp(argv[1], "-D") == 0)
+			else if(strcmp(argv[1], "--remove") == 0)
 			{
 				
 				if(mailStg && mailStg->Connect(CMailBase::m_master_db_host.c_str(), CMailBase::m_master_db_username.c_str(), CMailBase::m_master_db_password.c_str(),
@@ -438,9 +438,9 @@ int run(int argc, char* argv[])
 				}
 				
 			}
-			else if(strcmp(argv[1], "-l") == 0)
+			else if(strcmp(argv[1], "--list") == 0)
 			{
-				if(strcmp(argv[2], "--group") == 0)
+				if(strcmp(argv[2], "--GROUP") == 0)
 				{
 					
 					if(mailStg && mailStg->Connect(CMailBase::m_master_db_host.c_str(), CMailBase::m_master_db_username.c_str(), CMailBase::m_master_db_password.c_str(),
@@ -476,9 +476,9 @@ int run(int argc, char* argv[])
                     return -1;
 				}
 			}
-			else if(strcmp(argv[1], "-s") == 0)
+			else if(strcmp(argv[1], "--set") == 0)
 			{
-				if(strcmp(argv[2], "--defaultlevel") == 0)
+				if(strcmp(argv[2], "--DEFAULT") == 0)
 				{
 					
 					if(mailStg && mailStg->Connect(CMailBase::m_master_db_host.c_str(), CMailBase::m_master_db_username.c_str(), CMailBase::m_master_db_password.c_str(),
@@ -529,7 +529,7 @@ int run(int argc, char* argv[])
 		}
 		else if(argc == 3)
 		{
-			if(strcmp(argv[1], "-d") == 0)
+			if(strcmp(argv[1], "--del") == 0)
 			{
 				if(strcasecmp(argv[2], "admin") == 0)
 				{
@@ -559,7 +559,7 @@ int run(int argc, char* argv[])
 				}
 				
 			}
-			else if(strcmp(argv[1], "-p") == 0)
+			else if(strcmp(argv[1], "--passwd") == 0)
 			{
 				string strpwd1 = getpass("New Password:");
 				string strpwd2 = getpass("Verify:");
@@ -591,9 +591,9 @@ int run(int argc, char* argv[])
 					printf("Sorry, Twice input is not equal.\n");
 				}
 			}
-			else if(strcmp(argv[1], "-l") == 0)
+			else if(strcmp(argv[1], "--list") == 0)
 			{
-				if(strcmp(argv[2], "--user") == 0)
+				if(strcmp(argv[2], "--USER") == 0)
 				{
 					const char* szUserType[] = {NULL, "Member", "Group", NULL};
 					const char* szUserRole[] = {NULL, "User", "Administrator", NULL};
@@ -624,7 +624,7 @@ int run(int argc, char* argv[])
 						printf("Ops..., system error!\n");
 					}
 				}
-				else if(strcmp(argv[2], "--level") == 0)
+				else if(strcmp(argv[2], "--LEVEL") == 0)
 				{
 					
 					if(mailStg && mailStg->Connect(CMailBase::m_master_db_host.c_str(), CMailBase::m_master_db_username.c_str(), CMailBase::m_master_db_password.c_str(),

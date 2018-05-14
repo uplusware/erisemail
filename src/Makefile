@@ -27,7 +27,7 @@ OBJSVR = mainsrv.o sslapi.o service.o session.o xmpp_sessions.o base.o smtp.o po
 	
 
 EXEUTL = eriseutil
-OBJUTL = maintools.o base.o util/DES.o stgengine.o
+OBJUTL = mainutil.o base.o util/DES.o stgengine.o
 
 SQLUDF = postudf.so
 OBJUDF = postudf.o

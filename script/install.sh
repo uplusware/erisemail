@@ -97,38 +97,8 @@ fi
 cp -f ${path}/erisemaild /usr/bin/erisemaild
 chmod a+x /usr/bin/erisemaild
 
-cp -f ${path}/eriseaddgroup /usr/bin/eriseaddgroup
-chmod a+x /usr/bin/eriseaddgroup
-
-cp -f ${path}/erisedelgroup /usr/bin/erisedelgroup
-chmod a+x /usr/bin/erisedelgroup
-
-cp -f ${path}/eriseadduser /usr/bin/eriseadduser
-chmod a+x /usr/bin/eriseadduser
-
-cp -f ${path}/erisedeluser /usr/bin/erisedeluser
-chmod a+x /usr/bin/erisedeluser
-
-cp -f ${path}/eriseaddusertogroup /usr/bin/eriseaddusertogroup
-chmod a+x /usr/bin/eriseaddusertogroup
-
-cp -f ${path}/erisedeluserfromgroup /usr/bin/erisedeluserfromgroup
-chmod a+x /usr/bin/erisedeluserfromgroup
-
 cp -f ${path}/eriseutil /usr/bin/eriseutil
 chmod a+x /usr/bin/eriseutil
-
-cp -f ${path}/erisenotify /usr/bin/erisenotify
-chmod a+x /usr/bin/erisenotify
-
-cp -f ${path}/erisepasswd /usr/bin/erisepasswd
-chmod a+x /usr/bin/erisepasswd
-
-cp -f ${path}/eriseenableuser /usr/bin/eriseenableuser
-chmod a+x /usr/bin/eriseenableuser
-
-cp -f ${path}/erisedisableuser /usr/bin/erisedisableuser
-chmod a+x /usr/bin/erisedisableuser
 
 cp -f ${path}/erisemail.sh  /etc/init.d/erisemail
 chmod a+x /etc/init.d/erisemail

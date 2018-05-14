@@ -40,18 +40,6 @@ cp src/libldapasn1.so $3-erisemail-bin-cn-$2-${m}-${o}/libldapasn1.so
 cp src/liberiseantispam.so $3-erisemail-bin-cn-$2-${m}-${o}/liberiseantispam.so
 cp src/postudf.so $3-erisemail-bin-cn-$2-${m}-${o}/postudf.so
 
-cp script/eriseaddgroup $3-erisemail-bin-cn-$2-${m}-${o}/eriseaddgroup
-cp script/eriseadduser $3-erisemail-bin-cn-$2-${m}-${o}/eriseadduser
-cp script/erisedelgroup $3-erisemail-bin-cn-$2-${m}-${o}/erisedelgroup
-cp script/erisedeluser $3-erisemail-bin-cn-$2-${m}-${o}/erisedeluser
-cp script/eriseaddusertogroup $3-erisemail-bin-cn-$2-${m}-${o}/eriseaddusertogroup
-cp script/erisedeluserfromgroup $3-erisemail-bin-cn-$2-${m}-${o}/erisedeluserfromgroup
-
-cp script/erisepasswd $3-erisemail-bin-cn-$2-${m}-${o}/erisepasswd
-
-cp script/eriseenableuser $3-erisemail-bin-cn-$2-${m}-${o}/eriseenableuser
-cp script/erisedisableuser $3-erisemail-bin-cn-$2-${m}-${o}/erisedisableuser
-
 cp script/install.sh $3-erisemail-bin-cn-$2-${m}-${o}/
 cp script/uninstall.sh $3-erisemail-bin-cn-$2-${m}-${o}/
 
@@ -93,18 +81,6 @@ cp src/liberisestorage.so $3-erisemail-bin-en-$2-${m}-${o}/liberisestorage.so
 cp src/libldapasn1.so $3-erisemail-bin-en-$2-${m}-${o}/libldapasn1.so
 cp src/liberiseantispam.so $3-erisemail-bin-en-$2-${m}-${o}/liberiseantispam.so
 cp src/postudf.so $3-erisemail-bin-en-$2-${m}-${o}/postudf.so
-
-cp script/eriseaddgroup $3-erisemail-bin-en-$2-${m}-${o}/eriseaddgroup
-cp script/eriseadduser $3-erisemail-bin-en-$2-${m}-${o}/eriseadduser
-cp script/erisedelgroup $3-erisemail-bin-en-$2-${m}-${o}/erisedelgroup
-cp script/erisedeluser $3-erisemail-bin-en-$2-${m}-${o}/erisedeluser
-cp script/eriseaddusertogroup $3-erisemail-bin-en-$2-${m}-${o}/eriseaddusertogroup
-cp script/erisedeluserfromgroup $3-erisemail-bin-en-$2-${m}-${o}/erisedeluserfromgroup
-
-cp script/erisepasswd $3-erisemail-bin-en-$2-${m}-${o}/erisepasswd
-
-cp script/eriseenableuser $3-erisemail-bin-en-$2-${m}-${o}/eriseenableuser
-cp script/erisedisableuser $3-erisemail-bin-en-$2-${m}-${o}/erisedisableuser
 
 cp script/install.sh $3-erisemail-bin-en-$2-${m}-${o}/
 cp script/uninstall.sh $3-erisemail-bin-en-$2-${m}-${o}/
