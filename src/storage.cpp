@@ -320,9 +320,10 @@ int MailStorage::Connect(const char * host, const char* username, const char* pa
         mysql_init(&m_hMySQL);
         m_is_inited = TRUE;
     }
-    mysql_optionsv(&m_hMySQL, MYSQL_OPT_CONNECT_TIMEOUT, (const void*)&timeout_val);
-    mysql_optionsv(&m_hMySQL, MYSQL_OPT_READ_TIMEOUT, (const void*)&timeout_val);
-    mysql_optionsv(&m_hMySQL, MYSQL_OPT_WRITE_TIMEOUT, (const void*)&timeout_val);
+    
+    mysql_options(&m_hMySQL, MYSQL_OPT_CONNECT_TIMEOUT, (const void*)&timeout_val);
+    mysql_options(&m_hMySQL, MYSQL_OPT_READ_TIMEOUT, (const void*)&timeout_val);
+    mysql_options(&m_hMySQL, MYSQL_OPT_WRITE_TIMEOUT, (const void*)&timeout_val);
 
     if(mysql_real_connect(&m_hMySQL, host, username, password, database, port, sock_file && sock_file[0] != '\0' ? sock_file : NULL, 0) != NULL)
     {
