@@ -21,11 +21,12 @@ cd ${path}
 path=$(pwd)
 
 echo "Finding MySQL UDF plugin directory ..."
-test -x /usr/lib/mysql/plugin || exit -1
+test -x /usr/lib/mysql/plugin || test -x /usr/lib64/mysql/plugin || exit -1
 
 echo "Copy the files to your system."
 
-cp -f ${path}/postudf.so /usr/lib/mysql/plugin
+test -x /usr/lib/mysql/plugin && cp -f ${path}/postudf.so /usr/lib/mysql/plugin
+test -x /usr/lib64/mysql/plugin && cp -f ${path}/postudf.so /usr/lib64/mysql/plugin
 
 test -x /etc/erisemail || mkdir /etc/erisemail
 test -x /var/erisemail || mkdir /var/erisemail
@@ -86,12 +87,11 @@ else
     cp -f ${path}/liberisestorage.so /usr/lib/liberisestorage.so
     cp -f ${path}/libldapasn1.so /usr/lib/libldapasn1.so
     cp -f ${path}/liberiseantispam.so /usr/lib/liberiseantispam.so
-  elif [ -x /usr/lib64 ]; then
+  fi
+  if [ -x /usr/lib64 ]; then
     cp -f ${path}/liberisestorage.so /usr/lib64/liberisestorage.so
     cp -f ${path}/libldapasn1.so /usr/lib64/libldapasn1.so
     cp -f ${path}/liberiseantispam.so /usr/lib64/liberiseantispam.so
-  else
-    exit -1
   fi
 fi
 cp -f ${path}/erisemaild /usr/bin/erisemaild
