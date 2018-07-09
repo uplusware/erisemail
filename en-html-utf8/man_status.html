@@ -197,6 +197,23 @@
 								{
 									_$_('XMPPWorkerThreadNum').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" :  statusList.item(i).childNodes[0].nodeValue;
 								}
+                                
+                                else if(statusList.item(i).tagName == "LDAPEnable")
+								{
+									_$_('LDAPEnable').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue == "yes" ? "<img src=\"yes.gif\">" : "<img src=\"no.gif\">";
+								}
+								else if(statusList.item(i).tagName == "LDAPPort")
+								{
+									_$_('LDAPPort').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" :  statusList.item(i).childNodes[0].nodeValue;
+								}
+                                else if(statusList.item(i).tagName == "LDAPSPort")
+								{
+									_$_('LDAPSPort').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" :  statusList.item(i).childNodes[0].nodeValue;
+								}
+                                else if(statusList.item(i).tagName == "EncryptLDAP")
+								{
+                                    _$_('EncryptLDAP').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue == "yes" ? "<img src=\"yes.gif\">" : "<img src=\"no.gif\">";
+								}
 							}
 							_$_("STATUS").innerHTML = "";
 							_$_("STATUS").style.display = "none";
@@ -242,6 +259,7 @@
     <li><a href="#tabs-5">IMAP</a></li>
     <li><a href="#tabs-6">HTTP</a></li>
     <li><a href="#tabs-7">XMPP</a></li>
+    <li><a href="#tabs-8">LDAP</a></li>
     </ul>
     <div id="tabs-1">
 	<table id="GLOBALTBL" bgcolor="#fafafa" border="0" width="100%" bordercolorlight="#C0C0C0" cellspacing="0" cellpadding="1" bordercolordark="#FFFFFF" class="gray">
@@ -310,6 +328,15 @@
 		<tr bgcolor="#fafafa"><td class="gray" width="200" height="25" align="right">XMPP Port:</td><td class="gray" width="660"><div border="0" id="XMPPPort"></div></td></tr>
         <tr bgcolor="#fafafa"><td class="gray" width="200" height="25" align="right">XMPP Encryption:</td><td class="gray" width="660"><div border="0" id="EncryptXMPP"></div></td></tr>
         <tr bgcolor="#fafafa"><td class="gray" width="200" height="25" align="right">XMPP Worker Thread Number:</td><td class="gray" width="660"><div border="0" id="XMPPWorkerThreadNum"></div></td></tr>
+	</table>
+    </div>
+    
+    <div id="tabs-8">
+	<table id="LDAPTBL" bgcolor="#fafafa" border="0" width="100%" bordercolorlight="#C0C0C0" cellspacing="0" cellpadding="1" bordercolordark="#FFFFFF" class="gray">
+		<tr bgcolor="#FFFFFF"><td class="gray" width="200" height="25" align="right">LDAP Service:</td><td class="gray" width="660"><div border="0" id="LDAPEnable"></div></td></tr>
+		<tr bgcolor="#fafafa"><td class="gray" width="200" height="25" align="right">LDAP Port:</td><td class="gray" width="660"><div border="0" id="LDAPPort"></div></td></tr>
+        <tr bgcolor="#fafafa"><td class="gray" width="200" height="25" align="right">LDAP-SSL Port:</td><td class="gray" width="660"><div border="0" id="LDAPSPort"></div></td></tr>
+        <tr bgcolor="#fafafa"><td class="gray" width="200" height="25" align="right">LDAP Encryption:</td><td class="gray" width="660"><div border="0" id="EncryptLDAP"></div></td></tr>
 	</table>
     </div>
     

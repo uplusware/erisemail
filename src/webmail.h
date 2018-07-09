@@ -7675,6 +7675,25 @@ public:
 			strResp += szTmp;
 			strResp += "</HTTPSPort>";
 
+            strResp += "<LDAPEnable>";
+			strResp += CMailBase::m_enable_local_ldap ? "yes" : "no";;
+			strResp += "</LDAPEnable>";
+			
+			sprintf(szTmp, "%d", CMailBase::m_local_ldapport);
+			strResp += "<LDAPPort>";
+			strResp += szTmp;
+			strResp += "</LDAPPort>";
+            
+            sprintf(szTmp, "%d", CMailBase::m_local_ldapsport);
+			strResp += "<LDAPSPort>";
+			strResp += szTmp;
+			strResp += "</LDAPSPort>";
+            
+            sprintf(szTmp, "%d", CMailBase::m_encrypt_local_ldap);
+			strResp += "<EncryptLDAP>";
+			strResp += szTmp;
+			strResp += "</EncryptLDAP>";
+            
 			strResp += "</response></erisemail>";
 		}
 		else
