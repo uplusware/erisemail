@@ -41,11 +41,15 @@ OPENSSL_DIR = openssl
 HADOOP_DIR = hadoop
 LIBJVM_DIR = /usr/lib/jvm/default-java/jre/lib/amd64/server/
 
-INCDIR = -I../$(OPENSSL_DIR)/include -I/usr/local/include/mariadb/ -I./ldap_asn1/
-LDDIRS = -L. -L/usr/local/lib/mariadb/
+INCDIR = -I../$(OPENSSL_DIR)/include -I/usr/local/include/mariadb/ -I./ldap_asn1/ -I/usr/include/mysql/
+LDDIRS = -L. -L/usr/local/lib/mariadb/ -L/usr/lib64/mysql/
 
 LDLIST_SVR = ../$(OPENSSL_DIR)/libssl.a ../$(OPENSSL_DIR)/libcrypto.a -lstdc++ -lrt -ldl -lpthread -lmemcached
-LDLIST_STG = -lstdc++ -lrt -lmariadb -lmemcached
+ifeq (/usr/lib64/mysql/libmysqlclient_r.so, $(wildcard /usr/lib64/mysql/libmysqlclient_r.so))
+    LDLIST_STG = -lstdc++ -lrt -lmysqlclient_r -lmemcached
+else
+    LDLIST_STG = -lstdc++ -lrt -lmariadb -lmemcached
+endif
 LDLIST_JKS = -lstdc++
 LDLIST_UTL = -lstdc++ -lpthread -ldl
 LDLIST_UDF = -lstdc++ -lpthread
