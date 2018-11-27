@@ -378,55 +378,81 @@ void Service::ReloadList()
 int Service::create_server_service(CUplusTrace& uTrace, const char* hostip, unsigned short hostport, int& srv_sockfd)
 {
     int nFlag = 0, result = 0;
-    struct addrinfo hints;
-    struct addrinfo *server_addr, *rp;
     
-    memset(&hints, 0, sizeof(struct addrinfo));
-    hints.ai_family = AF_UNSPEC;    /* Allow IPv4 or IPv6 */
-    hints.ai_socktype = SOCK_STREAM; /* Datagram socket */
-    hints.ai_flags = AI_PASSIVE;    /* For wildcard IP address */
-    hints.ai_protocol = 0;          /* Any protocol */
-    hints.ai_canonname = NULL;
-    hints.ai_addr = NULL;
-    hints.ai_next = NULL;
-    
-    char sz_port[32];
-    sprintf(sz_port, "%u", hostport);
-    
-    int s = getaddrinfo((hostip && hostip[0] != '\0') ? hostip : NULL, sz_port, &hints, &server_addr);
-    if (s != 0)
+    if(!hostip || hostip[0] == '\0')
     {
-       uTrace.Write(Trace_Error, "getaddrinfo: %s", gai_strerror(s));
-       srv_sockfd = -1;
-       return srv_sockfd;
+        sockaddr_in6 svr_addr6;
+        srv_sockfd = socket(AF_INET6, SOCK_STREAM, 0);
+        if (srv_sockfd == -1)
+            return srv_sockfd;
+        memset(&svr_addr6, 0, sizeof(sockaddr_in6));
+        svr_addr6.sin6_family = AF_INET6;
+        svr_addr6.sin6_port = htons(hostport);
+        svr_addr6.sin6_addr = in6addr_any;
+        
+        nFlag = 1;
+        setsockopt(srv_sockfd, SOL_SOCKET, SO_REUSEADDR, (char*)&nFlag, sizeof(nFlag));
+        
+        nFlag = 0;
+        setsockopt(srv_sockfd, SOL_SOCKET, IPV6_V6ONLY, (char*)&nFlag, sizeof(nFlag));
+        
+        if(bind(srv_sockfd, (sockaddr*)&svr_addr6, sizeof(sockaddr_in6)) != 0)
+        {
+            srv_sockfd = -1;
+            return srv_sockfd;
+        }
     }
-    
-    for (rp = server_addr; rp != NULL; rp = rp->ai_next)
+    else
     {
-       srv_sockfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
-       if (srv_sockfd == -1)
-           continue;
-       
-       nFlag = 1;
-       setsockopt(srv_sockfd, SOL_SOCKET, SO_REUSEADDR, (char*)&nFlag, sizeof(nFlag));
-    
-       if (bind(srv_sockfd, rp->ai_addr, rp->ai_addrlen) == 0)
-           break;                  /* Success */
-       
-       perror("bind");
-       close(srv_sockfd);
-       srv_sockfd = -1;
-    }
-    
-    if (rp == NULL)
-    {               /* No address succeeded */
-          uTrace.Write(Trace_Error, "Could not bind");
-          srv_sockfd = -1;
-          return srv_sockfd;
-    }
+        struct addrinfo hints;
+        struct addrinfo *server_addr, *rp;
+        
+        memset(&hints, 0, sizeof(struct addrinfo));
+        hints.ai_family = AF_UNSPEC;    /* Allow IPv4 or IPv6 */
+        hints.ai_socktype = SOCK_STREAM; /* Datagram socket */
+        hints.ai_flags = AI_PASSIVE;    /* For wildcard IP address */
+        hints.ai_protocol = 0;          /* Any protocol */
+        hints.ai_canonname = NULL;
+        hints.ai_addr = NULL;
+        hints.ai_next = NULL;
+        
+        char sz_port[32];
+        sprintf(sz_port, "%u", hostport);
+        
+        int s = getaddrinfo((hostip && hostip[0] != '\0') ? hostip : NULL, sz_port, &hints, &server_addr);
+        if (s != 0)
+        {
+           uTrace.Write(Trace_Error, "getaddrinfo: %s", gai_strerror(s));
+           srv_sockfd = -1;
+           return srv_sockfd;
+        }
+        
+        for (rp = server_addr; rp != NULL; rp = rp->ai_next)
+        {
+           srv_sockfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
+           if (srv_sockfd == -1)
+               continue;
+           
+           nFlag = 1;
+           setsockopt(srv_sockfd, SOL_SOCKET, SO_REUSEADDR, (char*)&nFlag, sizeof(nFlag));
+        
+           if (bind(srv_sockfd, rp->ai_addr, rp->ai_addrlen) == 0)
+               break;                  /* Success */
+           
+           perror("bind");
+           close(srv_sockfd);
+           srv_sockfd = -1;
+        }
+        
+        if (rp == NULL)
+        {               /* No address succeeded */
+              uTrace.Write(Trace_Error, "Could not bind");
+              srv_sockfd = -1;
+              return srv_sockfd;
+        }
 
-    freeaddrinfo(server_addr);           /* No longer needed */
-    
+        freeaddrinfo(server_addr);           /* No longer needed */
+    }
     nFlag = fcntl(srv_sockfd, F_GETFL, 0);
     fcntl(srv_sockfd, F_SETFL, nFlag|O_NONBLOCK);
     
