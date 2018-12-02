@@ -5,6 +5,7 @@
 <LINK rel="Bookmark" href="erisemail.ico" >
 <LINK rel="Shortcut Icon" href="erisemail.ico" />
 <link href="css.css" rel="stylesheet" type="text/css">
+<link href="/jqueryui/jquery-ui.css" rel="stylesheet">
 <script type="text/javascript" src="inc.js"></script>
 <title>...::: Welcome to eRisemail System :::...</title>
 <script language="JavaScript">
@@ -64,7 +65,8 @@
           	<input type="hidden" id="SELFPAGENAME" name="SELFPAGENAME">
           </td>
           <td width="100" valign="middle" align="center">
-          	<input type="button" value="Upload" onClick="return upfile()">
+            <button id="UPLOADATT" name="UPLOADATT" class="ui-button ui-corner-all ui-widget" onclick="return upfile();">Upload</button>
+          	<!-- <input type="button" value="Upload" onClick="return upfile()"> -->
           </td>
         </tr>
       </table>
