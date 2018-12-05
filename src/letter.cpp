@@ -1933,6 +1933,7 @@ void MimeDataSummary::fieldParse(const char* field)
 		{
 			if(m_pNewSummary)
 				m_vMimeSummary.push_back(m_pNewSummary);
+            m_pNewSummary = NULL;
 		}
 		else
 		{
