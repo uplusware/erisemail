@@ -2303,16 +2303,18 @@ int MailStorage::LoadMailFromFile(const char* mfrom, const char* mto, unsigned i
 						if(emlfile->eof())
 							break;
 						
-						if(emlfile->read(rbuf, MEMORY_BLOCK_SIZE) < 0)
-							break;
+						//if(emlfile->read(rbuf, MEMORY_BLOCK_SIZE) < 0)
+						//	break;
+                        emlfile->read(rbuf, MEMORY_BLOCK_SIZE);
 						rlen = emlfile->gcount();
 						rbuf[rlen] = '\0';
 						
 						string strtmp = rbuf;
 						SqlSafetyString(strtmp);
 						
-						if(sqlfile->write(strtmp.c_str(), strtmp.length()) < 0)
-							break;
+						//if(sqlfile->write(strtmp.c_str(), strtmp.length()) < 0)
+						//	break;
+                        sqlfile->write(strtmp.c_str(), strtmp.length());
 					}
 					sqlfile->write("\"", 1);
 					
@@ -2382,16 +2384,18 @@ int MailStorage::UpdateMailFromFile(const char* mfrom, const char* mto, unsigned
 						if(emlfile->eof())
 							break;
 						
-						if(emlfile->read(rbuf, MEMORY_BLOCK_SIZE) < 0)
-							break;
+						//if(emlfile->read(rbuf, MEMORY_BLOCK_SIZE) < 0)
+						//	break;
+                        emlfile->read(rbuf, MEMORY_BLOCK_SIZE);
 						rlen = emlfile->gcount();
 						rbuf[rlen] = '\0';
 						
 						string strtmp = rbuf;
 						SqlSafetyString(strtmp);
 						
-						if(sqlfile->write(strtmp.c_str(), strtmp.length()) < 0)
-							break;
+						//if(sqlfile->write(strtmp.c_str(), strtmp.length()) < 0)
+						//	break;
+                        sqlfile->write(strtmp.c_str(), strtmp.length());
 					}
 					sqlfile->write("\"", 1);
 					

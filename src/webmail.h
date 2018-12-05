@@ -205,10 +205,11 @@ public:
                         {
                             break;
                         }
-                        if(fs_doc->read(rbuf, 1448) < 0)
-                        {
-                            break;
-                        }
+                        //if(fs_doc->read(rbuf, 1448) < 0)
+                        //{
+                        //    break;
+                        //}
+                        fs_doc->read(rbuf, 1448);
                         int rlen = fs_doc->gcount();
                         m_session->HttpSend(rbuf, rlen);
                     }
@@ -7429,10 +7430,12 @@ public:
 						{
 							break;
 						}
-						if(filein.read(rbuf, 1448) < 0)
-						{
-							break;
-						}
+						//if(filein.read(rbuf, 1448) < 0)
+						//{
+						//	break;
+						//}
+                        filein.read(rbuf, 1448);
+                        
 						int rlen = filein.gcount();
 						rbuf[rlen] = '\0';
 						m_session->HttpSend(rbuf, rlen);

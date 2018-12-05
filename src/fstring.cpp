@@ -246,8 +246,9 @@ void fbuffer::bufcat(const char* buf, int len)
 			int wlen = 0;
 			while(1)
 			{
-				if(m_tmpfd->write(m_buf + wlen, (m_buf_len - wlen) > MEMORY_BLOCK_SIZE ? MEMORY_BLOCK_SIZE : (m_buf_len - wlen)) < 0)
-					break;
+				//if(m_tmpfd->write(m_buf + wlen, (m_buf_len - wlen) > MEMORY_BLOCK_SIZE ? MEMORY_BLOCK_SIZE : (m_buf_len - wlen)) < 0)
+				//	break;
+                m_tmpfd->write(m_buf + wlen, (m_buf_len - wlen) > MEMORY_BLOCK_SIZE ? MEMORY_BLOCK_SIZE : (m_buf_len - wlen));
 				wlen += (m_buf_len - wlen) > MEMORY_BLOCK_SIZE ? MEMORY_BLOCK_SIZE : (m_buf_len - wlen);
 				if(wlen >= m_buf_len)
 					break;

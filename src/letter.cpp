@@ -553,8 +553,10 @@ int MailLetter::Write(const char* buf, unsigned int len)
                 m_mailbody_fragment = "";
             }
             
-			if(m_ofile->write(buf, len))
-			{
+			//if(m_ofile->write(buf, len))
+			//{
+                m_ofile->write(buf, len);
+                
 				//generate the summary
 				char* tbuf = new char[len + 1];
 				memcpy(tbuf, buf, len);
@@ -564,11 +566,11 @@ int MailLetter::Write(const char* buf, unsigned int len)
 				
 				m_size += len;
 				return 0;
-			}
-			else
-			{
-				return -1;
-			}
+			//}
+			//else
+			//{
+			//	return -1;
+			//}
 		}
 		else
 		{

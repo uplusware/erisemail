@@ -48,7 +48,11 @@ LDLIST_SVR = ../$(OPENSSL_DIR)/libssl.a ../$(OPENSSL_DIR)/libcrypto.a -lstdc++ -
 ifeq (/usr/lib64/mysql/libmysqlclient_r.so, $(wildcard /usr/lib64/mysql/libmysqlclient_r.so))
     LDLIST_STG = -lstdc++ -lrt -lmysqlclient_r -lmemcached
 else
-    LDLIST_STG = -lstdc++ -lrt -lmariadb -lmemcached
+    ifeq (/usr/lib/x86_64-linux-gnu/libmariadbclient.so, $(wildcard /usr/lib/x86_64-linux-gnu/libmariadbclient.so))
+        LDLIST_STG = -lstdc++ -lrt -lmariadbclient -lmemcached
+    else
+        LDLIST_STG = -lstdc++ -lrt -lmariadb -lmemcached
+    endif
 endif
 LDLIST_JKS = -lstdc++
 LDLIST_UTL = -lstdc++ -lpthread -ldl
@@ -84,7 +88,7 @@ else
     LDAP_DEF = _WITHOUT_LDAP_
 endif
 
-FLAGS = -O2 -fPIC -w
+FLAGS = -O2 -std=c++03 -fPIC -w
 
 all: asn1 stg svr utl jks udf nty
 

@@ -247,10 +247,11 @@ int email::output(const char* clientip)
 				{
 					break;
 				}
-				if(ifile->read(rbuf, MEMORY_BLOCK_SIZE) < 0)
-				{
-					break;
-				}
+				//if(ifile->read(rbuf, MEMORY_BLOCK_SIZE) < 0)
+				//{
+				//	break;
+				//}
+                ifile->read(rbuf, MEMORY_BLOCK_SIZE);
 				int rlen = ifile->gcount();
 				m_buffer.bufcat(rbuf, rlen);
 			}
