@@ -346,6 +346,7 @@ public:
 	int SetMailSize(unsigned int mid, unsigned int msize);
     
     int SaveMailBodyToDB(const char* emlfile, const char* fragment);
+    int DeleteMailBodyFromDB(const char* emlfile);
     int LoadMailBodyToFile(const char* emlfile, const char* fullpath);
     
     int MTALock();

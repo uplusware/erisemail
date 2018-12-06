@@ -55,7 +55,7 @@ static void daemon_init()
 	close(STDOUT_FILENO);
     if(CMailBase::m_close_stderr)
         close(STDERR_FILENO);
-    
+
 	signal(SIGCHLD, SIG_IGN);
 }
 

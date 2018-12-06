@@ -553,10 +553,8 @@ int MailLetter::Write(const char* buf, unsigned int len)
                 m_mailbody_fragment = "";
             }
             
-			//if(m_ofile->write(buf, len))
-			//{
-                m_ofile->write(buf, len);
-                
+			if(m_ofile->write(buf, len) && !m_ofile->bad())
+			{
 				//generate the summary
 				char* tbuf = new char[len + 1];
 				memcpy(tbuf, buf, len);
@@ -566,11 +564,11 @@ int MailLetter::Write(const char* buf, unsigned int len)
 				
 				m_size += len;
 				return 0;
-			//}
-			//else
-			//{
-			//	return -1;
-			//}
+			}
+			else
+			{
+				return -1;
+			}
 		}
 		else
 		{
@@ -710,6 +708,7 @@ void MailLetter::Close()
 	{
 		if(m_eml_full_path != "")
 		{
+            m_mailstg->DeleteMailBodyFromDB(m_emlfile.c_str());
 			unlink(m_eml_full_path.c_str());
 		}
 		m_eml_full_path = "";

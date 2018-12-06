@@ -2303,18 +2303,18 @@ int MailStorage::LoadMailFromFile(const char* mfrom, const char* mto, unsigned i
 						if(emlfile->eof())
 							break;
 						
-						//if(emlfile->read(rbuf, MEMORY_BLOCK_SIZE) < 0)
-						//	break;
-                        emlfile->read(rbuf, MEMORY_BLOCK_SIZE);
+						emlfile->read(rbuf, MEMORY_BLOCK_SIZE);
+                        if(emlfile->bad())
+                            break;
 						rlen = emlfile->gcount();
 						rbuf[rlen] = '\0';
 						
 						string strtmp = rbuf;
 						SqlSafetyString(strtmp);
 						
-						//if(sqlfile->write(strtmp.c_str(), strtmp.length()) < 0)
-						//	break;
                         sqlfile->write(strtmp.c_str(), strtmp.length());
+                        if(sqlfile->bad())
+                            break;
 					}
 					sqlfile->write("\"", 1);
 					
@@ -2384,18 +2384,19 @@ int MailStorage::UpdateMailFromFile(const char* mfrom, const char* mto, unsigned
 						if(emlfile->eof())
 							break;
 						
-						//if(emlfile->read(rbuf, MEMORY_BLOCK_SIZE) < 0)
-						//	break;
                         emlfile->read(rbuf, MEMORY_BLOCK_SIZE);
+                        if(emlfile->bad())
+                            break;
+                        
 						rlen = emlfile->gcount();
 						rbuf[rlen] = '\0';
 						
 						string strtmp = rbuf;
 						SqlSafetyString(strtmp);
 						
-						//if(sqlfile->write(strtmp.c_str(), strtmp.length()) < 0)
-						//	break;
                         sqlfile->write(strtmp.c_str(), strtmp.length());
+                        if(sqlfile->bad())
+                            break;
 					}
 					sqlfile->write("\"", 1);
 					
@@ -5715,7 +5716,33 @@ int MailStorage::SaveMailBodyToDB(const char* emlfile, const char* fragment)
 	{
 		sprintf(sqlcmd, "INSERT INTO mbodytbl(mbody, mfragment) VALUES('%s','%s')", 
 			strSafetyEmlfile.c_str(), strSafetyFragment.c_str());
+       
+		if(Query(sqlcmd, strlen(sqlcmd)) == 0)
+		{
+			free(sqlcmd);
+			return 0;
+		}
+		else
+		{
+			free(sqlcmd);
+			show_error(&m_hMySQL, sqlcmd);
+			return -1;
+		}
+	}
+	else
+		return -1;
+}
 
+int MailStorage::DeleteMailBodyFromDB(const char* emlfile)
+{
+    string strSafetyEmlfile= emlfile;
+	SqlSafetyString(strSafetyEmlfile);
+	
+	char* sqlcmd = (char*)malloc(strSafetyEmlfile.length() + 1024);
+	if(sqlcmd)
+	{
+		sprintf(sqlcmd, "DELETE from mbodytbl WHERE mbody='%s'", strSafetyEmlfile.c_str());
+       
 		if(Query(sqlcmd, strlen(sqlcmd)) == 0)
 		{
 			free(sqlcmd);

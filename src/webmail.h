@@ -3682,16 +3682,18 @@ public:
 					}
 					
 					vLetter[v]->Close();
-
-					m_mailStg->InsertMailIndex(vLetterInfo[v]->mail_from.c_str(), vLetterInfo[v]->mail_to.c_str(), vLetterInfo[v]->host.c_str(), vLetterInfo[v]->mail_time,
-						vLetterInfo[v]->mail_type, vLetterInfo[v]->mail_uniqueid.c_str(), vLetterInfo[v]->mail_dirid, vLetterInfo[v]->mail_status,
-						vLetter[v]->GetEmlName(), vLetter[v]->GetSize(), vLetterInfo[v]->mail_id);
                     
-                    if(vLetterInfo[v]->mail_type == mtExtern)
+                    if(isOK)
                     {
-                        mta_post_notify();
+                        m_mailStg->InsertMailIndex(vLetterInfo[v]->mail_from.c_str(), vLetterInfo[v]->mail_to.c_str(), vLetterInfo[v]->host.c_str(), vLetterInfo[v]->mail_time,
+                            vLetterInfo[v]->mail_type, vLetterInfo[v]->mail_uniqueid.c_str(), vLetterInfo[v]->mail_dirid, vLetterInfo[v]->mail_status,
+                            vLetter[v]->GetEmlName(), vLetter[v]->GetSize(), vLetterInfo[v]->mail_id);
+                        
+                        if(vLetterInfo[v]->mail_type == mtExtern)
+                        {
+                            mta_post_notify();
+                        }
                     }
-            
 					delete vLetterInfo[v];
 					
 					delete vLetter[v];
@@ -4098,11 +4100,12 @@ public:
 						newLetter->SetOK();
                     
 					newLetter->Close();
-
-					m_mailStg->InsertMailIndex(letter_info.mail_from.c_str(), letter_info.mail_to.c_str(), letter_info.host.c_str(), letter_info.mail_time,
-						letter_info.mail_type, letter_info.mail_uniqueid.c_str(), letter_info.mail_dirid, letter_info.mail_status,
-						newLetter->GetEmlName(), newLetter->GetSize(), letter_info.mail_id);
-					
+                    if(isOK)
+                    {
+                        m_mailStg->InsertMailIndex(letter_info.mail_from.c_str(), letter_info.mail_to.c_str(), letter_info.host.c_str(), letter_info.mail_time,
+                            letter_info.mail_type, letter_info.mail_uniqueid.c_str(), letter_info.mail_dirid, letter_info.mail_status,
+                            newLetter->GetEmlName(), newLetter->GetSize(), letter_info.mail_id);
+					}
 					delete oldLetter;
 					delete newLetter;
 				}
