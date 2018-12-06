@@ -148,7 +148,7 @@ enum auth_steps
     AUTH_STEP_SUCCESS = 99
 };
 
-#define XMPP_MAX_STANZA_LENGTH  (1024*8)
+#define XMPP_MAX_STANZA_LENGTH  (1024*8) //must be less than 65535
 
 class xmpp_stanza
 {

@@ -520,7 +520,7 @@ int MailStorage::Install(const char* database)
 		"CREATE TABLE IF NOT EXISTS `%s`.`leveltbl` ("
 		"`lid` INT UNSIGNED NOT NULL AUTO_INCREMENT ,"
 		"`lname` VARCHAR( 64 ) NOT NULL ,"
-		"`ldescription` LONGTEXT NOT NULL ,"
+		"`ldescription` TEXT NOT NULL ,"
 		"`lmailmaxsize` INT UNSIGNED NOT NULL ,"
 		"`lboxmaxsize` INT UNSIGNED NOT NULL ,"
 		"`lenableaudit` INT NOT NULL ,"
@@ -698,7 +698,7 @@ int MailStorage::Install(const char* database)
 		"CREATE TABLE IF NOT EXISTS `%s`.`mbodytbl` ("
 		"`mid` INT UNSIGNED NOT NULL AUTO_INCREMENT ,"
 		"`mbody` VARCHAR( 256 ) NOT NULL ,"
-		"`mfragment` LONGTEXT NOT NULL ,"
+		"`mfragment` TEXT NOT NULL ,"
         "`mtime` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,"
 		"PRIMARY KEY ( `mid` ) ) ENGINE = InnoDB",
 		database);
@@ -728,7 +728,7 @@ int MailStorage::Install(const char* database)
 		"`xid` INT UNSIGNED NOT NULL AUTO_INCREMENT ,"
 		"`xfrom` VARCHAR( 256 ) NOT NULL ,"
 		"`xto` VARCHAR( 256 ) NOT NULL ,"
-		"`xmessage` LONGTEXT NOT NULL,"
+		"`xmessage` TEXT NOT NULL,"
         "`xtime` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,"
 		"PRIMARY KEY ( `xid` ) ) ENGINE = InnoDB",
 		database);

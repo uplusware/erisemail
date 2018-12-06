@@ -546,11 +546,13 @@ int MailLetter::Write(const char* buf, unsigned int len)
 		if(m_ofile->is_open())
 		{
             m_mailbody_fragment += buf;
-            if(m_mailbody_fragment.length() >= 512*1024) //64k
+            
+            while(m_mailbody_fragment.length() > 65535) //must less than 65535, since mysql use TEXT type
             {
-                if(m_mailstg->SaveMailBodyToDB(m_emlfile.c_str(), m_mailbody_fragment.c_str()) < 0)
+                string str_block64k = m_mailbody_fragment.substr(0, 65535);
+                m_mailbody_fragment = m_mailbody_fragment.substr(65535);
+                if(m_mailstg->SaveMailBodyToDB(m_emlfile.c_str(), str_block64k.c_str()) < 0)
                     return -1;
-                m_mailbody_fragment = "";
             }
             
 			if(m_ofile->write(buf, len) && !m_ofile->bad())
@@ -622,11 +624,25 @@ void MailLetter::Close()
             }
         }
 #else
+        while(m_mailbody_fragment.length() > 65535) //must less than 65535, since mysql use TEXT type
+        {
+            string str_block64k = m_mailbody_fragment.substr(0, 65535);
+            m_mailbody_fragment = m_mailbody_fragment.substr(65535);
+            if(m_mailstg->SaveMailBodyToDB(m_emlfile.c_str(), str_block64k.c_str()) < 0)
+            {
+                m_LetterOk = FALSE;
+                break;
+            }
+        }
         if(m_mailbody_fragment.length() > 0)
         {
-            m_mailstg->SaveMailBodyToDB(m_emlfile.c_str(), m_mailbody_fragment.c_str());
+            if(m_mailstg->SaveMailBodyToDB(m_emlfile.c_str(), m_mailbody_fragment.c_str()) < 0)
+            {
+                m_LetterOk = FALSE;
+            }
             m_mailbody_fragment = "";
         }
+        
 		if(m_ofile)
 		{
 			if(m_ofile->is_open())
