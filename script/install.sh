@@ -20,12 +20,12 @@ oldpwd=$(pwd)
 cd ${path}
 path=$(pwd)
 
-echo "Finding MySQL UDF plugin directory ..."
-test -x /usr/lib/mysql/plugin || test -x /usr/lib64/mysql/plugin || exit -1
+echo "Finding MySQL/MariaDB UDF plugin directory ..."
+test -x /usr/lib/mysql/plugin || test -x /usr/lib64/mysql/plugin || test -x /usr/lib/x86_64-linux-gnu/mariadb18/plugin/ || (echo "Couldn't find MySQL/MariaDB UDF plugin directory." && exit -1)
 
 echo "Copy the files to your system."
 
-(test -x /usr/lib/mysql/plugin && cp -f ${path}/postudf.so /usr/lib/mysql/plugin) || (test -x /usr/lib64/mysql/plugin && cp -f ${path}/postudf.so /usr/lib64/mysql/plugin)
+(test -x /usr/lib/mysql/plugin && cp -f ${path}/postudf.so /usr/lib/mysql/plugin) || (test -x /usr/lib64/mysql/plugin && cp -f ${path}/postudf.so /usr/lib64/mysql/plugin) || (test -x /usr/lib/x86_64-linux-gnu/mariadb18/plugin/ && cp -f ${path}/postudf.so /usr/lib/x86_64-linux-gnu/mariadb18/plugin/)
 
 test -x /etc/erisemail || mkdir /etc/erisemail
 test -x /var/erisemail || mkdir /var/erisemail
