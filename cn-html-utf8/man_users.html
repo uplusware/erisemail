@@ -573,7 +573,45 @@
 </head>
 
 <body onLoad="init()" onUnload="">
+<p align="center">
+<table border="0" width="100%" bordercolorlight="#C0C0C0" cellpadding="0" cellspacing="0" bordercolordark="#FFFFFF">
+<tr><td class="title">
 
+<table name="TITLE_BAR" id="TITLE_BAR" border="0" width="100%" bordercolorlight="#C0C0C0" cellpadding="2" cellspacing="0" bordercolordark="#FFFFFF">
+  <tr align="center" valign="middle" height="32">
+    <td width="22" background="topbg.gif"><img src="append.gif"></td>
+    <td align="left" background="topbg.gif"><a href="javascript:show_newuser_div();"><font color="#FFFFFF"><b>增加账号</b></font></a></td>
+  </tr>
+</table>
+</td></tr>
+</table>
+<table border="0" width="100%" bordercolorlight="#C0C0C0" cellpadding="2" cellspacing="0" bordercolordark="#FFFFFF">
+  <tr>
+		<td valign="top">
+			<table id="USERTBL" border="0" width="100%" bordercolorlight="#C0C0C0" cellspacing="0" cellpadding="1" bordercolordark="#FFFFFF" class="gray">
+			<tr height= "25">
+				<td width="22" class="blue" align="center" valign="middle" height="25"><img src="book.gif"></td>
+				<td height="25" align="center" class="blue" onMouseOver="this.mousepoint = 99;this.style.cursor = 'pointer';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onClick="sort_users('uname')"><font color="#FFFFFF"><b>账号</b></font></td>
+				<td height="25" align="center" class="blue" onMouseOver="this.mousepoint = 99;this.style.cursor = 'pointer';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onClick="sort_users('ualias')"><font color="#FFFFFF"><b>名称</b></font></td>
+				<td height="25" align="center" class="blue" onMouseOver="this.mousepoint = 99;this.style.cursor = 'pointer';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onClick="sort_users('uhost')"><font color="#FFFFFF"><b>主机域</b></font></td>
+				<td height="25" align="center" class="blue" onMouseOver="this.mousepoint = 99;this.style.cursor = 'pointer';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onClick="sort_users('ulevel')"><font color="#FFFFFF"><b>策略组</b></font></td>
+				<td height="25" align="center" class="blue" onMouseOver="this.mousepoint = 99;this.style.cursor = 'pointer';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onClick="sort_users('utype')"><font color="#FFFFFF"><b>类型</b></font></td>
+				<td height="25" align="center" class="blue" onMouseOver="this.mousepoint = 99;this.style.cursor = 'pointer';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onClick="sort_users('urole')"><font color="#FFFFFF"><b>级别</b></font></td>
+				<td height="25" align="center" class="blue" onMouseOver="this.mousepoint = 99;this.style.cursor = 'pointer';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onClick="sort_users('ustatus')"><font color="#FFFFFF"><b>状态</b></font></td>
+				<td height="25" align="center" class="blue"><font color="#FFFFFF"><b>编辑</b></font></td>
+				<td height="25" align="center" class="blue"><font color="#FFFFFF"><b>删除</b></font></td>
+			</tr>
+			</table>
+			<div id="STATUS"></div>
+		</td>
+	</tr>
+	<tr>
+		<td valign="top">
+			<div id="STATUS"></div>
+		</td>
+	</tr>
+</table>
+</p>
 <div id="NEW_USER_DIV" style="display:none">
 	<table id="NEW_USER_SIZE" bgcolor="#EDF1F8" border="0" cellspacing="0" cellpadding="0">
 	<tr><td>
@@ -640,45 +678,6 @@
 	</td><tr>
 	</table>
 </div>
-<p align="center">
-<table border="0" width="100%" bordercolorlight="#C0C0C0" cellpadding="0" cellspacing="0" bordercolordark="#FFFFFF">
-<tr><td class="title">
-
-<table name="TITLE_BAR" id="TITLE_BAR" border="0" width="100%" bordercolorlight="#C0C0C0" cellpadding="2" cellspacing="0" bordercolordark="#FFFFFF">
-  <tr align="center" valign="middle" height="32">
-    <td width="22" background="topbg.gif"><img src="append.gif"></td>
-    <td align="left" background="topbg.gif"><a href="javascript:show_newuser_div();"><font color="#FFFFFF"><b>增加账号</b></font></a></td>
-  </tr>
-</table>
-</td></tr>
-</table>
-<table border="0" width="100%" bordercolorlight="#C0C0C0" cellpadding="2" cellspacing="0" bordercolordark="#FFFFFF">
-  <tr>
-		<td valign="top">
-			<table id="USERTBL" border="0" width="100%" bordercolorlight="#C0C0C0" cellspacing="0" cellpadding="1" bordercolordark="#FFFFFF" class="gray">
-			<tr height= "25">
-				<td width="22" class="blue" align="center" valign="middle" height="25"><img src="book.gif"></td>
-				<td height="25" align="center" class="blue" onMouseOver="this.mousepoint = 99;this.style.cursor = 'pointer';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onClick="sort_users('uname')"><font color="#FFFFFF"><b>账号</b></font></td>
-				<td height="25" align="center" class="blue" onMouseOver="this.mousepoint = 99;this.style.cursor = 'pointer';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onClick="sort_users('ualias')"><font color="#FFFFFF"><b>名称</b></font></td>
-				<td height="25" align="center" class="blue" onMouseOver="this.mousepoint = 99;this.style.cursor = 'pointer';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onClick="sort_users('uhost')"><font color="#FFFFFF"><b>主机域</b></font></td>
-				<td height="25" align="center" class="blue" onMouseOver="this.mousepoint = 99;this.style.cursor = 'pointer';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onClick="sort_users('ulevel')"><font color="#FFFFFF"><b>策略组</b></font></td>
-				<td height="25" align="center" class="blue" onMouseOver="this.mousepoint = 99;this.style.cursor = 'pointer';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onClick="sort_users('utype')"><font color="#FFFFFF"><b>类型</b></font></td>
-				<td height="25" align="center" class="blue" onMouseOver="this.mousepoint = 99;this.style.cursor = 'pointer';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onClick="sort_users('urole')"><font color="#FFFFFF"><b>级别</b></font></td>
-				<td height="25" align="center" class="blue" onMouseOver="this.mousepoint = 99;this.style.cursor = 'pointer';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onClick="sort_users('ustatus')"><font color="#FFFFFF"><b>状态</b></font></td>
-				<td height="25" align="center" class="blue"><font color="#FFFFFF"><b>编辑</b></font></td>
-				<td height="25" align="center" class="blue"><font color="#FFFFFF"><b>删除</b></font></td>
-			</tr>
-			</table>
-			<div id="STATUS"></div>
-		</td>
-	</tr>
-	<tr>
-		<td valign="top">
-			<div id="STATUS"></div>
-		</td>
-	</tr>
-</table>
-</p>
 <script src="/jqueryui/external/jquery/jquery.js"></script>
 <script src="/jqueryui/jquery-ui.js"></script>
 </body>
