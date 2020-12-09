@@ -2075,6 +2075,7 @@ int MailStorage::AddID(const char* username, const char* password, const char* a
 				return -1;
 			}
             
+			CheckRequiredDir(username);
             if(CommitTransaction() != 0)
                 return -1;
             
@@ -3862,6 +3863,7 @@ int MailStorage::GetMailLen(int mid, int& mlen)
 		mlen = file_stat.st_size;
 		close(mfd);
 	}
+    return 0;
 }
 
 int MailStorage::ShiftDelMail(int mid, unsigned int mtx)

@@ -1,4 +1,6 @@
-### eRisemail - Scalable distributed Mail/XMPP Server/Federation based on the Linux/MySQL/Hadoop/LDAP
+![erisemail](https://raw.githubusercontent.com/uplusware/erisemail/master/doc/erisemail.png)
+
+## eRisemail - Mail/XMPP Server/Federation based on the Linux/MySQL/Hadoop/LDAP
 * Support SMTP, POP3, IMAP4, HTTP, XMPP and SSL/TLS
 * Support WebMail and WebAdmin based on built-in web server
 * Support CRAM-MD5, DIGEST-MD5, APOP, External/TLS-Certification and GSSAPI/Kerberos
@@ -11,4 +13,4 @@
 * Recommend Ubuntu or CentOS as host OS [Installation](https://github.com/uplusware/erisemail/wiki/Installation)
 * Project [Wiki](https://github.com/uplusware/erisemail/wiki)
 
-![erisemail](https://raw.githubusercontent.com/uplusware/erisemail/master/doc/erisemail.gif)
+![erisemail](https://raw.githubusercontent.com/uplusware/erisemail/master/doc/erisemail.png)

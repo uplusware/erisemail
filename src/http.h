@@ -178,9 +178,9 @@ public:
     
     virtual BOOL IsKeepAlive() { return m_keep_alive; }
     
-    BOOL EnableKeepAlive(BOOL keep_alive) { m_enabled_keep_alive = keep_alive; }
+    BOOL EnableKeepAlive(BOOL keep_alive) { m_enabled_keep_alive = keep_alive; return TRUE;}
     
-    virtual BOOL IsEnabledKeepAlive() { return m_enabled_keep_alive; }
+    virtual BOOL IsEnabledKeepAlive() { return m_enabled_keep_alive; return TRUE; }
     
 protected:
 	BOOL m_isSSL;

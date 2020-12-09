@@ -1776,7 +1776,7 @@ BOOL CXmpp::DbResultTag(TiXmlDocument* xmlDoc)
                     m_srv2srv_list.erase(m_peer_srv_domain_name);
                 }
                 
-				m_srv2srv_list.insert(make_pair<string, CXmpp*>(m_peer_srv_domain_name, this));
+				m_srv2srv_list.insert(std::pair<string, CXmpp*>(m_peer_srv_domain_name, this));
 				pthread_rwlock_unlock(&m_srv2srv_list_lock); //release write
 			
 				string msg_text;
@@ -2513,7 +2513,7 @@ BOOL CXmpp::SuccessTag(TiXmlDocument* xmlDoc)
                 m_srv2srv_list.erase(m_peer_srv_domain_name);
             }
             
-			m_srv2srv_list.insert(make_pair<string, CXmpp*>(m_peer_srv_domain_name, this));
+			m_srv2srv_list.insert(std::pair<string, CXmpp*>(m_peer_srv_domain_name, this));
 			pthread_rwlock_unlock(&m_srv2srv_list_lock); //release write
             
             if(m_is_connection_initiator && m_bSTARTTLS)
@@ -2610,7 +2610,7 @@ BOOL CXmpp::AuthTag(TiXmlDocument* xmlDoc)
                 m_online_list.erase(m_username);
             }
             
-            m_online_list.insert(make_pair<string, CXmpp*>(m_username, this));
+            m_online_list.insert(std::pair<string, CXmpp*>(m_username, this));
             pthread_rwlock_unlock(&m_online_list_lock); //release write
         }
         else if(szMechanism && strcmp(szMechanism, "DIGEST-MD5") == 0)
@@ -3052,7 +3052,7 @@ BOOL CXmpp::ResponseTag(TiXmlDocument* xmlDoc)
                     
                     m_online_list.erase(m_username);
                 }
-                m_online_list.insert(make_pair<string, CXmpp*>(m_username, this));
+                m_online_list.insert(std::pair<string, CXmpp*>(m_username, this));
                 pthread_rwlock_unlock(&m_online_list_lock); //release write
             
                 sprintf(xmpp_buf, "<success xmlns='urn:ietf:params:xml:ns:xmpp-sasl'/>");
@@ -3304,7 +3304,7 @@ BOOL CXmpp::ResponseTag(TiXmlDocument* xmlDoc)
                     
                     m_online_list.erase(m_username);
                 }
-                m_online_list.insert(make_pair<string, CXmpp*>(m_username, this));
+                m_online_list.insert(std::pair<string, CXmpp*>(m_username, this));
                 pthread_rwlock_unlock(&m_online_list_lock); //release write
                 
                 sprintf(xmpp_buf, "<success xmlns='urn:ietf:params:xml:ns:xmpp-sasl'/>");
