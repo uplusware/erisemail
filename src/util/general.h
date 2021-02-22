@@ -360,7 +360,7 @@ int __inline__ Send(int sockfd, const char * buf, unsigned int buf_len, unsigned
 
 int __inline__ SSLRead(int sockfd, SSL* ssl, char * buf, unsigned int buf_len, unsigned int idle_timeout)
 {
-#if 0
+#if 1
 	int len, ret;
 	unsigned int nRecv = 0;
 	while(1)
@@ -555,21 +555,7 @@ int __inline__ SSLWrite(int sockfd, SSL* ssl, const char * buf, unsigned int buf
             ret = SSL_get_error(ssl, len);
             if(ret == SSL_ERROR_WANT_READ || ret == SSL_ERROR_WANT_WRITE)
             {
-                timeout.tv_sec = idle_timeout; 
-                timeout.tv_usec = 0;
-
-                FD_SET(sockfd, &mask);
-                
-                res = select(sockfd + 1, ret == SSL_ERROR_WANT_READ ? &mask : NULL, ret == SSL_ERROR_WANT_WRITE ? &mask : NULL, NULL, &timeout);
-                if( res == 1) 
-                {
-                    continue;
-                }
-                else /* timeout or error */
-                {
-                    close(sockfd);
-                    return -1;
-                }
+                continue;
             }
             else
             {
