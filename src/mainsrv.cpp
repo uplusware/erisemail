@@ -443,6 +443,7 @@ static int Stop()
 
 	MailTransferAgent mta_svr;
 	mta_svr.Stop();
+    return 0;
 }
 
 static void Version()
@@ -462,6 +463,7 @@ static int Reload()
 
 	MailTransferAgent mta_svr;
 	mta_svr.ReloadConfig();
+    return 0;
 }
 
 static int processcmd(const char* cmd, const char* conf, const char* permit, const char* reject, const char* domain, const char* webadmin)

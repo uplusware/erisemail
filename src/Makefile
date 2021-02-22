@@ -41,7 +41,7 @@ OPENSSL_DIR = openssl
 HADOOP_DIR = hadoop
 LIBJVM_DIR = /usr/lib/jvm/default-java/jre/lib/amd64/server/
 
-INCDIR = -I../$(OPENSSL_DIR)/include -I/usr/local/include/mariadb/ -I./ldap_asn1/ -I/usr/include/mysql/
+INCDIR = -I../$(OPENSSL_DIR)/include -I/usr/local/include/mariadb/ -I./ldap_asn1/ -I/usr/include/mysql/ 
 LDDIRS = -L. -L/usr/local/lib/mariadb/ -L/usr/lib64/mysql/
 
 LDLIST_SVR = ../$(OPENSSL_DIR)/libssl.a ../$(OPENSSL_DIR)/libcrypto.a -lstdc++ -lrt -ldl -lpthread -lmemcached
@@ -88,7 +88,7 @@ else
     LDAP_DEF = _WITHOUT_LDAP_
 endif
 
-FLAGS = -O2 -std=c++03 -fPIC -w
+FLAGS = -O2 -std=c++11 -fPIC
 
 all: asn1 stg svr utl jks udf nty
 

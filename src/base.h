@@ -1048,12 +1048,12 @@ public:
 	virtual int ProtRecv(char* buf, int len) = 0;
     
     /* Non-pure virtual function */
-    virtual int ProtSend(char* buf, int len) { };
-    virtual int ProtRecvNoWait(char* buf, int len) { };
-    virtual int ProtSendNoWait(char* buf, int len) { };
-    virtual int ProtTryFlush() { };
+    virtual int ProtSend(char* buf, int len) { return 0; };
+    virtual int ProtRecvNoWait(char* buf, int len) {return 0; };
+    virtual int ProtSendNoWait(char* buf, int len) { return 0; };
+    virtual int ProtTryFlush() { return 0; };
     virtual char GetProtEndingChar() { return '\n'; };
-    virtual BOOL TLSContinue() {};
+    virtual BOOL TLSContinue() {return FALSE;};
     virtual BOOL IsKeepAlive() { return FALSE; }
     virtual BOOL IsEnabledKeepAlive() { return FALSE; }
 };

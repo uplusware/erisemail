@@ -875,7 +875,7 @@ BOOL CMailBase::LoadConfig()
 
 				memc_port = atoi(memc_port_str.c_str());
 				
-				m_memcached_list.insert(make_pair<string, int>(memc_addr.c_str(), memc_port));
+				m_memcached_list.insert(std::pair<string, int>(memc_addr.c_str(), memc_port));
 			}
 			/* else
 			{
@@ -950,7 +950,7 @@ BOOL CMailBase::LoadConfig()
 
 BOOL CMailBase::UnLoadConfig()
 {
-
+    return TRUE;
 }
 
 BOOL CMailBase::LoadList()
@@ -1059,7 +1059,7 @@ BOOL CMailBase::LoadList()
 
 BOOL CMailBase::UnLoadList()
 {
-
+    return TRUE;
 }
 
 BOOL CMailBase::Is_Local_Domain(const char* domain)

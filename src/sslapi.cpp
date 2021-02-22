@@ -94,27 +94,7 @@ BOOL create_ssl(int sockfd, const char* ca_crt_root, const char* ca_crt_server, 
                 
             if(ret == SSL_ERROR_WANT_READ || ret == SSL_ERROR_WANT_WRITE)
             {
-                fd_set mask;
-                struct timeval timeout;
-        
-                timeout.tv_sec = idle_timeout;
-                timeout.tv_usec = 0;
-
-                FD_ZERO(&mask);
-                FD_SET(sockfd, &mask);
-                
-                int res = select(sockfd + 1, ret == SSL_ERROR_WANT_READ ? &mask : NULL, ret == SSL_ERROR_WANT_WRITE ? &mask : NULL, NULL, &timeout);
-
-                if( res == 1)
-                {
-                    continue;
-                }
-                else /* timeout or error */
-                {
-                    
-                    fprintf(stderr, "SSL_accept: %s %s", ERR_error_string(ERR_get_error(),NULL), strerror(errno));
-                    goto FAIL_CLEAN_SSL_2;
-                }
+                continue;
             }
             else
             {
@@ -341,4 +321,5 @@ BOOL close_ssl(SSL* p_ssl, SSL_CTX* p_ssl_ctx)
     {
 		SSL_CTX_free(p_ssl_ctx);
     }
+    return TRUE;
 }
