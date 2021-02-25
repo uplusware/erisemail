@@ -239,6 +239,7 @@ BOOL connect_ssl(int sockfd,  const char* ca_crt_root, const char* ca_crt_client
             }
             else
             {
+                
                 fprintf(stderr, "SSL_connect: %s", ERR_error_string(ERR_get_error(),NULL));
                 goto FAIL_CLEAN_SSL_2;
             }
