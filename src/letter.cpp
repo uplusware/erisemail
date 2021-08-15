@@ -981,7 +981,6 @@ void LetterSummary::loadXML()
     }
 	if (m_memcached && xml_text && memc_rc == MEMCACHED_SUCCESS && memc_value_length > 0 && m_xml->LoadString(xml_text, memc_value_length))
 	{
-        //printf("get: %s %d\n%s\n", m_xmlpath.c_str(), memc_value_length, xml_text);
 		if(xml_text)
 		    free(xml_text);
 	}

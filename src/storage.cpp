@@ -2075,6 +2075,7 @@ int MailStorage::AddID(const char* username, const char* password, const char* a
 				return -1;
 			}
             
+			CheckRequiredDir(username);
             if(CommitTransaction() != 0)
                 return -1;
             
