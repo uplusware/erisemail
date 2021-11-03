@@ -1,7 +1,7 @@
 ![erisemail](https://raw.githubusercontent.com/uplusware/erisemail/master/doc/erisemail.png)
 
-## eRisemail - Mail/XMPP Server/Federation based on the Linux/MySQL/Hadoop/LDAP
-* Support SMTP, POP3, IMAP4, HTTP, XMPP and SSL/TLS
+## eRisemail - Mail, IM and LDAP Server, began in 2004
+* Support SMTP, POP3, IMAP4, HTTP, XMPP, LDAP and SSL/TLS
 * Support WebMail and WebAdmin based on built-in web server
 * Support CRAM-MD5, DIGEST-MD5, APOP, External/TLS-Certification and GSSAPI/Kerberos
 * Support Mail Group, Customize User Policy and Mail audit
