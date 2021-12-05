@@ -1,6 +1,5 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html>
-
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <LINK rel="Bookmark" href="erisemail.ico" >
@@ -8,42 +7,8 @@
 <link href="css.css" rel="stylesheet" type="text/css">
 <link href="/jqueryui/jquery-ui.css" rel="stylesheet">
 <script type="text/javascript" src="inc.js"></script>
+<script type="text/javascript" src="man_index.js"></script>
 <title>...:::eRisemail 邮件后台管理系统:::...</title>
-<script language="JavaScript"> 
-	function manlogin()
-	{
-		var username = _$_("USER_NAME").value;
-		var password = _$_("USER_PWD").value
-		var qUrl = "/api/manlogin.xml?USER_NAME=" + username + "&USER_PWD="+ password;
-		var xmlHttp = initxmlhttp();
-	    xmlHttp.onreadystatechange = function()
-		{
-			
-			if ((xmlHttp.readyState == 4) && (xmlHttp.status == 200))
-			{
-				
-				var xmldom=xmlHttp.responseXML;
-				xmldom.documentElement.normalize();
-				var responseNode = xmldom.documentElement.childNodes.item(0);
-				if(responseNode.tagName == "response")
-				{
-					var errno = responseNode.getAttribute("errno")
-					if(errno == "0" || errno == 0)
-					{
-						_$_("content").innerHTML = "<img src=\"waiting.gif\">";
-						window.location = "/man_home.html";
-					}
-					else
-					{
-						_$_("content").innerHTML = "<table border=\"0\"><tr><td><img src=\"alert.gif\"></td><td>认证失败</td></tr></table>";
-					}
-				}
-			}
-		}
-		xmlHttp.open("GET", qUrl , true);
-		xmlHttp.send("");
-	}
-</script>
 </head>
 
 <body>
