@@ -13,4 +13,6 @@
 * Recommend Ubuntu or CentOS as host OS [Installation](https://github.com/uplusware/erisemail/wiki/Installation)
 * Project [Wiki](https://github.com/uplusware/erisemail/wiki)
 
-![erisemail](https://raw.githubusercontent.com/uplusware/erisemail/master/doc/erisemail.png)
+### History
+
+This project began in 2004. It was published in Sourceforge originally. About 5 years ago, it was move to Github. Thanks to Github offering the host.
