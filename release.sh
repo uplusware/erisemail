@@ -30,7 +30,7 @@ mkdir $3-erisemail-bin-cn-$2-${m}-${o}
 mkdir $3-erisemail-bin-cn-$2-${m}-${o}/html
 
 cp -rf webmail/cn-html-$2/* $3-erisemail-bin-cn-$2-${m}-${o}/html/
-cp -rf jqueryui $3-erisemail-bin-cn-$2-${m}-${o}/html/
+cp -rf webmail/jqueryui $3-erisemail-bin-cn-$2-${m}-${o}/html/
 
 cp src/erisemaild $3-erisemail-bin-cn-$2-${m}-${o}/erisemaild
 cp src/eriseutil $3-erisemail-bin-cn-$2-${m}-${o}/eriseutil
@@ -72,7 +72,7 @@ mkdir $3-erisemail-bin-en-$2-${m}-${o}
 mkdir $3-erisemail-bin-en-$2-${m}-${o}/html
 
 cp -rf webmail/en-html-$2/* $3-erisemail-bin-en-$2-${m}-${o}/html/
-cp -rf jqueryui $3-erisemail-bin-en-$2-${m}-${o}/html/
+cp -rf webmail/jqueryui $3-erisemail-bin-en-$2-${m}-${o}/html/
 
 cp src/erisemaild $3-erisemail-bin-en-$2-${m}-${o}/erisemaild
 cp src/eriseutil $3-erisemail-bin-en-$2-${m}-${o}/eriseutil
