@@ -15,4 +15,4 @@
 
 ### History
 
-This project began in 2004. It was published in SourceForge originally. About 5 years ago, it was move to Github. Thanks to Github offering the host.
+This project began in 2004. It was published in SourceForge originally. In 2015, it was move to Github. Thanks to Github offering the host.
