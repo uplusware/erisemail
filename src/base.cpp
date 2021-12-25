@@ -6,7 +6,7 @@
 #include "util/security.h"
 #include "posixname.h"
 
-#define ERISEMAIL_VERSION "1.6.10"
+#define ERISEMAIL_VERSION "1.6.13"
 
 static char CHAR_TBL[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890-=~!@#$%^&*()_+[]\\{}|;':\",./<>?";
 

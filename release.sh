@@ -4,7 +4,7 @@ if [ $# = 3 ]
 then
 	echo $1
 else
-	echo "release 1.6.08 utf8 ubuntu"
+	echo "release 1.6.13 utf8 centos8"
 	exit 1
 fi
 
