@@ -4,7 +4,6 @@ function reject_mail() {
             if (document.getElementsByName('sel')[x].checked == true) {
                 sel_num++;
             }
-
         }
         if (sel_num == 0) {
             alert('Not choose any mail yet');
@@ -23,7 +22,6 @@ function pass_mail() {
             if (document.getElementsByName('sel')[x].checked == true) {
                 sel_num++;
             }
-
         }
         if (sel_num == 0) {
             alert('Not choose any mail yet');
@@ -496,7 +494,6 @@ function load_unaudied_mails(npage) {
 
                                         this.setAttribute("imagesrc", this.style.backgroundImage);
                                         this.style.backgroundImage = "url('activebg.gif')";
-
                                     }
 
                                     td7.onmouseout = function () {

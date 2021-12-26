@@ -150,7 +150,6 @@ function read_mail(strID) {
                                     } else {
                                         strPreview += "<table border=\"0\" cellpadding=\"1\" cellspacing=\"1\"><tr><td width='16'><img src=\"attach.gif\"></td><td align='left'><a href='" + imgsrc + "' target='_blank' >" + TextToHTML(filename) + "</a></td></tr></table>";
                                     }
-
                                 }
                             }
 
