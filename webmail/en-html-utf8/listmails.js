@@ -4,7 +4,7 @@ function do_delmail(mid) {
     var xmlHttp = initxmlhttp();
     xmlHttp.onreadystatechange = function () {
         var strmid = "mailtr" + mid;
-        var trid = _$_(strmid);
+        var trid = $id(strmid);
 
         if (trid == null)
             return false;
@@ -16,8 +16,8 @@ function do_delmail(mid) {
             if (responseNode.tagName == "response") {
                 var errno = responseNode.getAttribute("errno")
                     if (errno == "0" || errno == 0) {
-                        _$_('MAILTBL').deleteRow(trid.rowIndex);
-                        load_mails(Request.QueryString('DIRID'), _$_('PAGE_CUR').value, Request.QueryString('TOP_USAGE'));
+                        $id('MAILTBL').deleteRow(trid.rowIndex);
+                        load_mails(Request.QueryString('DIRID'), $id('PAGE_CUR').value, Request.QueryString('TOP_USAGE'));
                     } else {
                         trid.cells[3].style.textDecoration = "";
                         trid.cells[4].style.textDecoration = "";
@@ -39,7 +39,7 @@ function do_delmail(mid) {
 }
 
 function ontimer() {
-    load_mails(Request.QueryString('DIRID'), _$_('PAGE_CUR').value, Request.QueryString('TOP_USAGE'));
+    load_mails(Request.QueryString('DIRID'), $id('PAGE_CUR').value, Request.QueryString('TOP_USAGE'));
 
     setTimeout('ontimer()', 10000);
 }
@@ -49,7 +49,7 @@ function do_trashmail(mid) {
     var xmlHttp = initxmlhttp();
     xmlHttp.onreadystatechange = function () {
         var strmid = "mailtr" + mid;
-        var trid = _$_(strmid);
+        var trid = $id(strmid);
 
         if (trid == null)
             return false;
@@ -62,10 +62,10 @@ function do_trashmail(mid) {
                 var errno = responseNode.getAttribute("errno")
                     if (errno == "0" || errno == 0) {
                         var strmid = "mailtr" + mid;
-                        var trid = _$_(strmid);
-                        _$_('MAILTBL').deleteRow(trid.rowIndex);
+                        var trid = $id(strmid);
+                        $id('MAILTBL').deleteRow(trid.rowIndex);
 
-                        load_mails(Request.QueryString('DIRID'), _$_('PAGE_CUR').value, Request.QueryString('TOP_USAGE'));
+                        load_mails(Request.QueryString('DIRID'), $id('PAGE_CUR').value, Request.QueryString('TOP_USAGE'));
                     } else {
 
                         trid.cells[3].style.textDecoration = "";
@@ -113,7 +113,7 @@ function delmail(force) {
 }
 
 function refresh() {
-    load_mails(Request.QueryString('DIRID'), _$_('PAGE_CUR').value, Request.QueryString('TOP_USAGE'));
+    load_mails(Request.QueryString('DIRID'), $id('PAGE_CUR').value, Request.QueryString('TOP_USAGE'));
 }
 
 function remail() {
@@ -197,7 +197,7 @@ function forward_mail() {
 function do_flag_mail(flag, mid) {
     var fid = "flag" + mid;
 
-    if (!_$_(fid))
+    if (!$id(fid))
         return;
 
     if (flag == true)
@@ -205,7 +205,7 @@ function do_flag_mail(flag, mid) {
     else
         strFlag = "no";
 
-    var oldsrc = _$_(fid).src;
+    var oldsrc = $id(fid).src;
 
     var qUrl = "/api/flagmail.xml?ID=" + mid + "&FLAG=" + strFlag;
 
@@ -219,22 +219,22 @@ function do_flag_mail(flag, mid) {
                 var errno = responseNode.getAttribute("errno")
                     if (errno == "0" || errno == 0) {
                         var strmid = "mailtr" + mid;
-                        var trid = _$_(strmid);
+                        var trid = $id(strmid);
                         if (flag == true) {
                             trid.cells[1].setAttribute("flag", "yes");
-                            _$_(fid).src = "hot.gif";
+                            $id(fid).src = "hot.gif";
                         } else {
                             trid.cells[1].setAttribute("flag", "no");
-                            _$_(fid).src = "unhot.gif";
+                            $id(fid).src = "unhot.gif";
                         }
 
                     } else {
 
-                        _$_(fid).src = oldsrc;
+                        $id(fid).src = oldsrc;
                     }
             }
         } else {
-            _$_(fid).src = "loading.gif";
+            $id(fid).src = "loading.gif";
         }
     }
     xmlHttp.open("GET", qUrl, true);
@@ -251,10 +251,10 @@ function flag_mail(flag) {
 
 function do_seen_mail(flag, mid) {
     var seenid = "seen" + mid;
-    if (!_$_(seenid))
+    if (!$id(seenid))
         return;
 
-    var oldsrc = _$_(seenid).src;
+    var oldsrc = $id(seenid).src;
 
     if (flag == true)
         strFlag = "yes";
@@ -273,22 +273,22 @@ function do_seen_mail(flag, mid) {
                 var errno = responseNode.getAttribute("errno")
                     if (errno == "0" || errno == 0) {
                         var strmid = "mailtr" + mid;
-                        var trid = _$_(strmid);
+                        var trid = $id(strmid);
 
                         if (flag == true) {
                             trid.style.fontWeight = "normal"
-                                _$_(seenid).src = "seen.gif";
+                                $id(seenid).src = "seen.gif";
                         } else {
                             trid.style.fontWeight = "bold"
-                                _$_(seenid).src = "unseen.gif";
+                                $id(seenid).src = "unseen.gif";
                         }
                     } else {
 
-                        _$_(seenid).src = oldsrc;
+                        $id(seenid).src = oldsrc;
                     }
             }
         } else {
-            _$_(seenid).src = "loading.gif";
+            $id(seenid).src = "loading.gif";
         }
     }
     xmlHttp.open("GET", qUrl, true);
@@ -309,7 +309,7 @@ function do_copy_mail(mid, todir) {
 
     xmlHttp.onreadystatechange = function () {
         var strmid = "mailtr" + mid;
-        var trid = _$_(strmid);
+        var trid = $id(strmid);
 
         if (trid == null)
             return false;
@@ -326,7 +326,7 @@ function do_copy_mail(mid, todir) {
             if (responseNode.tagName == "response") {
                 var errno = responseNode.getAttribute("errno")
                     if (errno == "0" || errno == 0) {
-                        load_mails(Request.QueryString('DIRID'), _$_('PAGE_CUR').value, Request.QueryString('TOP_USAGE'));
+                        load_mails(Request.QueryString('DIRID'), $id('PAGE_CUR').value, Request.QueryString('TOP_USAGE'));
                         return true;
                     } else {
                         return false;
@@ -363,7 +363,7 @@ function do_move_mail(mid, todir) {
 
     xmlHttp.onreadystatechange = function () {
         var strmid = "mailtr" + mid;
-        var trid = _$_(strmid);
+        var trid = $id(strmid);
 
         if (trid == null)
             return false;
@@ -376,10 +376,10 @@ function do_move_mail(mid, todir) {
                 var errno = responseNode.getAttribute("errno")
                     if (errno == "0" || errno == 0) {
                         var strmid = "mailtr" + mid;
-                        var trid = _$_(strmid);
-                        _$_('MAILTBL').deleteRow(trid.rowIndex);
+                        var trid = $id(strmid);
+                        $id('MAILTBL').deleteRow(trid.rowIndex);
 
-                        load_mails(Request.QueryString('DIRID'), _$_('PAGE_CUR').value, Request.QueryString('TOP_USAGE'));
+                        load_mails(Request.QueryString('DIRID'), $id('PAGE_CUR').value, Request.QueryString('TOP_USAGE'));
                     } else {
                         trid.cells[3].style.color = "";
                         trid.cells[4].style.color = "";
@@ -441,11 +441,11 @@ function get_page_num(dirid, npage) {
                                     mailnum = countList.item(i).childNodes[0] == null ? "" : countList.item(i).childNodes[0].nodeValue;
 
                                     if (mailnum % num_of_page == 0)
-                                        _$_("PAGE_NUM").value = (mailnum / num_of_page);
+                                        $id("PAGE_NUM").value = (mailnum / num_of_page);
                                     else
-                                        _$_("PAGE_NUM").value = ((mailnum - mailnum % num_of_page) / num_of_page + 1);
+                                        $id("PAGE_NUM").value = ((mailnum - mailnum % num_of_page) / num_of_page + 1);
 
-                                    _$_("PAGE").value = (parseInt(npage) + 1) + "/" + _$_("PAGE_NUM").value;
+                                    $id("PAGE").value = (parseInt(npage) + 1) + "/" + $id("PAGE_NUM").value;
 
                                     update_page_button();
                                 }
@@ -462,14 +462,14 @@ function get_page_num(dirid, npage) {
 function get_insert_pos(time, uniqid) {
     var i = 0;
     var tmp = 0;
-    if (_$_('MAILTBL').rows.length == 0)
+    if ($id('MAILTBL').rows.length == 0)
         return 0;
 
-    for (i = 0; i < _$_('MAILTBL').rows.length; i++) {
-        if (_$_('MAILTBL').rows[i].getAttribute("uniqid") == uniqid) {
+    for (i = 0; i < $id('MAILTBL').rows.length; i++) {
+        if ($id('MAILTBL').rows[i].getAttribute("uniqid") == uniqid) {
             return -1;
         } else {
-            if (parseInt(time) > parseInt(_$_('MAILTBL').rows[i].getAttribute("sort"))) {
+            if (parseInt(time) > parseInt($id('MAILTBL').rows[i].getAttribute("sort"))) {
                 return i;
             }
         }
@@ -485,14 +485,14 @@ function check_selall() {
         }
     }
     if (document.getElementsByName('sel').length == 0) {
-        if (_$_('selall') != null)
-            _$_('selall').checked = false;
+        if ($id('selall') != null)
+            $id('selall').checked = false;
     } else {
-        if (_$_('selall') != null) {
+        if ($id('selall') != null) {
             if (x == document.getElementsByName('sel').length)
-                _$_('selall').checked = true;
+                $id('selall').checked = true;
             else
-                _$_('selall').checked = false;
+                $id('selall').checked = false;
         }
     }
 }
@@ -502,24 +502,24 @@ function update_mail_status(mid, flag, seen) {
     var strmid = "mailtr" + mid;
     var seenid = "seen" + mid;
 
-    if (!_$_(fid) || !_$_(strmid) || !_$_(seenid))
+    if (!$id(fid) || !$id(strmid) || !$id(seenid))
         return;
 
-    var trid = _$_(strmid);
+    var trid = $id(strmid);
     if (flag == true) {
         trid.cells[1].setAttribute("flag", "yes");
-        _$_(fid).src = "hot.gif";
+        $id(fid).src = "hot.gif";
     } else {
         trid.cells[1].setAttribute("flag", "no");
-        _$_(fid).src = "unhot.gif";
+        $id(fid).src = "unhot.gif";
     }
 
     if (seen == true) {
         trid.style.fontWeight = "normal"
-            _$_(seenid).src = "seen.gif";
+            $id(seenid).src = "seen.gif";
     } else {
         trid.style.fontWeight = "bold"
-            _$_(seenid).src = "unseen.gif";
+            $id(seenid).src = "unseen.gif";
     }
 
 }
@@ -528,16 +528,16 @@ function update_mail_flag(mid, flag) {
     var fid = "flag" + mid;
     var strmid = "mailtr" + mid;
 
-    if (!_$_(fid) || !_$_(strmid))
+    if (!$id(fid) || !$id(strmid))
         return;
 
-    var trid = _$_(strmid);
+    var trid = $id(strmid);
     if (flag == true) {
         trid.cells[1].setAttribute("flag", "yes");
-        _$_(fid).src = "hot.gif";
+        $id(fid).src = "hot.gif";
     } else {
         trid.cells[1].setAttribute("flag", "no");
-        _$_(fid).src = "unhot.gif";
+        $id(fid).src = "unhot.gif";
     }
 }
 
@@ -545,23 +545,23 @@ function update_mail_seen(mid, seen) {
     var strmid = "mailtr" + mid;
     var seenid = "seen" + mid;
 
-    if (!_$_(strmid) || !_$_(seenid))
+    if (!$id(strmid) || !$id(seenid))
         return;
 
-    var trid = _$_(strmid);
+    var trid = $id(strmid);
     if (seen == true) {
         trid.style.fontWeight = "normal"
-            _$_(seenid).src = "seen.gif";
+            $id(seenid).src = "seen.gif";
     } else {
         trid.style.fontWeight = "bold";
-        _$_(seenid).src = "unseen.gif";
+        $id(seenid).src = "unseen.gif";
     }
 }
 
 function delete_maillist_row(mid) {
     var strmid = "mailtr" + mid;
-    var trid = _$_(strmid);
-    _$_('MAILTBL').deleteRow(trid.rowIndex);
+    var trid = $id(strmid);
+    $id('MAILTBL').deleteRow(trid.rowIndex);
 
 }
 
@@ -586,7 +586,7 @@ function load_mails(dirid, npage, strUsage) {
     xmlHttp.onreadystatechange = function () {
         if (xmlHttp.readyState == 4) {
             if (xmlHttp.status == 200) {
-                _$_('STATUS').style.display = "none";
+                $id('STATUS').style.display = "none";
 
                 var xmldom = xmlHttp.responseXML;
                 xmldom.documentElement.normalize();
@@ -622,8 +622,8 @@ function load_mails(dirid, npage, strUsage) {
                                         strSubject = mailList.item(i).getAttribute("subject");
 
                                     strSubject = abbrString(strSubject, 32);
-                                    while (_$_('MAILTBL').rows.length > num_of_page) {
-                                        _$_('MAILTBL').deleteRow(_$_('MAILTBL').rows.length - 1);
+                                    while ($id('MAILTBL').rows.length > num_of_page) {
+                                        $id('MAILTBL').deleteRow($id('MAILTBL').rows.length - 1);
                                     }
 
                                     var pos = get_insert_pos(mailList.item(i).getAttribute("sort"), mailList.item(i).getAttribute("uniqid"));
@@ -647,7 +647,7 @@ function load_mails(dirid, npage, strUsage) {
                                         update_mail_status(mailList.item(i).getAttribute("id"), bFlag, bSeen);
                                         continue;
                                     }
-                                    tr = _$_('MAILTBL').insertRow(pos);
+                                    tr = $id('MAILTBL').insertRow(pos);
                                     if (i % 2 == 1) {
                                         tr.style.backgroundColor = "#F0F0F0";
                                     } else {
@@ -868,13 +868,13 @@ function load_mails(dirid, npage, strUsage) {
                         }
                 }
             } else {
-                _$_('STATUS').style.display = "block";
-                _$_('STATUS').innerHTML = "<center><img src=\"alert.gif\"></center>";
+                $id('STATUS').style.display = "block";
+                $id('STATUS').innerHTML = "<center><img src=\"alert.gif\"></center>";
 
             }
         } else {
-            _$_('STATUS').style.display = "block";
-            _$_('STATUS').innerHTML = "<center><img src=\"waiting.gif\"></center>";
+            $id('STATUS').style.display = "block";
+            $id('STATUS').innerHTML = "<center><img src=\"waiting.gif\"></center>";
 
         }
     }
@@ -883,78 +883,78 @@ function load_mails(dirid, npage, strUsage) {
 }
 
 function init() {
-    window.parent._$_('REMAIL').src = "remail.gif";
-    window.parent._$_('REMAIL').disabled = false;
+    window.parent.$id('REMAIL').src = "remail.gif";
+    window.parent.$id('REMAIL').disabled = false;
 
-    window.parent._$_('RETOALL').src = "retoall.gif";
-    window.parent._$_('RETOALL').disabled = false;
+    window.parent.$id('RETOALL').src = "retoall.gif";
+    window.parent.$id('RETOALL').disabled = false;
 
-    window.parent._$_('FORWARD').src = "forward.gif";
-    window.parent._$_('FORWARD').disabled = false;
+    window.parent.$id('FORWARD').src = "forward.gif";
+    window.parent.$id('FORWARD').disabled = false;
 
-    window.parent._$_('MAILBAR').style.display = "block";
-    window.parent._$_('DIRBAR').style.display = "none";
-    window.parent._$_('CALBAR').style.display = "none";
-    window.parent._$_('READCALBAR').style.display = "none";
-    window.parent._$_('NULLBAR').style.display = "none";
+    window.parent.$id('MAILBAR').style.display = "block";
+    window.parent.$id('DIRBAR').style.display = "none";
+    window.parent.$id('CALBAR').style.display = "none";
+    window.parent.$id('READCALBAR').style.display = "none";
+    window.parent.$id('NULLBAR').style.display = "none";
 
-    _$_('GLOBALPATH').innerHTML = (Request.QueryString('GPATH') == null ? ("/Inbox") : decodeURIComponent(Request.QueryString('GPATH')));
+    $id('GLOBALPATH').innerHTML = (Request.QueryString('GPATH') == null ? ("/Inbox") : decodeURIComponent(Request.QueryString('GPATH')));
 
     ontimer();
 }
 
 function update_page_button() {
-    if (_$_('PAGE_CUR').value < 0) {
-        _$_('PAGE_CUR').value = 0;
+    if ($id('PAGE_CUR').value < 0) {
+        $id('PAGE_CUR').value = 0;
     }
 
-    if (_$_('PAGE_NUM').value <= 0) {
-        _$_('PAGE_NUM').value = 0;
+    if ($id('PAGE_NUM').value <= 0) {
+        $id('PAGE_NUM').value = 0;
 
-        _$_('next_page_btn').src = "next2.gif";
-        _$_('next_page_btn').disabled = true;
+        $id('next_page_btn').src = "next2.gif";
+        $id('next_page_btn').disabled = true;
 
-        _$_('last_page_btn').src = "last2.gif"
-            _$_('last_page_btn').disabled = true;
+        $id('last_page_btn').src = "last2.gif"
+            $id('last_page_btn').disabled = true;
 
-        _$_('first_page_btn').src = "first2.gif";
-        _$_('first_page_btn').disabled = true;
+        $id('first_page_btn').src = "first2.gif";
+        $id('first_page_btn').disabled = true;
 
-        _$_('prev_page_btn').src = "prev2.gif"
-            _$_('prev_page_btn').disabled = true;
+        $id('prev_page_btn').src = "prev2.gif"
+            $id('prev_page_btn').disabled = true;
 
     } else {
-        if (_$_('PAGE_CUR').value <= 0) {
-            _$_('PAGE_CUR').value = 0;
+        if ($id('PAGE_CUR').value <= 0) {
+            $id('PAGE_CUR').value = 0;
 
-            _$_('first_page_btn').src = "first2.gif";
-            _$_('first_page_btn').disabled = true;
+            $id('first_page_btn').src = "first2.gif";
+            $id('first_page_btn').disabled = true;
 
-            _$_('prev_page_btn').src = "prev2.gif"
-                _$_('prev_page_btn').disabled = true;
+            $id('prev_page_btn').src = "prev2.gif"
+                $id('prev_page_btn').disabled = true;
 
         } else {
-            _$_('first_page_btn').src = "first.gif";
-            _$_('first_page_btn').disabled = false;
+            $id('first_page_btn').src = "first.gif";
+            $id('first_page_btn').disabled = false;
 
-            _$_('prev_page_btn').src = "prev.gif"
-                _$_('prev_page_btn').disabled = false;
+            $id('prev_page_btn').src = "prev.gif"
+                $id('prev_page_btn').disabled = false;
         }
 
-        if (parseInt(_$_('PAGE_CUR').value) >= parseInt(_$_('PAGE_NUM').value - 1)) {
-            _$_('PAGE_CUR').value = parseInt(_$_('PAGE_NUM').value) - 1;
+        if (parseInt($id('PAGE_CUR').value) >= parseInt($id('PAGE_NUM').value - 1)) {
+            $id('PAGE_CUR').value = parseInt($id('PAGE_NUM').value) - 1;
 
-            _$_('next_page_btn').src = "next2.gif";
-            _$_('next_page_btn').disabled = true;
+            $id('next_page_btn').src = "next2.gif";
+            $id('next_page_btn').disabled = true;
 
-            _$_('last_page_btn').src = "last2.gif"
-                _$_('last_page_btn').disabled = true;
+            $id('last_page_btn').src = "last2.gif"
+                $id('last_page_btn').disabled = true;
         } else {
-            _$_('next_page_btn').src = "next.gif";
-            _$_('next_page_btn').disabled = false;
+            $id('next_page_btn').src = "next.gif";
+            $id('next_page_btn').disabled = false;
 
-            _$_('last_page_btn').src = "last.gif"
-                _$_('last_page_btn').disabled = false;
+            $id('last_page_btn').src = "last.gif"
+                $id('last_page_btn').disabled = false;
         }
 
     }

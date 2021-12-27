@@ -20,7 +20,7 @@ function list_cluster() {
 
                             for (var i = 0; i < logList.length; i++) {
                                 if (logList.item(i).tagName == "cluster") {
-                                    tr = _$_('CLUSTERTBL').insertRow(_$_('CLUSTERTBL').rows.length);
+                                    tr = $id('CLUSTERTBL').insertRow($id('CLUSTERTBL').rows.length);
                                     tr.setAttribute("host", logList.item(i).getAttribute("host"));
 
                                     tr.onmouseover = function () {
@@ -57,13 +57,13 @@ function list_cluster() {
 
                                 }
                             }
-                            _$_("STATUS").innerHTML = "";
-                            _$_("STATUS").style.display = "none";
+                            $id("STATUS").innerHTML = "";
+                            $id("STATUS").style.display = "none";
                         }
                 }
             }
         } else {
-            _$_("STATUS").innerHTML = "<center><img src=\"waiting.gif\"></center>";
+            $id("STATUS").innerHTML = "<center><img src=\"waiting.gif\"></center>";
         }
     }
     xmlHttp.open("GET", qUrl, true);

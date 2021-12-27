@@ -1,7 +1,7 @@
 function init() {
     window.parent.uploading(false);
-    window.parent._$_("attach_flag").innerHTML = "";
-    _$_('SELFPAGENAME').value = window.location.pathname;
+    window.parent.$id("attach_flag").innerHTML = "";
+    $id('SELFPAGENAME').value = window.location.pathname;
 
     var strUploaded = Request.QueryString('UPLOADEDFILES');
     if (strUploaded == null)
@@ -21,12 +21,12 @@ function init() {
 }
 
 function upfile() {
-    if (_$_('ATTACHFILEBODY').value != "") {
+    if ($id('ATTACHFILEBODY').value != "") {
         window.parent.uploading(true);
-        window.parent._$_("attach_flag").innerHTML = "<img src=\"uploading.gif\">";
+        window.parent.$id("attach_flag").innerHTML = "<img src=\"uploading.gif\">";
 
         window.parent.upfile();
-        _$_('upfileform').submit();
+        $id('upfileform').submit();
         return true;
     } else {
         alert('请选择附件');

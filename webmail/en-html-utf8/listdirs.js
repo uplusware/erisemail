@@ -47,10 +47,10 @@ function delete_label(dirid, dirname, tdobj) {
             if (responseNode.tagName == "response") {
                 var errno = responseNode.getAttribute("errno")
                     if (errno == "0" || errno == 0) {
-                        clear_table(window.parent.leftmenuframe._$_('DIRTBL'));
+                        clear_table(window.parent.leftmenuframe.$id('DIRTBL'));
                         window.parent.leftmenuframe.load_dirs(-1, '', 'common', -1, 0);
 
-                        clear_table(_$_('DIRTBL'));
+                        clear_table($id('DIRTBL'));
                         travel_dirs(-1, '', -1);
                     } else {
                         alert("Remove '" + dirname + "' failed");
@@ -63,8 +63,8 @@ function delete_label(dirid, dirname, tdobj) {
 }
 
 function do_create_label() {
-    create_label(_$_('NEW_LABEL').value, _$_('NEW_LABEL_DIV').getAttribute("dirid"));
-    _$_('NEW_LABEL').value = "";
+    create_label($id('NEW_LABEL').value, $id('NEW_LABEL_DIV').getAttribute("dirid"));
+    $id('NEW_LABEL').value = "";
 }
 
 function show_inputlabel_div(dirid) {
@@ -84,7 +84,7 @@ function show_inputlabel_div(dirid) {
         }
     });
 
-    _$_('NEW_LABEL_DIV').setAttribute("dirid", dirid);
+    $id('NEW_LABEL_DIV').setAttribute("dirid", dirid);
 }
 
 function output_dir(tblobj, pid, path, nodeObj, layer) {
@@ -260,7 +260,7 @@ function travel_dirs(pid, gpath, layer) {
                         if (errno == "0" || errno == 0) {
                             var dirList = responseNode.childNodes;
 
-                            output_dir(_$_('DIRTBL'), pid, "", dirList, layer);
+                            output_dir($id('DIRTBL'), pid, "", dirList, layer);
                         }
                 }
             }
@@ -285,10 +285,10 @@ function create_label(dirname, dirid) {
             if (responseNode.tagName == "response") {
                 var errno = responseNode.getAttribute("errno")
                     if (errno == "0" || errno == 0) {
-                        clear_table(window.parent.leftmenuframe._$_('DIRTBL'));
+                        clear_table(window.parent.leftmenuframe.$id('DIRTBL'));
                         window.parent.leftmenuframe.load_dirs(-1, '', 'common', -1, 0);
 
-                        clear_table(_$_('DIRTBL'));
+                        clear_table($id('DIRTBL'));
                         travel_dirs(-1, '', -1);
 
                     } else {
@@ -302,11 +302,11 @@ function create_label(dirname, dirid) {
 }
 
 function init() {
-    window.parent._$_('MAILBAR').style.display = "none";
-    window.parent._$_('DIRBAR').style.display = "block";
-    window.parent._$_('CALBAR').style.display = "none";
-    window.parent._$_('READCALBAR').style.display = "none";
-    window.parent._$_('NULLBAR').style.display = "none";
+    window.parent.$id('MAILBAR').style.display = "none";
+    window.parent.$id('DIRBAR').style.display = "block";
+    window.parent.$id('CALBAR').style.display = "none";
+    window.parent.$id('READCALBAR').style.display = "none";
+    window.parent.$id('NULLBAR').style.display = "none";
 }
 
 function uninit() {}
@@ -330,7 +330,7 @@ function login_username() {
                             }
                         }
 
-                        _$_('LOGIN_USERNAME').innerHTML = "<font color=\"#FFFFFF\"><b>" + strTmp + "</b>'s folders</font>";
+                        $id('LOGIN_USERNAME').innerHTML = "<font color=\"#FFFFFF\"><b>" + strTmp + "</b>'s folders</font>";
                     }
             }
         }

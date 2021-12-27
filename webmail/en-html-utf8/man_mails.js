@@ -40,7 +40,7 @@ function do_pass_mail(mid) {
     var xmlHttp = initxmlhttp();
     xmlHttp.onreadystatechange = function () {
         var strmid = "mailtr" + mid;
-        var trid = _$_(strmid);
+        var trid = $id(strmid);
 
         if (trid == null)
             return false;
@@ -52,9 +52,9 @@ function do_pass_mail(mid) {
             if (responseNode.tagName == "response") {
                 var errno = responseNode.getAttribute("errno")
                     if (errno == "0" || errno == 0) {
-                        _$_('MAILTBL').deleteRow(trid.rowIndex);
+                        $id('MAILTBL').deleteRow(trid.rowIndex);
 
-                        load_unaudied_mails(_$_('PAGE_CUR').value);
+                        load_unaudied_mails($id('PAGE_CUR').value);
                     } else {
                         trid.cells[2].style.color = "";
                         trid.cells[3].style.color = "";
@@ -80,7 +80,7 @@ function do_reject_mail(mid) {
     var xmlHttp = initxmlhttp();
     xmlHttp.onreadystatechange = function () {
         var strmid = "mailtr" + mid;
-        var trid = _$_(strmid);
+        var trid = $id(strmid);
 
         if (trid == null)
             return false;
@@ -92,9 +92,9 @@ function do_reject_mail(mid) {
             if (responseNode.tagName == "response") {
                 var errno = responseNode.getAttribute("errno")
                     if (errno == "0" || errno == 0) {
-                        _$_('MAILTBL').deleteRow(trid.rowIndex);
+                        $id('MAILTBL').deleteRow(trid.rowIndex);
 
-                        load_unaudied_mails(_$_('PAGE_CUR').value);
+                        load_unaudied_mails($id('PAGE_CUR').value);
                     } else {
                         trid.cells[2].style.color = "";
                         trid.cells[3].style.color = "";
@@ -116,57 +116,57 @@ function do_reject_mail(mid) {
 }
 
 function update_page_button() {
-    if (_$_('PAGE_CUR').value < 0) {
-        _$_('PAGE_CUR').value = 0;
+    if ($id('PAGE_CUR').value < 0) {
+        $id('PAGE_CUR').value = 0;
     }
 
-    if (_$_('PAGE_NUM').value <= 0) {
-        _$_('PAGE_NUM').value = 0;
+    if ($id('PAGE_NUM').value <= 0) {
+        $id('PAGE_NUM').value = 0;
 
-        _$_('next_page_btn').src = "next2.gif";
-        _$_('next_page_btn').disabled = true;
+        $id('next_page_btn').src = "next2.gif";
+        $id('next_page_btn').disabled = true;
 
-        _$_('last_page_btn').src = "last2.gif"
-            _$_('last_page_btn').disabled = true;
+        $id('last_page_btn').src = "last2.gif"
+            $id('last_page_btn').disabled = true;
 
-        _$_('first_page_btn').src = "first2.gif";
-        _$_('first_page_btn').disabled = true;
+        $id('first_page_btn').src = "first2.gif";
+        $id('first_page_btn').disabled = true;
 
-        _$_('prev_page_btn').src = "prev2.gif"
-            _$_('prev_page_btn').disabled = true;
+        $id('prev_page_btn').src = "prev2.gif"
+            $id('prev_page_btn').disabled = true;
 
     } else {
-        if (_$_('PAGE_CUR').value <= 0) {
-            _$_('PAGE_CUR').value = 0;
+        if ($id('PAGE_CUR').value <= 0) {
+            $id('PAGE_CUR').value = 0;
 
-            _$_('first_page_btn').src = "first2.gif";
-            _$_('first_page_btn').disabled = true;
+            $id('first_page_btn').src = "first2.gif";
+            $id('first_page_btn').disabled = true;
 
-            _$_('prev_page_btn').src = "prev2.gif"
-                _$_('prev_page_btn').disabled = true;
+            $id('prev_page_btn').src = "prev2.gif"
+                $id('prev_page_btn').disabled = true;
 
         } else {
-            _$_('first_page_btn').src = "first.gif";
-            _$_('first_page_btn').disabled = false;
+            $id('first_page_btn').src = "first.gif";
+            $id('first_page_btn').disabled = false;
 
-            _$_('prev_page_btn').src = "prev.gif"
-                _$_('prev_page_btn').disabled = false;
+            $id('prev_page_btn').src = "prev.gif"
+                $id('prev_page_btn').disabled = false;
         }
 
-        if (parseInt(_$_('PAGE_CUR').value) >= parseInt(_$_('PAGE_NUM').value - 1)) {
-            _$_('PAGE_CUR').value = parseInt(_$_('PAGE_NUM').value) - 1;
+        if (parseInt($id('PAGE_CUR').value) >= parseInt($id('PAGE_NUM').value - 1)) {
+            $id('PAGE_CUR').value = parseInt($id('PAGE_NUM').value) - 1;
 
-            _$_('next_page_btn').src = "next2.gif";
-            _$_('next_page_btn').disabled = true;
+            $id('next_page_btn').src = "next2.gif";
+            $id('next_page_btn').disabled = true;
 
-            _$_('last_page_btn').src = "last2.gif"
-                _$_('last_page_btn').disabled = true;
+            $id('last_page_btn').src = "last2.gif"
+                $id('last_page_btn').disabled = true;
         } else {
-            _$_('next_page_btn').src = "next.gif";
-            _$_('next_page_btn').disabled = false;
+            $id('next_page_btn').src = "next.gif";
+            $id('next_page_btn').disabled = false;
 
-            _$_('last_page_btn').src = "last.gif"
-                _$_('last_page_btn').disabled = false;
+            $id('last_page_btn').src = "last.gif"
+                $id('last_page_btn').disabled = false;
         }
 
     }
@@ -198,11 +198,11 @@ function get_auditpage_num(npage) {
                                     mailnum = countList.item(i).childNodes[0] == null ? "" : countList.item(i).childNodes[0].nodeValue;
 
                                     if (mailnum % num_of_page == 0)
-                                        _$_("PAGE_NUM").value = (mailnum / num_of_page);
+                                        $id("PAGE_NUM").value = (mailnum / num_of_page);
                                     else
-                                        _$_("PAGE_NUM").value = ((mailnum - mailnum % num_of_page) / num_of_page + 1);
+                                        $id("PAGE_NUM").value = ((mailnum - mailnum % num_of_page) / num_of_page + 1);
 
-                                    _$_("PAGE").value = (parseInt(npage) + 1) + "/" + _$_("PAGE_NUM").value;
+                                    $id("PAGE").value = (parseInt(npage) + 1) + "/" + $id("PAGE_NUM").value;
 
                                     update_page_button();
                                 }
@@ -230,14 +230,14 @@ function check_selall() {
         }
     }
     if (document.getElementsByName('sel').length == 0) {
-        if (_$_('selall') != null)
-            _$_('selall').checked = false;
+        if ($id('selall') != null)
+            $id('selall').checked = false;
     } else {
-        if (_$_('selall') != null) {
+        if ($id('selall') != null) {
             if (x == document.getElementsByName('sel').length)
-                _$_('selall').checked = true;
+                $id('selall').checked = true;
             else
-                _$_('selall').checked = false;
+                $id('selall').checked = false;
         }
     }
 }
@@ -245,14 +245,14 @@ function check_selall() {
 function get_insert_pos(time, uniqid) {
     var i = 0;
     var tmp = 0;
-    if (_$_('MAILTBL').rows.length == 0)
+    if ($id('MAILTBL').rows.length == 0)
         return 0;
 
-    for (i = 0; i < _$_('MAILTBL').rows.length; i++) {
-        if (_$_('MAILTBL').rows[i].getAttribute("uniqid") == uniqid) {
+    for (i = 0; i < $id('MAILTBL').rows.length; i++) {
+        if ($id('MAILTBL').rows[i].getAttribute("uniqid") == uniqid) {
             return -1;
         } else {
-            if (parseInt(time) > parseInt(_$_('MAILTBL').rows[i].getAttribute("sort"))) {
+            if (parseInt(time) > parseInt($id('MAILTBL').rows[i].getAttribute("sort"))) {
                 return i;
             }
         }
@@ -277,7 +277,7 @@ function load_unaudied_mails(npage) {
     xmlHttp.onreadystatechange = function () {
         if (xmlHttp.readyState == 4) {
             if (xmlHttp.status == 200) {
-                _$_('STATUS').style.display = "none";
+                $id('STATUS').style.display = "none";
 
                 var xmldom = xmlHttp.responseXML;
                 xmldom.documentElement.normalize();
@@ -299,8 +299,8 @@ function load_unaudied_mails(npage) {
                                         strSubject = "No Subject";
                                     else
                                         strSubject = mailList.item(i).getAttribute("subject");
-                                    while (_$_('MAILTBL').rows.length > num_of_page) {
-                                        _$_('MAILTBL').deleteRow(_$_('MAILTBL').rows.length - 1);
+                                    while ($id('MAILTBL').rows.length > num_of_page) {
+                                        $id('MAILTBL').deleteRow($id('MAILTBL').rows.length - 1);
                                     }
 
                                     var pos = get_insert_pos(mailList.item(i).getAttribute("sort"), mailList.item(i).getAttribute("uniqid"));
@@ -308,7 +308,7 @@ function load_unaudied_mails(npage) {
                                     if (pos == -1)
                                         continue;
 
-                                    tr = _$_('MAILTBL').insertRow(pos);
+                                    tr = $id('MAILTBL').insertRow(pos);
 
                                     tr.setAttribute("id", "mailtr" + mailList.item(i).getAttribute("id"));
                                     tr.setAttribute("time", mailList.item(i).getAttribute("time"));
@@ -508,13 +508,13 @@ function load_unaudied_mails(npage) {
                         }
                 }
             } else {
-                _$_('STATUS').style.display = "block";
-                _$_('STATUS').innerHTML = "<center><img src=\"alert.gif\"></center>";
+                $id('STATUS').style.display = "block";
+                $id('STATUS').innerHTML = "<center><img src=\"alert.gif\"></center>";
 
             }
         } else {
-            _$_('STATUS').style.display = "block";
-            _$_('STATUS').innerHTML = "<center><img src=\"waiting.gif\"></center>";
+            $id('STATUS').style.display = "block";
+            $id('STATUS').innerHTML = "<center><img src=\"waiting.gif\"></center>";
 
         }
     }
@@ -524,5 +524,5 @@ function load_unaudied_mails(npage) {
 
 function init() {
     window.parent.change_tab("mail");
-    load_unaudied_mails(_$_('PAGE_CUR').value);
+    load_unaudied_mails($id('PAGE_CUR').value);
 }

@@ -33,13 +33,13 @@
 	<tr><td align="center" valign="middle" height="10">
 		<table>
 		<tr>
-			<td><input name="first_page_btn" id="first_page_btn" type="image" src="first.gif" onClick="clear_table(_$_('MAILTBL')); _$_('PAGE_CUR').value = 0;load_mails(Request.QueryString('DIRID'), _$_('PAGE_CUR').value, Request.QueryString('TOP_USAGE'));"></td>
-			<td><input name="prev_page_btn" id="prev_page_btn" type="image" src="prev.gif" onClick="clear_table(_$_('MAILTBL')); _$_('PAGE_CUR').value = (parseInt(_$_('PAGE_CUR').value) - 1); load_mails(Request.QueryString('DIRID'), _$_('PAGE_CUR').value, Request.QueryString('TOP_USAGE'));"></td>
+			<td><input name="first_page_btn" id="first_page_btn" type="image" src="first.gif" onClick="clear_table($id('MAILTBL')); $id('PAGE_CUR').value = 0;load_mails(Request.QueryString('DIRID'), $id('PAGE_CUR').value, Request.QueryString('TOP_USAGE'));"></td>
+			<td><input name="prev_page_btn" id="prev_page_btn" type="image" src="prev.gif" onClick="clear_table($id('MAILTBL')); $id('PAGE_CUR').value = (parseInt($id('PAGE_CUR').value) - 1); load_mails(Request.QueryString('DIRID'), $id('PAGE_CUR').value, Request.QueryString('TOP_USAGE'));"></td>
 			
 			<td><input type="text" class="text1"  id="PAGE" value="..." name="PAGE" size="5" readonly></td>
 			
-			<td><input name="next_page_btn" id="next_page_btn" type="image" src="next.gif" onClick="clear_table(_$_('MAILTBL')); _$_('PAGE_CUR').value = (parseInt(_$_('PAGE_CUR').value) + 1);load_mails(Request.QueryString('DIRID'), _$_('PAGE_CUR').value, Request.QueryString('TOP_USAGE'));"></td>
-			<td><input name="last_page_btn" id="last_page_btn" type="image" src="last.gif" onClick="clear_table(_$_('MAILTBL')); _$_('PAGE_CUR').value = (parseInt(_$_('PAGE_NUM').value) - 1); load_mails(Request.QueryString('DIRID'), _$_('PAGE_CUR').value);"></td>
+			<td><input name="next_page_btn" id="next_page_btn" type="image" src="next.gif" onClick="clear_table($id('MAILTBL')); $id('PAGE_CUR').value = (parseInt($id('PAGE_CUR').value) + 1);load_mails(Request.QueryString('DIRID'), $id('PAGE_CUR').value, Request.QueryString('TOP_USAGE'));"></td>
+			<td><input name="last_page_btn" id="last_page_btn" type="image" src="last.gif" onClick="clear_table($id('MAILTBL')); $id('PAGE_CUR').value = (parseInt($id('PAGE_NUM').value) - 1); load_mails(Request.QueryString('DIRID'), $id('PAGE_CUR').value);"></td>
 		</tr>
 		</table>
 	</td></tr>

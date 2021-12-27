@@ -30,91 +30,91 @@ function list_status() {
 
                             for (var i = 0; i < statusList.length; i++) {
                                 if (statusList.item(i).tagName == "commonMailNumber") {
-                                    _$_('commonMailNumber').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue;
+                                    $id('commonMailNumber').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue;
                                 } else if (statusList.item(i).tagName == "deletedMailNumber") {
-                                    _$_('deletedMailNumber').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue;
+                                    $id('deletedMailNumber').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue;
                                 } else if (statusList.item(i).tagName == "commonMailSize") {
-                                    _$_('commonMailSize').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : Math.round(statusList.item(i).childNodes[0].nodeValue / 1024 * 100) / 100 + "KB";
+                                    $id('commonMailSize').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : Math.round(statusList.item(i).childNodes[0].nodeValue / 1024 * 100) / 100 + "KB";
                                 } else if (statusList.item(i).tagName == "deletedMailSize") {
-                                    _$_('deletedMailSize').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : Math.round(statusList.item(i).childNodes[0].nodeValue / 1024 * 100) / 100 + "KB";
+                                    $id('deletedMailSize').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : Math.round(statusList.item(i).childNodes[0].nodeValue / 1024 * 100) / 100 + "KB";
                                 } else if (statusList.item(i).tagName == "Encoding") {
-                                    _$_('Encoding').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue;
+                                    $id('Encoding').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue;
                                 } else if (statusList.item(i).tagName == "EmailDomainName") {
-                                    _$_('EmailDomainName').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue;
+                                    $id('EmailDomainName').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue;
                                 } else if (statusList.item(i).tagName == "LocalHostName") {
-                                    _$_('LocalHostName').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue;
+                                    $id('LocalHostName').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue;
                                 } else if (statusList.item(i).tagName == "HostIP") {
-                                    _$_('HostIP').innerHTML = statusList.item(i).childNodes[0] == null ? "服务未绑定IP" : statusList.item(i).childNodes[0].nodeValue;
+                                    $id('HostIP').innerHTML = statusList.item(i).childNodes[0] == null ? "服务未绑定IP" : statusList.item(i).childNodes[0].nodeValue;
                                 } else if (statusList.item(i).tagName == "DNSServer") {
-                                    _$_('DNSServer').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue;
+                                    $id('DNSServer').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue;
                                 } else if (statusList.item(i).tagName == "MaxConnPerProtocal") {
-                                    _$_('MaxConnPerProtocal').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue;
+                                    $id('MaxConnPerProtocal').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue;
                                 } else if (statusList.item(i).tagName == "RelayTaskNum") {
-                                    _$_('RelayTaskNum').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue;
+                                    $id('RelayTaskNum').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue;
                                 } else if (statusList.item(i).tagName == "EnableRelay") {
-                                    _$_('EnableRelay').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue == "yes" ? "<img src=\"yes.gif\">" : "<img src=\"no.gif\">";
+                                    $id('EnableRelay').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue == "yes" ? "<img src=\"yes.gif\">" : "<img src=\"no.gif\">";
                                 } else if (statusList.item(i).tagName == "SMTPHostNameCheck") {
-                                    _$_('SMTPHostNameCheck').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue == "yes" ? "<img src=\"yes.gif\">" : "<img src=\"no.gif\">";
+                                    $id('SMTPHostNameCheck').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue == "yes" ? "<img src=\"yes.gif\">" : "<img src=\"no.gif\">";
                                 } else if (statusList.item(i).tagName == "EnableSMTPTLS") {
-                                    _$_('EnableSMTPTLS').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue == "yes" ? "<img src=\"yes.gif\">" : "<img src=\"no.gif\">";
+                                    $id('EnableSMTPTLS').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue == "yes" ? "<img src=\"yes.gif\">" : "<img src=\"no.gif\">";
                                 } else if (statusList.item(i).tagName == "SMTPSEnable") {
-                                    _$_('SMTPSEnable').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue == "yes" ? "<img src=\"yes.gif\">" : "<img src=\"no.gif\">";
+                                    $id('SMTPSEnable').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue == "yes" ? "<img src=\"yes.gif\">" : "<img src=\"no.gif\">";
                                 } else if (statusList.item(i).tagName == "SMTPSPort") {
-                                    _$_('SMTPSPort').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue;
+                                    $id('SMTPSPort').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue;
                                 } else if (statusList.item(i).tagName == "POP3Enable") {
-                                    _$_('POP3Enable').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue == "yes" ? "<img src=\"yes.gif\">" : "<img src=\"no.gif\">";
+                                    $id('POP3Enable').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue == "yes" ? "<img src=\"yes.gif\">" : "<img src=\"no.gif\">";
                                 } else if (statusList.item(i).tagName == "POP3Port") {
-                                    _$_('POP3Port').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue;
+                                    $id('POP3Port').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue;
                                 } else if (statusList.item(i).tagName == "EnablePOP3TLS") {
-                                    _$_('EnablePOP3TLS').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue == "yes" ? "<img src=\"yes.gif\">" : "<img src=\"no.gif\">";
+                                    $id('EnablePOP3TLS').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue == "yes" ? "<img src=\"yes.gif\">" : "<img src=\"no.gif\">";
                                 } else if (statusList.item(i).tagName == "POP3SEnable") {
-                                    _$_('POP3SEnable').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue == "yes" ? "<img src=\"yes.gif\">" : "<img src=\"no.gif\">";
+                                    $id('POP3SEnable').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue == "yes" ? "<img src=\"yes.gif\">" : "<img src=\"no.gif\">";
                                 } else if (statusList.item(i).tagName == "POP3SPort") {
-                                    _$_('POP3SPort').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue;
+                                    $id('POP3SPort').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue;
                                 } else if (statusList.item(i).tagName == "IMAPEnable") {
-                                    _$_('IMAPEnable').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue == "yes" ? "<img src=\"yes.gif\">" : "<img src=\"no.gif\">";
+                                    $id('IMAPEnable').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue == "yes" ? "<img src=\"yes.gif\">" : "<img src=\"no.gif\">";
                                 } else if (statusList.item(i).tagName == "IMAPPort") {
-                                    _$_('IMAPPort').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue;
+                                    $id('IMAPPort').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue;
                                 } else if (statusList.item(i).tagName == "EnableIMAPTLS") {
-                                    _$_('EnableIMAPTLS').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue == "yes" ? "<img src=\"yes.gif\">" : "<img src=\"no.gif\">";
+                                    $id('EnableIMAPTLS').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue == "yes" ? "<img src=\"yes.gif\">" : "<img src=\"no.gif\">";
                                 } else if (statusList.item(i).tagName == "IMAPSEnable") {
-                                    _$_('IMAPSEnable').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue == "yes" ? "<img src=\"yes.gif\">" : "<img src=\"no.gif\">";
+                                    $id('IMAPSEnable').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue == "yes" ? "<img src=\"yes.gif\">" : "<img src=\"no.gif\">";
                                 } else if (statusList.item(i).tagName == "IMAPSPort") {
-                                    _$_('IMAPSPort').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue;
+                                    $id('IMAPSPort').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue;
                                 } else if (statusList.item(i).tagName == "HTTPEnable") {
-                                    _$_('HTTPEnable').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue == "yes" ? "<img src=\"yes.gif\">" : "<img src=\"no.gif\">";
+                                    $id('HTTPEnable').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue == "yes" ? "<img src=\"yes.gif\">" : "<img src=\"no.gif\">";
                                 } else if (statusList.item(i).tagName == "HTTPPort") {
-                                    _$_('HTTPPort').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue;
+                                    $id('HTTPPort').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue;
                                 } else if (statusList.item(i).tagName == "HTTPSEnable") {
-                                    _$_('HTTPSEnable').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue == "yes" ? "<img src=\"yes.gif\">" : "<img src=\"no.gif\">";
+                                    $id('HTTPSEnable').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue == "yes" ? "<img src=\"yes.gif\">" : "<img src=\"no.gif\">";
                                 } else if (statusList.item(i).tagName == "HTTPSPort") {
-                                    _$_('HTTPSPort').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue;
+                                    $id('HTTPSPort').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue;
                                 } else if (statusList.item(i).tagName == "XMPPEnable") {
-                                    _$_('XMPPEnable').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue == "yes" ? "<img src=\"yes.gif\">" : "<img src=\"no.gif\">";
+                                    $id('XMPPEnable').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue == "yes" ? "<img src=\"yes.gif\">" : "<img src=\"no.gif\">";
                                 } else if (statusList.item(i).tagName == "XMPPPort") {
-                                    _$_('XMPPPort').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue;
+                                    $id('XMPPPort').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue;
                                 } else if (statusList.item(i).tagName == "EncryptXMPP") {
                                     var arr = ["Non-encrypted or TLS optional", "TLS required", "Old-SSL-based"];
-                                    _$_('EncryptXMPP').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : arr[statusList.item(i).childNodes[0].nodeValue];
+                                    $id('EncryptXMPP').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : arr[statusList.item(i).childNodes[0].nodeValue];
                                 } else if (statusList.item(i).tagName == "XMPPWorkerThreadNum") {
-                                    _$_('XMPPWorkerThreadNum').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue;
+                                    $id('XMPPWorkerThreadNum').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue;
                                 } else if (statusList.item(i).tagName == "LDAPEnable") {
-                                    _$_('LDAPEnable').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue == "yes" ? "<img src=\"yes.gif\">" : "<img src=\"no.gif\">";
+                                    $id('LDAPEnable').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue == "yes" ? "<img src=\"yes.gif\">" : "<img src=\"no.gif\">";
                                 } else if (statusList.item(i).tagName == "LDAPPort") {
-                                    _$_('LDAPPort').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue;
+                                    $id('LDAPPort').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue;
                                 } else if (statusList.item(i).tagName == "LDAPSPort") {
-                                    _$_('LDAPSPort').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue;
+                                    $id('LDAPSPort').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue;
                                 } else if (statusList.item(i).tagName == "EncryptLDAP") {
-                                    _$_('EncryptLDAP').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue == "yes" ? "<img src=\"yes.gif\">" : "<img src=\"no.gif\">";
+                                    $id('EncryptLDAP').innerHTML = statusList.item(i).childNodes[0] == null ? "<img src=\"pad.gif\">" : statusList.item(i).childNodes[0].nodeValue == "yes" ? "<img src=\"yes.gif\">" : "<img src=\"no.gif\">";
                                 }
                             }
-                            _$_("STATUS").innerHTML = "";
-                            _$_("STATUS").style.display = "none";
+                            $id("STATUS").innerHTML = "";
+                            $id("STATUS").style.display = "none";
                         }
                 }
             }
         } else {
-            _$_("STATUS").innerHTML = "<center><img src=\"waiting.gif\"></center>";
+            $id("STATUS").innerHTML = "<center><img src=\"waiting.gif\"></center>";
         }
     }
     xmlHttp.open("GET", qUrl, true);

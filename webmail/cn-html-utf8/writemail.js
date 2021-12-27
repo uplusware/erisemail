@@ -46,7 +46,7 @@ var arrColor = [
 function colorCmd(cmd, divid, color) {
     RTC("richeditor").execCommand(cmd, false, color);
 
-    _$_(divid).style.display = "none";
+    $id(divid).style.display = "none";
 }
 
 function sizeCmd(size) {
@@ -54,7 +54,7 @@ function sizeCmd(size) {
         return;
     RTC("richeditor").execCommand('FontSize', false, size);
 
-    _$_('fontSizeTbl').style.display = "none";
+    $id('fontSizeTbl').style.display = "none";
 }
 
 function paintColorDiv(cmd, divid) {
@@ -87,51 +87,51 @@ function paintSizeDiv(cmd, divid) {
 }
 
 function popforeDiv() {
-    if (_$_('foreColorTbl').style.display == 'block')
-        _$_('foreColorTbl').style.display = 'none';
+    if ($id('foreColorTbl').style.display == 'block')
+        $id('foreColorTbl').style.display = 'none';
     else
-        _$_('foreColorTbl').style.display = 'block';
+        $id('foreColorTbl').style.display = 'block';
 
-    _$_('backColorTbl').style.display = 'none';
-    _$_('fontSizeTbl').style.display = 'none';
+    $id('backColorTbl').style.display = 'none';
+    $id('fontSizeTbl').style.display = 'none';
 
-    _$_('foreColorTbl').style.left = 89;
-    _$_('foreColorTbl').style.top = 258;
+    $id('foreColorTbl').style.left = 89;
+    $id('foreColorTbl').style.top = 258;
 }
 
 function popbackDiv() {
-    if (_$_('backColorTbl').style.display == 'block')
-        _$_('backColorTbl').style.display = 'none';
+    if ($id('backColorTbl').style.display == 'block')
+        $id('backColorTbl').style.display = 'none';
     else
-        _$_('backColorTbl').style.display = 'block';
+        $id('backColorTbl').style.display = 'block';
 
-    _$_('foreColorTbl').style.display = 'none';
-    _$_('fontSizeTbl').style.display = 'none';
+    $id('foreColorTbl').style.display = 'none';
+    $id('fontSizeTbl').style.display = 'none';
 
-    _$_('backColorTbl').style.left = 115;
-    _$_('backColorTbl').style.top = 258;
+    $id('backColorTbl').style.left = 115;
+    $id('backColorTbl').style.top = 258;
 }
 
 function popsizeDiv() {
-    if (_$_('fontSizeTbl').style.display == 'block')
-        _$_('fontSizeTbl').style.display = 'none';
+    if ($id('fontSizeTbl').style.display == 'block')
+        $id('fontSizeTbl').style.display = 'none';
     else
-        _$_('fontSizeTbl').style.display = 'block';
+        $id('fontSizeTbl').style.display = 'block';
 
-    _$_('foreColorTbl').style.display = 'none';
-    _$_('backColorTbl').style.display = 'none';
+    $id('foreColorTbl').style.display = 'none';
+    $id('backColorTbl').style.display = 'none';
 
-    _$_('fontSizeTbl').style.left = 150;
-    _$_('fontSizeTbl').style.top = 258;
+    $id('fontSizeTbl').style.left = 150;
+    $id('fontSizeTbl').style.top = 258;
 }
 
 function ontimer() {
-    if (_$_("CONTENT").value != _$_('richeditor').contentWindow.document.body.innerHTML) {
+    if ($id("CONTENT").value != $id('richeditor').contentWindow.document.body.innerHTML) {
         isChange = true;
 
         toggle_onbeforeunload(isChange)
 
-        _$_("CONTENT").value = _$_('richeditor').contentWindow.document.body.innerHTML;
+        $id("CONTENT").value = $id('richeditor').contentWindow.document.body.innerHTML;
     }
 
     setTimeout('ontimer()', 1000);
@@ -144,7 +144,7 @@ function init() {
     uploading_status = false;
     isChange = false;
 
-    _$_('GLOBALPATH').innerHTML = (Request.QueryString('GPATH') == null ? ("/草稿箱") : decodeURIComponent(Request.QueryString('GPATH')));
+    $id('GLOBALPATH').innerHTML = (Request.QueryString('GPATH') == null ? ("/草稿箱") : decodeURIComponent(Request.QueryString('GPATH')));
 
     strID = Request.QueryString('ID');
     strType = Request.QueryString('TYPE');
@@ -152,14 +152,14 @@ function init() {
     if ((strID != null) && (strType != null)) {
         read_mail(strID, strType);
     } else {
-        _$_('TO_ADDRS').value = Request.QueryString('TOADDRS') == null ? "" : Request.QueryString('TOADDRS');
+        $id('TO_ADDRS').value = Request.QueryString('TOADDRS') == null ? "" : Request.QueryString('TOADDRS');
     }
 
-    _$_('foreColorTbl').innerHTML = paintColorDiv("ForeColor", "foreColorTbl");
-    _$_('backColorTbl').innerHTML = paintColorDiv("BackColor", "backColorTbl");
-    _$_('fontSizeTbl').innerHTML = paintSizeDiv("FontSize", "fontSizeTbl");
+    $id('foreColorTbl').innerHTML = paintColorDiv("ForeColor", "foreColorTbl");
+    $id('backColorTbl').innerHTML = paintColorDiv("BackColor", "backColorTbl");
+    $id('fontSizeTbl').innerHTML = paintSizeDiv("FontSize", "fontSizeTbl");
 
-    _$_("CONTENT").value = _$_('richeditor').contentWindow.document.body.innerHTML;
+    $id("CONTENT").value = $id('richeditor').contentWindow.document.body.innerHTML;
 
     ontimer();
 }
@@ -170,7 +170,7 @@ function upfile() {
 }
 
 function delmail(force) {
-    if (_$_('DRAFTID').value == null || _$_('DRAFTID').value == "" || _$_('DRAFTID').value == -1) {
+    if ($id('DRAFTID').value == null || $id('DRAFTID').value == "" || $id('DRAFTID').value == -1) {
         alert("此草稿尚未保存")
         return false;
     }
@@ -186,14 +186,14 @@ function delmail(force) {
 }
 
 function do_delsentmail() {
-    if (_$_('DRAFTID').value == null || _$_('DRAFTID').value == "" || _$_('DRAFTID').value == -1) {
+    if ($id('DRAFTID').value == null || $id('DRAFTID').value == "" || $id('DRAFTID').value == -1) {
         return;
     }
 
     isChange = false;
     toggle_onbeforeunload(isChange);
 
-    var qUrl = "/api/delmail.xml?MAILID=" + _$_('DRAFTID').value;
+    var qUrl = "/api/delmail.xml?MAILID=" + $id('DRAFTID').value;
     var xmlHttp = initxmlhttp();
     xmlHttp.open("GET", qUrl, false);
     xmlHttp.send("");
@@ -213,13 +213,13 @@ function do_delsentmail() {
 }
 
 function do_trashmail() {
-    if (_$_('DRAFTID').value == null || _$_('DRAFTID').value == "" || _$_('DRAFTID').value == -1) {
+    if ($id('DRAFTID').value == null || $id('DRAFTID').value == "" || $id('DRAFTID').value == -1) {
         return;
     }
 
     isChange = false;
     toggle_onbeforeunload(isChange);
-    var qUrl = "/api/trashmail.xml?MAILID=" + _$_('DRAFTID').value;
+    var qUrl = "/api/trashmail.xml?MAILID=" + $id('DRAFTID').value;
     var xmlHttp = initxmlhttp();
     xmlHttp.open("GET", qUrl, false);
     xmlHttp.send("");
@@ -300,12 +300,12 @@ function do_savesent() {
         uploadedfiles += document.getElementsByName('TMPFILENAME')[x].value;
         uploadedfiles += "*"
     }
-    _$_("CONTENT").value = _$_('richeditor').contentWindow.document.body.innerHTML;
-    var strPostData = "TO_ADDRS=" + encodeURIComponent(_$_('TO_ADDRS').value) + "&";
-    strPostData += "CC_ADDRS=" + encodeURIComponent(_$_('CC_ADDRS').value) + "&";
-    strPostData += "BCC_ADDRS=" + encodeURIComponent(_$_('BCC_ADDRS').value) + "&";
-    strPostData += "SUBJECT=" + encodeURIComponent(_$_('SUBJECT').value) + "&";
-    strPostData += "CONTENT=" + encodeURIComponent(_$_('CONTENT').value) + "&";
+    $id("CONTENT").value = $id('richeditor').contentWindow.document.body.innerHTML;
+    var strPostData = "TO_ADDRS=" + encodeURIComponent($id('TO_ADDRS').value) + "&";
+    strPostData += "CC_ADDRS=" + encodeURIComponent($id('CC_ADDRS').value) + "&";
+    strPostData += "BCC_ADDRS=" + encodeURIComponent($id('BCC_ADDRS').value) + "&";
+    strPostData += "SUBJECT=" + encodeURIComponent($id('SUBJECT').value) + "&";
+    strPostData += "CONTENT=" + encodeURIComponent($id('CONTENT').value) + "&";
     strPostData += "ATTACHFILES=" + encodeURIComponent(uploadedfiles);
 
     var qUrl = "api/savesent.xml";
@@ -324,7 +324,7 @@ function do_savesent() {
                         if (errno == "0" || errno == 0) {
                             do_delsentmail();
 
-                            _$_('PROCESSING_TBL').rows[0].cells[0].innerHTML = "保存邮件到已发送邮件文件夹成功";
+                            $id('PROCESSING_TBL').rows[0].cells[0].innerHTML = "保存邮件到已发送邮件文件夹成功";
 
                             $("#PROCESSING_DIV").dialog();
 
@@ -338,19 +338,19 @@ function do_savesent() {
 
                             window.close();
                         } else {
-                            _$_('PROCESSING_TBL').rows[0].cells[0].innerHTML = "<font color='#FF0000'>保存邮件到已发送邮件文件夹失败</font>";
+                            $id('PROCESSING_TBL').rows[0].cells[0].innerHTML = "<font color='#FF0000'>保存邮件到已发送邮件文件夹失败</font>";
                             $("#PROCESSING_DIV").dialog();
                         }
                 }
             } else {
-                _$_('PROCESSING_TBL').rows[0].cells[0].innerHTML = "<font color='#FF0000'>保存邮件到已发送邮件文件夹失败</font>";
+                $id('PROCESSING_TBL').rows[0].cells[0].innerHTML = "<font color='#FF0000'>保存邮件到已发送邮件文件夹失败</font>";
                 $("#PROCESSING_DIV").dialog();
             }
         } else {
             sent_status = true;
             toggle_onbeforeunload(sent_status);
 
-            _$_('PROCESSING_TBL').rows[0].cells[0].innerHTML = "正在保存邮件到发件箱 - <img src=\"waiting.gif\" />";
+            $id('PROCESSING_TBL').rows[0].cells[0].innerHTML = "正在保存邮件到发件箱 - <img src=\"waiting.gif\" />";
             $("#PROCESSING_DIV").dialog();
         }
     }
@@ -366,12 +366,12 @@ function send_mail() {
 }
 
 function do_send_mail() {
-    if (_$_('TO_ADDRS').value == "") {
+    if ($id('TO_ADDRS').value == "") {
         alert("收件人不能为空");
         return;
     }
 
-    if (_$_('SUBJECT').value == "") {
+    if ($id('SUBJECT').value == "") {
         if (confirm("信件主题为空，您要继续吗？") == false)
             return;
     }
@@ -381,12 +381,12 @@ function do_send_mail() {
         uploadedfiles += document.getElementsByName('TMPFILENAME')[x].value;
         uploadedfiles += "*"
     }
-    _$_("CONTENT").value = _$_('richeditor').contentWindow.document.body.innerHTML;
-    var strPostData = "TO_ADDRS=" + encodeURIComponent(_$_('TO_ADDRS').value) + "&";
-    strPostData += "CC_ADDRS=" + encodeURIComponent(_$_('CC_ADDRS').value) + "&";
-    strPostData += "BCC_ADDRS=" + encodeURIComponent(_$_('BCC_ADDRS').value) + "&";
-    strPostData += "SUBJECT=" + encodeURIComponent(_$_('SUBJECT').value) + "&";
-    strPostData += "CONTENT=" + encodeURIComponent(_$_('CONTENT').value) + "&";
+    $id("CONTENT").value = $id('richeditor').contentWindow.document.body.innerHTML;
+    var strPostData = "TO_ADDRS=" + encodeURIComponent($id('TO_ADDRS').value) + "&";
+    strPostData += "CC_ADDRS=" + encodeURIComponent($id('CC_ADDRS').value) + "&";
+    strPostData += "BCC_ADDRS=" + encodeURIComponent($id('BCC_ADDRS').value) + "&";
+    strPostData += "SUBJECT=" + encodeURIComponent($id('SUBJECT').value) + "&";
+    strPostData += "CONTENT=" + encodeURIComponent($id('CONTENT').value) + "&";
     strPostData += "ATTACHFILES=" + encodeURIComponent(uploadedfiles);
     var qUrl = "api/sendmail.xml";
 
@@ -404,23 +404,23 @@ function do_send_mail() {
                         if (errno == "0") {
                             isChange = false;
                             toggle_onbeforeunload(isChange);
-                            _$_('PROCESSING_TBL').rows[0].cells[0].innerHTML = "发送邮件成功";
+                            $id('PROCESSING_TBL').rows[0].cells[0].innerHTML = "发送邮件成功";
                             $("#PROCESSING_DIV").dialog();
 
                             do_savesent();
                         } else {
-                            _$_('PROCESSING_TBL').rows[0].cells[0].innerHTML = "<font color='#FF0000'>发送邮件失败(邮件太大)</font>";
+                            $id('PROCESSING_TBL').rows[0].cells[0].innerHTML = "<font color='#FF0000'>发送邮件失败(邮件太大)</font>";
                             $("#PROCESSING_DIV").dialog();
                         }
                 }
             } else {
-                _$_('PROCESSING_TBL').rows[0].cells[0].innerHTML = "<font color='#FF0000'>发送邮件失败</font>";
+                $id('PROCESSING_TBL').rows[0].cells[0].innerHTML = "<font color='#FF0000'>发送邮件失败</font>";
                 $("#PROCESSING_DIV").dialog();
             }
         } else {
             sending_status = true;
             toggle_onbeforeunload(sending_status);
-            _$_('PROCESSING_TBL').rows[0].cells[0].innerHTML = "正在发送邮件 - <img src=\"waiting.gif\" />";
+            $id('PROCESSING_TBL').rows[0].cells[0].innerHTML = "正在发送邮件 - <img src=\"waiting.gif\" />";
             $("#PROCESSING_DIV").dialog();
         }
     }
@@ -441,13 +441,13 @@ function do_savedraft() {
         uploadedfiles += document.getElementsByName('TMPFILENAME')[x].value;
         uploadedfiles += "*"
     }
-    _$_("CONTENT").value = _$_('richeditor').contentWindow.document.body.innerHTML;
-    var strPostData = "DRAFTID=" + _$_('DRAFTID').value + "&";
-    strPostData += "TO_ADDRS=" + encodeURIComponent(_$_('TO_ADDRS').value) + "&";
-    strPostData += "CC_ADDRS=" + encodeURIComponent(_$_('CC_ADDRS').value) + "&";
-    strPostData += "BCC_ADDRS=" + encodeURIComponent(_$_('BCC_ADDRS').value) + "&";
-    strPostData += "SUBJECT=" + encodeURIComponent(_$_('SUBJECT').value) + "&";
-    strPostData += "CONTENT=" + encodeURIComponent(_$_('CONTENT').value) + "&";
+    $id("CONTENT").value = $id('richeditor').contentWindow.document.body.innerHTML;
+    var strPostData = "DRAFTID=" + $id('DRAFTID').value + "&";
+    strPostData += "TO_ADDRS=" + encodeURIComponent($id('TO_ADDRS').value) + "&";
+    strPostData += "CC_ADDRS=" + encodeURIComponent($id('CC_ADDRS').value) + "&";
+    strPostData += "BCC_ADDRS=" + encodeURIComponent($id('BCC_ADDRS').value) + "&";
+    strPostData += "SUBJECT=" + encodeURIComponent($id('SUBJECT').value) + "&";
+    strPostData += "CONTENT=" + encodeURIComponent($id('CONTENT').value) + "&";
     strPostData += "ATTACHFILES=" + encodeURIComponent(uploadedfiles);
     var qUrl = "api/savedraft.xml";
 
@@ -469,23 +469,23 @@ function do_savedraft() {
                             var bodyList = responseNode.childNodes;
                             for (var i = 0; i < bodyList.length; i++) {
                                 if (bodyList.item(i).tagName == "draftid") {
-                                    _$_('DRAFTID').value = bodyList.item(i).childNodes[0].nodeValue;
+                                    $id('DRAFTID').value = bodyList.item(i).childNodes[0].nodeValue;
                                 }
                             }
 
-                            _$_('PROCESSING_TBL').rows[0].cells[0].innerHTML = "保存草稿成功";
+                            $id('PROCESSING_TBL').rows[0].cells[0].innerHTML = "保存草稿成功";
                             $("#PROCESSING_DIV").dialog();
 
                         } else {
 
-                            _$_('PROCESSING_TBL').rows[0].cells[0].innerHTML = "<font color='#FF0000'>保存草稿出错(邮件太大)</font>";
+                            $id('PROCESSING_TBL').rows[0].cells[0].innerHTML = "<font color='#FF0000'>保存草稿出错(邮件太大)</font>";
                             $("#PROCESSING_DIV").dialog();
 
                         }
                 }
             } else {
 
-                _$_('PROCESSING_TBL').rows[0].cells[0].innerHTML = "<font color='#FF0000'>保存草稿出错</font>";
+                $id('PROCESSING_TBL').rows[0].cells[0].innerHTML = "<font color='#FF0000'>保存草稿出错</font>";
                 $("#PROCESSING_DIV").dialog();
 
             }
@@ -493,7 +493,7 @@ function do_savedraft() {
         } else {
             saving_status = true;
             toggle_onbeforeunload(saving_status);
-            _$_('PROCESSING_TBL').rows[0].cells[0].innerHTML = "正在保存草稿 - <img src=\"waiting.gif\" />";
+            $id('PROCESSING_TBL').rows[0].cells[0].innerHTML = "正在保存草稿 - <img src=\"waiting.gif\" />";
             $("#PROCESSING_DIV").dialog();
         }
     }
@@ -554,23 +554,23 @@ function read_mail(strID, strType) {
                         }
 
                         if (strType == "4") {
-                            _$_('DRAFTID').value = strID;
+                            $id('DRAFTID').value = strID;
 
-                            _$_("TO_ADDRS").value = strTo;
-                            _$_("CC_ADDRS").value = strCc;
-                            _$_("SUBJECT").value = strSubject;
-                            _$_("CONTENT").value = (strHtmlContent != "" ? strHtmlContent : strTextContent);
-                            _$_('richeditor').contentWindow.document.body.innerHTML = _$_("CONTENT").value;
-                            _$_("CONTENT").value = _$_('richeditor').contentWindow.document.body.innerHTML;
+                            $id("TO_ADDRS").value = strTo;
+                            $id("CC_ADDRS").value = strCc;
+                            $id("SUBJECT").value = strSubject;
+                            $id("CONTENT").value = (strHtmlContent != "" ? strHtmlContent : strTextContent);
+                            $id('richeditor').contentWindow.document.body.innerHTML = $id("CONTENT").value;
+                            $id("CONTENT").value = $id('richeditor').contentWindow.document.body.innerHTML;
                             if (strAttach != "") {
                                 extract_att(strID);
                             }
 
                         } else if (strType == "3") {
-                            _$_("SUBJECT").value = "Fwd: " + strSubject;
+                            $id("SUBJECT").value = "Fwd: " + strSubject;
 
-                            _$_("CONTENT").value = (strHtmlContent != "" ? strHtmlContent : strTextContent);
-                            _$_('richeditor').contentWindow.document.body.innerHTML = _$_("CONTENT").value;
+                            $id("CONTENT").value = (strHtmlContent != "" ? strHtmlContent : strTextContent);
+                            $id('richeditor').contentWindow.document.body.innerHTML = $id("CONTENT").value;
 
                             strReply = "<br><br><br><br><hr>";
                             strReply += "<table border='0' bgcolor='#EFEFEF' bordercolorlight='#C0C0C0' bordercolordark='#FFFFFF' cellpadding='5' cellspacing='1' width='100%'>";
@@ -582,12 +582,12 @@ function read_mail(strID, strType) {
                             strReply += "<tr><td bgcolor='#EFEFEF' align='right' width='80'><b>主题:</b></td><td bgcolor='#FFFFFF' align='left' width='910'>" + TextToHTML(strSubject) + "</td></tr>";
                             strReply += "</table>";
 
-                            strReply += _$_('richeditor').contentWindow.document.body.innerHTML;
+                            strReply += $id('richeditor').contentWindow.document.body.innerHTML;
 
-                            _$_("CONTENT").value = strReply;
+                            $id("CONTENT").value = strReply;
 
-                            _$_('richeditor').contentWindow.document.body.innerHTML = _$_("CONTENT").value;
-                            _$_("CONTENT").value = _$_('richeditor').contentWindow.document.body.innerHTML;
+                            $id('richeditor').contentWindow.document.body.innerHTML = $id("CONTENT").value;
+                            $id("CONTENT").value = $id('richeditor').contentWindow.document.body.innerHTML;
 
                             if (strAttach != "") {
                                 extract_att(strID);
@@ -648,13 +648,13 @@ function read_mail(strID, strType) {
                                 }
                             }
 
-                            _$_("TO_ADDRS").value = to_addrs;
-                            _$_("CC_ADDRS").value = cc_addrs;
+                            $id("TO_ADDRS").value = to_addrs;
+                            $id("CC_ADDRS").value = cc_addrs;
 
-                            _$_("SUBJECT").value = "Re: " + strSubject;
+                            $id("SUBJECT").value = "Re: " + strSubject;
 
-                            _$_("CONTENT").value = (strHtmlContent != "" ? strHtmlContent : strTextContent);
-                            _$_('richeditor').contentWindow.document.body.innerHTML = _$_("CONTENT").value;
+                            $id("CONTENT").value = (strHtmlContent != "" ? strHtmlContent : strTextContent);
+                            $id('richeditor').contentWindow.document.body.innerHTML = $id("CONTENT").value;
 
                             strReply = "<br><br><br><br><hr>";
                             strReply += "<table border='0' bgcolor='#EFEFEF' bordercolorlight='#C0C0C0' bordercolordark='#FFFFFF' cellpadding='5' cellspacing='1' width='100%'>";
@@ -666,19 +666,19 @@ function read_mail(strID, strType) {
                             strReply += "<tr><td bgcolor='#EFEFEF' align='right' width='80'><b>主题:</b></td><td bgcolor='#FFFFFF' align='left' width='910'>" + TextToHTML(strSubject) + "</td></tr>";
                             strReply += "</table>";
 
-                            strReply += _$_('richeditor').contentWindow.document.body.innerHTML;
+                            strReply += $id('richeditor').contentWindow.document.body.innerHTML;
 
-                            _$_("CONTENT").value = strReply;
+                            $id("CONTENT").value = strReply;
 
-                            _$_('richeditor').contentWindow.document.body.innerHTML = _$_("CONTENT").value;
-                            _$_("CONTENT").value = _$_('richeditor').contentWindow.document.body.innerHTML;
+                            $id('richeditor').contentWindow.document.body.innerHTML = $id("CONTENT").value;
+                            $id("CONTENT").value = $id('richeditor').contentWindow.document.body.innerHTML;
 
                         } else if (strType == "1") {
-                            _$_("TO_ADDRS").value = strFrom;
-                            _$_("SUBJECT").value = "Re: " + strSubject;
+                            $id("TO_ADDRS").value = strFrom;
+                            $id("SUBJECT").value = "Re: " + strSubject;
 
-                            _$_("CONTENT").value = (strHtmlContent != "" ? strHtmlContent : strTextContent);
-                            _$_('richeditor').contentWindow.document.body.innerHTML = _$_("CONTENT").value;
+                            $id("CONTENT").value = (strHtmlContent != "" ? strHtmlContent : strTextContent);
+                            $id('richeditor').contentWindow.document.body.innerHTML = $id("CONTENT").value;
 
                             strReply = "<br><br><br><br><hr>";
                             strReply += "<table border='0' bgcolor='#EFEFEF' bordercolorlight='#C0C0C0' bordercolordark='#FFFFFF' cellpadding='5' cellspacing='1' width='100%'>";
@@ -690,12 +690,12 @@ function read_mail(strID, strType) {
                             strReply += "<tr><td bgcolor='#EFEFEF' align='right' width='80'><b>主题:</b></td><td bgcolor='#FFFFFF' align='left' width='910'>" + TextToHTML(strSubject) + "</td></tr>";
                             strReply += "</table>";
 
-                            strReply += _$_('richeditor').contentWindow.document.body.innerHTML;
+                            strReply += $id('richeditor').contentWindow.document.body.innerHTML;
 
-                            _$_("CONTENT").value = strReply;
+                            $id("CONTENT").value = strReply;
 
-                            _$_('richeditor').contentWindow.document.body.innerHTML = _$_("CONTENT").value;
-                            _$_("CONTENT").value = _$_('richeditor').contentWindow.document.body.innerHTML;
+                            $id('richeditor').contentWindow.document.body.innerHTML = $id("CONTENT").value;
+                            $id("CONTENT").value = $id('richeditor').contentWindow.document.body.innerHTML;
 
                         }
                     }
@@ -733,16 +733,16 @@ function extract_att(strID) {
                                 }
                             }
                         }
-                        _$_('attach_flag').innerHTML = "";
+                        $id('attach_flag').innerHTML = "";
                     } else {
-                        _$_('attach_flag').innerHTML = "<img src=\"alert.gif\">";
+                        $id('attach_flag').innerHTML = "<img src=\"alert.gif\">";
                     }
                 }
             } else {
-                _$_('attach_flag').innerHTML = "<img src=\"alert.gif\">";
+                $id('attach_flag').innerHTML = "<img src=\"alert.gif\">";
             }
         } else {
-            _$_('attach_flag').innerHTML = "<img src=\"loading.gif\">";
+            $id('attach_flag').innerHTML = "<img src=\"loading.gif\">";
         }
     }
     xmlHttp.open("GET", qUrl, true);
@@ -751,8 +751,8 @@ function extract_att(strID) {
 
 function del_attach(selfid, tmpname) {
     if (del_uploaded(tmpname)) {
-        var tObj = _$_('SHOW_UPLOADEDFILES');
-        tObj.deleteRow(_$_(selfid).rowIndex);
+        var tObj = $id('SHOW_UPLOADEDFILES');
+        tObj.deleteRow($id(selfid).rowIndex);
     }
 }
 
@@ -777,7 +777,7 @@ function del_uploaded(tmpname) {
 }
 
 function show_attachs(tmpname, showname, attsize) {
-    var tObj = _$_('SHOW_UPLOADEDFILES');
+    var tObj = $id('SHOW_UPLOADEDFILES');
     tr = tObj.insertRow(tObj.rows.length);
     tr.setAttribute("id", "file" + tr.rowIndex);
     var td1 = tr.insertCell(0);
@@ -804,20 +804,20 @@ function append_addrs() {
         if (document.getElementsByName('seluser')[x].checked == true) {
             isChange = true;
             toggle_onbeforeunload(isChange)
-            if (_$_('ADDR_BOOK_DIV').getAttribute("who") == "1") {
-                if (_$_('TO_ADDRS').value != "")
-                    _$_('TO_ADDRS').value += ", "
-                    _$_('TO_ADDRS').value += document.getElementsByName('seluser')[x].value;
+            if ($id('ADDR_BOOK_DIV').getAttribute("who") == "1") {
+                if ($id('TO_ADDRS').value != "")
+                    $id('TO_ADDRS').value += ", "
+                    $id('TO_ADDRS').value += document.getElementsByName('seluser')[x].value;
 
-            } else if (_$_('ADDR_BOOK_DIV').getAttribute("who") == "2") {
-                if (_$_('CC_ADDRS').value != "")
-                    _$_('CC_ADDRS').value += ", "
-                    _$_('CC_ADDRS').value += document.getElementsByName('seluser')[x].value;
+            } else if ($id('ADDR_BOOK_DIV').getAttribute("who") == "2") {
+                if ($id('CC_ADDRS').value != "")
+                    $id('CC_ADDRS').value += ", "
+                    $id('CC_ADDRS').value += document.getElementsByName('seluser')[x].value;
 
-            } else if (_$_('ADDR_BOOK_DIV').getAttribute("who") == "3") {
-                if (_$_('BCC_ADDRS').value != "")
-                    _$_('BCC_ADDRS').value += ", "
-                    _$_('BCC_ADDRS').value += document.getElementsByName('seluser')[x].value;
+            } else if ($id('ADDR_BOOK_DIV').getAttribute("who") == "3") {
+                if ($id('BCC_ADDRS').value != "")
+                    $id('BCC_ADDRS').value += ", "
+                    $id('BCC_ADDRS').value += document.getElementsByName('seluser')[x].value;
             }
         }
     }
@@ -840,7 +840,7 @@ function load_users(who, orderby, desc) {
                     var strTmp;
                     var userList = responseNode.childNodes;
 
-                    clear_table_without_header(_$_('USERTBL'));
+                    clear_table_without_header($id('USERTBL'));
 
                     for (var i = 0; i < userList.length; i++) {
                         if (userList.item(i).tagName == "user") {
@@ -861,7 +861,7 @@ function load_users(who, orderby, desc) {
                                     image = "inactive_member.gif";
                             }
 
-                            tr = _$_('USERTBL').insertRow(_$_('USERTBL').rows.length);
+                            tr = $id('USERTBL').insertRow($id('USERTBL').rows.length);
 
                             var td0 = tr.insertCell(0);
                             td0.valign = "middle";
@@ -915,22 +915,22 @@ function showbook(who, orderby) {
         }
     });
 
-    _$_('ADDR_BOOK_DIV').setAttribute("who", who);
+    $id('ADDR_BOOK_DIV').setAttribute("who", who);
 
-    _$_('selalluser').checked = false;
+    $id('selalluser').checked = false;
 
-    if (_$_('ADDR_BOOK_DIV').getAttribute("loaded") != "true") {
-        _$_('USERTBL').setAttribute('orderby', orderby);
-        load_users(_$_('USERTBL').getAttribute('orderby'), _$_('USERTBL').getAttribute(_$_('USERTBL').getAttribute('orderby')));
+    if ($id('ADDR_BOOK_DIV').getAttribute("loaded") != "true") {
+        $id('USERTBL').setAttribute('orderby', orderby);
+        load_users($id('USERTBL').getAttribute('orderby'), $id('USERTBL').getAttribute($id('USERTBL').getAttribute('orderby')));
 
-        _$_('ADDR_BOOK_DIV').setAttribute("loaded", "true");
+        $id('ADDR_BOOK_DIV').setAttribute("loaded", "true");
     }
 
     /*
-    _$_('ADDR_BOOK_DIV').style.display = "block";
+    $id('ADDR_BOOK_DIV').style.display = "block";
 
-    _$_('ADDR_BOOK_DIV').style.left = x;
-    _$_('ADDR_BOOK_DIV').style.top = y; */
+    $id('ADDR_BOOK_DIV').style.left = x;
+    $id('ADDR_BOOK_DIV').style.top = y; */
 }
 
 function do_copy_mail(mid, todirs) {
@@ -939,7 +939,7 @@ function do_copy_mail(mid, todirs) {
 
     xmlHttp.onreadystatechange = function () {
         var strmid = "mailtr" + mid;
-        var trid = window.opener._$_(strmid);
+        var trid = window.opener.$id(strmid);
 
         if (trid == null)
             return false;
@@ -960,7 +960,7 @@ function do_copy_mail(mid, todirs) {
                     }
             }
         } else {
-            _$_('PROCESSING_TBL').rows[0].cells[0].innerHTML = "正在复制，请等待...";
+            $id('PROCESSING_TBL').rows[0].cells[0].innerHTML = "正在复制，请等待...";
             $("#PROCESSING_DIV").dialog();
         }
     }
@@ -971,11 +971,11 @@ function do_copy_mail(mid, todirs) {
 }
 
 function copy_mail(todir) {
-    if (_$_('DRAFTID').value == null || _$_('DRAFTID').value == "" || _$_('DRAFTID').value == -1) {
+    if ($id('DRAFTID').value == null || $id('DRAFTID').value == "" || $id('DRAFTID').value == -1) {
         alert("此草稿尚未保存");
         return;
     }
-    do_copy_mail(_$_('DRAFTID').value, todir);
+    do_copy_mail($id('DRAFTID').value, todir);
 }
 
 function do_move_mail(mid, todirs) {
@@ -984,7 +984,7 @@ function do_move_mail(mid, todirs) {
 
     xmlHttp.onreadystatechange = function () {
         var strmid = "mailtr" + mid;
-        var trid = window.opener._$_(strmid);
+        var trid = window.opener.$id(strmid);
 
         if (trid == null)
             return false;
@@ -1005,7 +1005,7 @@ function do_move_mail(mid, todirs) {
                     } else {}
             }
         } else {
-            _$_('PROCESSING_TBL').rows[0].cells[0].innerHTML = "正在移动，请等待...";
+            $id('PROCESSING_TBL').rows[0].cells[0].innerHTML = "正在移动，请等待...";
             $("#PROCESSING_DIV").dialog();
         }
 
@@ -1017,11 +1017,11 @@ function do_move_mail(mid, todirs) {
 }
 
 function move_mail(todir) {
-    if (_$_('DRAFTID').value == null || _$_('DRAFTID').value == "" || _$_('DRAFTID').value == -1) {
+    if ($id('DRAFTID').value == null || $id('DRAFTID').value == "" || $id('DRAFTID').value == -1) {
         alert("此草稿尚未保存");
         return;
     }
-    do_copy_mail(_$_('DRAFTID').value, todir);
+    do_copy_mail($id('DRAFTID').value, todir);
 }
 
 function init_editor() {
@@ -1084,10 +1084,10 @@ function show_copy_mail_dir_div() {
         }
     });
 
-    _$_('DIRS_DIV2').style.display = "none";
+    $id('DIRS_DIV2').style.display = "none";
 
-    var Pos = GetObjPos(_$_('COPYMAIL'))
-        show_dirs(_$_('DIRS_DIV1'), _$_('DIRTBL1'), Pos.x, Pos.y + Pos.h + 2, "seldir1");
+    var Pos = GetObjPos($id('COPYMAIL'))
+        show_dirs($id('DIRS_DIV1'), $id('DIRTBL1'), Pos.x, Pos.y + Pos.h + 2, "seldir1");
 }
 
 function show_move_mail_dir_div() {
@@ -1107,23 +1107,23 @@ function show_move_mail_dir_div() {
         }
     });
 
-    _$_('DIRS_DIV1').style.display = "none";
+    $id('DIRS_DIV1').style.display = "none";
 
-    var Pos = GetObjPos(_$_('MOVEMAIL'))
-        show_dirs(_$_('DIRS_DIV2'), _$_('DIRTBL2'), Pos.x, Pos.y + Pos.h + 2, "seldir2");
+    var Pos = GetObjPos($id('MOVEMAIL'))
+        show_dirs($id('DIRS_DIV2'), $id('DIRTBL2'), Pos.x, Pos.y + Pos.h + 2, "seldir2");
 }
 
 function sort_users(who, orderby) {
-    _$_('selalluser').checked = false;
+    $id('selalluser').checked = false;
 
-    _$_('USERTBL').setAttribute('orderby', orderby);
+    $id('USERTBL').setAttribute('orderby', orderby);
 
-    clear_table_without_header(_$_('USERTBL'));
+    clear_table_without_header($id('USERTBL'));
 
-    if (_$_('USERTBL').getAttribute(orderby) == 'true')
-        _$_('USERTBL').setAttribute(orderby, 'false');
+    if ($id('USERTBL').getAttribute(orderby) == 'true')
+        $id('USERTBL').setAttribute(orderby, 'false');
     else
-        _$_('USERTBL').setAttribute(orderby, 'true');
+        $id('USERTBL').setAttribute(orderby, 'true');
 
-    load_users(who, _$_('USERTBL').getAttribute('orderby'), _$_('USERTBL').getAttribute(_$_('USERTBL').getAttribute('orderby')));
+    load_users(who, $id('USERTBL').getAttribute('orderby'), $id('USERTBL').getAttribute($id('USERTBL').getAttribute('orderby')));
 }

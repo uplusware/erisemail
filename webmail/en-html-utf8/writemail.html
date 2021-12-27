@@ -48,8 +48,8 @@
 				<tr bgcolor="#FFFFCC">
 					<td class="gray" width="22" align="left"><input type="checkbox" name="selalluser" id="selalluser" onClick="sel_alluser(this.checked)"></td>
 					<td class="gray" width="22" align="left"><img src="pad.gif"></td>
-					<td class="gray" height="22" width="150" align="center" onMouseOver="this.mousepoint = 99;this.style.cursor = 'pointer';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onClick="sort_users(_$_('ADDR_BOOK_DIV').getAttribute('who'), 'uname')"><b>ID</b></td>
-					<td class="gray" height="22" width="350" align="center" onMouseOver="this.mousepoint = 99;this.style.cursor = 'pointer';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onClick="sort_users(_$_('ADDR_BOOK_DIV').getAttribute('who'), 'ualias')"><b>Alias</b></td>
+					<td class="gray" height="22" width="150" align="center" onMouseOver="this.mousepoint = 99;this.style.cursor = 'pointer';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onClick="sort_users($id('ADDR_BOOK_DIV').getAttribute('who'), 'uname')"><b>ID</b></td>
+					<td class="gray" height="22" width="350" align="center" onMouseOver="this.mousepoint = 99;this.style.cursor = 'pointer';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onClick="sort_users($id('ADDR_BOOK_DIV').getAttribute('who'), 'ualias')"><b>Alias</b></td>
 				</tr>
 				</table>
 			</div>
@@ -155,7 +155,7 @@
 				<td valign="middle"><input type="image" src="frontcolor.gif" style="border:1px solid #FFFFFF" onMouseOver="this.style.border='1px solid #81a9ce'" onMouseOut="this.style.border='1px solid #FFFFFF'"  onclick="popforeDiv()"></td>
 				<td valign="middle"><input type="image" src="backcolor.gif" style="border:1px solid #FFFFFF" onMouseOver="this.style.border='1px solid #81a9ce'" onMouseOut="this.style.border='1px solid #FFFFFF'"  onclick="popbackDiv()"></td>
 				<td valign="middle">
-					<select class='sel1' onclick="_$_('foreColorTbl').style.display='none';_$_('backColorTbl').style.display='none'; "onChange="sizeCmd(this.value); this.value='0'">
+					<select class='sel1' onclick="$id('foreColorTbl').style.display='none';$id('backColorTbl').style.display='none'; "onChange="sizeCmd(this.value); this.value='0'">
 						<option value="0" selected>font-size</option>
 						<option value="1">1</option>
 						<option value="2">2</option>

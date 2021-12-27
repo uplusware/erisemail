@@ -39,7 +39,7 @@ function load_config_file(cfgname, ctrlobj, statusobj) {
 function save_config_file(cfgname, ctrlobj, statusobj) {
     var qUrl = "/api/saveconfigfile.xml";
     var strPostData = "CONFIG_NAME=" + encodeURIComponent(cfgname);
-    strPostData += "&" + cfgname + "=" + encodeURIComponent(_$_(cfgname).value);
+    strPostData += "&" + cfgname + "=" + encodeURIComponent($id(cfgname).value);
     var xmlHttp = initxmlhttp();
     xmlHttp.onreadystatechange = function () {
         if (xmlHttp.readyState == 4) {

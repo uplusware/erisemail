@@ -33,7 +33,7 @@ function create_label(dirname, dirid) {
             if (responseNode.tagName == "response") {
                 var errno = responseNode.getAttribute("errno")
                     if (errno == "0" || errno == 0) {
-                        clear_table(window.parent.leftmenuframe._$_('DIRTBL'));
+                        clear_table(window.parent.leftmenuframe.$id('DIRTBL'));
                         window.parent.leftmenuframe.load_dirs(-1, '', 'common', -1, 0);
                     } else {
                         alert("创建'" + dirname + "'失败");
@@ -64,7 +64,7 @@ function login_username() {
                             }
                         }
 
-                        _$_('LOGIN_USERNAME').innerHTML = "<b>[" + strTmp + "]</b>的文件夹";
+                        $id('LOGIN_USERNAME').innerHTML = "<b>[" + strTmp + "]</b>的文件夹";
                     }
             }
         }
@@ -80,7 +80,7 @@ function init() {
 }
 
 function refresh_dir() {
-    clear_table(window.parent.leftmenuframe._$_('DIRTBL'));
+    clear_table(window.parent.leftmenuframe.$id('DIRTBL'));
     window.parent.leftmenuframe.load_dirs(-1, '', 'common', -1, 0);
 }
 
@@ -156,9 +156,9 @@ function ok_create_label() {
         }
     }
     if (c <= 1) {
-        need_reload(_$_('DIRS_DIV3'));
-        create_label(_$_('NEW_LABEL').value, strDirs);
-        _$_('NEW_LABEL').value = "";
+        need_reload($id('DIRS_DIV3'));
+        create_label($id('NEW_LABEL').value, strDirs);
+        $id('NEW_LABEL').value = "";
     } else {
         alert("不能选择多个目的文件夹");
 
@@ -185,10 +185,10 @@ function show_copy_mail_dir_div() {
         }
     });
 
-    _$_('DIRS_DIV2').style.display = "none";
-    _$_('DIRS_DIV3').style.display = "none";
-    var Pos = GetObjPos(_$_('COPYMAIL'))
-        show_dirs(_$_('DIRS_DIV1'), _$_('DIRTBL1'), Pos.x, Pos.y + Pos.h + 2, "seldir1");
+    $id('DIRS_DIV2').style.display = "none";
+    $id('DIRS_DIV3').style.display = "none";
+    var Pos = GetObjPos($id('COPYMAIL'))
+        show_dirs($id('DIRS_DIV1'), $id('DIRTBL1'), Pos.x, Pos.y + Pos.h + 2, "seldir1");
 }
 
 function show_move_mail_dir_div() {
@@ -208,11 +208,11 @@ function show_move_mail_dir_div() {
         }
     });
 
-    _$_('DIRS_DIV1').style.display = "none";
-    _$_('DIRS_DIV3').style.display = "none";
+    $id('DIRS_DIV1').style.display = "none";
+    $id('DIRS_DIV3').style.display = "none";
 
-    var Pos = GetObjPos(_$_('MOVEMAIL'))
-        show_dirs(_$_('DIRS_DIV2'), _$_('DIRTBL2'), Pos.x, Pos.y + Pos.h + 2, "seldir2");
+    var Pos = GetObjPos($id('MOVEMAIL'))
+        show_dirs($id('DIRS_DIV2'), $id('DIRTBL2'), Pos.x, Pos.y + Pos.h + 2, "seldir2");
 }
 
 function newmail() {
@@ -236,10 +236,10 @@ function show_add_dir_div() {
         }
     });
 
-    _$_('DIRS_DIV1').style.display = "none";
-    _$_('DIRS_DIV2').style.display = "none";
-    var Pos = GetObjPos(_$_('NEW_LABEL'))
-        show_dirs(_$_('DIRS_DIV3'), _$_('DIRTBL3'), Pos.x, Pos.y + Pos.h + 2, "seldir3");
+    $id('DIRS_DIV1').style.display = "none";
+    $id('DIRS_DIV2').style.display = "none";
+    var Pos = GetObjPos($id('NEW_LABEL'))
+        show_dirs($id('DIRS_DIV3'), $id('DIRTBL3'), Pos.x, Pos.y + Pos.h + 2, "seldir3");
 }
 
 function show_frame1_view(url) {

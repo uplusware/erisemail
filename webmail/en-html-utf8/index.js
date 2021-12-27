@@ -1,6 +1,6 @@
 function login() {
-    var username = _$_("USER_NAME").value;
-    var password = _$_("USER_PWD").value
+    var username = $id("USER_NAME").value;
+    var password = $id("USER_PWD").value
         var qUrl = "/api/login.xml?USER_NAME=" + username + "&USER_PWD=" + password;
     var xmlHttp = initxmlhttp();
     xmlHttp.onreadystatechange = function () {
@@ -13,10 +13,10 @@ function login() {
             if (responseNode.tagName == "response") {
                 var errno = responseNode.getAttribute("errno")
                     if (errno == "0" || errno == 0) {
-                        _$_("content").innerHTML = "<img src=\"waiting.gif\">";
+                        $id("content").innerHTML = "<img src=\"waiting.gif\">";
                         window.location = "/home.html";
                     } else {
-                        _$_("content").innerHTML = "<table border=\"0\"><tr><td><img src=\"alert.gif\"></td><td>Login failed</td></tr></table>";
+                        $id("content").innerHTML = "<table border=\"0\"><tr><td><img src=\"alert.gif\"></td><td>Login failed</td></tr></table>";
                     }
             }
         }

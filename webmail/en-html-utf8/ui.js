@@ -68,7 +68,7 @@ function output_dir(tblobj, pid, path, nodeObj, layer, begtr, checkname) {
                             }
                         }
                         this.setAttribute("extended", "true");
-                        _$_('extend' + this.getAttribute("did") + tblobj.getAttribute("id")).src = "extended.gif";
+                        $id('extend' + this.getAttribute("did") + tblobj.getAttribute("id")).src = "extended.gif";
                     } else {
 
                         for (var y = this.parentNode.parentNode.parentNode.parentNode.parentNode.rowIndex + 1; y < tblobj.rows.length; y++) {
@@ -79,7 +79,7 @@ function output_dir(tblobj, pid, path, nodeObj, layer, begtr, checkname) {
                             tblobj.rows[y].style.display = "none";
                         }
                         this.setAttribute("extended", "false");
-                        _$_('extend' + this.getAttribute("did") + tblobj.getAttribute("id")).src = "unextended.gif";
+                        $id('extend' + this.getAttribute("did") + tblobj.getAttribute("id")).src = "unextended.gif";
                     }
                 }
 

@@ -68,11 +68,11 @@ function read_mail(strID) {
                                 }
                             }
                             if (strCc == "") {
-                                _$_("cccol").style.display = "none";
+                                $id("cccol").style.display = "none";
                             }
 
-                            _$_("mailcontent").style.width = _$_('mailcontentframe').offsetWidth - 5;
-                            _$_("mailcontent").style.height = _$_('mailcontentframe').offsetHeight - 5;
+                            $id("mailcontent").style.width = $id('mailcontentframe').offsetWidth - 5;
+                            $id("mailcontent").style.height = $id('mailcontentframe').offsetHeight - 5;
 
                             if (strCalendarContent != "") {
                                 var vCal = new vCalendar();
@@ -154,11 +154,11 @@ function read_mail(strID) {
                                 }
                             }
 
-                            _$_("mailfrom").innerHTML = "<input class=\"text3\" size=\"100\" type=\"text\" value=\"" + TextToHTML(strFrom) + "\" readonly>";
-                            _$_("mailto").innerHTML = "<input class=\"text3\" size=\"100\" type=\"text\" value=\"" + TextToHTML(strTo) + "\" readonly>";
-                            _$_("mailcc").innerHTML = "<input class=\"text3\" size=\"100\" type=\"text\" value=\"" + TextToHTML(strCc) + "\" readonly>";
-                            _$_("maildate").innerHTML = "<input class=\"text3\" size=\"100\" type=\"text\" value=\"" + TextToHTML(strDate) + "\" readonly>";
-                            _$_("mailsubject").innerHTML = "<input class=\"text3\" size=\"100\" type=\"text\" value=\"" + (strSubject == "" ? "无主题" : TextToHTML(strSubject)) + "\" readonly>";
+                            $id("mailfrom").innerHTML = "<input class=\"text3\" size=\"100\" type=\"text\" value=\"" + TextToHTML(strFrom) + "\" readonly>";
+                            $id("mailto").innerHTML = "<input class=\"text3\" size=\"100\" type=\"text\" value=\"" + TextToHTML(strTo) + "\" readonly>";
+                            $id("mailcc").innerHTML = "<input class=\"text3\" size=\"100\" type=\"text\" value=\"" + TextToHTML(strCc) + "\" readonly>";
+                            $id("maildate").innerHTML = "<input class=\"text3\" size=\"100\" type=\"text\" value=\"" + TextToHTML(strDate) + "\" readonly>";
+                            $id("mailsubject").innerHTML = "<input class=\"text3\" size=\"100\" type=\"text\" value=\"" + (strSubject == "" ? "无主题" : TextToHTML(strSubject)) + "\" readonly>";
 
                             var strrpl = "/api/attachment.cgi?ID=";
                             strrpl += strID;
@@ -167,26 +167,26 @@ function read_mail(strID) {
                             var regS1 = new RegExp("cid:", "gi");
                             strHtmlContent = strHtmlContent.replace(regS1, strrpl);
                             if (strCalendarContent == "") {
-                                _$_("mailcontent").innerHTML = (strHtmlContent != "" ? strHtmlContent : TextToHTML(strTextContent)) + (strPreview != "" ? ("<p></p><hr><b>" + att_count + "个附件</b>" + strPreview) : "");
+                                $id("mailcontent").innerHTML = (strHtmlContent != "" ? strHtmlContent : TextToHTML(strTextContent)) + (strPreview != "" ? ("<p></p><hr><b>" + att_count + "个附件</b>" + strPreview) : "");
                             } else {
-                                _$_("timecol").style.display = "none";
+                                $id("timecol").style.display = "none";
 
-                                _$_("mailcontent").innerHTML = strCalendarContent + (strPreview != "" ? ("<p></p><hr><b>" + att_count + "个附件</b>" + strPreview) : "");
+                                $id("mailcontent").innerHTML = strCalendarContent + (strPreview != "" ? ("<p></p><hr><b>" + att_count + "个附件</b>" + strPreview) : "");
                             }
                         } else {
-                            _$_("mailcontent").innerHTML = "<table border=\"0\"><tr><td><img src=\"alert.gif\"></td><td>加载失败</td></tr></table>";
+                            $id("mailcontent").innerHTML = "<table border=\"0\"><tr><td><img src=\"alert.gif\"></td><td>加载失败</td></tr></table>";
                         }
                 }
             } else {
-                _$_("mailcontent").innerHTML = "<table border=\"0\"><tr><td><img src=\"alert.gif\"></td><td>加载失败</td></tr></table>";
+                $id("mailcontent").innerHTML = "<table border=\"0\"><tr><td><img src=\"alert.gif\"></td><td>加载失败</td></tr></table>";
             }
         } else {
-            _$_("mailfrom").innerHTML = "<img src=\"loading.gif\">";
-            _$_("mailto").innerHTML = "<img src=\"loading.gif\">";
-            _$_("mailcc").innerHTML = "<img src=\"loading.gif\">";
-            _$_("maildate").innerHTML = "<img src=\"loading.gif\">";
-            _$_("mailsubject").innerHTML = "<img src=\"loading.gif\">";
-            _$_("mailcontent").innerHTML = "<img src=\"loading.gif\">";
+            $id("mailfrom").innerHTML = "<img src=\"loading.gif\">";
+            $id("mailto").innerHTML = "<img src=\"loading.gif\">";
+            $id("mailcc").innerHTML = "<img src=\"loading.gif\">";
+            $id("maildate").innerHTML = "<img src=\"loading.gif\">";
+            $id("mailsubject").innerHTML = "<img src=\"loading.gif\">";
+            $id("mailcontent").innerHTML = "<img src=\"loading.gif\">";
         }
     }
     xmlHttp.open("GET", qUrl, true);

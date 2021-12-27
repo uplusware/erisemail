@@ -152,7 +152,7 @@ function output_dir(tblobj, pid, path, topusage, nodeObj, layer, begtr) {
                             }
                         }
                         this.setAttribute("extended", "true");
-                        _$_('extend' + this.getAttribute("did")).src = "extended.gif";
+                        $id('extend' + this.getAttribute("did")).src = "extended.gif";
                     } else {
 
                         for (var y = this.parentNode.parentNode.parentNode.parentNode.parentNode.rowIndex + 1; y < tblobj.rows.length; y++) {
@@ -163,7 +163,7 @@ function output_dir(tblobj, pid, path, topusage, nodeObj, layer, begtr) {
                             tblobj.rows[y].style.display = "none";
                         }
                         this.setAttribute("extended", "false");
-                        _$_('extend' + this.getAttribute("did")).src = "unextended.gif";
+                        $id('extend' + this.getAttribute("did")).src = "unextended.gif";
                     }
                 }
 
@@ -254,7 +254,7 @@ function load_dirs(pid, gpath, topusage, layer, begtr) {
                     var errno = responseNode.getAttribute("errno")
                         if (errno == "0" || errno == 0) {
                             var dirList = responseNode.childNodes;
-                            output_dir(_$_('DIRTBL'), pid, gpath, topusage, dirList, layer, begtr);
+                            output_dir($id('DIRTBL'), pid, gpath, topusage, dirList, layer, begtr);
                         }
                 }
             }

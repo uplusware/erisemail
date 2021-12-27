@@ -1,17 +1,17 @@
 function ontimer(trid) {
-    if (_$_(trid)) {
-        if (_$_(trid).getAttribute("isOver") == "true") {
-            _$_('LEVEL_DESCRIPTION').innerHTML = "<table border=\"0\" height=\"100%\" width=\"100%\" cellpadding=\"2\" cellspacing=\"2\" bgcolor=\"#FFFFEE\"><tr><td align=\"left\" valign=\"middle\">" + _$_(trid).getAttribute("description") + "</td></tr></table>";
+    if ($id(trid)) {
+        if ($id(trid).getAttribute("isOver") == "true") {
+            $id('LEVEL_DESCRIPTION').innerHTML = "<table border=\"0\" height=\"100%\" width=\"100%\" cellpadding=\"2\" cellspacing=\"2\" bgcolor=\"#FFFFEE\"><tr><td align=\"left\" valign=\"middle\">" + $id(trid).getAttribute("description") + "</td></tr></table>";
 
-            var pos = GetObjPos(_$_(trid));
+            var pos = GetObjPos($id(trid));
 
-            _$_('LEVEL_DESCRIPTION').style.left = pos.x - 1;
-            _$_('LEVEL_DESCRIPTION').style.top = pos.y + pos.h + 1;
+            $id('LEVEL_DESCRIPTION').style.left = pos.x - 1;
+            $id('LEVEL_DESCRIPTION').style.top = pos.y + pos.h + 1;
 
-            _$_('LEVEL_DESCRIPTION').style.height = 25;
-            _$_('LEVEL_DESCRIPTION').style.width = _$_('LEVELTBL').offsetWidth;
+            $id('LEVEL_DESCRIPTION').style.height = 25;
+            $id('LEVEL_DESCRIPTION').style.width = $id('LEVELTBL').offsetWidth;
 
-            _$_('LEVEL_DESCRIPTION').style.display = "block";
+            $id('LEVEL_DESCRIPTION').style.display = "block";
         }
     }
 }
@@ -33,7 +33,7 @@ function load_levels() {
 
                             for (var i = 0; i < levelList.length; i++) {
                                 if (levelList.item(i).tagName == "level") {
-                                    tr = _$_('LEVELTBL').insertRow(_$_('LEVELTBL').rows.length);
+                                    tr = $id('LEVELTBL').insertRow($id('LEVELTBL').rows.length);
                                     tr.setAttribute("id", "LEVEL_ID_" + levelList.item(i).getAttribute("lid"));
                                     tr.setAttribute("lid", levelList.item(i).getAttribute("lid"));
                                     tr.setAttribute("name", levelList.item(i).getAttribute("name"));
@@ -55,7 +55,7 @@ function load_levels() {
                                     tr.onmouseout = function () {
                                         this.style.backgroundImage = this.getAttribute("imagesrc");
 
-                                        _$_('LEVEL_DESCRIPTION').style.display = "none";
+                                        $id('LEVEL_DESCRIPTION').style.display = "none";
 
                                         this.setAttribute("isOver", "false");
                                     }
@@ -153,7 +153,7 @@ function load_levels() {
                                     td7.innerHTML = "<img src=\"edit.gif\">";
 
                                     td7.onclick = function () {
-                                        _$_('LEVEL_DESCRIPTION').style.display = "none";
+                                        $id('LEVEL_DESCRIPTION').style.display = "none";
                                         show_editlevel_div(this.parentNode);
                                     }
 
@@ -205,13 +205,13 @@ function load_levels() {
 
                                 }
                             }
-                            _$_("STATUS").innerHTML = "";
-                            _$_("STATUS").style.display = "none";
+                            $id("STATUS").innerHTML = "";
+                            $id("STATUS").style.display = "none";
                         }
                 }
             }
         } else {
-            _$_("STATUS").innerHTML = "<center><img src=\"waiting.gif\"></center>";
+            $id("STATUS").innerHTML = "<center><img src=\"waiting.gif\"></center>";
         }
     }
     xmlHttp.open("GET", qUrl, true);
@@ -235,7 +235,7 @@ function set_level_deafult(obj) {
             if (responseNode.tagName == "response") {
                 var errno = responseNode.getAttribute("errno")
                     if (errno == "0" || errno == 0) {
-                        clear_table_without_header(_$_('LEVELTBL'));
+                        clear_table_without_header($id('LEVELTBL'));
                         load_levels();
 
                     } else {
@@ -265,14 +265,14 @@ function show_newlevel_div() {
         }
     });
 
-    _$_('NEW_LEVELNAME').value = "";
-    _$_('NEW_DESCRIPTION').value = "";
-    _$_('NEW_MAILMAXSIZE').value = "5000";
-    _$_('NEW_BOXMAXSIZE').value = "500000";
-    _$_('NEW_AUDIT').checked = false;
-    _$_('NEW_MAILSIZETHRESHOLD').value = "5000";
-    _$_('NEW_ATTACHSIZETHRESHOLD').value = "5000";
-    _$_('NEW_DEFAULT').checked = false;
+    $id('NEW_LEVELNAME').value = "";
+    $id('NEW_DESCRIPTION').value = "";
+    $id('NEW_MAILMAXSIZE').value = "5000";
+    $id('NEW_BOXMAXSIZE').value = "500000";
+    $id('NEW_AUDIT').checked = false;
+    $id('NEW_MAILSIZETHRESHOLD').value = "5000";
+    $id('NEW_ATTACHSIZETHRESHOLD').value = "5000";
+    $id('NEW_DEFAULT').checked = false;
 }
 
 function show_editlevel_div(obj) {
@@ -292,46 +292,46 @@ function show_editlevel_div(obj) {
         }
     });
 
-    _$_('EDIT_LEVEL_DIV').setAttribute("lid", obj.getAttribute("lid"));
+    $id('EDIT_LEVEL_DIV').setAttribute("lid", obj.getAttribute("lid"));
 
-    _$_('EDIT_LEVELNAME').value = obj.getAttribute("name");
-    _$_('EDIT_DESCRIPTION').value = obj.getAttribute("description");
-    _$_('EDIT_MAILMAXSIZE').value = Math.round(obj.getAttribute("mailmaxsize") / 1024);
-    _$_('EDIT_BOXMAXSIZE').value = Math.round(obj.getAttribute("boxmaxsize") / 1024);
-    _$_('EDIT_AUDIT').checked = obj.getAttribute("enableaudit") == "true" ? true : false;
-    _$_('EDIT_MAILSIZETHRESHOLD').value = Math.round(obj.getAttribute("mailsizethreshold") / 1024);
-    _$_('EDIT_ATTACHSIZETHRESHOLD').value = Math.round(obj.getAttribute("attachsizethreshold") / 1024);
-    _$_('EDIT_DEFAULT').checked = obj.getAttribute("default") == "true" ? true : false;
+    $id('EDIT_LEVELNAME').value = obj.getAttribute("name");
+    $id('EDIT_DESCRIPTION').value = obj.getAttribute("description");
+    $id('EDIT_MAILMAXSIZE').value = Math.round(obj.getAttribute("mailmaxsize") / 1024);
+    $id('EDIT_BOXMAXSIZE').value = Math.round(obj.getAttribute("boxmaxsize") / 1024);
+    $id('EDIT_AUDIT').checked = obj.getAttribute("enableaudit") == "true" ? true : false;
+    $id('EDIT_MAILSIZETHRESHOLD').value = Math.round(obj.getAttribute("mailsizethreshold") / 1024);
+    $id('EDIT_ATTACHSIZETHRESHOLD').value = Math.round(obj.getAttribute("attachsizethreshold") / 1024);
+    $id('EDIT_DEFAULT').checked = obj.getAttribute("default") == "true" ? true : false;
 }
 
 function do_create_level() {
-    if (!isLegalID(_$_('NEW_LEVELNAME').value)
-         || !isNumber(_$_('NEW_MAILMAXSIZE').value)
-         || !isNumber(_$_('NEW_BOXMAXSIZE').value)
-         || !isNumber(_$_('NEW_MAILSIZETHRESHOLD').value)
-         || !isNumber(_$_('NEW_ATTACHSIZETHRESHOLD').value)) {
+    if (!isLegalID($id('NEW_LEVELNAME').value)
+         || !isNumber($id('NEW_MAILMAXSIZE').value)
+         || !isNumber($id('NEW_BOXMAXSIZE').value)
+         || !isNumber($id('NEW_MAILSIZETHRESHOLD').value)
+         || !isNumber($id('NEW_ATTACHSIZETHRESHOLD').value)) {
         alert("Illegal Character.");
         return false;
     }
 
-    if (parseInt(_$_('NEW_MAILMAXSIZE').value) > 1024 * 1024 * 2) {
+    if (parseInt($id('NEW_MAILMAXSIZE').value) > 1024 * 1024 * 2) {
         alert("Maximum mail size cannot exceed " + 1024 * 1024 * 2 + " KB");
         return false;
     }
 
-    if (parseInt(_$_('NEW_BOXMAXSIZE').value) > 1024 * 1024 * 4) {
+    if (parseInt($id('NEW_BOXMAXSIZE').value) > 1024 * 1024 * 4) {
         alert("Maximum mailbox size cannot exceed " + 1024 * 1024 * 4 + " KB");
         return false;
     }
     var qUrl = "/api/createlevel.xml";
-    var strPostData = "NEW_LEVELNAME=" + encodeURIComponent(_$_('NEW_LEVELNAME').value);
-    strPostData += "&NEW_DESCRIPTION=" + encodeURIComponent(_$_('NEW_DESCRIPTION').value);
-    strPostData += "&NEW_MAILMAXSIZE=" + encodeURIComponent(_$_('NEW_MAILMAXSIZE').value);
-    strPostData += "&NEW_BOXMAXSIZE=" + encodeURIComponent(_$_('NEW_BOXMAXSIZE').value);
-    strPostData += "&NEW_AUDIT=" + ((_$_('NEW_AUDIT').checked == true) ? encodeURIComponent("true") : encodeURIComponent("false"));
-    strPostData += "&NEW_MAILSIZETHRESHOLD=" + encodeURIComponent(_$_('NEW_MAILSIZETHRESHOLD').value);
-    strPostData += "&NEW_ATTACHSIZETHRESHOLD=" + encodeURIComponent(_$_('NEW_ATTACHSIZETHRESHOLD').value);
-    strPostData += "&NEW_DEFAULT=" + ((_$_('NEW_DEFAULT').checked == true) ? encodeURIComponent("true") : encodeURIComponent("false"));
+    var strPostData = "NEW_LEVELNAME=" + encodeURIComponent($id('NEW_LEVELNAME').value);
+    strPostData += "&NEW_DESCRIPTION=" + encodeURIComponent($id('NEW_DESCRIPTION').value);
+    strPostData += "&NEW_MAILMAXSIZE=" + encodeURIComponent($id('NEW_MAILMAXSIZE').value);
+    strPostData += "&NEW_BOXMAXSIZE=" + encodeURIComponent($id('NEW_BOXMAXSIZE').value);
+    strPostData += "&NEW_AUDIT=" + (($id('NEW_AUDIT').checked == true) ? encodeURIComponent("true") : encodeURIComponent("false"));
+    strPostData += "&NEW_MAILSIZETHRESHOLD=" + encodeURIComponent($id('NEW_MAILSIZETHRESHOLD').value);
+    strPostData += "&NEW_ATTACHSIZETHRESHOLD=" + encodeURIComponent($id('NEW_ATTACHSIZETHRESHOLD').value);
+    strPostData += "&NEW_DEFAULT=" + (($id('NEW_DEFAULT').checked == true) ? encodeURIComponent("true") : encodeURIComponent("false"));
     var xmlHttp = initxmlhttp();
     xmlHttp.onreadystatechange = function () {
         if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
@@ -341,7 +341,7 @@ function do_create_level() {
             if (responseNode.tagName == "response") {
                 var errno = responseNode.getAttribute("errno")
                     if (errno == "0" || errno == 0) {
-                        clear_table_without_header(_$_('LEVELTBL'));
+                        clear_table_without_header($id('LEVELTBL'));
                         load_levels();
 
                     } else {
@@ -357,35 +357,35 @@ function do_create_level() {
 }
 
 function do_edit_level() {
-    if (!isLegalID(_$_('EDIT_LEVELNAME').value)
-         || !isNumber(_$_('EDIT_MAILMAXSIZE').value)
-         || !isNumber(_$_('EDIT_BOXMAXSIZE').value)
-         || !isNumber(_$_('EDIT_MAILSIZETHRESHOLD').value)
-         || !isNumber(_$_('EDIT_ATTACHSIZETHRESHOLD').value)) {
+    if (!isLegalID($id('EDIT_LEVELNAME').value)
+         || !isNumber($id('EDIT_MAILMAXSIZE').value)
+         || !isNumber($id('EDIT_BOXMAXSIZE').value)
+         || !isNumber($id('EDIT_MAILSIZETHRESHOLD').value)
+         || !isNumber($id('EDIT_ATTACHSIZETHRESHOLD').value)) {
         alert("Illegal Character.");
         return false;
     }
 
-    if (parseInt(_$_('EDIT_MAILMAXSIZE').value) > 1024 * 1024 * 2) {
+    if (parseInt($id('EDIT_MAILMAXSIZE').value) > 1024 * 1024 * 2) {
         alert("Maximum mail size cannot exceed " + 1024 * 1024 * 2 + " KB");
         return false;
     }
 
-    if (parseInt(_$_('EDIT_BOXMAXSIZE').value) > 1024 * 1024 * 4) {
+    if (parseInt($id('EDIT_BOXMAXSIZE').value) > 1024 * 1024 * 4) {
         alert("Maximum mailbox size cannot exceed " + 1024 * 1024 * 4 + " KB");
         return false;
     }
 
     var qUrl = "/api/updatelevel.xml";
-    var strPostData = "EDIT_LEVELID=" + encodeURIComponent(_$_('EDIT_LEVEL_DIV').getAttribute("lid"));
-    strPostData += "&EDIT_LEVELNAME=" + encodeURIComponent(_$_('EDIT_LEVELNAME').value);
-    strPostData += "&EDIT_DESCRIPTION=" + encodeURIComponent(_$_('EDIT_DESCRIPTION').value);
-    strPostData += "&EDIT_MAILMAXSIZE=" + encodeURIComponent(_$_('EDIT_MAILMAXSIZE').value);
-    strPostData += "&EDIT_BOXMAXSIZE=" + encodeURIComponent(_$_('EDIT_BOXMAXSIZE').value);
-    strPostData += "&EDIT_AUDIT=" + ((_$_('EDIT_AUDIT').checked == true) ? encodeURIComponent("true") : encodeURIComponent("false"));
-    strPostData += "&EDIT_MAILSIZETHRESHOLD=" + encodeURIComponent(_$_('EDIT_MAILSIZETHRESHOLD').value);
-    strPostData += "&EDIT_ATTACHSIZETHRESHOLD=" + encodeURIComponent(_$_('EDIT_ATTACHSIZETHRESHOLD').value);
-    strPostData += "&EDIT_DEFAULT=" + ((_$_('EDIT_DEFAULT').checked == true) ? encodeURIComponent("true") : encodeURIComponent("false"));
+    var strPostData = "EDIT_LEVELID=" + encodeURIComponent($id('EDIT_LEVEL_DIV').getAttribute("lid"));
+    strPostData += "&EDIT_LEVELNAME=" + encodeURIComponent($id('EDIT_LEVELNAME').value);
+    strPostData += "&EDIT_DESCRIPTION=" + encodeURIComponent($id('EDIT_DESCRIPTION').value);
+    strPostData += "&EDIT_MAILMAXSIZE=" + encodeURIComponent($id('EDIT_MAILMAXSIZE').value);
+    strPostData += "&EDIT_BOXMAXSIZE=" + encodeURIComponent($id('EDIT_BOXMAXSIZE').value);
+    strPostData += "&EDIT_AUDIT=" + (($id('EDIT_AUDIT').checked == true) ? encodeURIComponent("true") : encodeURIComponent("false"));
+    strPostData += "&EDIT_MAILSIZETHRESHOLD=" + encodeURIComponent($id('EDIT_MAILSIZETHRESHOLD').value);
+    strPostData += "&EDIT_ATTACHSIZETHRESHOLD=" + encodeURIComponent($id('EDIT_ATTACHSIZETHRESHOLD').value);
+    strPostData += "&EDIT_DEFAULT=" + (($id('EDIT_DEFAULT').checked == true) ? encodeURIComponent("true") : encodeURIComponent("false"));
 
     var xmlHttp = initxmlhttp();
     xmlHttp.onreadystatechange = function () {
@@ -396,7 +396,7 @@ function do_edit_level() {
             if (responseNode.tagName == "response") {
                 var errno = responseNode.getAttribute("errno")
                     if (errno == "0" || errno == 0) {
-                        clear_table_without_header(_$_('LEVELTBL'));
+                        clear_table_without_header($id('LEVELTBL'));
                         load_levels();
 
                     } else {
@@ -423,7 +423,7 @@ function do_delete_level(levelid) {
             if (responseNode.tagName == "response") {
                 var errno = responseNode.getAttribute("errno")
                     if (errno == "0" || errno == 0) {
-                        clear_table_without_header(_$_('LEVELTBL'));
+                        clear_table_without_header($id('LEVELTBL'));
                         load_levels();
                     } else {
                         alert("Fail to remove policy");

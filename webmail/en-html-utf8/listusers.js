@@ -32,7 +32,7 @@ function load_users(orderby, desc) {
                                             image = "inactive_member.gif";
                                     }
 
-                                    tr = _$_('USERTBL').insertRow(_$_('USERTBL').rows.length);
+                                    tr = $id('USERTBL').insertRow($id('USERTBL').rows.length);
 
                                     tr.onmouseover = function () {
                                         this.mousepoint = 99;
@@ -104,13 +104,13 @@ function load_users(orderby, desc) {
                                         tr.disabled = "true";
                                 }
                             }
-                            _$_("STATUS").innerHTML = "";
-                            _$_("STATUS").style.display = "none";
+                            $id("STATUS").innerHTML = "";
+                            $id("STATUS").style.display = "none";
                         }
                 }
             }
         } else {
-            _$_("STATUS").innerHTML = "<center><img src=\"waiting.gif\"></center>";
+            $id("STATUS").innerHTML = "<center><img src=\"waiting.gif\"></center>";
         }
     }
     xmlHttp.open("GET", qUrl, true);
@@ -118,11 +118,11 @@ function load_users(orderby, desc) {
 }
 
 function init() {
-    window.parent._$_('MAILBAR').style.display = "none";
-    window.parent._$_('DIRBAR').style.display = "none";
-    window.parent._$_('CALBAR').style.display = "none";
-    window.parent._$_('READCALBAR').style.display = "none";
-    window.parent._$_('NULLBAR').style.display = "block";
+    window.parent.$id('MAILBAR').style.display = "none";
+    window.parent.$id('DIRBAR').style.display = "none";
+    window.parent.$id('CALBAR').style.display = "none";
+    window.parent.$id('READCALBAR').style.display = "none";
+    window.parent.$id('NULLBAR').style.display = "block";
 
 }
 
@@ -133,14 +133,14 @@ function show_mail_detail(url) {
 }
 
 function sort_users(orderby) {
-    _$_('USERTBL').setAttribute('orderby', orderby);
+    $id('USERTBL').setAttribute('orderby', orderby);
 
-    clear_table_without_header(_$_('USERTBL'));
+    clear_table_without_header($id('USERTBL'));
 
-    if (_$_('USERTBL').getAttribute(orderby) == 'true')
-        _$_('USERTBL').setAttribute(orderby, 'false');
+    if ($id('USERTBL').getAttribute(orderby) == 'true')
+        $id('USERTBL').setAttribute(orderby, 'false');
     else
-        _$_('USERTBL').setAttribute(orderby, 'true');
+        $id('USERTBL').setAttribute(orderby, 'true');
 
-    load_users(_$_('USERTBL').getAttribute('orderby'), _$_('USERTBL').getAttribute(_$_('USERTBL').getAttribute('orderby')))
+    load_users($id('USERTBL').getAttribute('orderby'), $id('USERTBL').getAttribute($id('USERTBL').getAttribute('orderby')))
 }

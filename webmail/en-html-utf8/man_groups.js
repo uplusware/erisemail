@@ -15,11 +15,11 @@ function add_user_to_group(obj, groupname) {
         }
     });
 
-    _$_('ADDRS').setAttribute("groupname", groupname);
+    $id('ADDRS').setAttribute("groupname", groupname);
 
     load_members();
 
-    _$_('selalluser').checked = false;
+    $id('selalluser').checked = false;
 }
 
 function do_del_user_from_group(groupname, userlist) {
@@ -35,11 +35,11 @@ function do_del_user_from_group(groupname, userlist) {
             if (responseNode.tagName == "response") {
                 var errno = responseNode.getAttribute("errno")
                     if (errno == "0" || errno == 0) {
-                        _$_("GROUP_MEMBER_LIST_TR_" + groupname).setAttribute("loaded", "false");
-                        while (_$_("GROUP_MEMBER_LIST_TR_" + groupname).cells[0].firstChild != null) {
-                            _$_("GROUP_MEMBER_LIST_TR_" + groupname).cells[0].firstChild.parentNode.removeChild(_$_("GROUP_MEMBER_LIST_TR_" + groupname).cells[0].firstChild);
+                        $id("GROUP_MEMBER_LIST_TR_" + groupname).setAttribute("loaded", "false");
+                        while ($id("GROUP_MEMBER_LIST_TR_" + groupname).cells[0].firstChild != null) {
+                            $id("GROUP_MEMBER_LIST_TR_" + groupname).cells[0].firstChild.parentNode.removeChild($id("GROUP_MEMBER_LIST_TR_" + groupname).cells[0].firstChild);
                         }
-                        list_members_in_group(_$_("GROUP_MEMBER_LIST_TR_" + groupname), groupname);
+                        list_members_in_group($id("GROUP_MEMBER_LIST_TR_" + groupname), groupname);
 
                     } else {
                         alert("Fail to add user to group");
@@ -61,7 +61,7 @@ function do_add_user_to_group() {
 
     var qUrl = "/api/addusertogroup.xml";
     var strPostData = "USER_LIST=" + encodeURIComponent(strUsers);
-    strPostData += "&GROUP_NAME=" + encodeURIComponent(_$_('ADDRS').getAttribute("groupname"));
+    strPostData += "&GROUP_NAME=" + encodeURIComponent($id('ADDRS').getAttribute("groupname"));
     var xmlHttp = initxmlhttp();
     xmlHttp.onreadystatechange = function () {
         if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
@@ -71,11 +71,11 @@ function do_add_user_to_group() {
             if (responseNode.tagName == "response") {
                 var errno = responseNode.getAttribute("errno")
                     if (errno == "0" || errno == 0) {
-                        _$_("GROUP_MEMBER_LIST_TR_" + _$_('ADDRS').getAttribute("groupname")).setAttribute("loaded", "false");
-                        while (_$_("GROUP_MEMBER_LIST_TR_" + _$_('ADDRS').getAttribute("groupname")).cells[0].firstChild != null) {
-                            _$_("GROUP_MEMBER_LIST_TR_" + _$_('ADDRS').getAttribute("groupname")).cells[0].firstChild.parentNode.removeChild(_$_("GROUP_MEMBER_LIST_TR_" + _$_('ADDRS').getAttribute("groupname")).cells[0].firstChild);
+                        $id("GROUP_MEMBER_LIST_TR_" + $id('ADDRS').getAttribute("groupname")).setAttribute("loaded", "false");
+                        while ($id("GROUP_MEMBER_LIST_TR_" + $id('ADDRS').getAttribute("groupname")).cells[0].firstChild != null) {
+                            $id("GROUP_MEMBER_LIST_TR_" + $id('ADDRS').getAttribute("groupname")).cells[0].firstChild.parentNode.removeChild($id("GROUP_MEMBER_LIST_TR_" + $id('ADDRS').getAttribute("groupname")).cells[0].firstChild);
                         }
-                        list_members_in_group(_$_("GROUP_MEMBER_LIST_TR_" + _$_('ADDRS').getAttribute("groupname")), _$_('ADDRS').getAttribute("groupname"));
+                        list_members_in_group($id("GROUP_MEMBER_LIST_TR_" + $id('ADDRS').getAttribute("groupname")), $id('ADDRS').getAttribute("groupname"));
 
                     } else {
                         alert("Fail to append user to group.");
@@ -218,7 +218,7 @@ function load_groups() {
 
                             for (var i = 0; i < userList.length; i++) {
                                 if (userList.item(i).tagName == "user") {
-                                    var tr1 = _$_('GROUPTBL').insertRow(_$_('GROUPTBL').rows.length);
+                                    var tr1 = $id('GROUPTBL').insertRow($id('GROUPTBL').rows.length);
                                     tr1.setAttribute("height", "22");
                                     var td10 = tr1.insertCell(0);
                                     setStyle(td10, "TD.blue");
@@ -297,7 +297,7 @@ function load_groups() {
 
                                     td10.appendChild(newtbl);
 
-                                    var tr2 = _$_('GROUPTBL').insertRow(_$_('GROUPTBL').rows.length);
+                                    var tr2 = $id('GROUPTBL').insertRow($id('GROUPTBL').rows.length);
                                     tr2.setAttribute("id", "GROUP_MEMBER_LIST_TR_" + userList.item(i).getAttribute("name"));
                                     tr2.style.display = "none";
 
@@ -307,13 +307,13 @@ function load_groups() {
                                     td20.style.backgroundColor = "#FFFFFF";
                                 }
                             }
-                            _$_("STATUS").innerHTML = "";
-                            _$_("STATUS").style.display = "none";
+                            $id("STATUS").innerHTML = "";
+                            $id("STATUS").style.display = "none";
                         }
                 }
             }
         } else {
-            _$_("STATUS").innerHTML = "<center><img src=\"waiting.gif\"></center>";
+            $id("STATUS").innerHTML = "<center><img src=\"waiting.gif\"></center>";
         }
     }
     xmlHttp.open("GET", qUrl, true);
@@ -335,7 +335,7 @@ function load_members() {
                             var strTmp;
                             var userList = responseNode.childNodes;
 
-                            clear_table(_$_('USERTBL'));
+                            clear_table($id('USERTBL'));
 
                             for (var i = 0; i < userList.length; i++) {
                                 if (userList.item(i).tagName == "user") {
@@ -356,7 +356,7 @@ function load_members() {
                                             image = "inactive_member.gif";
                                     }
 
-                                    tr = _$_('USERTBL').insertRow(_$_('USERTBL').rows.length);
+                                    tr = $id('USERTBL').insertRow($id('USERTBL').rows.length);
 
                                     var td0 = tr.insertCell(0);
                                     td0.valign = "middle";
@@ -388,7 +388,7 @@ function load_members() {
                                 }
                             }
 
-                            _$_('ADDRS').style.height = _$_('USERTBL_SIZE').offsetHeight;
+                            $id('ADDRS').style.height = $id('USERTBL_SIZE').offsetHeight;
                         }
                 }
             }

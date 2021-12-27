@@ -18,15 +18,15 @@ function load_levels_to_option(selobj) {
                         if (levelList.item(i).tagName == "level") {
                             var varItem = new Option(levelList.item(i).getAttribute("name"), levelList.item(i).getAttribute("lid"));
                             if (levelList.item(i).getAttribute("default") == "true") {
-                                _$_('NEW_USER_DIV').setAttribute("defaultlevel", levelList.item(i).getAttribute("lid"));
+                                $id('NEW_USER_DIV').setAttribute("defaultlevel", levelList.item(i).getAttribute("lid"));
                                 varItem.selected = true;
                             }
                             selobj.options.add(varItem);
                         }
                     }
 
-                    _$_("STATUS").innerHTML = "";
-                    _$_("STATUS").style.display = "none";
+                    $id("STATUS").innerHTML = "";
+                    $id("STATUS").style.display = "none";
                 }
         }
     }
@@ -54,8 +54,8 @@ function load_clusters_to_option(selobj) {
                         }
                     }
 
-                    _$_("STATUS").innerHTML = "";
-                    _$_("STATUS").style.display = "none";
+                    $id("STATUS").innerHTML = "";
+                    $id("STATUS").style.display = "none";
                 }
         }
     }
@@ -77,42 +77,42 @@ function show_edituser_div(username, obj) {
         }
     });
 
-    if (_$_('EDIT_USER_DIV').getAttribute("loaded") != "true") {
-        load_levels_to_option(_$_('EDIT_LEVEL'));
-        load_clusters_to_option(_$_('EDIT_HOST'));
-        _$_('EDIT_USER_DIV').setAttribute("loaded", "true")
+    if ($id('EDIT_USER_DIV').getAttribute("loaded") != "true") {
+        load_levels_to_option($id('EDIT_LEVEL'));
+        load_clusters_to_option($id('EDIT_HOST'));
+        $id('EDIT_USER_DIV').setAttribute("loaded", "true")
     }
 
-    _$_('EDIT_USERNAME').value = obj.getAttribute("username");
-    _$_('EDIT_ALIAS').value = obj.getAttribute("alias");
+    $id('EDIT_USERNAME').value = obj.getAttribute("username");
+    $id('EDIT_ALIAS').value = obj.getAttribute("alias");
 
-    for (var i = 0; i < _$_('EDIT_LEVEL').options.length; i++) {
-        if (_$_('EDIT_LEVEL').options[i].value == obj.getAttribute("level")) {
-            _$_('EDIT_LEVEL').options[i].selected = true;
+    for (var i = 0; i < $id('EDIT_LEVEL').options.length; i++) {
+        if ($id('EDIT_LEVEL').options[i].value == obj.getAttribute("level")) {
+            $id('EDIT_LEVEL').options[i].selected = true;
             break;
         }
 
     }
 
-    for (var i = 0; i < _$_('EDIT_HOST').options.length; i++) {
-        if (_$_('EDIT_HOST').options[i].value == obj.getAttribute("host")) {
-            _$_('EDIT_HOST').options[i].selected = true;
+    for (var i = 0; i < $id('EDIT_HOST').options.length; i++) {
+        if ($id('EDIT_HOST').options[i].value == obj.getAttribute("host")) {
+            $id('EDIT_HOST').options[i].selected = true;
             break;
         }
 
     }
 
     if (obj.getAttribute("type") == "Group" || obj.getAttribute("type") == "group") {
-        _$_('EDIT_LEVEL').disabled = true;
-        _$_('EDIT_HOST').disabled = true;
+        $id('EDIT_LEVEL').disabled = true;
+        $id('EDIT_HOST').disabled = true;
     } else {
-        _$_('EDIT_LEVEL').disabled = false;
-        _$_('EDIT_HOST').disabled = false;
+        $id('EDIT_LEVEL').disabled = false;
+        $id('EDIT_HOST').disabled = false;
     }
 
-    _$_('EDIT_USER_STATUS').checked = (obj.getAttribute("status") == "Active") ? false : true;
+    $id('EDIT_USER_STATUS').checked = (obj.getAttribute("status") == "Active") ? false : true;
 
-    _$_('EDIT_USER_DIV').setAttribute("username", username);
+    $id('EDIT_USER_DIV').setAttribute("username", username);
 }
 
 function show_newuser_div() {
@@ -134,25 +134,25 @@ function show_newuser_div() {
 
     document.getElementsByName('NEW_TYPE')[0].checked = true;
 
-    _$_('NEW_USERNAME').value = "";
+    $id('NEW_USERNAME').value = "";
 
-    _$_('NEW_USERPWD').disabled = false;
-    _$_('NEW_USERPWD2').disabled = false;
+    $id('NEW_USERPWD').disabled = false;
+    $id('NEW_USERPWD2').disabled = false;
 
-    _$_('NEW_LEVEL').disabled = false;
+    $id('NEW_LEVEL').disabled = false;
 
-    _$_('NEW_USERPWD').value = "";
-    _$_('NEW_USERPWD2').value = "";
+    $id('NEW_USERPWD').value = "";
+    $id('NEW_USERPWD2').value = "";
 
-    _$_('NEW_ALIAS').value = "";
+    $id('NEW_ALIAS').value = "";
 
-    if (_$_('NEW_USER_DIV').getAttribute("loaded") != "true") {
-        load_levels_to_option(_$_('NEW_LEVEL'));
-        load_clusters_to_option(_$_('NEW_HOST'));
-        _$_('NEW_USER_DIV').setAttribute("loaded", "true")
+    if ($id('NEW_USER_DIV').getAttribute("loaded") != "true") {
+        load_levels_to_option($id('NEW_LEVEL'));
+        load_clusters_to_option($id('NEW_HOST'));
+        $id('NEW_USER_DIV').setAttribute("loaded", "true")
     }
 
-    _$_('NEW_LEVEL').value = _$_('NEW_USER_DIV').getAttribute("defaultlevel");
+    $id('NEW_LEVEL').value = $id('NEW_USER_DIV').getAttribute("defaultlevel");
 }
 
 function do_delete_user(uname) {
@@ -166,8 +166,8 @@ function do_delete_user(uname) {
             if (responseNode.tagName == "response") {
                 var errno = responseNode.getAttribute("errno")
                     if (errno == "0" || errno == 0) {
-                        clear_table_without_header(_$_('USERTBL'));
-                        load_users(_$_('USERTBL').getAttribute('orderby'), _$_('USERTBL').getAttribute(_$_('USERTBL').getAttribute('orderby')));
+                        clear_table_without_header($id('USERTBL'));
+                        load_users($id('USERTBL').getAttribute('orderby'), $id('USERTBL').getAttribute($id('USERTBL').getAttribute('orderby')));
 
                     } else {
                         alert("Fail to remove ID");
@@ -213,7 +213,7 @@ function load_users(orderby, desc) {
                                             image = "inactive_member.gif";
                                     }
 
-                                    tr = _$_('USERTBL').insertRow(_$_('USERTBL').rows.length);
+                                    tr = $id('USERTBL').insertRow($id('USERTBL').rows.length);
                                     if (userList.item(i).getAttribute("type") == "Group") {
                                         tr.style.backgroundColor = "#FFFFEE";
                                     }
@@ -347,13 +347,13 @@ function load_users(orderby, desc) {
                                     }
                                 }
                             }
-                            _$_("STATUS").innerHTML = "";
-                            _$_("STATUS").style.display = "none";
+                            $id("STATUS").innerHTML = "";
+                            $id("STATUS").style.display = "none";
                         }
                 }
             }
         } else {
-            _$_("STATUS").innerHTML = "<center><img src=\"waiting.gif\"></center>";
+            $id("STATUS").innerHTML = "<center><img src=\"waiting.gif\"></center>";
         }
     }
     xmlHttp.open("GET", qUrl, true);
@@ -362,12 +362,12 @@ function load_users(orderby, desc) {
 
 function init() {
     window.parent.change_tab("user");
-    _$_('USERTBL').setAttribute('orderby', 'utime');
-    load_users(_$_('USERTBL').getAttribute('orderby'), _$_('USERTBL').getAttribute(_$_('USERTBL').getAttribute('orderby')));
+    $id('USERTBL').setAttribute('orderby', 'utime');
+    load_users($id('USERTBL').getAttribute('orderby'), $id('USERTBL').getAttribute($id('USERTBL').getAttribute('orderby')));
 }
 
 function do_add_user() {
-    if (_$_('NEW_USERPWD').value != _$_('NEW_USERPWD2').value) {
+    if ($id('NEW_USERPWD').value != $id('NEW_USERPWD2').value) {
         alert("Passwod is not equal with verified one.");
         return;
     }
@@ -379,12 +379,12 @@ function do_add_user() {
         strType = "group";
 
     var qUrl = "/api/adduser.xml";
-    var strPostData = "NEW_USERNAME=" + encodeURIComponent(_$_('NEW_USERNAME').value);
-    strPostData += "&NEW_USERPWD=" + encodeURIComponent(_$_('NEW_USERPWD').value);
-    strPostData += "&NEW_ALIAS=" + encodeURIComponent(_$_('NEW_ALIAS').value);
+    var strPostData = "NEW_USERNAME=" + encodeURIComponent($id('NEW_USERNAME').value);
+    strPostData += "&NEW_USERPWD=" + encodeURIComponent($id('NEW_USERPWD').value);
+    strPostData += "&NEW_ALIAS=" + encodeURIComponent($id('NEW_ALIAS').value);
     strPostData += "&NEW_TYPE=" + encodeURIComponent(strType);
-    strPostData += "&NEW_LEVEL=" + encodeURIComponent(_$_('NEW_LEVEL').value);
-    strPostData += "&NEW_HOST=" + encodeURIComponent(_$_('NEW_HOST').value);
+    strPostData += "&NEW_LEVEL=" + encodeURIComponent($id('NEW_LEVEL').value);
+    strPostData += "&NEW_HOST=" + encodeURIComponent($id('NEW_HOST').value);
     var xmlHttp = initxmlhttp();
     xmlHttp.onreadystatechange = function () {
         if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
@@ -394,8 +394,8 @@ function do_add_user() {
             if (responseNode.tagName == "response") {
                 var errno = responseNode.getAttribute("errno")
                     if (errno == "0" || errno == 0) {
-                        clear_table_without_header(_$_('USERTBL'));
-                        load_users(_$_('USERTBL').getAttribute('orderby'), _$_('USERTBL').getAttribute(_$_('USERTBL').getAttribute('orderby')));
+                        clear_table_without_header($id('USERTBL'));
+                        load_users($id('USERTBL').getAttribute('orderby'), $id('USERTBL').getAttribute($id('USERTBL').getAttribute('orderby')));
 
                     } else {
                         alert("Fail to create ID");
@@ -406,19 +406,19 @@ function do_add_user() {
     xmlHttp.open("POST", qUrl, true);
     xmlHttp.send(strPostData);
 
-    _$_('NEW_USERNAME').value = "";
-    _$_('NEW_USERPWD').value = "";
-    _$_('NEW_USERPWD2').value = "";
-    _$_('NEW_ALIAS').value = "";
+    $id('NEW_USERNAME').value = "";
+    $id('NEW_USERPWD').value = "";
+    $id('NEW_USERPWD2').value = "";
+    $id('NEW_ALIAS').value = "";
 }
 
 function do_edit_user() {
     var qUrl = "/api/edituser.xml";
-    var strPostData = "EDIT_USERNAME=" + encodeURIComponent(_$_('EDIT_USERNAME').value);
-    strPostData += "&EDIT_ALIAS=" + encodeURIComponent(_$_('EDIT_ALIAS').value);
-    strPostData += "&EDIT_LEVEL=" + encodeURIComponent(_$_('EDIT_LEVEL').value);
-    strPostData += "&EDIT_HOST=" + encodeURIComponent(_$_('EDIT_HOST').value);
-    strPostData += "&EDIT_USER_STATUS=" + encodeURIComponent(_$_('EDIT_USER_STATUS').checked == true ? "Disable" : "Active");
+    var strPostData = "EDIT_USERNAME=" + encodeURIComponent($id('EDIT_USERNAME').value);
+    strPostData += "&EDIT_ALIAS=" + encodeURIComponent($id('EDIT_ALIAS').value);
+    strPostData += "&EDIT_LEVEL=" + encodeURIComponent($id('EDIT_LEVEL').value);
+    strPostData += "&EDIT_HOST=" + encodeURIComponent($id('EDIT_HOST').value);
+    strPostData += "&EDIT_USER_STATUS=" + encodeURIComponent($id('EDIT_USER_STATUS').checked == true ? "Disable" : "Active");
     var xmlHttp = initxmlhttp();
     xmlHttp.onreadystatechange = function () {
         if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
@@ -428,8 +428,8 @@ function do_edit_user() {
             if (responseNode.tagName == "response") {
                 var errno = responseNode.getAttribute("errno")
                     if (errno == "0" || errno == 0) {
-                        clear_table_without_header(_$_('USERTBL'));
-                        load_users(_$_('USERTBL').getAttribute('orderby'), _$_('USERTBL').getAttribute(_$_('USERTBL').getAttribute('orderby')));
+                        clear_table_without_header($id('USERTBL'));
+                        load_users($id('USERTBL').getAttribute('orderby'), $id('USERTBL').getAttribute($id('USERTBL').getAttribute('orderby')));
 
                     } else {
                         alert("Fail to update ID");
@@ -442,40 +442,40 @@ function do_edit_user() {
 }
 
 function sort_users(orderby) {
-    _$_('USERTBL').setAttribute('orderby', orderby);
+    $id('USERTBL').setAttribute('orderby', orderby);
 
-    clear_table_without_header(_$_('USERTBL'));
+    clear_table_without_header($id('USERTBL'));
 
-    if (_$_('USERTBL').getAttribute(orderby) == 'true')
-        _$_('USERTBL').setAttribute(orderby, 'false');
+    if ($id('USERTBL').getAttribute(orderby) == 'true')
+        $id('USERTBL').setAttribute(orderby, 'false');
     else
-        _$_('USERTBL').setAttribute(orderby, 'true');
+        $id('USERTBL').setAttribute(orderby, 'true');
 
-    load_users(_$_('USERTBL').getAttribute('orderby'), _$_('USERTBL').getAttribute(_$_('USERTBL').getAttribute('orderby')))
+    load_users($id('USERTBL').getAttribute('orderby'), $id('USERTBL').getAttribute($id('USERTBL').getAttribute('orderby')))
 }
 
 function switch_id_type() {
 
     if (document.getElementsByName('NEW_TYPE')[0].checked) {
-        _$_('NEW_USERPWD').disabled = false;
-        _$_('NEW_USERPWD2').disabled = false;
+        $id('NEW_USERPWD').disabled = false;
+        $id('NEW_USERPWD2').disabled = false;
 
-        _$_('NEW_LEVEL').disabled = false;
-        _$_('NEW_HOST').disabled = false;
+        $id('NEW_LEVEL').disabled = false;
+        $id('NEW_HOST').disabled = false;
 
-        _$_('NEW_USERPWD').value = "";
-        _$_('NEW_USERPWD2').value = "";
+        $id('NEW_USERPWD').value = "";
+        $id('NEW_USERPWD2').value = "";
 
     } else if (document.getElementsByName('NEW_TYPE')[1].checked) {
-        _$_('NEW_USERPWD').disabled = true;
-        _$_('NEW_USERPWD2').disabled = true;
+        $id('NEW_USERPWD').disabled = true;
+        $id('NEW_USERPWD2').disabled = true;
 
-        _$_('NEW_LEVEL').disabled = true;
-        _$_('NEW_HOST').disabled = true;
+        $id('NEW_LEVEL').disabled = true;
+        $id('NEW_HOST').disabled = true;
 
-        _$_('NEW_USERPWD').value = randpwd();
-        _$_('NEW_USERPWD2').value = _$_('NEW_USERPWD').value;
+        $id('NEW_USERPWD').value = randpwd();
+        $id('NEW_USERPWD2').value = $id('NEW_USERPWD').value;
 
-        _$_('NEW_LEVEL').value = _$_('NEW_USER_DIV').getAttribute("defaultlevel");
+        $id('NEW_LEVEL').value = $id('NEW_USER_DIV').getAttribute("defaultlevel");
     }
 }
