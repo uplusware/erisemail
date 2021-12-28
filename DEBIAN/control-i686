@@ -1,9 +1,0 @@
-Package: erisemail
-Version: 1.6.08
-Section: utils 
-Priority: optional 
-Architecture: i386
-Depends:
-Installed-Size: 4096000 
-Maintainer: Uplusware<mailto:uplusware@gmail.com>
-Description: eRisemail Server powered by Uplusware. A free e-mail server based on the Linux(Support 32bit and 64bit platforms) and MySQL.Support GB2312, UTF-8 and UCS2 Format.Supported Protocol: SMTP(SSL/TLS) POP3(SSL/TLS) IMAP(SSL/TLS) WebMail(HTTP/HTTPS).
