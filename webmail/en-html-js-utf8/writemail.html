@@ -1,0 +1,204 @@
+<html>
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<LINK rel="Bookmark" href="erisemail.ico" >
+<LINK rel="Shortcut Icon" href="erisemail.ico" />
+<link href="css.css" rel="stylesheet" type="text/css">
+<link href="/jqueryui/jquery-ui.css" rel="stylesheet">
+<script type="text/javascript" src="language.js"></script>
+<script type="text/javascript" src="inc.js"></script>
+<script type="text/javascript" src="ui.js"></script>
+<script type="text/javascript" src="writemail.js"></script>
+<title>...::: Welcome to eRisemail System :::...</title>
+</head>
+
+<body onLoad="init()" onUnload="uninit()">
+
+<div id="PROCESSING_DIV" style="display:none;">
+	<table id="PROCESSING_TBL" width="100%" height="70" border="0" cellpadding="0" cellspacing="0">
+		<tr><td align="center" valign="middle"></td></tr>
+	</table>	
+</div>
+
+<div id="DIRS_DIV1" style="display:none; z-Index:20; width:220px; height:200px;">
+  <table border="0" cellspacing="0" cellpadding="1" width="100%" bordercolorlight="#C0C0C0" bordercolordark="#FFFFFF" class="gray">
+    <tr>
+      <td align="left" valign="top" class="gray" bgcolor="#FFFFFF" height="160">
+      	<div style="overflow:auto; width:100%; height:100%; background-color: #FFFFFF;"><table id="DIRTBL1" bgcolor="#FFFFFF" border="0" cellspacing="0" cellpadding="0" width="100%"></table></div>
+      </td>
+    </tr>
+  </table>
+</div>
+<div id="DIRS_DIV2" style="display:none; z-Index:20; width:220px; height:200px;">
+  <table border="0" cellspacing="0" cellpadding="1" width="100%" bordercolorlight="#C0C0C0" bordercolordark="#FFFFFF" class="gray">
+    <tr>
+      <td align="left" valign="top" class="gray" bgcolor="#FFFFFF" height="160">
+      	<div style="overflow:auto; width:100%; height:100%; background-color: #FFFFFF;"><table id="DIRTBL2" bgcolor="#FFFFFF" border="0" cellspacing="0" cellpadding="0" width="100%"></table></div>
+      </td>
+    </tr>
+  </table>
+</div>
+
+<div id="ADDR_BOOK_DIV" style="display:none; z-Index:20; width:500px; height:326px;">
+	<table id="USERTOPTBL" border="0" cellpadding="0" cellspacing="0" bgcolor="#EDF1F8">
+		<tr><td height="260">
+			<div style="overflow:auto;width:100%;height:100%; background-color: #FFFFFF;">
+				<table id="USERTBL" border="0" bordercolorlight="#C0C0C0" cellpadding="0" cellspacing="0" bordercolordark="#FFFFFF" bgcolor="#FFFFFF" class="gray">
+				<tr bgcolor="#FFFFCC">
+					<td class="gray" width="22" align="left"><input type="checkbox" name="selalluser" id="selalluser" onClick="sel_alluser(this.checked)"></td>
+					<td class="gray" width="22" align="left"><img src="pad.gif"></td>
+					<td class="gray" height="22" width="150" align="center" onMouseOver="this.mousepoint = 99;this.style.cursor = 'pointer';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onClick="sort_users($id('ADDR_BOOK_DIV').getAttribute('who'), 'uname')"><b>ID</b></td>
+					<td class="gray" height="22" width="350" align="center" onMouseOver="this.mousepoint = 99;this.style.cursor = 'pointer';" onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';" onClick="sort_users($id('ADDR_BOOK_DIV').getAttribute('who'), 'ualias')"><b>Alias</b></td>
+				</tr>
+				</table>
+			</div>
+		</td></tr>
+	</table>
+</div>
+
+              	
+<table border="0" width="900" cellpadding="0" cellspacing="0" bgcolor="#FFFFFF">
+	<tr>
+		<td valign="top">
+		<table border="0" width="100%" bordercolorlight="#C0C0C0" cellpadding="0" cellspacing="0" bordercolordark="#FFFFFF">
+		<tr><td class="title">
+			<table background="pathbg.gif" border="0" width="100%" bordercolorlight="#C0C0C0" cellspacing="0" cellpadding="2" bordercolordark="#FFFFFF"><tr valign="middle" height="25"><td align="center" width="22"><img src="writemail.gif"></td><td align="center"><b><font color="#FFFFFF"><div id="GLOBALPATH"></div></font></b></td><td width="20"><input type="image" src="close.gif" onClick="window.close()"></td></tr></table>
+		</td></tr>
+		</table>
+		<table border="0" width="900" cellpadding="1" cellspacing="1" background="toptitlebg.gif">
+			<tr><td>
+				<table id="MAILBAR" style="display:block"  bgcolor="#FFFFFF">
+					<tr>
+					  <td><button id="SENDMAIL" name="SENDMAIL" class="ui-button ui-corner-all ui-widget" onclick="send_mail();">Send</button></td>
+					  <td><button id="SAVEDRAFT" name="SAVEDRAFT" class="ui-button ui-corner-all ui-widget" onclick="save_draft();">Save</button></td>
+					  <td><button id="FLAG" name="FLAG" class="ui-button ui-corner-all ui-widget" onclick="flag_mail(true);">Flag</button></td>
+					  <td><button id="UNFLAG" name="UNFLAG" class="ui-button ui-corner-all ui-widget" onclick="flag_mail(false)();">Unflag</button></td>
+					  <td><button id="SEEN" name="SEEN" class="ui-button ui-corner-all ui-widget" onclick="seen_mail(true)();">Seen</button></td>
+					  <td><button id="UNSEEN" name="UNSEEN" class="ui-button ui-corner-all ui-widget" onclick="seen_mail(false);">Unseen</button></td>
+					  <td><button id="COPYMAIL" name="COPYMAIL" class="ui-button ui-corner-all ui-widget" onclick="show_copy_mail_dir_div();">Copy</button></td>
+					  <td><button id="MOVEMAIL" name="MOVEMAIL" class="ui-button ui-corner-all ui-widget" onclick="show_move_mail_dir_div();">Move</button></td>
+					  <td><button id="DELMAIL" name="DELMAIL" class="ui-button ui-corner-all ui-widget" onclick="delmail();">Delete</button></td>
+					</tr>
+				</table>
+			</td></tr>
+		</table>
+		<table width="100%" border="0" bordercolorlight="#C0C0C0" cellspacing="0" bordercolordark="#FFFFFF" class="gray">
+		<tr valign="middle">
+			<td class="gray" bgcolor="#EFEFEF" align="right" width="100"><b>To:</b></td>
+			<td class="gray">
+				<table border="0" cellspacing="0" cellpadding="0">
+					<tr>
+						<td><input type="text" value="" size="80" id="TO_ADDRS" name="TO_ADDRS" onChange="isChange = true;toggle_onbeforeunload(isChange)"></td>
+						<td width="100" align="center"><button id="ADDRESS_BOOK1" name="ADDRESS_BOOK" class="ui-button ui-corner-all ui-widget" onclick="showbook(1, 'uname');">Address</button></td>
+					</tr>
+				</table>
+			</td>
+		</tr>
+		
+		<tr valign="middle">
+			<td class="gray" bgcolor="#EFEFEF" align="right" width="100"><b>CC:</b></td>
+			<td class="gray">
+				<table border="0" cellspacing="0" cellpadding="0">
+					<tr>
+						<td><input type="text" value="" size="80" id="CC_ADDRS" name="CC_ADDRS" onChange="isChange = true;toggle_onbeforeunload(isChange)"></td>
+						<td width="100" align="center"><button id="ADDRESS_BOOK2" name="ADDRESS_BOOK" class="ui-button ui-corner-all ui-widget" onclick="showbook(2, 'uname');">Address</button></td>
+					</tr>
+				</table>
+			</td>
+		</tr>
+		
+		<tr valign="middle">
+			<td class="gray" bgcolor="#EFEFEF" align="right" width="100"><b>BCC:</b></td>
+			<td class="gray">
+				<table border="0"  cellspacing="0" cellpadding="0">
+					<tr>
+						<td><input type="text" value="" size="80" id="BCC_ADDRS" name="BCC_ADDRS" onChange="isChange = true;toggle_onbeforeunload(isChange)"></td>
+						<td width="100" align="center"><button id="ADDRESS_BOOK3" name="ADDRESS_BOOK" class="ui-button ui-corner-all ui-widget" onclick="showbook(3, 'uname');">Address</button></td>
+					</tr>
+				</table>
+			</td>
+		</tr>
+		
+		<tr valign="middle">
+			<td class="gray" bgcolor="#EFEFEF" align="right" width="100"><b>Subject:</b></td>
+			<td class="gray">
+				<table border="0"  cellspacing="0" cellpadding="0">
+					<tr>
+						<td><input type="text" value="" size="80" id="SUBJECT" name="SUBJECT" onChange="isChange = true;toggle_onbeforeunload(isChange)"></td>
+					</tr>
+				</table>
+			</td>
+		</tr>
+		
+		<tr valign="middle" id="attachid">
+			<td class="gray" bgcolor="#EFEFEF" width="100" align="right" valign="middle" height="36" >
+				<table border="0"><tr><td><div id="attach_flag"></div></td><td><b>Attachment:</b></td></tr></table>
+			</td>
+			<td class="gray">
+				<input type="hidden" id="DRAFTID" name="DRAFTID" value="-1">
+				<iframe name="attachframe" title="...::: Welcome to eRisemail System :::..." src="attach.html" width="100%" height="36" scrolling="no" marginwidth="0" marginheight="0" border="0" frameborder="0">
+				</iframe>
+				<table id="SHOW_UPLOADEDFILES">
+				</table>
+			</td>
+		</tr>
+		
+		<tr>
+			<td class="gray" align="left" colspan="2">
+				<table border="0"  cellspacing="0" cellpadding="3"><tr>
+				<td valign="middle"><input type="image" src="undo.gif" style="border:1px solid #FFFFFF" onMouseOver="this.style.border='1px solid #81a9ce'" onMouseOut="this.style.border='1px solid #FFFFFF'"  onclick="RTC('richeditor').execCommand('Undo', false, null);"></td>
+				<td valign="middle"><input type="image" src="redo.gif" style="border:1px solid #FFFFFF" onMouseOver="this.style.border='1px solid #81a9ce'" onMouseOut="this.style.border='1px solid #FFFFFF'"  onclick="RTC('richeditor').execCommand('Redo', false, null);"></td>
+				<td valign="middle"><input type="image" src="bold.gif" style="border:1px solid #FFFFFF" onMouseOver="this.style.border='1px solid #81a9ce'" onMouseOut="this.style.border='1px solid #FFFFFF'"  onclick="RTC('richeditor').execCommand('Bold', false, null);"></td>
+				<td valign="middle"><input type="image" src="italic.gif" style="border:1px solid #FFFFFF" onMouseOver="this.style.border='1px solid #81a9ce'" onMouseOut="this.style.border='1px solid #FFFFFF'"  onclick="RTC('richeditor').execCommand('Italic', false, null);"></td>
+				<td valign="middle"><input type="image" src="underline.gif" style="border:1px solid #FFFFFF" onMouseOver="this.style.border='1px solid #81a9ce'" onMouseOut="this.style.border='1px solid #FFFFFF'"  onclick="RTC('richeditor').execCommand('Underline', false, null);"></td>
+				<td valign="middle"><input type="image" src="frontcolor.gif" style="border:1px solid #FFFFFF" onMouseOver="this.style.border='1px solid #81a9ce'" onMouseOut="this.style.border='1px solid #FFFFFF'"  onclick="popforeDiv()"></td>
+				<td valign="middle"><input type="image" src="backcolor.gif" style="border:1px solid #FFFFFF" onMouseOver="this.style.border='1px solid #81a9ce'" onMouseOut="this.style.border='1px solid #FFFFFF'"  onclick="popbackDiv()"></td>
+				<td valign="middle">
+					<select class='sel1' onclick="$id('foreColorTbl').style.display='none';$id('backColorTbl').style.display='none'; "onChange="sizeCmd(this.value); this.value='0'">
+						<option value="0" selected>font-size</option>
+						<option value="1">1</option>
+						<option value="2">2</option>
+						<option value="3">3</option>
+						<option value="4">4</option>
+						<option value="5">5</option>
+						<option value="6">6</option>
+						<option value="7">7</option>
+					</select>
+				</td>
+				<td valign="middle"><input type="image" src="left.gif" style="border:1px solid #FFFFFF" onMouseOver="this.style.border='1px solid #81a9ce'" onMouseOut="this.style.border='1px solid #FFFFFF'"  onclick="RTC('richeditor').execCommand('JustifyLeft', false, null);"></td>
+				<td valign="middle"><input type="image" src="center.gif" style="border:1px solid #FFFFFF" onMouseOver="this.style.border='1px solid #81a9ce'" onMouseOut="this.style.border='1px solid #FFFFFF'"  onclick="RTC('richeditor').execCommand('JustifyCenter', false, null);"></td>
+				<td valign="middle"><input type="image" src="right.gif" style="border:1px solid #FFFFFF" onMouseOver="this.style.border='1px solid #81a9ce'" onMouseOut="this.style.border='1px solid #FFFFFF'"  onclick="RTC('richeditor').execCommand('JustifyRight', false, null);"></td>
+				<td valign="middle"><input type="image" src="indent.gif" style="border:1px solid #FFFFFF" onMouseOver="this.style.border='1px solid #81a9ce'" onMouseOut="this.style.border='1px solid #FFFFFF'"  onclick="RTC('richeditor').execCommand('Indent', false, null);"></td>
+				<td valign="middle"><input type="image" src="outdent.gif" style="border:1px solid #FFFFFF" onMouseOver="this.style.border='1px solid #81a9ce'" onMouseOut="this.style.border='1px solid #FFFFFF'"  onclick="RTC('richeditor').execCommand('Outdent', false, null);"></td>
+				<td valign="middle"><input type="image" src="orderlist.gif" style="border:1px solid #FFFFFF" onMouseOver="this.style.border='1px solid #81a9ce'" onMouseOut="this.style.border='1px solid #FFFFFF'"  onclick="RTC('richeditor').execCommand('InsertOrderedList', false, null);"></td>
+				<td valign="middle"><input type="image" src="unorderlist.gif" style="border:1px solid #FFFFFF" onMouseOver="this.style.border='1px solid #81a9ce'" onMouseOut="this.style.border='1px solid #FFFFFF'"  onclick="RTC('richeditor').execCommand('InsertUnorderedList', false, null);"></td>
+				</tr></table>
+			</td>
+		</tr>
+		<tr>
+			<td class="gray" align="left" colspan="2">
+				<textarea style="display: none; height:0px; width:0px;" id="CONTENT" name="CONTENT" class=".area1" onChange="isChange = true;toggle_onbeforeunload(isChange)"></textarea>
+				<iframe name="richeditor" id="richeditor" src="about:blank" style="height:390; width:100%; background:#ffffff;" scrolling="auto" marginwidth="2" marginheight="2" border="1" frameborder="0" onload="init_editor()"></iframe>
+			</td>
+		</tr>
+		</table>
+	</td>
+	</tr>
+	<tr>
+    	<td><p align="center">copyright &copy; <a href="http://uplusware.net" target="_blank">uplusware</a> 2022, all right reserved</td>
+    </tr>
+</table>
+
+
+<div name="foreColorTbl" id="foreColorTbl" class="div1" style="z-index:100; border:solid 1px #cccccc; display:none; width:200px; height:120px;"></div>
+<div name="backColorTbl" id="backColorTbl" class="div1" style="z-index:100; border:solid 1px #cccccc; display:none; width:200px; height:120px;"></div>
+<div name="fontSizeTbl" id="fontSizeTbl" class="div1" style="z-index:100; border:solid 1px #cccccc; display:none; width:70px; height:231px;"></div>
+
+<script src="/jqueryui/external/jquery/jquery.js"></script>
+<script src="/jqueryui/jquery-ui.js"></script>
+
+</body>
+
+</html>
+

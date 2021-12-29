@@ -1,0 +1,135 @@
+<html>
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<LINK rel="Bookmark" href="erisemail.ico" >
+<LINK rel="Shortcut Icon" href="erisemail.ico" />
+<link href="css.css" rel="stylesheet" type="text/css">
+<link href="/jqueryui/jquery-ui.css" rel="stylesheet">
+<script type="text/javascript" src="language.js"></script>
+<script type="text/javascript" src="inc.js"></script>
+<script type="text/javascript" src="man_status.js"></script>
+<title>..:::eRisemail Web Management System:::..</title>
+</head>
+
+<body onLoad="init()" onUnload="">
+<p align="center">
+<table border="0" width="100%" bordercolorlight="#C0C0C0" cellpadding="0" cellspacing="0" bordercolordark="#FFFFFF">
+<tr><td class="title">
+
+	<table border="0" width="100%" bordercolorlight="#C0C0C0" cellpadding="2" cellspacing="0" bordercolordark="#FFFFFF">
+	  <tr align="center" valign="middle" height="32">
+	    <td width="22" background="topbg.gif"><img src="man_status_titleicon.gif"></td>
+	    <td align="left" background="topbg.gif"><font color="#FFFFFF"><b>System Status</b></font></td>
+	  </tr>
+	</table>
+
+</td></tr>
+</table>
+
+<table border="0" width="100%" bordercolorlight="#C0C0C0" cellpadding="0" cellspacing="0" bordercolordark="#FFFFFF">
+<tr><td>
+    <div id="STATUS_TABS">
+    <ul>
+    <li><a href="#tabs-1">Basic</a></li>
+    <li><a href="#tabs-2">Storage</a></li>
+    <li><a href="#tabs-3">SMTP</a></li>
+    <li><a href="#tabs-4">POP3</a></li>
+    <li><a href="#tabs-5">IMAP</a></li>
+    <li><a href="#tabs-6">HTTP</a></li>
+    <li><a href="#tabs-7">XMPP</a></li>
+    <li><a href="#tabs-8">LDAP</a></li>
+    </ul>
+    <div id="tabs-1">
+	<table id="GLOBALTBL" bgcolor="#fafafa" border="0" width="100%" bordercolorlight="#C0C0C0" cellspacing="0" cellpadding="1" bordercolordark="#FFFFFF" class="gray">
+		<tr bgcolor="#FFFFFF"><td class="gray" width="200" height="25" align="right">Encoding:</td><td class="gray" width="660"><div border="0" id="Encoding"></div></td></tr>
+		<tr bgcolor="#fafafa"><td class="gray" width="200" height="25" align="right">Postfix of Email:</td><td class="gray" width="660"><div border="0" id="EmailDomainName"></div></td></tr>
+		<tr bgcolor="#FFFFFF"><td class="gray" width="200" height="25" align="right">Local Hostname:</td><td class="gray" width="660"><div border="0" id="LocalHostName"></div></td></tr>
+		<tr bgcolor="#fafafa"><td class="gray" width="200" height="25" align="right">Local Binded IP:</td><td class="gray" width="660"><div border="0" id="HostIP"></div></td></tr>
+		<tr bgcolor="#FFFFFF"><td class="gray" width="200" height="25" align="right">DNS Server IP:</td><td class="gray" width="660"><div border="0" id="DNSServer"></div></td></tr>
+		<tr bgcolor="#fafafa"><td class="gray" width="200" height="25" align="right">Max Simultaneous Connections:</td><td class="gray" width="660"><div border="0" id="MaxConnPerProtocal"> / Service</div></td></tr>
+		<tr bgcolor="#FFFFFF"><td class="gray" width="200" height="25" align="right">Relay Task Number:</td><td class="gray" width="660"><div border="0" id="RelayTaskNum"></div></td></tr>
+	</table>
+	</div>
+    
+    <div id="tabs-2">
+	<table id="STORAGETBL" bgcolor="#fafafa" border="0" width="100%" bordercolorlight="#C0C0C0" cellspacing="0" cellpadding="1" bordercolordark="#FFFFFF" class="gray">
+		<tr bgcolor="#FFFFFF"><td class="gray" width="200" height="25" align="right">Active Mail Count:</td><td class="gray" width="660"><div border="0" id="commonMailNumber"></div></td></tr>
+		<tr bgcolor="#fafafa"><td class="gray" width="200" height="25" align="right">Deleted Mail Count:</td><td class="gray" width="660"><div border="0" id="deletedMailNumber"></div></td></tr>
+		<tr bgcolor="#FFFFFF"><td class="gray" width="200" height="25" align="right">Total Active Mail Size:</td><td class="gray" width="660"><div border="0" id="commonMailSize"></div></td></tr>
+		<tr bgcolor="#fafafa"><td class="gray" width="200" height="25" align="right">Total Deleted Mail Size:</td><td class="gray" width="660"><div border="0" id="deletedMailSize"></div></td></tr>
+	</table>	    
+    </div>
+    
+    <div id="tabs-3">
+	<table id="SMTPTBL" bgcolor="#fafafa" border="0" width="100%" bordercolorlight="#C0C0C0" cellspacing="0" cellpadding="1" bordercolordark="#FFFFFF" class="gray">
+		<tr bgcolor="#fafafa"><td class="gray" width="200" height="25" align="right">Enable Relay:</td><td class="gray" width="660"><div border="0" id="EnableRelay"></div></td></tr>
+		<tr bgcolor="#FFFFFF"><td class="gray" width="200" height="25" align="right">Check Domain:</td><td class="gray" width="660"><div border="0" id="SMTPHostNameCheck"></div></td></tr>
+		<tr bgcolor="#fafafa"><td class="gray" width="200" height="25" align="right">SMTP Service:</td><td><img src="yes.gif"></td></tr>
+		<tr bgcolor="#FFFFFF"><td class="gray" width="200" height="25" align="right">SMTP Port:</td><td>25</td></tr>
+		<tr bgcolor="#fafafa"><td class="gray" width="200" height="25" align="right">TLS:</td><td class="gray" width="660"><div border="0" id="EnableSMTPTLS"></div></td></tr>
+		<tr bgcolor="#FFFFFF"><td class="gray" width="200" height="25" align="right">SMTP-SSL Service:</td><td class="gray" width="660"><div border="0" id="SMTPSEnable"></div></td></tr>
+		<tr bgcolor="#fafafa"><td class="gray" width="200" height="25" align="right">SMTP-SSL Port:</td><td class="gray" width="660"><div border="0" id="SMTPSPort"></div></td></tr>
+	</table>
+    </div>
+    <div id="tabs-4">
+	<table id="POP3TBL" bgcolor="#fafafa" border="0" width="100%" bordercolorlight="#C0C0C0" cellspacing="0" cellpadding="1" bordercolordark="#FFFFFF" class="gray">
+		<tr bgcolor="#FFFFFF"><td class="gray" width="200" height="25" align="right">POP3 Service:</td><td class="gray" width="660"><div border="0" id="POP3Enable"></div></td></tr>
+		<tr bgcolor="#fafafa"><td class="gray" width="200" height="25" align="right">POP3 Port:</td><td class="gray" width="660"><div border="0" id="POP3Port"></div></td></tr>
+		<tr bgcolor="#FFFFFF"><td class="gray" width="200" height="25" align="right">TLS:</td><td class="gray" width="660"><div border="0" id="EnablePOP3TLS"></div></td></tr>
+		<tr bgcolor="#fafafa"><td class="gray" width="200" height="25" align="right">POP3-SSL Service:</td><td class="gray" width="660"><div border="0" id="POP3SEnable"></div></td></tr>
+		<tr bgcolor="#FFFFFF"><td class="gray" width="200" height="25" align="right">POP3-SSL Port:</td><td class="gray" width="660"><div border="0" id="POP3SPort"></div></td></tr>
+	</table>
+    </div>
+    
+    <div id="tabs-5">
+	<table id="IMAPTBL" bgcolor="#fafafa" border="0" width="100%" bordercolorlight="#C0C0C0" cellspacing="0" cellpadding="1" bordercolordark="#FFFFFF" class="gray">
+		<tr bgcolor="#fafafa"><td class="gray" width="200" height="25" align="right">IMAP Service:</td><td class="gray" width="660"><div border="0" id="IMAPEnable"></div></td></tr>
+		<tr bgcolor="#FFFFFF"><td class="gray" width="200" height="25" align="right">IMAP Port:</td><td class="gray" width="660"><div border="0" id="IMAPPort"></div></td></tr>
+		<tr bgcolor="#fafafa"><td class="gray" width="200" height="25" align="right">TLS:</td><td class="gray" width="660"><div border="0" id="EnableIMAPTLS"></div></td></tr>
+		<tr bgcolor="#FFFFFF"><td class="gray" width="200" height="25" align="right">IMAP-SSL Service:</td><td class="gray" width="660"><div border="0" id="IMAPSEnable"></div></td></tr>
+		<tr bgcolor="#fafafa"><td class="gray" width="200" height="25" align="right">IMAP-SSL Port:</td><td class="gray" width="660"><div border="0" id="IMAPSPort"></div></td></tr>
+	</table>
+    </div>
+    
+    <div id="tabs-6">
+	<table id="HTTPTBL" bgcolor="#fafafa" border="0" width="100%" bordercolorlight="#C0C0C0" cellspacing="0" cellpadding="1" bordercolordark="#FFFFFF" class="gray">
+		<tr bgcolor="#FFFFFF"><td class="gray" width="200" height="25" align="right">HTTP Service:</td><td class="gray" width="660"><div border="0" id="HTTPEnable"></div></td></tr>
+		<tr bgcolor="#fafafa"><td class="gray" width="200" height="25" align="right">HTTP Port:</td><td class="gray" width="660"><div border="0" id="HTTPPort"></div></td></tr>
+		<tr bgcolor="#FFFFFF"><td class="gray" width="200" height="25" align="right">HTTPS Service:</td><td class="gray" width="660"><div border="0" id="HTTPSEnable"></div></td></tr>
+		<tr bgcolor="#fafafa"><td class="gray" width="200" height="25" align="right">HTTPS Port:</td><td class="gray" width="660"><div border="0" id="HTTPSPort"></div></td></tr>
+	</table>
+    </div>
+    
+    <div id="tabs-7">
+	<table id="XMPPTBL" bgcolor="#fafafa" border="0" width="100%" bordercolorlight="#C0C0C0" cellspacing="0" cellpadding="1" bordercolordark="#FFFFFF" class="gray">
+		<tr bgcolor="#FFFFFF"><td class="gray" width="200" height="25" align="right">XMPP Service:</td><td class="gray" width="660"><div border="0" id="XMPPEnable"></div></td></tr>
+		<tr bgcolor="#fafafa"><td class="gray" width="200" height="25" align="right">XMPP Port:</td><td class="gray" width="660"><div border="0" id="XMPPPort"></div></td></tr>
+        <tr bgcolor="#fafafa"><td class="gray" width="200" height="25" align="right">XMPP Encryption:</td><td class="gray" width="660"><div border="0" id="EncryptXMPP"></div></td></tr>
+        <tr bgcolor="#fafafa"><td class="gray" width="200" height="25" align="right">XMPP Worker Thread Number:</td><td class="gray" width="660"><div border="0" id="XMPPWorkerThreadNum"></div></td></tr>
+	</table>
+    </div>
+    
+    <div id="tabs-8">
+	<table id="LDAPTBL" bgcolor="#fafafa" border="0" width="100%" bordercolorlight="#C0C0C0" cellspacing="0" cellpadding="1" bordercolordark="#FFFFFF" class="gray">
+		<tr bgcolor="#FFFFFF"><td class="gray" width="200" height="25" align="right">LDAP Service:</td><td class="gray" width="660"><div border="0" id="LDAPEnable"></div></td></tr>
+		<tr bgcolor="#fafafa"><td class="gray" width="200" height="25" align="right">LDAP Port:</td><td class="gray" width="660"><div border="0" id="LDAPPort"></div></td></tr>
+        <tr bgcolor="#fafafa"><td class="gray" width="200" height="25" align="right">LDAP-SSL Port:</td><td class="gray" width="660"><div border="0" id="LDAPSPort"></div></td></tr>
+        <tr bgcolor="#fafafa"><td class="gray" width="200" height="25" align="right">LDAP Encryption:</td><td class="gray" width="660"><div border="0" id="EncryptLDAP"></div></td></tr>
+	</table>
+    </div>
+    
+	<div border="0" id="STATUS"></div>
+</td></tr>
+</table>
+</p>
+<script src="/jqueryui/external/jquery/jquery.js"></script>
+<script src="/jqueryui/jquery-ui.js"></script>
+<script>
+    $( function() {
+        $( "#STATUS_TABS" ).tabs();
+    } );
+</script>
+</body>
+
+</html>
