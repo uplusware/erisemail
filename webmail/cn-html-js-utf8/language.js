@@ -12,5 +12,17 @@ LANG_RESOURCE = {
 	"CONFIRM_CLEAN_TRASH" : "确实要清空废件箱吗？",
 	"CLEAN_TRASH" : "清空",
 	"SAVED" : "保存成功",
+	"WRONG_VERIFIED_PASSWORD" : "新密码两次输入不一致",
+	"PASSWORD_CHANGED_NEED_RELOGIN" : "密码更改成功，请重新登陆",
+	"PASSWORD_CHANGED_FAILED_NEED_RETRY" : "密码更改失败，请重新操作",
+	"EMPTY_ALIAS" : "别名不能为空",
+	"CHANGE_ALIAS_OK" : "更改别名成功",
+	"CHANGE_ALIAS_FAILED" : "更改别名失败",
+	"ADMINISTRATOR_DESC" : "管理员",
+	"USER_DESC" : "普通用户",
+	"DISABLED_ID_DESC" : "禁用",
+	"UNKNOWN_ID_DESC" : "未知",
+	"YES" : "是",
+	"NO" : "否",
 	"LANG_RESOURCE_LAST_PLACE_HOLDER" : "占位符，无他途"
 };

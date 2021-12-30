@@ -34,6 +34,8 @@ function upfile() {
     }
 }
 
-$('#UPLOADATT').click(function(){
-    return upfile();
+$(document).ready(function () {
+    $('#UPLOADATT').click(function(){
+        return upfile();
+    });
 });

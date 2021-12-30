@@ -85,7 +85,7 @@ function refresh_dir() {
 }
 
 function delmail() {
-    if (confirm("Sure to delete the mail?") == true) {
+    if (confirm("Sure to delete the folder?") == true) {
         window.parent.childframe1.delmail(false);
     }
 }

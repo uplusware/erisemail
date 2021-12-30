@@ -85,7 +85,7 @@ function refresh_dir() {
 }
 
 function delmail() {
-    if (confirm("确定删除选定文件吗？") == true) {
+    if (confirm("确定删除选定文件夹吗？") == true) {
         window.parent.childframe1.delmail(false);
     }
 }

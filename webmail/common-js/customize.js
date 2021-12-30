@@ -1,6 +1,6 @@
 function passwd(oldpwd, newpwd, verifypwd) {
     if (newpwd != verifypwd) {
-        pwdinfo.innerHTML = "新密码两次输入不一致";
+        pwdinfo.innerHTML = LANG_RESOURCE['WRONG_VERIFIED_PASSWORD'];
         return;
     }
     var qUrl = "/api/passwd.xml?OLD_PWD=" + oldpwd + "&NEW_PWD=" + newpwd;
@@ -13,10 +13,10 @@ function passwd(oldpwd, newpwd, verifypwd) {
             if (responseNode.tagName == "response") {
                 var errno = responseNode.getAttribute("errno")
                     if (errno == "0" || errno == 0) {
-                        alert("密码更改成功，请重新登陆");
+                        alert(LANG_RESOURCE['PASSWORD_CHANGED_NEED_RELOGIN']);
                         window.parent.logout();
                     } else {
-                        document.getElementById("pwdinfo").innerHTML = "密码更改失败，请重新操作";
+                        document.getElementById("pwdinfo").innerHTML = LANG_RESOURCE['PASSWORD_CHANGED_FAILED_NEED_RETRY'];
                     }
             }
         }
@@ -27,7 +27,7 @@ function passwd(oldpwd, newpwd, verifypwd) {
 
 function alias(stralias) {
     if (stralias == "") {
-        aliasinfo.innerHTML = "别名不能为空";
+        aliasinfo.innerHTML = LANG_RESOURCE['EMPTY_ALIAS'];
         return;
     }
     var qUrl = "/api/alias.xml?ALIAS=" + stralias;
@@ -40,9 +40,9 @@ function alias(stralias) {
             if (responseNode.tagName == "response") {
                 var errno = responseNode.getAttribute("errno")
                     if (errno == "0" || errno == 0) {
-                        alert("更改别名成功");
+                        alert(LANG_RESOURCE['CHANGE_ALIAS_OK']);
                     } else {
-                        document.getElementById("aliasinfo").innerHTML = "更改别名失败";
+                        document.getElementById("aliasinfo").innerHTML = LANG_RESOURCE['CHANGE_ALIAS_FAILED'];
                     }
             }
         }
@@ -68,19 +68,19 @@ function userinfo() {
                             if (userList.item(i).tagName == "user") {
                                 var strRole;
                                 if (userList.item(i).getAttribute("role") == "Administrator")
-                                    strRole = "管理员";
+                                    strRole = LANG_RESOURCE['ADMINISTRATOR_DESC'];
                                 else if (userList.item(i).getAttribute("role") == "User")
-                                    strRole = "普通用户";
+                                    strRole = LANG_RESOURCE['USER_DESC'];
                                 else if (userList.item(i).getAttribute("role") == "Disabled")
-                                    strRole = "禁用";
+                                    strRole = LANG_RESOURCE['DISABLED_ID_DESC'];
                                 else
-                                    strRole = "未知";
+                                    strRole = LANG_RESOURCE['UNKNOWN_ID_DESC'];
 
                                 $id('userrole').innerHTML = strRole;
 
                                 $id('mailsize').innerHTML = Math.round(userList.item(i).getAttribute("mailsize") / 1024);
                                 $id('boxsize').innerHTML = Math.round(userList.item(i).getAttribute("boxsize") / 1024);
-                                $id('audit').innerHTML = userList.item(i).getAttribute("audit") == "yes" ? "是" : "否";
+                                $id('audit').innerHTML = userList.item(i).getAttribute("audit") == "yes" ? LANG_RESOURCE['YES'] : LANG_RESOURCE['NO'];
 
                                 $id('ALIAS').value = userList.item(i).getAttribute("alias");
                             }
