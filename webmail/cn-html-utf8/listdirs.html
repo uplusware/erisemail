@@ -1,0 +1,41 @@
+<html>
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<LINK rel="Bookmark" href="erisemail.ico" >
+<LINK rel="Shortcut Icon" href="erisemail.ico" />
+<link href="common.css" rel="stylesheet" type="text/css">
+<link href="/jqueryui/jquery-ui.css" rel="stylesheet">
+<script type="text/javascript" src="language.js"></script>
+<script type="text/javascript" src="inc.js"></script>
+<script src="/jqueryui/external/jquery/jquery.js"></script>
+<script src="/jqueryui/jquery-ui.js"></script>
+<script type="text/javascript" src="listdirs.js"></script>
+<title>...:::欢迎访问 eRisemail 邮件系统:::...</title>
+</head>
+
+<body onLoad="init(); login_username();travel_dirs(-1, '', -1);" onUnload="uninit()" bgcolor="#FFFFFF">
+
+<div id="NEW_LABEL_DIV" style="display:none">
+	<table border="0" cellpadding="2" cellspacing="2" width="100%" height="100%">
+	<tr>
+	<td align="right"><img src="tosub.gif"></td>
+	<td align="right">文件夹:</td>
+	<td align="left"><input type="text" name="NEW_LABEL" id="NEW_LABEL" size="16"></td>
+	</tr>
+	</table>
+</div>
+<table border="0" width="100%" bordercolorlight="#C0C0C0" cellpadding="0" cellspacing="0" bordercolordark="#FFFFFF">
+<tr><td class="title">
+
+<table id="DIRS_TITLE" border="0" width="100%" bordercolorlight="#C0C0C0" cellpadding="2" cellspacing="0" bordercolordark="#FFFFFF" background="pathbg.gif">
+	<tr  height="25"><td align="left" width="22"><img src="folder.gif"></td><td align="center"><div name="LOGIN_USERNAME" id="LOGIN_USERNAME"></div></td></tr>
+</table>
+</td></tr>
+</table>
+
+<table id="DIRTBL" border="0" width="100%" bordercolorlight="#C0C0C0" cellpadding="2" cellspacing="0" bordercolordark="#FFFFFF" class="gray">
+</table>
+</body>
+
+</html>

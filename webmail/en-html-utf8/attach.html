@@ -1,0 +1,36 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<LINK rel="Bookmark" href="erisemail.ico" >
+<LINK rel="Shortcut Icon" href="erisemail.ico" />
+<link href="common.css" rel="stylesheet" type="text/css">
+<link href="/jqueryui/jquery-ui.css" rel="stylesheet">
+<script type="text/javascript" src="language.js"></script>
+<script type="text/javascript" src="inc.js"></script>
+<script src="/jqueryui/external/jquery/jquery.js"></script>
+<script src="/jqueryui/jquery-ui.js"></script>
+<script type="text/javascript" src="attach.js"></script>
+<title>...::: Welcome to eRisemail System :::...</title>
+</head>
+<body leftmargin="0" topmargin="0" marginwidth="0" marginheight="0" onLoad="init()">
+<form id="upfileform" name="upfileform" method="POST" enctype="multipart/form-data" action="/api/upfile.cgi">
+<table border="0" height="100%" bgcolor="#FFFFFF" cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+    <td>
+      <table border="0" cellspacing="0" cellpadding="0">
+        <tr> 
+          <td valign="middle" align="left">
+          	<input type="file" id="ATTACHFILEBODY" name="ATTACHFILEBODY" class="file1" size="60">
+          	<input type="hidden" id="SELFPAGENAME" name="SELFPAGENAME">
+          </td>
+          <td width="100" valign="middle" align="center">
+            <button id="UPLOADATT" name="UPLOADATT" class="ui-button ui-corner-all ui-widget">Upload</button>
+          </td>
+        </tr>
+      </table>
+    </td>
+</tr>
+</table>
+</form>
+</body>
+</html>

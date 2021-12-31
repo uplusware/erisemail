@@ -1279,7 +1279,7 @@ public:
 		
 		string username, password;
 
-		if(check_userauth_token(strauth.c_str(), username) == 0)
+		if(check_adminauth_token(strauth.c_str(), username) == 0)
 		{
 			string strUserName;
 			string strAlias;

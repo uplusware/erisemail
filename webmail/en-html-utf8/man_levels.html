@@ -1,0 +1,138 @@
+<html>
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<LINK rel="Bookmark" href="erisemail.ico" >
+<LINK rel="Shortcut Icon" href="erisemail.ico" />
+<link href="common.css" rel="stylesheet" type="text/css">
+<link href="/jqueryui/jquery-ui.css" rel="stylesheet">
+<script type="text/javascript" src="language.js"></script>
+<script type="text/javascript" src="inc.js"></script>
+<script src="/jqueryui/external/jquery/jquery.js"></script>
+<script src="/jqueryui/jquery-ui.js"></script>
+<script type="text/javascript" src="man_levels.js"></script>
+<title>..:::eRisemail Web Management System:::..</title>
+</head>
+
+<body onLoad="init()" onUnload="">
+<p align="center">
+<table border="0" width="100%" bordercolorlight="#C0C0C0" cellpadding="0" cellspacing="0" bordercolordark="#FFFFFF">
+<tr><td class="title">
+
+<table name="TITLE_BAR" id="TITLE_BAR" border="0" width="100%" bordercolorlight="#C0C0C0" cellpadding="2" cellspacing="0" bordercolordark="#FFFFFF">
+  <tr align="center" valign="middle" height="32">
+    <td width="22" background="topbg.gif"><img src="append.gif"></td>
+    <td align="left" background="topbg.gif"><a href="javascript:show_newlevel_div();"><font color="#FFFFFF"><b>Append Policy</b></font></a></td>
+  </tr>
+</table>
+
+</td></tr>
+</table>
+
+<table border="0" width="100%" bordercolorlight="#C0C0C0" cellpadding="2" cellspacing="0" bordercolordark="#FFFFFF">
+  <tr>
+		<td valign="top">
+			<table id="LEVELTBL" border="0" width="100%" bordercolorlight="#C0C0C0" cellspacing="0" cellpadding="1" bordercolordark="#FFFFFF" class="gray">
+			<tr height= "25">
+				<td width="22" align="center" valign="middle" height="25" class="blue"><img src="man_level_titleicon.gif"></td>
+				<td height="22" align="center" class="blue"><font color="#FFFFFF"><b>Name</b></font></td>
+				<td height="22" align="center" class="blue"><font color="#FFFFFF"><b>Max-size</b></font></td>
+				<td height="22" align="center" class="blue"><font color="#FFFFFF"><b>Total-Size</b></font></td>
+				<td height="22" align="center" class="blue"><font color="#FFFFFF"><b>Review</b></font></td>
+				<td height="22" align="center" class="blue"><font color="#FFFFFF" width="120"><b>Threshold-Size</b></font></td>
+				<td height="22" align="center" class="blue"><font color="#FFFFFF" width="120"><b>Attch-Threshold</b></font></td>
+				<td height="22" align="center" class="blue"><font color="#FFFFFF"><b>Edit</b></font></td>
+				<td height="22" align="center" class="blue"><font color="#FFFFFF"><b>Remove</b></font></td>
+			</tr>
+			</table>
+			<div id="STATUS"></div>
+		</td>
+	</tr>
+</table>
+</p>
+<div id="NEW_LEVEL_DIV" style="display:none">
+	<table id="NEW_LEVEL_SIZE" bgcolor="#EDF1F8" border="0" cellspacing="0" cellpadding="0">
+	<tr><td>
+		<table id="NEW_LEVEL_TBL" border="0" backcolor="#FFFFFF" bordercolorlight="#C0C0C0" cellspacing="0" cellpadding="1" bordercolordark="#FFFFFF" class="gray" bgcolor="#FFFFFF">
+	<tr>
+		<td  class="gray"align="right">Name:</td>
+		<td  class="gray"align="left"><input type="text" name="NEW_LEVELNAME" id="NEW_LEVELNAME" size="16" onPaste="this.value=this.value.replace(/[^a-zA-Z0-9\-_\.]/g,'');" onKeyup="this.value=this.value.replace(/[^a-zA-Z0-9\-_\.]/g,'');" onBlur="this.value=this.value.replace(/[^a-zA-Z0-9\-_\.]/g,'');"></td>
+	</tr>
+	<tr>
+		<td  class="gray"align="right">Description:</td>
+		<td  class="gray"align="left"><input type="text" name="NEW_DESCRIPTION" id="NEW_DESCRIPTION" size="32"></td>
+	</tr>
+	<tr>
+		<td  class="gray"align="right">Maximum mail size:</td>
+		<td  class="gray"align="left"><input type="text" name="NEW_MAILMAXSIZE" id="NEW_MAILMAXSIZE"  value="5000" size="16" onPaste="this.value=this.value.replace(/[^0-9]/g,'');" onKeyup="this.value=this.value.replace(/[^0-9]/g,'');" onBlur="this.value=this.value.replace(/[^0-9]/g,'');"> KB</td>
+	</tr>
+	<tr>
+		<td  class="gray"align="right">Mailbox size:</td>
+		<td  class="gray"align="left"><input type="text" name="NEW_BOXMAXSIZE" id="NEW_BOXMAXSIZE"  value="500000" size="16" onPaste="this.value=this.value.replace(/[^0-9]/g,'');" onKeyup="this.value=this.value.replace(/[^0-9]/g,'');" onBlur="this.value=this.value.replace(/[^0-9]/g,'');"> KB</td>
+	</tr>
+	<tr>
+		<td  class="gray"align="right">Review:</td>
+		<td  class="gray"align="left"><input type="checkbox" name="NEW_AUDIT" id="NEW_AUDIT"></td>
+	</tr>
+	<tr>
+		<td  class="gray"align="right" width="150">Threshold of Mail:</td>
+		<td  class="gray"align="left" width="260"><input type="text" name="NEW_MAILSIZETHRESHOLD" id="NEW_MAILSIZETHRESHOLD"  value="5000" size="16" onPaste="this.value=this.value.replace(/[^0-9]/g,'');" onKeyup="this.value=this.value.replace(/[^0-9]/g,'');" onBlur="this.value=this.value.replace(/[^0-9]/g,'');"> KB</td>
+	</tr>
+	<tr>
+		<td  class="gray"align="right">Threshold of Attachment:</td>
+		<td  class="gray"align="left"><input type="text" name="NEW_ATTACHSIZETHRESHOLD" id="NEW_ATTACHSIZETHRESHOLD"  value="5000" size="16" onPaste="this.value=this.value.replace(/[^0-9]/g,'');" onKeyup="this.value=this.value.replace(/[^0-9]/g,'');" onBlur="this.value=this.value.replace(/[^0-9]/g,'');"> KB</td>
+	</tr>
+	<tr>
+		<td  class="gray"align="right">Default:</td>
+		<td  class="gray"align="left"><input type="checkbox" name="NEW_DEFAULT" id="NEW_DEFAULT"></td>
+	</tr>
+		</table>
+	</td><tr>
+	</table>
+</div>
+
+<div id="EDIT_LEVEL_DIV" style="display:none">
+	<table id="EDIT_LEVEL_SIZE" bgcolor="#EDF1F8" border="0" cellspacing="0" cellpadding="0">
+	<tr><td>
+		<table id="EDIT_LEVEL_TBL" border="0" backcolor="#FFFFFF" bordercolorlight="#C0C0C0" cellspacing="0" cellpadding="1" bordercolordark="#FFFFFF" class="gray"  bgcolor="#FFFFFF">
+	<tr>
+		<td class="gray" align="right">Name:</td>
+		<td class="gray" align="left"><input type="text" name="EDIT_LEVELNAME" id="EDIT_LEVELNAME" size="16" onPaste="this.value=this.value.replace(/[^a-zA-Z0-9\-_\.]/g,'');" onKeyup="this.value=this.value.replace(/[^a-zA-Z0-9\-_\.]/g,'');" onBlur="this.value=this.value.replace(/[^a-zA-Z0-9\-_\.]/g,'');"></td>
+	</tr>
+	<tr>
+		<td class="gray" align="right">Description:</td>
+		<td class="gray" align="left"><input type="text" name="EDIT_DESCRIPTION" id="EDIT_DESCRIPTION" size="32"></td>
+	</tr>
+	<tr>
+		<td class="gray" align="right">Maximum mail size:</td>
+		<td class="gray" align="left"><input type="text" name="EDIT_AILMAXSIZE" id="EDIT_MAILMAXSIZE" size="16" onPaste="this.value=this.value.replace(/[^0-9]/g,'');" onKeyup="this.value=this.value.replace(/[^0-9]/g,'');" onBlur="this.value=this.value.replace(/[^0-9]/g,'');"> KB</td>
+	</tr>
+	<tr>
+		<td class="gray" align="right">Mailbox size:</td>
+		<td class="gray" align="left"><input type="text" name="EDIT_BOXMAXSIZE" id="EDIT_BOXMAXSIZE" size="16" onPaste="this.value=this.value.replace(/[^0-9]/g,'');" onKeyup="this.value=this.value.replace(/[^0-9]/g,'');" onBlur="this.value=this.value.replace(/[^0-9]/g,'');"> KB</td>
+	</tr>
+	<tr>
+		<td class="gray" align="right">Review:</td>
+		<td class="gray" align="left"><input type="checkbox" name="EDIT_AUDIT" id="EDIT_AUDIT"></td>
+	</tr>
+	<tr>
+		<td class="gray" align="right" width="150">Threshold of Mail:</td>
+		<td class="gray" align="left" width="260"><input type="text" name="EDIT_MAILSIZETHRESHOLD" id="EDIT_MAILSIZETHRESHOLD" size="16" onPaste="this.value=this.value.replace(/[^0-9]/g,'');" onKeyup="this.value=this.value.replace(/[^0-9]/g,'');" onBlur="this.value=this.value.replace(/[^0-9]/g,'');"> KB</td>
+	</tr>
+	<tr>
+		<td class="gray" align="right">Threshold of Attachment:</td>
+		<td class="gray" align="left"><input type="text" name="EDIT_ATTACHSIZETHRESHOLD" id="EDIT_ATTACHSIZETHRESHOLD" size="16" onPaste="this.value=this.value.replace(/[^0-9]/g,'');" onKeyup="this.value=this.value.replace(/[^0-9]/g,'');" onBlur="this.value=this.value.replace(/[^0-9]/g,'');"> KB</td>
+	</tr>
+	<tr>
+		<td class="gray" align="right">Default:</td>
+		<td class="gray" align="left"><input type="checkbox" name="EDIT_DEFAULT" id="EDIT_DEFAULT"></td>
+	</tr>
+		</table>
+	</td><tr>
+	</table>
+</div>
+
+<div id="LEVEL_DESCRIPTION" class="div1" style="display:none" ></div>
+</body>
+
+</html>
