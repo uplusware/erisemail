@@ -436,3 +436,15 @@ function do_delete_level(levelid) {
 
     return true;
 }
+
+$(document).ready(function () {
+    init();
+
+    $('#append_level').click(function () {
+        show_newlevel_div();
+    });
+});
+
+$(window).on('unload',function(){
+
+})

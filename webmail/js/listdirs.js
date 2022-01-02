@@ -342,3 +342,13 @@ function login_username() {
 function create_root_dir() {
     show_inputlabel_div("-1");
 }
+
+$(document).ready(function () {
+    init();
+    login_username();
+    travel_dirs(-1, '', -1);
+});
+
+$(window).on('unload',function(){
+    uninit();
+})

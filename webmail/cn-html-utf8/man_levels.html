@@ -14,7 +14,7 @@
 	<title>..:::eRisemail 邮件后台管理系统:::..</title>
 </head>
 
-<body onLoad="init()" onUnload="">
+<body>
 	<p align="center">
 	<table border="0" width="100%" bordercolorlight="#C0C0C0" cellpadding="0" cellspacing="0" bordercolordark="#FFFFFF">
 		<tr>
@@ -24,7 +24,7 @@
 					cellpadding="2" cellspacing="0" bordercolordark="#FFFFFF">
 					<tr align="center" valign="middle" height="32">
 						<td width="22" background="topbg.gif"><img src="append.gif"></td>
-						<td align="left" background="topbg.gif"><a href="javascript:show_newlevel_div();">
+						<td align="left" background="topbg.gif"><a href="javascript:void(0);" id="append_level">
 								<font color="#FFFFFF"><b>增加策略</b></font>
 							</a></td>
 					</tr>
@@ -81,49 +81,60 @@
 						cellpadding="1" bordercolordark="#FFFFFF" class="gray" bgcolor="#FFFFFF">
 						<tr>
 							<td class="gray" align="right">策略名:</td>
-							<td class="gray" align="left"><input type="text" name="NEW_LEVELNAME" id="NEW_LEVELNAME"
-									size="16" onPaste="this.value=this.value.replace(/[^a-zA-Z0-9\-_\.]/g,'');"
+							<td class="gray" align="left">
+								<input type="text" name="NEW_LEVELNAME" id="NEW_LEVELNAME" size="16"
+									onPaste="this.value=this.value.replace(/[^a-zA-Z0-9\-_\.]/g,'');"
 									onKeyup="this.value=this.value.replace(/[^a-zA-Z0-9\-_\.]/g,'');"
-									onBlur="this.value=this.value.replace(/[^a-zA-Z0-9\-_\.]/g,'');"></td>
+									onBlur="this.value=this.value.replace(/[^a-zA-Z0-9\-_\.]/g,'');">
+							</td>
 						</tr>
 						<tr>
 							<td class="gray" align="right">描述:</td>
-							<td class="gray" align="left"><input type="text" name="NEW_DESCRIPTION" id="NEW_DESCRIPTION"
-									size="32"></td>
+							<td class="gray" align="left">
+								<input type="text" name="NEW_DESCRIPTION" id="NEW_DESCRIPTION" size="32">
+							</td>
 						</tr>
 						<tr>
 							<td class="gray" align="right">单封邮件最大:</td>
-							<td class="gray" align="left"><input type="text" name="NEW_MAILMAXSIZE" id="NEW_MAILMAXSIZE"
-									value="5000" size="16" onPaste="this.value=this.value.replace(/[^0-9]/g,'');"
+							<td class="gray" align="left">
+								<input type="text" name="NEW_MAILMAXSIZE" id="NEW_MAILMAXSIZE" value="5000" size="16"
+									onPaste="this.value=this.value.replace(/[^0-9]/g,'');"
 									onKeyup="this.value=this.value.replace(/[^0-9]/g,'');"
-									onBlur="this.value=this.value.replace(/[^0-9]/g,'');"> KB</td>
+									onBlur="this.value=this.value.replace(/[^0-9]/g,'');"> KB
+							</td>
 						</tr>
 						<tr>
 							<td class="gray" align="right">邮箱大小:</td>
-							<td class="gray" align="left"><input type="text" name="NEW_BOXMAXSIZE" id="NEW_BOXMAXSIZE"
-									value="500000" size="16" onPaste="this.value=this.value.replace(/[^0-9]/g,'');"
+							<td class="gray" align="left">
+								<input type="text" name="NEW_BOXMAXSIZE" id="NEW_BOXMAXSIZE" value="500000" size="16"
+									onPaste="this.value=this.value.replace(/[^0-9]/g,'');"
 									onKeyup="this.value=this.value.replace(/[^0-9]/g,'');"
-									onBlur="this.value=this.value.replace(/[^0-9]/g,'');"> KB</td>
+									onBlur="this.value=this.value.replace(/[^0-9]/g,'');"> KB
+							</td>
 						</tr>
 						<tr>
 							<td class="gray" align="right">是否审核:</td>
-							<td class="gray" align="left"><input type="checkbox" name="NEW_AUDIT" id="NEW_AUDIT"></td>
+							<td class="gray" align="left">
+								<input type="checkbox" name="NEW_AUDIT" id="NEW_AUDIT">
+							</td>
 						</tr>
 						<tr>
 							<td class="gray" align="right" width="150">邮件大小审核限值:</td>
-							<td class="gray" align="left" width="260"><input type="text" name="NEW_MAILSIZETHRESHOLD"
-									id="NEW_MAILSIZETHRESHOLD" value="5000" size="16"
-									onPaste="this.value=this.value.replace(/[^0-9]/g,'');"
+							<td class="gray" align="left" width="260">
+								<input type="text" name="NEW_MAILSIZETHRESHOLD" id="NEW_MAILSIZETHRESHOLD" value="5000"
+									size="16" onPaste="this.value=this.value.replace(/[^0-9]/g,'');"
 									onKeyup="this.value=this.value.replace(/[^0-9]/g,'');"
-									onBlur="this.value=this.value.replace(/[^0-9]/g,'');"> KB</td>
+									onBlur="this.value=this.value.replace(/[^0-9]/g,'');"> KB
+							</td>
 						</tr>
 						<tr>
 							<td class="gray" align="right">附件大小审核限值:</td>
-							<td class="gray" align="left"><input type="text" name="NEW_ATTACHSIZETHRESHOLD"
-									id="NEW_ATTACHSIZETHRESHOLD" value="5000" size="16"
-									onPaste="this.value=this.value.replace(/[^0-9]/g,'');"
+							<td class="gray" align="left">
+								<input type="text" name="NEW_ATTACHSIZETHRESHOLD" id="NEW_ATTACHSIZETHRESHOLD"
+									value="5000" size="16" onPaste="this.value=this.value.replace(/[^0-9]/g,'');"
 									onKeyup="this.value=this.value.replace(/[^0-9]/g,'');"
-									onBlur="this.value=this.value.replace(/[^0-9]/g,'');"> KB</td>
+									onBlur="this.value=this.value.replace(/[^0-9]/g,'');"> KB
+							</td>
 						</tr>
 						<tr>
 							<td class="gray" align="right">默认策略:</td>
@@ -144,54 +155,65 @@
 						cellpadding="1" bordercolordark="#FFFFFF" class="gray" bgcolor="#FFFFFF">
 						<tr>
 							<td class="gray" align="right">策略名:</td>
-							<td class="gray" align="left"><input type="text" name="EDIT_LEVELNAME" id="EDIT_LEVELNAME"
-									size="16" onPaste="this.value=this.value.replace(/[^a-zA-Z0-9\-_\.]/g,'');"
+							<td class="gray" align="left">
+								<input type="text" name="EDIT_LEVELNAME" id="EDIT_LEVELNAME" size="16"
+									onPaste="this.value=this.value.replace(/[^a-zA-Z0-9\-_\.]/g,'');"
 									onKeyup="this.value=this.value.replace(/[^a-zA-Z0-9\-_\.]/g,'');"
-									onBlur="this.value=this.value.replace(/[^a-zA-Z0-9\-_\.]/g,'');"></td>
+									onBlur="this.value=this.value.replace(/[^a-zA-Z0-9\-_\.]/g,'');">
+							</td>
 						</tr>
 						<tr>
 							<td class="gray" align="right">描述:</td>
-							<td class="gray" align="left"><input type="text" name="EDIT_DESCRIPTION"
-									id="EDIT_DESCRIPTION" size="32"></td>
+							<td class="gray" align="left">
+								<input type="text" name="EDIT_DESCRIPTION" id="EDIT_DESCRIPTION" size="32">
+							</td>
 						</tr>
 						<tr>
 							<td class="gray" align="right">单封邮件最大:</td>
-							<td class="gray" align="left"><input type="text" name="EDIT_AILMAXSIZE"
-									id="EDIT_MAILMAXSIZE" size="16"
+							<td class="gray" align="left">
+								<input type="text" name="EDIT_AILMAXSIZE" id="EDIT_MAILMAXSIZE" size="16"
 									onPaste="this.value=this.value.replace(/[^0-9]/g,'');"
 									onKeyup="this.value=this.value.replace(/[^0-9]/g,'');"
-									onBlur="this.value=this.value.replace(/[^0-9]/g,'');"> KB</td>
+									onBlur="this.value=this.value.replace(/[^0-9]/g,'');"> KB
+							</td>
 						</tr>
 						<tr>
 							<td class="gray" align="right">邮箱大小:</td>
-							<td class="gray" align="left"><input type="text" name="EDIT_BOXMAXSIZE" id="EDIT_BOXMAXSIZE"
-									size="16" onPaste="this.value=this.value.replace(/[^0-9]/g,'');"
+							<td class="gray" align="left">
+								<input type="text" name="EDIT_BOXMAXSIZE" id="EDIT_BOXMAXSIZE" size="16"
+									onPaste="this.value=this.value.replace(/[^0-9]/g,'');"
 									onKeyup="this.value=this.value.replace(/[^0-9]/g,'');"
-									onBlur="this.value=this.value.replace(/[^0-9]/g,'');"> KB</td>
+									onBlur="this.value=this.value.replace(/[^0-9]/g,'');"> KB
+							</td>
 						</tr>
 						<tr>
 							<td class="gray" align="right">是否审核:</td>
-							<td class="gray" align="left"><input type="checkbox" name="EDIT_AUDIT" id="EDIT_AUDIT"></td>
+							<td class="gray" align="left">
+								<input type="checkbox" name="EDIT_AUDIT" id="EDIT_AUDIT">
+							</td>
 						</tr>
 						<tr>
 							<td class="gray" align="right" width="150">邮件大小审核限值:</td>
-							<td class="gray" align="left" width="260"><input type="text" name="EDIT_MAILSIZETHRESHOLD"
-									id="EDIT_MAILSIZETHRESHOLD" size="16"
+							<td class="gray" align="left" width="260">
+								<input type="text" name="EDIT_MAILSIZETHRESHOLD" id="EDIT_MAILSIZETHRESHOLD" size="16"
 									onPaste="this.value=this.value.replace(/[^0-9]/g,'');"
 									onKeyup="this.value=this.value.replace(/[^0-9]/g,'');"
-									onBlur="this.value=this.value.replace(/[^0-9]/g,'');"> KB</td>
+									onBlur="this.value=this.value.replace(/[^0-9]/g,'');"> KB
+							</td>
 						</tr>
 						<tr>
 							<td class="gray" align="right">附件大小审核限值:</td>
-							<td class="gray" align="left"><input type="text" name="EDIT_ATTACHSIZETHRESHOLD"
-									id="EDIT_ATTACHSIZETHRESHOLD" size="16"
-									onPaste="this.value=this.value.replace(/[^0-9]/g,'');"
+							<td class="gray" align="left">
+								<input type="text" name="EDIT_ATTACHSIZETHRESHOLD" id="EDIT_ATTACHSIZETHRESHOLD"
+									size="16" onPaste="this.value=this.value.replace(/[^0-9]/g,'');"
 									onKeyup="this.value=this.value.replace(/[^0-9]/g,'');"
-									onBlur="this.value=this.value.replace(/[^0-9]/g,'');"> KB</td>
+									onBlur="this.value=this.value.replace(/[^0-9]/g,'');"> KB
+							</td>
 						</tr>
 						<tr>
 							<td class="gray" align="right">默认策略:</td>
-							<td class="gray" align="left"><input type="checkbox" name="EDIT_DEFAULT" id="EDIT_DEFAULT">
+							<td class="gray" align="left">
+								<input type="checkbox" name="EDIT_DEFAULT" id="EDIT_DEFAULT">
 							</td>
 						</tr>
 					</table>

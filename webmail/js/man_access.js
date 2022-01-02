@@ -69,3 +69,34 @@ function click_div(cfgname, divobj, btnobj, ctrlobj, statusobj) {
         divobj.setAttribute('loaded', 'true');
     }
 }
+
+$(document).ready(function () {
+    $('#SAVE_GLOBAL_REJECT_LIST').click(function () {
+        save_config_file('GLOBAL_REJECT_LIST', $id('GLOBAL_REJECT_LIST'), $id('GLOBAL_REJECT_LIST_STATUS'));
+    });
+
+    $('#SAVE_GLOBAL_PERMIT_LIST').click(function () {
+        save_config_file('GLOBAL_PERMIT_LIST', $id('GLOBAL_PERMIT_LIST'), $id('GLOBAL_PERMIT_LIST_STATUS'));
+    });
+
+    $('#SAVE_WEBADMIN_PERMIT_LIST').click(function () {
+        save_config_file('WEBADMIN_PERMIT_LIST', $id('WEBADMIN_PERMIT_LIST'), $id('WEBADMIN_PERMIT_LIST_STATUS'));
+    });
+
+    $('#SAVE_DOMAIN_PERMIT_LIST').click(function () {
+        save_config_file('DOMAIN_PERMIT_LIST', $id('DOMAIN_PERMIT_LIST'), $id('DOMAIN_PERMIT_LIST_STATUS'));
+    });
+});
+
+$(document).ready(function () {
+    $("#ACCESS_TABS").tabs();
+    click_div('GLOBAL_REJECT_LIST', $id('GLOBAL_REJECT_LIST_DIV'), $id('GLOBAL_REJECT_LIST_BTN'), $id('GLOBAL_REJECT_LIST'), $id('GLOBAL_REJECT_LIST_STATUS'));
+    click_div('GLOBAL_PERMIT_LIST', $id('GLOBAL_PERMIT_LIST_DIV'), $id('GLOBAL_PERMIT_LIST_BTN'), $id('GLOBAL_PERMIT_LIST'), $id('GLOBAL_PERMIT_LIST_STATUS'));
+    click_div('DOMAIN_PERMIT_LIST', $id('DOMAIN_PERMIT_LIST_DIV'), $id('DOMAIN_PERMIT_LIST_BTN'), $id('DOMAIN_PERMIT_LIST'), $id('DOMAIN_PERMIT_LIST_STATUS'));
+    click_div('WEBADMIN_PERMIT_LIST', $id('WEBADMIN_PERMIT_LIST_DIV'), $id('WEBADMIN_PERMIT_LIST_BTN'), $id('WEBADMIN_PERMIT_LIST'), $id('WEBADMIN_PERMIT_LIST_STATUS'));
+    
+});
+
+$(window).on('unload',function(){
+
+})

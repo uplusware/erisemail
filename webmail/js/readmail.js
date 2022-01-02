@@ -453,6 +453,8 @@ function init() {
 function uninit() { }
 
 $(document).ready(function () {
+    init();
+
     $('#REMAIL').click(function () {
         remail();
     });
@@ -493,3 +495,7 @@ $(document).ready(function () {
         delmail();
     });
 });
+
+$(window).on('unload',function(){
+
+})

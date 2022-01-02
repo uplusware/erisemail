@@ -35,7 +35,13 @@ function upfile() {
 }
 
 $(document).ready(function () {
+    init();
+
     $('#UPLOADATT').click(function () {
         return upfile();
     });
 });
+
+$(window).on('unload',function(){
+
+})

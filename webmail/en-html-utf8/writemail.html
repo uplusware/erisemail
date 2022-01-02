@@ -15,7 +15,7 @@
 	<title>...::: Welcome to eRisemail System :::...</title>
 </head>
 
-<body onLoad="init()" onUnload="uninit()">
+<body>
 
 	<div id="PROCESSING_DIV" style="display:none;">
 		<table id="PROCESSING_TBL" width="100%" height="70" border="0" cellpadding="0" cellspacing="0">
@@ -56,23 +56,19 @@
 		<table id="USERTOPTBL" border="0" cellpadding="0" cellspacing="0" bgcolor="#EDF1F8">
 			<tr>
 				<td height="260">
-					<div style="overflow:auto;width:100%;height:100%; background-color: #FFFFFF;">
+					<div style="overflow:auto; width:100%; height:100%; background-color: #FFFFFF;">
 						<table id="USERTBL" border="0" bordercolorlight="#C0C0C0" cellpadding="0" cellspacing="0"
 							bordercolordark="#FFFFFF" bgcolor="#FFFFFF" class="gray">
 							<tr bgcolor="#FFFFCC">
 								<td class="gray" width="22" align="left"><input type="checkbox" name="selalluser"
-										id="selalluser" onClick="sel_alluser(this.checked)"></td>
+										id="selalluser"></td>
 								<td class="gray" width="22" align="left"><img src="pad.gif"></td>
-								<td class="gray" height="22" width="150" align="center"
-									onMouseOver="this.mousepoint = 99;this.style.cursor = 'pointer';"
-									onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';"
-									onClick="sort_users($id('ADDR_BOOK_DIV').getAttribute('who'), 'uname')"><b>ID</b>
+								<td class="gray" height="22" width="150" align="center" id="sort_by_name">
+									<b>ID</b>
 								</td>
-								<td class="gray" height="22" width="350" align="center"
-									onMouseOver="this.mousepoint = 99;this.style.cursor = 'pointer';"
-									onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';"
-									onClick="sort_users($id('ADDR_BOOK_DIV').getAttribute('who'), 'ualias')">
-									<b>Alias</b></td>
+								<td class="gray" height="22" width="350" align="center" id="sort_by_alias">
+									<b>Alias</b>
+								</td>
 							</tr>
 						</table>
 					</div>

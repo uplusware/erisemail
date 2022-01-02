@@ -54,8 +54,7 @@
 
 					<tr>
 						<td class="gray" valign="bottom">
-							<button id="SAVE1" name="SAVE" class="ui-button ui-corner-all ui-widget"
-								onclick="save_config_file('GLOBAL_REJECT_LIST', $id('GLOBAL_REJECT_LIST'), $id('GLOBAL_REJECT_LIST_STATUS'));">Save</button>
+							<button id="SAVE_GLOBAL_REJECT_LIST" name="SAVE" class="ui-button ui-corner-all ui-widget">Save</button>
 						</td>
 					</tr>
 				</table>
@@ -76,8 +75,7 @@
 
 					<tr>
 						<td class="gray" valign="bottom">
-							<button id="SAVE2" name="SAVE" class="ui-button ui-corner-all ui-widget"
-								onclick="save_config_file('GLOBAL_PERMIT_LIST', $id('GLOBAL_PERMIT_LIST'), $id('GLOBAL_PERMIT_LIST_STATUS'));">Save</button>
+							<button id="SAVE_GLOBAL_PERMIT_LIST" name="SAVE" class="ui-button ui-corner-all ui-widget">Save</button>
 						</td>
 					</tr>
 				</table>
@@ -97,8 +95,7 @@
 
 					<tr>
 						<td class="gray" valign="bottom">
-							<button id="SAVE4" name="SAVE" class="ui-button ui-corner-all ui-widget"
-								onclick="save_config_file('WEBADMIN_PERMIT_LIST', $id('WEBADMIN_PERMIT_LIST'), $id('WEBADMIN_PERMIT_LIST_STATUS'));">Save</button>
+							<button id="SAVE_WEBADMIN_PERMIT_LIST" name="SAVE" class="ui-button ui-corner-all ui-widget">Save</button>
 						</td>
 					</tr>
 				</table>
@@ -118,8 +115,7 @@
 
 					<tr>
 						<td class="gray" valign="bottom">
-							<button id="SAVE3" name="SAVE" class="ui-button ui-corner-all ui-widget"
-								onclick="save_config_file('DOMAIN_PERMIT_LIST', $id('DOMAIN_PERMIT_LIST'), $id('DOMAIN_PERMIT_LIST_STATUS'));">Save</button>
+							<button id="SAVE_DOMAIN_PERMIT_LIST" name="SAVE" class="ui-button ui-corner-all ui-widget">Save</button>
 						</td>
 					</tr>
 				</table>
@@ -127,15 +123,6 @@
 			</div>
 		</div>
 		</p>
-		<script>
-			$(function () {
-				$("#ACCESS_TABS").tabs();
-				click_div('GLOBAL_REJECT_LIST', $id('GLOBAL_REJECT_LIST_DIV'), $id('GLOBAL_REJECT_LIST_BTN'), $id('GLOBAL_REJECT_LIST'), $id('GLOBAL_REJECT_LIST_STATUS'));
-				click_div('GLOBAL_PERMIT_LIST', $id('GLOBAL_PERMIT_LIST_DIV'), $id('GLOBAL_PERMIT_LIST_BTN'), $id('GLOBAL_PERMIT_LIST'), $id('GLOBAL_PERMIT_LIST_STATUS'));
-				click_div('DOMAIN_PERMIT_LIST', $id('DOMAIN_PERMIT_LIST_DIV'), $id('DOMAIN_PERMIT_LIST_BTN'), $id('DOMAIN_PERMIT_LIST'), $id('DOMAIN_PERMIT_LIST_STATUS'));
-				click_div('WEBADMIN_PERMIT_LIST', $id('WEBADMIN_PERMIT_LIST_DIV'), $id('WEBADMIN_PERMIT_LIST_BTN'), $id('WEBADMIN_PERMIT_LIST'), $id('WEBADMIN_PERMIT_LIST_STATUS'));
-			});
-		</script>
 </body>
 
 </html>

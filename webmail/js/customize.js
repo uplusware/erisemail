@@ -101,9 +101,14 @@ function init() {
     window.parent.$id('NULLBAR').style.display = "block";
 }
 
-function uninit() { }
+function uninit() {
+        
+}
 
 $(document).ready(function () {
+    init();
+    userinfo();
+
     $('#CHANGE_ALIAS_BUTTON').click(function () {
         alias(document.getElementById('ALIAS').value);
     });
@@ -117,3 +122,7 @@ $(document).ready(function () {
         this.select()
     });
 });
+
+$(window).on('unload',function(){
+    uninit();
+})

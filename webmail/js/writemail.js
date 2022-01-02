@@ -1122,6 +1122,8 @@ function sort_users(who, orderby) {
 
 
 $(document).ready(function () {
+    init();
+
     $('#ADDRESS_BOOK1').click(function () {
         showbook(1, 'uname');
     });
@@ -1194,4 +1196,30 @@ $(document).ready(function () {
         isChange = true;
         toggle_onbeforeunload(isChange);
     });
+
+    $('#selalluser').click(function () {
+        sel_alluser(this.checked);
+    });
+
+    $('#sort_by_name').click(function () {
+        sort_users($id('ADDR_BOOK_DIV').getAttribute('who'), 'uname');
+    });
+
+    $('#sort_by_alias').click(function () {
+        sort_users($id('ADDR_BOOK_DIV').getAttribute('who'), 'ualias')
+    });
+
+    $('#sort_by_name, #sort_by_alias').mouseover(function () {
+        this.mousepoint = 99;
+        this.style.cursor = 'pointer';
+    });
+
+    $('#sort_by_name, #sort_by_alias').mouseout(function () {
+        this.mousepoint = 99;
+        this.style.cursor = 'default';
+    });
 });
+
+$(window).on('unload',function(){
+    uninit();
+})

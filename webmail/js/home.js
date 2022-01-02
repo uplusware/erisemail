@@ -251,6 +251,8 @@ function show_popup_view(url) {
 }
 
 $(document).ready(function () {
+    init();
+    
     $('#NEWMAIL').click(function () {
         newmail();
     });
@@ -304,3 +306,7 @@ $(document).ready(function () {
     });
 
 });
+
+$(window).on('unload',function(){
+
+})

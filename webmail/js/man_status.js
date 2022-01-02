@@ -120,3 +120,13 @@ function list_status() {
     xmlHttp.open("GET", qUrl, true);
     xmlHttp.send("");
 }
+
+$(document).ready(function () {
+    init();
+    
+    $("#STATUS_TABS").tabs();
+});
+
+$(window).on('unload',function(){
+
+})

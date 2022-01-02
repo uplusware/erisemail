@@ -18,8 +18,6 @@ function add_user_to_group(obj, groupname) {
     $id('ADDRS').setAttribute("groupname", groupname);
 
     load_members();
-
-    $id('selalluser').checked = false;
 }
 
 function do_del_user_from_group(groupname, userlist) {
@@ -408,3 +406,11 @@ function init() {
     window.parent.change_tab("group");
     load_groups();
 }
+
+$(document).ready(function () {
+    init();
+});
+
+$(window).on('unload',function(){
+
+})

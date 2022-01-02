@@ -31,4 +31,12 @@ $(document).ready(function () {
         this.focus();
         this.select()
     });
+
+    $("#login_button").click(function(){
+        login();
+    });
 });
+
+$(window).on('unload',function(){
+
+})

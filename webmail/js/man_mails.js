@@ -526,3 +526,39 @@ function init() {
     window.parent.change_tab("mail");
     load_unaudied_mails($id('PAGE_CUR').value);
 }
+
+$(document).ready(function () {
+    init();
+
+    $('#first_page_btn').click(function () {
+        clear_table($id('MAILTBL'));
+        $id('PAGE_CUR').value = 0;
+        load_unaudied_mails($id('PAGE_CUR').value);
+    });
+
+    $('#prev_page_btn').click(function () {
+        clear_table($id('MAILTBL'));
+        $id('PAGE_CUR').value = (parseInt($id('PAGE_CUR').value) - 1);
+        load_unaudied_mails($id('PAGE_CUR').value);
+    });
+
+    $('#next_page_btn').click(function () {
+        clear_table($id('MAILTBL'));
+        $id('PAGE_CUR').value = (parseInt($id('PAGE_CUR').value) + 1);
+        load_unaudied_mails($id('PAGE_CUR').value);
+    });
+
+    $('#last_page_btn').click(function () {
+        clear_table($id('MAILTBL'));
+        $id('PAGE_CUR').value = (parseInt($id('PAGE_NUM').value) - 1);
+        load_unaudied_mails($id('PAGE_CUR').value);
+    });
+
+    $('#selall').click(function () {
+        sel_all(this.checked);
+    });
+});
+
+$(window).on('unload',function(){
+
+})

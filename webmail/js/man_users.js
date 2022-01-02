@@ -481,3 +481,57 @@ function switch_id_type() {
         $id('NEW_LEVEL').value = $id('NEW_USER_DIV').getAttribute("defaultlevel");
     }
 }
+
+$(document).ready(function () {
+    init();
+
+    $('#uname_col').click(function () {
+        sort_users('uname');
+    });
+
+    $('#ualias_col').click(function () {
+        sort_users('ualias');
+    });
+
+    $('#uhost_col').click(function () {
+        sort_users('uhost');
+    });
+
+    $('#ulevel_col').click(function () {
+        sort_users('ulevel');
+    });
+
+    $('#utype_col').click(function () {
+        sort_users('utype');
+    });
+
+    $('#urole_col').click(function () {
+        sort_users('urole');
+    });
+
+    $('#ustatus_col').click(function () {
+        sort_users('ustatus');
+    });
+
+    $('#uname_col, #ualias_col, #uhost_col, #ulevel_col, #utype_col, #urole_col, #ustatus_col').mouseover(function () {
+        this.mousepoint = 99;
+        this.style.cursor = 'pointer';
+    });
+
+    $('#uname_col, #ualias_col, #uhost_col, #ulevel_col, #utype_col, #urole_col, #ustatus_col').mouseout(function () {
+        this.mousepoint = 99;
+        this.style.cursor = 'default';
+    });
+
+    $('#append_id').click(function () {
+        show_newuser_div();
+    });
+
+    $('[name="NEW_TYPE"]').click(function () {
+        switch_id_type();
+    });
+});
+
+$(window).on('unload',function(){
+
+})

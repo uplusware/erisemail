@@ -18,4 +18,14 @@ function logout() {
     xmlHttp.send("");
 }
 
-function change_tab(tabname) { }
+function change_tab(tabname) {
+    
+}
+
+$(document).ready(function () {
+    
+});
+
+$(window).on('unload',function(){
+
+})

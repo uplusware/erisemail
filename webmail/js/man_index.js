@@ -24,3 +24,18 @@ function manlogin() {
     xmlHttp.open("GET", qUrl, true);
     xmlHttp.send("");
 }
+
+$(document).ready(function () {
+    $('input').mouseover(function () {
+        this.focus();
+        this.select()
+    });
+
+    $("#manlogin_button").click(function(){
+        manlogin();
+    });
+});
+
+$(window).on('unload',function(){
+
+})

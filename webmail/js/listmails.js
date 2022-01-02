@@ -967,6 +967,8 @@ function show_mail_detail(url) {
 }
 
 $(document).ready(function () {
+    init();
+    
     $('#first_page_btn').click(function () {
         clear_table($id('MAILTBL')); $id('PAGE_CUR').value = 0;
         load_mails(Request.QueryString('DIRID'), $id('PAGE_CUR').value, Request.QueryString('TOP_USAGE'));
@@ -986,4 +988,12 @@ $(document).ready(function () {
         clear_table($id('MAILTBL')); $id('PAGE_CUR').value = (parseInt($id('PAGE_NUM').value) - 1);
         load_mails(Request.QueryString('DIRID'), $id('PAGE_CUR').value);
     });
+
+    $('#selall').click(function () {
+        sel_all(this.checked);
+    });
 });
+
+$(window).on('unload',function(){
+
+})

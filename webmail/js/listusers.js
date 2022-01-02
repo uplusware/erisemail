@@ -126,7 +126,9 @@ function init() {
 
 }
 
-function uninit() { }
+function uninit() {
+    
+}
 
 function show_mail_detail(url) {
     window.open(url);
@@ -144,3 +146,43 @@ function sort_users(orderby) {
 
     load_users($id('USERTBL').getAttribute('orderby'), $id('USERTBL').getAttribute($id('USERTBL').getAttribute('orderby')))
 }
+
+$(document).ready(function () {
+    init();
+    $id('USERTBL').setAttribute('orderby', 'utime');
+    load_users($id('USERTBL').getAttribute('orderby'), $id('USERTBL').getAttribute($id('USERTBL').getAttribute('orderby')));
+
+    $('#uname_col').click(function () {
+        sort_users('uname');
+    });
+
+    $('#ualias_col').click(function () {
+        sort_users('ualias');
+    });
+
+    $('#utype_col').click(function () {
+        sort_users('utype');
+    });
+
+    $('#urole_col').click(function () {
+        sort_users('urole');
+    });
+
+    $('#ustatus_col').click(function () {
+        sort_users('ustatus');
+    });
+
+    $('#uname_col, #ualias_col, #utype_col, #urole_col, #ustatus_col').mouseover(function () {
+        this.mousepoint = 99;
+        this.style.cursor = 'pointer';
+    });
+
+    $('#uname_col, #ualias_col, #utype_col, #urole_col, #ustatus_col').mouseout(function () {
+        this.mousepoint = 99;
+        this.style.cursor = 'default';
+    });
+});
+
+$(window).on('unload',function(){
+    uninit();
+})

@@ -71,3 +71,11 @@ function list_logs() {
     xmlHttp.open("GET", qUrl, true);
     xmlHttp.send("");
 }
+
+$(document).ready(function () {
+    init();
+});
+
+$(window).on('unload',function(){
+
+})

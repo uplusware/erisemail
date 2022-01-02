@@ -13,10 +13,7 @@
 	<title>...::: Welcome to eRisemail System :::...</title>
 </head>
 
-<body
-	onLoad="init();$id('USERTBL').setAttribute('orderby', 'utime');load_users($id('USERTBL').getAttribute('orderby'), $id('USERTBL').getAttribute($id('USERTBL').getAttribute('orderby')));"
-	onUnload="uninit()" bgcolor="#FFFFFF">
-
+<body bgcolor="#FFFFFF">
 	<table border="0" width="100%" cellpadding="0" cellspacing="0" height="100%" bgcolor="#FFFFFF">
 		<tr>
 			<td valign="top">
@@ -25,34 +22,19 @@
 					<tr height="25">
 						<td class="title" width="22" background="titlebg.gif" align="center" valign="middle"
 							height="25"><img src="book.gif"></td>
-						<td class="title" height="22" align="center" background="titlebg.gif"
-							onMouseOver="this.mousepoint = 99;this.style.cursor = 'pointer';"
-							onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';"
-							onClick="sort_users('uname')">
+						<td class="title" height="22" align="center" background="titlebg.gif" id="uname_col">
 							<font color="#FFFFFF"><b>ID</b></font>
 						</td>
-						<td class="title" height="22" align="center" background="titlebg.gif"
-							onMouseOver="this.mousepoint = 99;this.style.cursor = 'pointer';"
-							onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';"
-							onClick="sort_users('ualias')">
+						<td class="title" height="22" align="center" background="titlebg.gif" id="ualias_col">
 							<font color="#FFFFFF"><b>Alias</b></font>
 						</td>
-						<td class="title" height="22" align="center" background="titlebg.gif"
-							onMouseOver="this.mousepoint = 99;this.style.cursor = 'pointer';"
-							onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';"
-							onClick="sort_users('utype')">
+						<td class="title" height="22" align="center" background="titlebg.gif" id="utype_col">
 							<font color="#FFFFFF"><b>Type</b></font>
 						</td>
-						<td class="title" height="22" align="center" background="titlebg.gif"
-							onMouseOver="this.mousepoint = 99;this.style.cursor = 'pointer';"
-							onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';"
-							onClick="sort_users('urole')">
+						<td class="title" height="22" align="center" background="titlebg.gif" id="urole_col">
 							<font color="#FFFFFF"><b>Role</b></font>
 						</td>
-						<td class="title" height="22" align="center" background="titlebg.gif"
-							onMouseOver="this.mousepoint = 99;this.style.cursor = 'pointer';"
-							onMouseOut="this.mousepoint = 99;this.style.cursor = 'default';"
-							onClick="sort_users('ustatus')">
+						<td class="title" height="22" align="center" background="titlebg.gif" id="ustatus_col">
 							<font color="#FFFFFF"><b>Status</b></font>
 						</td>
 					</tr>

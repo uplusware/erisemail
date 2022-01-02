@@ -203,3 +203,11 @@ function reject_mail() {
     window.opener.do_reject_mail(Request.QueryString('ID'));
     window.close();
 }
+
+$(document).ready(function () {
+    init();
+});
+
+$(window).on('unload',function(){
+
+})

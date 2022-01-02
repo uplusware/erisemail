@@ -263,3 +263,12 @@ function load_dirs(pid, gpath, topusage, layer, begtr) {
     xmlHttp.open("GET", qUrl, true);
     xmlHttp.send("");
 }
+
+$(document).ready(function () {
+    load_dirs(-1, '', 'common', -1, 0);
+    ontimer();
+});
+
+$(window).on('unload',function(){
+
+})
