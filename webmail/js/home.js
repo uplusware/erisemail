@@ -8,9 +8,9 @@ function logout() {
             var responseNode = xmldom.documentElement.childNodes.item(0);
             if (responseNode.tagName == "response") {
                 var errno = responseNode.getAttribute("errno")
-                    if (errno == "0" || errno == 0) {
-                        window.location = "/";
-                    }
+                if (errno == "0" || errno == 0) {
+                    window.location = "/";
+                }
             }
         }
     }
@@ -32,12 +32,12 @@ function create_label(dirname, dirid) {
             var responseNode = xmldom.documentElement.childNodes.item(0);
             if (responseNode.tagName == "response") {
                 var errno = responseNode.getAttribute("errno")
-                    if (errno == "0" || errno == 0) {
-                        clear_table(window.parent.leftmenuframe.$id('DIRTBL'));
-                        window.parent.leftmenuframe.load_dirs(-1, '', 'common', -1, 0);
-                    } else {
-                        alert(LANG_RESOURCE['CREATE'] + " '" + dirname + "' " + LANG_RESOURCE['FAILED']);
-                    }
+                if (errno == "0" || errno == 0) {
+                    clear_table(window.parent.leftmenuframe.$id('DIRTBL'));
+                    window.parent.leftmenuframe.load_dirs(-1, '', 'common', -1, 0);
+                } else {
+                    alert(LANG_RESOURCE['CREATE'] + " '" + dirname + "' " + LANG_RESOURCE['FAILED']);
+                }
             }
         }
     }
@@ -55,17 +55,17 @@ function login_username() {
             var responseNode = xmldom.documentElement.childNodes.item(0);
             if (responseNode.tagName == "response") {
                 var errno = responseNode.getAttribute("errno")
-                    if (errno == "0" || errno == 0) {
-                        var strTmp;
-                        var LoginUsername = responseNode.childNodes;
-                        for (var i = 0; i < LoginUsername.length; i++) {
-                            if (LoginUsername.item(i).tagName == "loginusername") {
-                                strTmp = LoginUsername.item(i).childNodes[0] == null ? "" : LoginUsername.item(i).childNodes[0].nodeValue;
-                            }
+                if (errno == "0" || errno == 0) {
+                    var strTmp;
+                    var LoginUsername = responseNode.childNodes;
+                    for (var i = 0; i < LoginUsername.length; i++) {
+                        if (LoginUsername.item(i).tagName == "loginusername") {
+                            strTmp = LoginUsername.item(i).childNodes[0] == null ? "" : LoginUsername.item(i).childNodes[0].nodeValue;
                         }
-
-                        $id('LOGIN_USERNAME').innerHTML = "<b>[" + strTmp + "]</b>" + LANG_RESOURCE['WHOSE_FOLDER'];
                     }
+
+                    $id('LOGIN_USERNAME').innerHTML = "<b>[" + strTmp + "]</b>" + LANG_RESOURCE['WHOSE_FOLDER'];
+                }
             }
         }
     }
@@ -187,7 +187,7 @@ function show_copy_mail_dir_div() {
     $id('DIRS_DIV2').style.display = "none";
     $id('DIRS_DIV3').style.display = "none";
     var Pos = GetObjPos($id('COPYMAIL'))
-        show_dirs($id('DIRS_DIV1'), $id('DIRTBL1'), Pos.x, Pos.y + Pos.h + 2, "seldir1");
+    show_dirs($id('DIRS_DIV1'), $id('DIRTBL1'), Pos.x, Pos.y + Pos.h + 2, "seldir1");
 }
 
 function show_move_mail_dir_div() {
@@ -211,7 +211,7 @@ function show_move_mail_dir_div() {
     $id('DIRS_DIV3').style.display = "none";
 
     var Pos = GetObjPos($id('MOVEMAIL'))
-        show_dirs($id('DIRS_DIV2'), $id('DIRTBL2'), Pos.x, Pos.y + Pos.h + 2, "seldir2");
+    show_dirs($id('DIRS_DIV2'), $id('DIRTBL2'), Pos.x, Pos.y + Pos.h + 2, "seldir2");
 }
 
 function newmail() {
@@ -238,7 +238,7 @@ function show_add_dir_div() {
     $id('DIRS_DIV1').style.display = "none";
     $id('DIRS_DIV2').style.display = "none";
     var Pos = GetObjPos($id('NEW_LABEL'))
-        show_dirs($id('DIRS_DIV3'), $id('DIRTBL3'), Pos.x, Pos.y + Pos.h + 2, "seldir3");
+    show_dirs($id('DIRS_DIV3'), $id('DIRTBL3'), Pos.x, Pos.y + Pos.h + 2, "seldir3");
 }
 
 function show_frame1_view(url) {
@@ -249,3 +249,58 @@ function show_popup_view(url) {
     window.open(url);
 
 }
+
+$(document).ready(function () {
+    $('#NEWMAIL').click(function () {
+        newmail();
+    });
+
+    $('#REMAIL').click(function () {
+        remail();
+    });
+
+    $('#RETOALL').click(function () {
+        remail_all();
+    });
+
+    $('#FORWARD').click(function () {
+        forward_mail();
+    });
+
+    $('#FLAG').click(function () {
+        flag_mail(true);
+    });
+
+    $('#UNFLAG').click(function () {
+        flag_mail(false);
+    });
+
+    $('#SEEN').click(function () {
+        seen_mail(true);
+    });
+
+    $('#UNSEEN').click(function () {
+        seen_mail(false);
+    });
+
+    $('#COPYMAIL').click(function () {
+        show_copy_mail_dir_div();
+    });
+
+    $('#MOVEMAIL').click(function () {
+        show_move_mail_dir_div();
+    });
+
+    $('#DELMAIL').click(function () {
+        delmail();
+    });
+
+    $('#NEWDIR').click(function () {
+        window.parent.childframe1.create_root_dir();
+    });
+
+    $('#REFRESH_DIR').click(function () {
+        refresh_dir();
+    });
+
+});

@@ -163,11 +163,11 @@ function load_dirs(tblobj, pid, gpath, layer, begtr, checkname) {
         var responseNode = xmldom.documentElement.childNodes.item(0);
         if (responseNode.tagName == "response") {
             var errno = responseNode.getAttribute("errno")
-                if (errno == "0" || errno == 0) {
-                    var dirList = responseNode.childNodes;
+            if (errno == "0" || errno == 0) {
+                var dirList = responseNode.childNodes;
 
-                    output_dir(tblobj, pid, "", dirList, layer, begtr, checkname);
-                }
+                output_dir(tblobj, pid, "", dirList, layer, begtr, checkname);
+            }
         }
     }
     return strTmp;

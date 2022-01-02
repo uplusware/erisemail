@@ -1,93 +1,117 @@
 <html>
 
 <head>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-<LINK rel="Bookmark" href="erisemail.ico" >
-<LINK rel="Shortcut Icon" href="erisemail.ico" />
-<link href="common.css" rel="stylesheet" type="text/css">
-<script type="text/javascript" src="language.js"></script>
-<script type="text/javascript" src="inc.js"></script>
-<script type="text/javascript" src="man_readmail.js"></script>
-<script type="text/javascript" src="calendar.js"></script>
-<title>...::: Welcome to eRisemail System :::...</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <LINK rel="Bookmark" href="erisemail.ico">
+  <LINK rel="Shortcut Icon" href="erisemail.ico" />
+  <link href="common.css" rel="stylesheet" type="text/css">
+  <script type="text/javascript" src="language.js"></script>
+  <script type="text/javascript" src="inc.js"></script>
+  <script src="/jqueryui/external/jquery/jquery.js"></script>
+  <script src="/jqueryui/jquery-ui.js"></script>
+  <script type="text/javascript" src="man_readmail.js"></script>
+  <script type="text/javascript" src="calendar.js"></script>
+  <title>...::: Welcome to eRisemail System :::...</title>
 </head>
 
 <body onLoad="init()">
-<p align="center">
-<table border="0" width="920" cellpadding="0" cellspacing="0" height="600" bgcolor="#FFFFFF">
-	<tr height="22">
-	<td>
-		<table border="0" width="100%" bordercolorlight="#C0C0C0" cellpadding="0" cellspacing="0" bordercolordark="#FFFFFF">
-		<tr><td class="title">
-		  	<table background="topbg.gif" border="0" width="100%" bordercolorlight="#C0C0C0" cellspacing="0" cellpadding="2" bordercolordark="#FFFFFF">
-		  		<tr valign="middle" height="32">
-		  			<td align="center" width="22"><img src="readmail.gif"></td>
-		  			<td align="left" ><font color="#FFFFFF"><b>Mail Content</b></font></td>
-		  		</tr>
-		  	</table>
-		</td></tr>
-		</table>
-	</td>
-	</tr>
-	<tr>
-    <td valign="top">
-    	<table border="0" cellpadding="0" cellspacing="0" width="100%" height="100%">
-        <tr valign="top"> 
-          <td>
-          	<table border="1" width="100%" bordercolorlight="#C0C0C0" cellspacing="0" bordercolordark="#FFFFFF" class="gray">
-              <tr id="fromcol" height="30"> 
-                <td class="gray" bgcolor="#EFEFEF"  width="95" align="right"><b>Sender:</b></td>
-                <td class="gray" bgcolor="#FFFFCC"><div id="mailfrom"></div></td>
-              </tr>
-              <tr id="tocol" height="30"> 
-                <td class="gray" bgcolor="#EFEFEF"  width="95" align="right"><b>To:</b></td>
-                <td class="gray"  bgcolor="#FFFFCC"><div id="mailto"></div></td>
-              </tr>
-              <tr id="cccol" height="30" > 
-                <td class="gray" bgcolor="#EFEFEF"  width="95"  align="right"><b>Cc:</b></td>
-                <td class="gray" bgcolor="#FFFFCC"><div id="mailcc"></div></td>
-              </tr>
-              <tr id="timecol" height="30" > 
-                <td class="gray" bgcolor="#EFEFEF"  width="95" align="right"><b>Date:</b></td>
-                <td class="gray" bgcolor="#FFFFCC"><div id="maildate"></div></td>
-              </tr>
-              <tr id="subjectcol" height="30" > 
-                <td class="gray" bgcolor="#EFEFEF"  width="95" align="right"><b>Subject:</b></td>
-                <td class="gray" bgcolor="#FFFFCC"><div id="mailsubject"></div></td>
-              </tr>
-            </table>
-          </td>
-        </tr>
-        <tr> 
-          <td>
-          	<table border="0" width="100%" height="100%" bordercolorlight="#C0C0C0" cellpadding="0" cellspacing="0" bordercolordark="#FFFFFF">
-              <tr bgcolor="#FFFFFF" height="100%"> 
-                <td class="gray" valign="top">
-                	<table width="100%" height="100%" border="0" cellspacing="0" cellpadding="2">
-					  <tr>
-					    <td width="100%" height="100%" id="mailcontentframe"><div id="mailcontent" class="div2"></div></td>
-					  </tr>
-					</table>
-                </td>
-              </tr>
-            </table>
-          </td>
-        </tr>
-      </table>
-  </td>
-  </tr>
-  <tr height="22">
-	  <td>
-		<table border="0" cellpadding="0" cellspacing="3">
-			<tr valign="left">
-				<td><img src="pass.gif"></td><td><a href="javascript:pass_mail();">Pass</a></td>
-				<td><img src="reject.gif"></td><td><a href="javascript:reject_mail();">Reject</a></td>
-			</tr>
-		</table>
-	  </td>
-  </tr>
-</table>
-</p>
+  <p align="center">
+  <table border="0" width="920" cellpadding="0" cellspacing="0" height="600" bgcolor="#FFFFFF">
+    <tr height="22">
+      <td>
+        <table border="0" width="100%" bordercolorlight="#C0C0C0" cellpadding="0" cellspacing="0"
+          bordercolordark="#FFFFFF">
+          <tr>
+            <td class="title">
+              <table background="topbg.gif" border="0" width="100%" bordercolorlight="#C0C0C0" cellspacing="0"
+                cellpadding="2" bordercolordark="#FFFFFF">
+                <tr valign="middle" height="32">
+                  <td align="center" width="22"><img src="readmail.gif"></td>
+                  <td align="left">
+                    <font color="#FFFFFF"><b>Mail Content</b></font>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+    <tr>
+      <td valign="top">
+        <table border="0" cellpadding="0" cellspacing="0" width="100%" height="100%">
+          <tr valign="top">
+            <td>
+              <table border="1" width="100%" bordercolorlight="#C0C0C0" cellspacing="0" bordercolordark="#FFFFFF"
+                class="gray">
+                <tr id="fromcol" height="30">
+                  <td class="gray" bgcolor="#EFEFEF" width="95" align="right"><b>Sender:</b></td>
+                  <td class="gray" bgcolor="#FFFFCC">
+                    <div id="mailfrom"></div>
+                  </td>
+                </tr>
+                <tr id="tocol" height="30">
+                  <td class="gray" bgcolor="#EFEFEF" width="95" align="right"><b>To:</b></td>
+                  <td class="gray" bgcolor="#FFFFCC">
+                    <div id="mailto"></div>
+                  </td>
+                </tr>
+                <tr id="cccol" height="30">
+                  <td class="gray" bgcolor="#EFEFEF" width="95" align="right"><b>Cc:</b></td>
+                  <td class="gray" bgcolor="#FFFFCC">
+                    <div id="mailcc"></div>
+                  </td>
+                </tr>
+                <tr id="timecol" height="30">
+                  <td class="gray" bgcolor="#EFEFEF" width="95" align="right"><b>Date:</b></td>
+                  <td class="gray" bgcolor="#FFFFCC">
+                    <div id="maildate"></div>
+                  </td>
+                </tr>
+                <tr id="subjectcol" height="30">
+                  <td class="gray" bgcolor="#EFEFEF" width="95" align="right"><b>Subject:</b></td>
+                  <td class="gray" bgcolor="#FFFFCC">
+                    <div id="mailsubject"></div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <table border="0" width="100%" height="100%" bordercolorlight="#C0C0C0" cellpadding="0" cellspacing="0"
+                bordercolordark="#FFFFFF">
+                <tr bgcolor="#FFFFFF" height="100%">
+                  <td class="gray" valign="top">
+                    <table width="100%" height="100%" border="0" cellspacing="0" cellpadding="2">
+                      <tr>
+                        <td width="100%" height="100%" id="mailcontentframe">
+                          <div id="mailcontent" class="div2"></div>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+    <tr height="22">
+      <td>
+        <table border="0" cellpadding="0" cellspacing="3">
+          <tr valign="left">
+            <td><img src="pass.gif"></td>
+            <td><a href="javascript:pass_mail();">Pass</a></td>
+            <td><img src="reject.gif"></td>
+            <td><a href="javascript:reject_mail();">Reject</a></td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+  </p>
 </body>
 
 </html>

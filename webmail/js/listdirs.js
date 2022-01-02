@@ -15,16 +15,16 @@ function get_total_mail_num(dirid, tdobj) {
                 var responseNode = xmldom.documentElement.childNodes.item(0);
                 if (responseNode.tagName == "response") {
                     var errno = responseNode.getAttribute("errno")
-                        if (errno == "0" || errno == 0) {
-                            var strTmp;
-                            var countList = responseNode.childNodes;
-                            for (var i = 0; i < countList.length; i++) {
-                                if (countList.item(i).tagName == "count") {
-                                    tdobj.innerHTML = countList.item(i).childNodes[0] == null ? "0" : countList.item(i).childNodes[0].nodeValue + " " + LANG_RESOURCE['MAILS'];
+                    if (errno == "0" || errno == 0) {
+                        var strTmp;
+                        var countList = responseNode.childNodes;
+                        for (var i = 0; i < countList.length; i++) {
+                            if (countList.item(i).tagName == "count") {
+                                tdobj.innerHTML = countList.item(i).childNodes[0] == null ? "0" : countList.item(i).childNodes[0].nodeValue + " " + LANG_RESOURCE['MAILS'];
 
-                                }
                             }
                         }
+                    }
                 }
             }
         } else {
@@ -46,15 +46,15 @@ function delete_label(dirid, dirname, tdobj) {
             var responseNode = xmldom.documentElement.childNodes.item(0);
             if (responseNode.tagName == "response") {
                 var errno = responseNode.getAttribute("errno")
-                    if (errno == "0" || errno == 0) {
-                        clear_table(window.parent.leftmenuframe.$id('DIRTBL'));
-                        window.parent.leftmenuframe.load_dirs(-1, '', 'common', -1, 0);
+                if (errno == "0" || errno == 0) {
+                    clear_table(window.parent.leftmenuframe.$id('DIRTBL'));
+                    window.parent.leftmenuframe.load_dirs(-1, '', 'common', -1, 0);
 
-                        clear_table($id('DIRTBL'));
-                        travel_dirs(-1, '', -1);
-                    } else {
-                        alert(LANG_RESOURCE['REMOVE'] + " '" + dirname + "' " + LANG_RESOURCE['FAILED']);
-                    }
+                    clear_table($id('DIRTBL'));
+                    travel_dirs(-1, '', -1);
+                } else {
+                    alert(LANG_RESOURCE['REMOVE'] + " '" + dirname + "' " + LANG_RESOURCE['FAILED']);
+                }
             }
         }
     }
@@ -74,11 +74,11 @@ function show_inputlabel_div(dirid) {
         modal: false,
         title: LANG_RESOURCE['NEW_FOLDER'],
         buttons: {
-            [LANG_RESOURCE['OK']] : function () {
+            [LANG_RESOURCE['OK']]: function () {
                 do_create_label();
                 $(this).dialog("close");
             },
-            [LANG_RESOURCE['CANCEL']] : function () {
+            [LANG_RESOURCE['CANCEL']]: function () {
                 $(this).dialog("close");
             }
         }
@@ -257,11 +257,11 @@ function travel_dirs(pid, gpath, layer) {
                 var responseNode = xmldom.documentElement.childNodes.item(0);
                 if (responseNode.tagName == "response") {
                     var errno = responseNode.getAttribute("errno")
-                        if (errno == "0" || errno == 0) {
-                            var dirList = responseNode.childNodes;
+                    if (errno == "0" || errno == 0) {
+                        var dirList = responseNode.childNodes;
 
-                            output_dir($id('DIRTBL'), pid, "", dirList, layer);
-                        }
+                        output_dir($id('DIRTBL'), pid, "", dirList, layer);
+                    }
                 }
             }
         }
@@ -284,16 +284,16 @@ function create_label(dirname, dirid) {
             var responseNode = xmldom.documentElement.childNodes.item(0);
             if (responseNode.tagName == "response") {
                 var errno = responseNode.getAttribute("errno")
-                    if (errno == "0" || errno == 0) {
-                        clear_table(window.parent.leftmenuframe.$id('DIRTBL'));
-                        window.parent.leftmenuframe.load_dirs(-1, '', 'common', -1, 0);
+                if (errno == "0" || errno == 0) {
+                    clear_table(window.parent.leftmenuframe.$id('DIRTBL'));
+                    window.parent.leftmenuframe.load_dirs(-1, '', 'common', -1, 0);
 
-                        clear_table($id('DIRTBL'));
-                        travel_dirs(-1, '', -1);
+                    clear_table($id('DIRTBL'));
+                    travel_dirs(-1, '', -1);
 
-                    } else {
-                        alert(LANG_RESOURCE['CREATE'] + " '" + dirname + "' " + LANG_RESOURCE['FAILED']);
-                    }
+                } else {
+                    alert(LANG_RESOURCE['CREATE'] + " '" + dirname + "' " + LANG_RESOURCE['FAILED']);
+                }
             }
         }
     }
@@ -309,7 +309,7 @@ function init() {
     window.parent.$id('NULLBAR').style.display = "none";
 }
 
-function uninit() {}
+function uninit() { }
 
 function login_username() {
     var qUrl = "/api/currentusername.xml";
@@ -321,17 +321,17 @@ function login_username() {
             var responseNode = xmldom.documentElement.childNodes.item(0);
             if (responseNode.tagName == "response") {
                 var errno = responseNode.getAttribute("errno")
-                    if (errno == "0" || errno == 0) {
-                        var strTmp;
-                        var LoginUsername = responseNode.childNodes;
-                        for (var i = 0; i < LoginUsername.length; i++) {
-                            if (LoginUsername.item(i).tagName == "loginusername") {
-                                strTmp = LoginUsername.item(i).childNodes[0] == null ? "" : LoginUsername.item(i).childNodes[0].nodeValue;
-                            }
+                if (errno == "0" || errno == 0) {
+                    var strTmp;
+                    var LoginUsername = responseNode.childNodes;
+                    for (var i = 0; i < LoginUsername.length; i++) {
+                        if (LoginUsername.item(i).tagName == "loginusername") {
+                            strTmp = LoginUsername.item(i).childNodes[0] == null ? "" : LoginUsername.item(i).childNodes[0].nodeValue;
                         }
-
-                        $id('LOGIN_USERNAME').innerHTML = "<font color=\"#FFFFFF\"><b>[" + strTmp + "]</b>" + LANG_RESOURCE['WHOSE_FOLDER'] + "</font>";
                     }
+
+                    $id('LOGIN_USERNAME').innerHTML = "<font color=\"#FFFFFF\"><b>[" + strTmp + "]</b>" + LANG_RESOURCE['WHOSE_FOLDER'] + "</font>";
+                }
             }
         }
     }

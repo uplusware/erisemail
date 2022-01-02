@@ -63,9 +63,9 @@ function paintColorDiv(cmd, divid) {
         Str += "<tr>";
         for (var j = 0; j < arrColor[i].length; j++) {
             Str += "<td class='td' style='background-color:#" + arrColor[i][j] + ";border:1px solid #fafafa;'"
-             + " onmouseover='this.mousepoint = 99; this.style.cursor =\"pointer\";' onmouseout='this.mousepoint = 99;this.style.cursor =\"default\";'"
-             + " onclick='colorCmd(\"" + cmd + "\", \"" + divid + "\", \"#" + arrColor[i][j] + "\")'>"
-             + "<img style='width:12px;height:12px' " + " style='background-color:#" + arrColor[i][j] + ";border:solid 1px #cccccc'/></td>";
+                + " onmouseover='this.mousepoint = 99; this.style.cursor =\"pointer\";' onmouseout='this.mousepoint = 99;this.style.cursor =\"default\";'"
+                + " onclick='colorCmd(\"" + cmd + "\", \"" + divid + "\", \"#" + arrColor[i][j] + "\")'>"
+                + "<img style='width:12px;height:12px' " + " style='background-color:#" + arrColor[i][j] + ";border:solid 1px #cccccc'/></td>";
         }
         Str += "</tr>";
     }
@@ -204,9 +204,9 @@ function do_delsentmail() {
         var responseNode = xmldom.documentElement.childNodes.item(0);
         if (responseNode.tagName == "response") {
             var errno = responseNode.getAttribute("errno")
-                if (errno == "0" || errno == 0) {
-                    return true;
-                }
+            if (errno == "0" || errno == 0) {
+                return true;
+            }
         }
     }
     return false;
@@ -230,9 +230,9 @@ function do_trashmail() {
         var responseNode = xmldom.documentElement.childNodes.item(0);
         if (responseNode.tagName == "response") {
             var errno = responseNode.getAttribute("errno")
-                if (errno == "0" || errno == 0) {
-                    return true;
-                }
+            if (errno == "0" || errno == 0) {
+                return true;
+            }
         }
     }
     return false;
@@ -258,7 +258,7 @@ function flag_mail(flag) {
             var responseNode = xmldom.documentElement.childNodes.item(0);
             if (responseNode.tagName == "response") {
                 var errno = responseNode.getAttribute("errno")
-                    if (errno == "0") {}
+                if (errno == "0") { }
             }
         }
     }
@@ -286,7 +286,7 @@ function seen_mail(flag) {
             var responseNode = xmldom.documentElement.childNodes.item(0);
             if (responseNode.tagName == "response") {
                 var errno = responseNode.getAttribute("errno")
-                    if (errno == "0" || errno == 0) {}
+                if (errno == "0" || errno == 0) { }
             }
         }
     }
@@ -321,25 +321,25 @@ function do_savesent() {
                 var responseNode = xmldom.documentElement.childNodes.item(0);
                 if (responseNode.tagName == "response") {
                     var errno = responseNode.getAttribute("errno")
-                        if (errno == "0" || errno == 0) {
-                            do_delsentmail();
+                    if (errno == "0" || errno == 0) {
+                        do_delsentmail();
 
-                            $id('PROCESSING_TBL').rows[0].cells[0].innerHTML = LANG_RESOURCE['SAVE_MAIL_TO_SENT_FOLDER_OK'];
-                            $("#PROCESSING_DIV").dialog();
+                        $id('PROCESSING_TBL').rows[0].cells[0].innerHTML = LANG_RESOURCE['SAVE_MAIL_TO_SENT_FOLDER_OK'];
+                        $("#PROCESSING_DIV").dialog();
 
-                            if (window.opener && window.opener.refresh)
-                                window.opener.refresh();
-                            else if (window.opener && window.opener.childframe1 && window.opener.childframe1.refresh)
-                                window.opener.childframe1.refresh();
+                        if (window.opener && window.opener.refresh)
+                            window.opener.refresh();
+                        else if (window.opener && window.opener.childframe1 && window.opener.childframe1.refresh)
+                            window.opener.childframe1.refresh();
 
-                            isChange = false;
-                            window.onbeforeunload = null;
+                        isChange = false;
+                        window.onbeforeunload = null;
 
-                            window.close();
-                        } else {
-                            $id('PROCESSING_TBL').rows[0].cells[0].innerHTML = "<font color='#FF0000'>" + LANG_RESOURCE['SAVE_MAIL_TO_SENT_FOLDER_FAILED'] + "</font>";
-                            $("#PROCESSING_DIV").dialog();
-                        }
+                        window.close();
+                    } else {
+                        $id('PROCESSING_TBL').rows[0].cells[0].innerHTML = "<font color='#FF0000'>" + LANG_RESOURCE['SAVE_MAIL_TO_SENT_FOLDER_FAILED'] + "</font>";
+                        $("#PROCESSING_DIV").dialog();
+                    }
                 }
             } else {
                 $id('PROCESSING_TBL').rows[0].cells[0].innerHTML = "<font color='#FF0000'>" + LANG_RESOURCE['SAVE_MAIL_TO_SENT_FOLDER_FAILED'] + "</font>";
@@ -400,17 +400,17 @@ function do_send_mail() {
                 var responseNode = xmldom.documentElement.childNodes.item(0);
                 if (responseNode.tagName == "response") {
                     var errno = responseNode.getAttribute("errno")
-                        if (errno == "0") {
-                            isChange = false;
-                            toggle_onbeforeunload(isChange);
-                            $id('PROCESSING_TBL').rows[0].cells[0].innerHTML = LANG_RESOURCE['SEND_MAIL_OK'];
-                            $("#PROCESSING_DIV").dialog();
+                    if (errno == "0") {
+                        isChange = false;
+                        toggle_onbeforeunload(isChange);
+                        $id('PROCESSING_TBL').rows[0].cells[0].innerHTML = LANG_RESOURCE['SEND_MAIL_OK'];
+                        $("#PROCESSING_DIV").dialog();
 
-                            do_savesent();
-                        } else {
-                            $id('PROCESSING_TBL').rows[0].cells[0].innerHTML = "<font color='#FF0000'>" + LANG_RESOURCE['SEND_MAIL_FAILED_FOR_HUGE_SIZE'] + "</font>";
-                            $("#PROCESSING_DIV").dialog();
-                        }
+                        do_savesent();
+                    } else {
+                        $id('PROCESSING_TBL').rows[0].cells[0].innerHTML = "<font color='#FF0000'>" + LANG_RESOURCE['SEND_MAIL_FAILED_FOR_HUGE_SIZE'] + "</font>";
+                        $("#PROCESSING_DIV").dialog();
+                    }
                 }
             } else {
                 $id('PROCESSING_TBL').rows[0].cells[0].innerHTML = "<font color='#FF0000'>" + LANG_RESOURCE['SEND_MAIL_FAILED'] + "</font>";
@@ -461,26 +461,26 @@ function do_savedraft() {
                 var responseNode = xmldom.documentElement.childNodes.item(0);
                 if (responseNode.tagName == "response") {
                     var errno = responseNode.getAttribute("errno")
-                        if (errno == "0") {
-                            isChange = false;
-                            toggle_onbeforeunload(isChange);
+                    if (errno == "0") {
+                        isChange = false;
+                        toggle_onbeforeunload(isChange);
 
-                            var bodyList = responseNode.childNodes;
-                            for (var i = 0; i < bodyList.length; i++) {
-                                if (bodyList.item(i).tagName == "draftid") {
-                                    $id('DRAFTID').value = bodyList.item(i).childNodes[0].nodeValue;
-                                }
+                        var bodyList = responseNode.childNodes;
+                        for (var i = 0; i < bodyList.length; i++) {
+                            if (bodyList.item(i).tagName == "draftid") {
+                                $id('DRAFTID').value = bodyList.item(i).childNodes[0].nodeValue;
                             }
-
-                            $id('PROCESSING_TBL').rows[0].cells[0].innerHTML = LANG_RESOURCE['SAVE_DRAFT_OK'];
-                            $("#PROCESSING_DIV").dialog();
-
-                        } else {
-
-                            $id('PROCESSING_TBL').rows[0].cells[0].innerHTML = "<font color='#FF0000'>" + LANG_RESOURCE['SAVE_DRAFT_ERROR_FOR_HUGE_SIZE'] + "</font>";
-                            $("#PROCESSING_DIV").dialog();
-
                         }
+
+                        $id('PROCESSING_TBL').rows[0].cells[0].innerHTML = LANG_RESOURCE['SAVE_DRAFT_OK'];
+                        $("#PROCESSING_DIV").dialog();
+
+                    } else {
+
+                        $id('PROCESSING_TBL').rows[0].cells[0].innerHTML = "<font color='#FF0000'>" + LANG_RESOURCE['SAVE_DRAFT_ERROR_FOR_HUGE_SIZE'] + "</font>";
+                        $("#PROCESSING_DIV").dialog();
+
+                    }
                 }
             } else {
 
@@ -516,12 +516,12 @@ function read_mail(strID, strType) {
 
                     if (errno == "0") {
                         var strFrom,
-                        strTo,
-                        strCc,
-                        strSubject,
-                        strTextContent,
-                        strHtmlContent,
-                        strAttach;
+                            strTo,
+                            strCc,
+                            strSubject,
+                            strTextContent,
+                            strHtmlContent,
+                            strAttach;
                         strFrom = "";
                         strTo = "";
                         strCc = "";
@@ -641,7 +641,7 @@ function read_mail(strID, strType) {
                                         cc_addrs_result.push(res);
                                         if (cc_addrs != "")
                                             cc_addrs += ","
-                                            cc_addrs += res;
+                                        cc_addrs += res;
                                     }
                                 }
                             }
@@ -719,7 +719,7 @@ function extract_att(strID) {
 
                     if (errno == "0") {
                         var strTmpname,
-                        strFilename;
+                            strFilename;
                         var attList = responseNode.childNodes;
                         for (var i = 0; i < attList.length; i++) {
                             if (attList.item(i).tagName == "attach") {
@@ -805,17 +805,17 @@ function append_addrs() {
             if ($id('ADDR_BOOK_DIV').getAttribute("who") == "1") {
                 if ($id('TO_ADDRS').value != "")
                     $id('TO_ADDRS').value += ", "
-                    $id('TO_ADDRS').value += document.getElementsByName('seluser')[x].value;
+                $id('TO_ADDRS').value += document.getElementsByName('seluser')[x].value;
 
             } else if ($id('ADDR_BOOK_DIV').getAttribute("who") == "2") {
                 if ($id('CC_ADDRS').value != "")
                     $id('CC_ADDRS').value += ", "
-                    $id('CC_ADDRS').value += document.getElementsByName('seluser')[x].value;
+                $id('CC_ADDRS').value += document.getElementsByName('seluser')[x].value;
 
             } else if ($id('ADDR_BOOK_DIV').getAttribute("who") == "3") {
                 if ($id('BCC_ADDRS').value != "")
                     $id('BCC_ADDRS').value += ", "
-                    $id('BCC_ADDRS').value += document.getElementsByName('seluser')[x].value;
+                $id('BCC_ADDRS').value += document.getElementsByName('seluser')[x].value;
             }
         }
     }
@@ -834,63 +834,63 @@ function load_users(who, orderby, desc) {
         var responseNode = xmldom.documentElement.childNodes.item(0);
         if (responseNode.tagName == "response") {
             var errno = responseNode.getAttribute("errno")
-                if (errno == "0") {
-                    var strTmp;
-                    var userList = responseNode.childNodes;
+            if (errno == "0") {
+                var strTmp;
+                var userList = responseNode.childNodes;
 
-                    clear_table_without_header($id('USERTBL'));
+                clear_table_without_header($id('USERTBL'));
 
-                    for (var i = 0; i < userList.length; i++) {
-                        if (userList.item(i).tagName == "user") {
-                            var image;
-                            if (userList.item(i).getAttribute("status") == "Active") {
-                                if (userList.item(i).getAttribute("role") == "Administrator")
-                                    image = "admin.gif";
-                                else {
-                                    if (userList.item(i).getAttribute("type") == "Group")
-                                        image = "group.gif";
-                                    else
-                                        image = "member.gif";
-                                }
-                            } else {
+                for (var i = 0; i < userList.length; i++) {
+                    if (userList.item(i).tagName == "user") {
+                        var image;
+                        if (userList.item(i).getAttribute("status") == "Active") {
+                            if (userList.item(i).getAttribute("role") == "Administrator")
+                                image = "admin.gif";
+                            else {
                                 if (userList.item(i).getAttribute("type") == "Group")
-                                    image = "inactive_group.gif";
+                                    image = "group.gif";
                                 else
-                                    image = "inactive_member.gif";
+                                    image = "member.gif";
                             }
-
-                            tr = $id('USERTBL').insertRow($id('USERTBL').rows.length);
-
-                            var td0 = tr.insertCell(0);
-                            td0.valign = "middle";
-                            td0.align = "center";
-                            td0.height = "22";
-                            setStyle(td0, "TD.gray");
-                            td0.innerHTML = "<input type=\"checkbox\" name=\"seluser\" id=\"seluser\" value=\"" + userList.item(i).getAttribute("name") + "@" + userList.item(i).getAttribute("domain") + "\">";
-
-                            var td1 = tr.insertCell(1);
-                            td1.valign = "middle";
-                            td1.align = "center";
-                            td1.height = "22";
-                            setStyle(td1, "TD.gray");
-                            td1.innerHTML = "<img src=\"" + image + "\" />";
-
-                            var td2 = tr.insertCell(2);
-                            td2.valign = "middle";
-                            td2.align = "left";
-                            td2.height = "22";
-                            setStyle(td2, "TD.gray");
-                            td2.innerHTML = userList.item(i).getAttribute("name");
-
-                            var td3 = tr.insertCell(3);
-                            td3.valign = "middle";
-                            td3.align = "left";
-                            td3.height = "22";
-                            setStyle(td3, "TD.gray");
-                            td3.innerHTML = userList.item(i).getAttribute("alias");
+                        } else {
+                            if (userList.item(i).getAttribute("type") == "Group")
+                                image = "inactive_group.gif";
+                            else
+                                image = "inactive_member.gif";
                         }
+
+                        tr = $id('USERTBL').insertRow($id('USERTBL').rows.length);
+
+                        var td0 = tr.insertCell(0);
+                        td0.valign = "middle";
+                        td0.align = "center";
+                        td0.height = "22";
+                        setStyle(td0, "TD.gray");
+                        td0.innerHTML = "<input type=\"checkbox\" name=\"seluser\" id=\"seluser\" value=\"" + userList.item(i).getAttribute("name") + "@" + userList.item(i).getAttribute("domain") + "\">";
+
+                        var td1 = tr.insertCell(1);
+                        td1.valign = "middle";
+                        td1.align = "center";
+                        td1.height = "22";
+                        setStyle(td1, "TD.gray");
+                        td1.innerHTML = "<img src=\"" + image + "\" />";
+
+                        var td2 = tr.insertCell(2);
+                        td2.valign = "middle";
+                        td2.align = "left";
+                        td2.height = "22";
+                        setStyle(td2, "TD.gray");
+                        td2.innerHTML = userList.item(i).getAttribute("name");
+
+                        var td3 = tr.insertCell(3);
+                        td3.valign = "middle";
+                        td3.align = "left";
+                        td3.height = "22";
+                        setStyle(td3, "TD.gray");
+                        td3.innerHTML = userList.item(i).getAttribute("alias");
                     }
                 }
+            }
         }
     }
 }
@@ -942,14 +942,14 @@ function do_copy_mail(mid, todirs) {
             var responseNode = xmldom.documentElement.childNodes.item(0);
             if (responseNode.tagName == "response") {
                 var errno = responseNode.getAttribute("errno")
-                    if (errno == "0" || errno == 0) {
-                        if (window.opener && window.opener.refresh)
-                            window.opener.refresh();
-                        $("PROCESSING_DIV").dialog("close");
-                        return true;
-                    } else {
-                        return false;
-                    }
+                if (errno == "0" || errno == 0) {
+                    if (window.opener && window.opener.refresh)
+                        window.opener.refresh();
+                    $("PROCESSING_DIV").dialog("close");
+                    return true;
+                } else {
+                    return false;
+                }
             }
         } else {
             $id('PROCESSING_TBL').rows[0].cells[0].innerHTML = LANG_RESOURCE['COPY_MAIL_ONGOING'];
@@ -987,14 +987,14 @@ function do_move_mail(mid, todirs) {
             var responseNode = xmldom.documentElement.childNodes.item(0);
             if (responseNode.tagName == "response") {
                 var errno = responseNode.getAttribute("errno")
-                    if (errno == "0" || errno == 0) {
-                        $("PROCESSING_DIV").dialog("close");
+                if (errno == "0" || errno == 0) {
+                    $("PROCESSING_DIV").dialog("close");
 
-                        window.opener.delete_maillist_row(mid);
+                    window.opener.delete_maillist_row(mid);
 
-                        if (window.opener.refresh)
-                            window.opener.refresh();
-                    } else {}
+                    if (window.opener.refresh)
+                        window.opener.refresh();
+                } else { }
             }
         } else {
             $id('PROCESSING_TBL').rows[0].cells[0].innerHTML = LANG_RESOURCE['MOVE_MAIL_ONGOING'];
@@ -1079,7 +1079,7 @@ function show_copy_mail_dir_div() {
     $id('DIRS_DIV2').style.display = "none";
 
     var Pos = GetObjPos($id('COPYMAIL'))
-        show_dirs($id('DIRS_DIV1'), $id('DIRTBL1'), Pos.x, Pos.y + Pos.h + 2, "seldir1");
+    show_dirs($id('DIRS_DIV1'), $id('DIRTBL1'), Pos.x, Pos.y + Pos.h + 2, "seldir1");
 }
 
 function show_move_mail_dir_div() {
@@ -1102,7 +1102,7 @@ function show_move_mail_dir_div() {
     $id('DIRS_DIV1').style.display = "none";
 
     var Pos = GetObjPos($id('MOVEMAIL'))
-        show_dirs($id('DIRS_DIV2'), $id('DIRTBL2'), Pos.x, Pos.y + Pos.h + 2, "seldir2");
+    show_dirs($id('DIRS_DIV2'), $id('DIRTBL2'), Pos.x, Pos.y + Pos.h + 2, "seldir2");
 }
 
 function sort_users(who, orderby) {
@@ -1119,3 +1119,79 @@ function sort_users(who, orderby) {
 
     load_users(who, $id('USERTBL').getAttribute('orderby'), $id('USERTBL').getAttribute($id('USERTBL').getAttribute('orderby')));
 }
+
+
+$(document).ready(function () {
+    $('#ADDRESS_BOOK1').click(function () {
+        showbook(1, 'uname');
+    });
+
+    $('#ADDRESS_BOOK2').click(function () {
+        showbook(2, 'uname');
+    });
+
+    $('#ADDRESS_BOOK3').click(function () {
+        showbook(3, 'uname');
+    });
+
+    $('#SENDMAIL').click(function () {
+        send_mail();
+    });
+
+    $('#SAVEDRAFT').click(function () {
+        save_draft();
+    });
+
+    $('#FLAG').click(function () {
+        flag_mail(true);
+    });
+
+    $('#UNFLAG').click(function () {
+        flag_mail(false);
+    });
+
+    $('#SEEN').click(function () {
+        seen_mail(true);
+    });
+
+    $('#UNSEEN').click(function () {
+        seen_mail(false);
+    });
+
+    $('#COPYMAIL').click(function () {
+        show_copy_mail_dir_div();
+    });
+
+    $('#MOVEMAIL').click(function () {
+        show_move_mail_dir_div();
+    });
+
+    $('#DELMAIL').click(function () {
+        delmail();
+    });
+
+    $('#TO_ADDRS').change(function () {
+        isChange = true;
+        toggle_onbeforeunload(isChange);
+    });
+
+    $('#CC_ADDRS').change(function () {
+        isChange = true;
+        toggle_onbeforeunload(isChange);
+    });
+
+    $('#BCC_ADDRS').change(function () {
+        isChange = true;
+        toggle_onbeforeunload(isChange);
+    });
+
+    $('#SUBJECT').change(function () {
+        isChange = true;
+        toggle_onbeforeunload(isChange);
+    });
+
+    $('#CONTENT').change(function () {
+        isChange = true;
+        toggle_onbeforeunload(isChange);
+    });
+});

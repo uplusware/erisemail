@@ -8,9 +8,9 @@ function logout() {
             var responseNode = xmldom.documentElement.childNodes.item(0);
             if (responseNode.tagName == "response") {
                 var errno = responseNode.getAttribute("errno")
-                    if (errno == "0" || errno == 0) {
-                        window.location = "/admin";
-                    }
+                if (errno == "0" || errno == 0) {
+                    window.location = "/admin";
+                }
             }
         }
     }
@@ -18,4 +18,4 @@ function logout() {
     xmlHttp.send("");
 }
 
-function change_tab(tabname) {}
+function change_tab(tabname) { }

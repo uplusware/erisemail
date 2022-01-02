@@ -126,7 +126,7 @@ function TextToHTML(str) {
 
 function retrieve(src) {
     var befor,
-    after;
+        after;
     befor = "";
     after = "";
     var ctbl = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890-_.";
@@ -192,12 +192,12 @@ var keyStr = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/="
 function encode64(input) {
     var output = "";
     var chr1,
-    chr2,
-    chr3 = "";
+        chr2,
+        chr3 = "";
     var enc1,
-    enc2,
-    enc3,
-    enc4 = "";
+        enc2,
+        enc3,
+        enc4 = "";
     var i = 0;
     do {
         chr1 = input.charCodeAt(i++);
@@ -226,12 +226,12 @@ function encode64(input) {
 function decode64(input) {
     var output = "";
     var chr1,
-    chr2,
-    chr3 = "";
+        chr2,
+        chr3 = "";
     var enc1,
-    enc2,
-    enc3,
-    enc4 = "";
+        enc2,
+        enc3,
+        enc4 = "";
     var i = 0;
 
     if (input.length % 4 != 0) {
@@ -347,13 +347,13 @@ function getStyle(labname) {
     for (x = 0; x < document.styleSheets.length; x++) {
         styleSheetObj = document.styleSheets[x];
         cssRulesObj = styleSheetObj.cssRules ? styleSheetObj.cssRules : styleSheetObj.rules
-            for (i = 0; i < cssRulesObj.length; i++) {
-                styleRule = cssRulesObj[i];
-                if (styleRule.selectorText.toLowerCase() == labname.toLowerCase()) {
-                    styleValue = styleRule.style.cssText;
-                    break;
-                }
+        for (i = 0; i < cssRulesObj.length; i++) {
+            styleRule = cssRulesObj[i];
+            if (styleRule.selectorText.toLowerCase() == labname.toLowerCase()) {
+                styleValue = styleRule.style.cssText;
+                break;
             }
+        }
     }
     return styleValue;
 }
@@ -379,7 +379,7 @@ function setStyle(element, labelname) {
     if (declaration.charAt(declaration.length - 1) == ';')
         declaration = declaration.slice(0, -1);
     var k,
-    v;
+        v;
     var splitted = declaration.split(';');
     for (var i = 0, len = splitted.length; i < len; i++) {
         k = rzCC(splitted[i].split(':')[0]);

@@ -13,19 +13,19 @@ function load_config_file(cfgname, ctrlobj, statusobj) {
                 var responseNode = xmldom.documentElement.childNodes.item(0);
                 if (responseNode.tagName == "response") {
                     var errno = responseNode.getAttribute("errno")
-                        if (errno == "0" || errno == 0) {
-                            var strTmp;
-                            var fileList = responseNode.childNodes;
+                    if (errno == "0" || errno == 0) {
+                        var strTmp;
+                        var fileList = responseNode.childNodes;
 
-                            for (var i = 0; i < fileList.length; i++) {
-                                if (fileList.item(i).tagName == "list") {
-                                    ctrlobj.value = fileList.item(i).childNodes[0] == null ? "" : fileList.item(i).childNodes[0].nodeValue;
-                                    break;
-                                }
+                        for (var i = 0; i < fileList.length; i++) {
+                            if (fileList.item(i).tagName == "list") {
+                                ctrlobj.value = fileList.item(i).childNodes[0] == null ? "" : fileList.item(i).childNodes[0].nodeValue;
+                                break;
                             }
-                            statusobj.innerHTML = "";
-                            statusobj.style.display = "none";
                         }
+                        statusobj.innerHTML = "";
+                        statusobj.style.display = "none";
+                    }
                 }
             }
         } else {
@@ -49,10 +49,10 @@ function save_config_file(cfgname, ctrlobj, statusobj) {
                 var responseNode = xmldom.documentElement.childNodes.item(0);
                 if (responseNode.tagName == "response") {
                     var errno = responseNode.getAttribute("errno")
-                        if (errno == "0" || errno == 0) {
-                            statusobj.innerHTML = "<table border=\"0\" cellpadding=\"0\" cellspacing=\"0\"><tr><td><font color=\"green\">" + LANG_RESOURCE['SAVED'] + "</font></td></tr></table>";
-                            statusobj.style.display = "block";
-                        }
+                    if (errno == "0" || errno == 0) {
+                        statusobj.innerHTML = "<table border=\"0\" cellpadding=\"0\" cellspacing=\"0\"><tr><td><font color=\"green\">" + LANG_RESOURCE['SAVED'] + "</font></td></tr></table>";
+                        statusobj.style.display = "block";
+                    }
                 }
             }
         } else {

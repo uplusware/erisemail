@@ -14,26 +14,26 @@ function getunseenmail() {
                 var responseNode = xmldom.documentElement.childNodes.item(0);
                 if (responseNode.tagName == "response") {
                     var errno = responseNode.getAttribute("errno")
-                        if (errno == "0" || errno == 0) {
-                            var strTmp;
-                            var countList = responseNode.childNodes;
-                            for (var i = 0; i < countList.length; i++) {
-                                if (countList.item(i).tagName == "unseen") {
-                                    for (var x = 0; x < document.getElementsByName('UNSEEN').length; x++) {
-                                        if (document.getElementsByName('UNSEEN')[x].getAttribute("did") == countList.item(i).getAttribute("did")) {
-                                            mailnum = countList.item(i).getAttribute("num");
-                                            if (mailnum > 0)
-                                                document.getElementsByName('UNSEEN')[x].innerHTML = "(" + mailnum + ")";
-                                            else
-                                                document.getElementsByName('UNSEEN')[x].innerHTML = "";
+                    if (errno == "0" || errno == 0) {
+                        var strTmp;
+                        var countList = responseNode.childNodes;
+                        for (var i = 0; i < countList.length; i++) {
+                            if (countList.item(i).tagName == "unseen") {
+                                for (var x = 0; x < document.getElementsByName('UNSEEN').length; x++) {
+                                    if (document.getElementsByName('UNSEEN')[x].getAttribute("did") == countList.item(i).getAttribute("did")) {
+                                        mailnum = countList.item(i).getAttribute("num");
+                                        if (mailnum > 0)
+                                            document.getElementsByName('UNSEEN')[x].innerHTML = "(" + mailnum + ")";
+                                        else
+                                            document.getElementsByName('UNSEEN')[x].innerHTML = "";
 
-                                            break;
-                                        }
+                                        break;
                                     }
-
                                 }
+
                             }
                         }
+                    }
                 }
             }
         }
@@ -64,9 +64,9 @@ function do_empty_trash() {
                 var responseNode = xmldom.documentElement.childNodes.item(0);
                 if (responseNode.tagName == "response") {
                     var errno = responseNode.getAttribute("errno")
-                        if (errno == "0" || errno == 0) {
-                            return true;
-                        }
+                    if (errno == "0" || errno == 0) {
+                        return true;
+                    }
                 }
             }
         }
@@ -252,10 +252,10 @@ function load_dirs(pid, gpath, topusage, layer, begtr) {
                 var responseNode = xmldom.documentElement.childNodes.item(0);
                 if (responseNode.tagName == "response") {
                     var errno = responseNode.getAttribute("errno")
-                        if (errno == "0" || errno == 0) {
-                            var dirList = responseNode.childNodes;
-                            output_dir($id('DIRTBL'), pid, gpath, topusage, dirList, layer, begtr);
-                        }
+                    if (errno == "0" || errno == 0) {
+                        var dirList = responseNode.childNodes;
+                        output_dir($id('DIRTBL'), pid, gpath, topusage, dirList, layer, begtr);
+                    }
                 }
             }
         }

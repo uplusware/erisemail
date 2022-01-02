@@ -10,7 +10,7 @@ JHashMap.prototype.put = function (key, value) {
 
 JHashMap.prototype.get = function (key) {
     return typeof this[this.prefix + key] == "undefined"
-     ? null : this[this.prefix + key];
+        ? null : this[this.prefix + key];
 }
 
 JHashMap.prototype.keySet = function () {
@@ -87,7 +87,7 @@ JHashMap.prototype.toString = function () {
     for (var strKey in this) {
         if (strKey.substring(0, this.prefix.length) == this.prefix)
             str += strKey.substring(this.prefix.length)
-             + " : " + this[strKey] + "\r\n";
+                + " : " + this[strKey] + "\r\n";
     }
     return str;
 }
@@ -125,7 +125,7 @@ function linetrim(str) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 // vCalendar
-function vCalendar() {}
+function vCalendar() { }
 
 vCalendar.prototype.PEOPLE = function (strOrg) {
     var RSVP = "";

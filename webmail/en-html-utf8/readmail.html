@@ -1,124 +1,174 @@
 <html>
 
 <head>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-<LINK rel="Bookmark" href="erisemail.ico" >
-<LINK rel="Shortcut Icon" href="erisemail.ico" />
-<link href="common.css" rel="stylesheet" type="text/css">
-<link href="/jqueryui/jquery-ui.css" rel="stylesheet">
-<script type="text/javascript" src="language.js"></script>
-<script type="text/javascript" src="inc.js"></script>
-<script type="text/javascript" src="ui.js"></script>
-<script type="text/javascript" src="calendar.js"></script>
-<script src="/jqueryui/external/jquery/jquery.js"></script>
-<script src="/jqueryui/jquery-ui.js"></script>
-<script type="text/javascript" src="readmail.js"></script>
-<title>...::: Welcome to eRisemail System :::...</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <LINK rel="Bookmark" href="erisemail.ico">
+  <LINK rel="Shortcut Icon" href="erisemail.ico" />
+  <link href="common.css" rel="stylesheet" type="text/css">
+  <link href="/jqueryui/jquery-ui.css" rel="stylesheet">
+  <script type="text/javascript" src="language.js"></script>
+  <script type="text/javascript" src="inc.js"></script>
+  <script type="text/javascript" src="ui.js"></script>
+  <script type="text/javascript" src="calendar.js"></script>
+  <script src="/jqueryui/external/jquery/jquery.js"></script>
+  <script src="/jqueryui/jquery-ui.js"></script>
+  <script type="text/javascript" src="readmail.js"></script>
+  <title>...::: Welcome to eRisemail System :::...</title>
 </head>
 
 <body onLoad="init()">
 
-<div id="PROCESSING_DIV" style="display:none;">
-	<table id="PROCESSING_TBL" width="100%" height="100%">
-		<tr><td align="right"><img src="busy.gif"></td><td align="left"></td></tr>
-	</table>	
-</div>
+  <div id="PROCESSING_DIV" style="display:none;">
+    <table id="PROCESSING_TBL" width="100%" height="100%">
+      <tr>
+        <td align="right"><img src="busy.gif"></td>
+        <td align="left"></td>
+      </tr>
+    </table>
+  </div>
 
-<div id="DIRS_DIV1" style="display:none; z-Index:20; width:220px; height:200px;">
-  <table border="0" cellspacing="0" cellpadding="1" width="100%" bordercolorlight="#C0C0C0" bordercolordark="#FFFFFF" class="gray">
+  <div id="DIRS_DIV1" style="display:none; z-Index:20; width:220px; height:200px;">
+    <table border="0" cellspacing="0" cellpadding="1" width="100%" bordercolorlight="#C0C0C0" bordercolordark="#FFFFFF"
+      class="gray">
+      <tr>
+        <td align="left" valign="top" class="gray" bgcolor="#FFFFFF" height="160">
+          <div style="overflow:auto; width:100%; height:100%; background-color: #FFFFFF;">
+            <table id="DIRTBL1" bgcolor="#FFFFFF" border="0" cellspacing="0" cellpadding="0" width="100%"></table>
+          </div>
+        </td>
+      </tr>
+    </table>
+  </div>
+  <div id="DIRS_DIV2" style="display:none; z-Index:20; width:220px; height:200px;">
+    <table border="0" cellspacing="0" cellpadding="1" width="100%" bordercolorlight="#C0C0C0" bordercolordark="#FFFFFF"
+      class="gray">
+      <tr>
+        <td align="left" valign="top" class="gray" bgcolor="#FFFFFF" height="160">
+          <div style="overflow:auto; width:100%; height:100%; background-color: #FFFFFF;">
+            <table id="DIRTBL2" bgcolor="#FFFFFF" border="0" cellspacing="0" cellpadding="0" width="100%"></table>
+          </div>
+        </td>
+      </tr>
+    </table>
+  </div>
+  <p align="center">
+  <table border="0" width="900" height="600" cellpadding="0" cellspacing="0" bgcolor="#FFFFFF">
     <tr>
-      <td align="left" valign="top" class="gray" bgcolor="#FFFFFF" height="160">
-      	<div style="overflow:auto; width:100%; height:100%; background-color: #FFFFFF;"><table id="DIRTBL1" bgcolor="#FFFFFF" border="0" cellspacing="0" cellpadding="0" width="100%"></table></div>
+      <td valign="top">
+        <table border="0" cellpadding="0" cellspacing="0" width="100%" height="100%">
+          <tr valign="top" height="10">
+            <td>
+              <table border="0" width="100%" bordercolorlight="#C0C0C0" cellpadding="0" cellspacing="0"
+                bordercolordark="#FFFFFF">
+                <tr>
+                  <td class="title">
+                    <table background="pathbg.gif" border="0" width="100%" bordercolorlight="#C0C0C0" cellspacing="0"
+                      cellpadding="2" bordercolordark="#FFFFFF">
+                      <tr valign="middle" height="25">
+                        <td align="center" width="26"><img src="readmail.gif"></td>
+                        <td align="center"><b>
+                            <font color="#FFFFFF">
+                              <div id="GLOBALPATH"></div>
+                            </font>
+                          </b></td>
+                        <td width="20"><input type="image" src="close.gif" onClick="window.close()"></td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+              <table border="0" width="100%" cellpadding="1" cellspacing="1" background="toptitlebg.gif">
+                <tr>
+                  <td>
+                    <table id="MAILBAR" style="display:block;  z-Index:20" bgcolor="#FFFFFF">
+                      <tr>
+                        <td><button id="REMAIL" name="REMAIL" class="ui-button ui-corner-all ui-widget">Reply</button>
+                        </td>
+                        <td><button id="RETOALL" name="RETOALL"
+                            class="ui-button ui-corner-all ui-widget">Re-All</button></td>
+                        <td><button id="FORWARD" name="FORWARD"
+                            class="ui-button ui-corner-all ui-widget">Forward</button></td>
+                        <td><button id="FLAG" name="FLAG" class="ui-button ui-corner-all ui-widget">Flag</button></td>
+                        <td><button id="UNFLAG" name="UNFLAG" class="ui-button ui-corner-all ui-widget">Unflag</button>
+                        </td>
+                        <td><button id="SEEN" name="SEEN" class="ui-button ui-corner-all ui-widget">Seen</button></td>
+                        <td><button id="UNSEEN" name="UNSEEN" class="ui-button ui-corner-all ui-widget">Unseen</button>
+                        </td>
+                        <td><button id="COPYMAIL" name="COPYMAIL"
+                            class="ui-button ui-corner-all ui-widget">Copy</button></td>
+                        <td><button id="MOVEMAIL" name="MOVEMAIL"
+                            class="ui-button ui-corner-all ui-widget">Move</button></td>
+                        <td><button id="DELMAIL" name="DELMAIL"
+                            class="ui-button ui-corner-all ui-widget">Delete</button></td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+              <table border="0" width="100%" bordercolorlight="#C0C0C0" cellspacing="0" bordercolordark="#FFFFFF"
+                class="gray">
+                <tr id="fromcol" height="30">
+                  <td class="gray" bgcolor="#EFEFEF" width="95" align="right"><b>From:</b></td>
+                  <td class="gray" bgcolor="#FFFFCC">
+                    <div id="mailfrom"></div>
+                  </td>
+                </tr>
+                <tr id="tocol" height="30">
+                  <td class="gray" bgcolor="#EFEFEF" width="95" align="right"><b>To:</b></td>
+                  <td class="gray" bgcolor="#FFFFCC">
+                    <div id="mailto"></div>
+                  </td>
+                </tr>
+                <tr id="cccol" height="30">
+                  <td class="gray" bgcolor="#EFEFEF" width="95" align="right"><b>CC:</b></td>
+                  <td class="gray" bgcolor="#FFFFCC">
+                    <div id="mailcc"></div>
+                  </td>
+                </tr>
+                <tr id="timecol" height="30">
+                  <td class="gray" bgcolor="#EFEFEF" width="95" align="right"><b>Date:</b></td>
+                  <td class="gray" bgcolor="#FFFFCC">
+                    <div id="maildate"></div>
+                  </td>
+                </tr>
+                <tr id="subjectcol" height="30">
+                  <td class="gray" bgcolor="#EFEFEF" width="95" align="right"><b>Subject:</b></td>
+                  <td class="gray" bgcolor="#FFFFCC">
+                    <div id="mailsubject"></div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <table border="0" width="100%" height="100%" bordercolorlight="#C0C0C0" cellpadding="0" cellspacing="0"
+                bordercolordark="#FFFFFF" class="gray">
+                <tr bgcolor="#FFFFFF" height="100%">
+                  <td class="gray" valign="top">
+                    <table width="100%" height="100%" border="0" cellspacing="0" cellpadding="0">
+                      <tr>
+                        <td width="100%" height="100%" id="mailcontentframe">
+                          <div id="mailcontent" class="div2"></div>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <p align="center">copyright &copy; <a href="http://uplusware.net" target="_blank">uplusware</a> 2022, all right
+          reserved
       </td>
     </tr>
   </table>
-</div>
-<div id="DIRS_DIV2" style="display:none; z-Index:20; width:220px; height:200px;">
-  <table border="0" cellspacing="0" cellpadding="1" width="100%" bordercolorlight="#C0C0C0" bordercolordark="#FFFFFF" class="gray">
-    <tr>
-      <td align="left" valign="top" class="gray" bgcolor="#FFFFFF" height="160">
-      	<div style="overflow:auto; width:100%; height:100%; background-color: #FFFFFF;"><table id="DIRTBL2" bgcolor="#FFFFFF" border="0" cellspacing="0" cellpadding="0" width="100%"></table></div>
-      </td>
-    </tr>
-  </table>
-</div>   
-<p align="center">
-<table border="0" width="900" height="600" cellpadding="0" cellspacing="0" bgcolor="#FFFFFF">
-<tr>
-    <td valign="top">
-    	<table border="0" cellpadding="0" cellspacing="0" width="100%" height="100%">
-        <tr valign="top" height="10"> 
-          <td>
-          	<table border="0" width="100%" bordercolorlight="#C0C0C0" cellpadding="0" cellspacing="0" bordercolordark="#FFFFFF">
-			<tr><td class="title">
-          		<table background="pathbg.gif" border="0" width="100%" bordercolorlight="#C0C0C0" cellspacing="0" cellpadding="2" bordercolordark="#FFFFFF"><tr valign="middle" height="25"><td align="center" width="26"><img src="readmail.gif"></td><td align="center"><b><font color="#FFFFFF"><div id="GLOBALPATH"></div></font></b></td><td width="20"><input type="image" src="close.gif" onClick="window.close()"></td></tr></table>
-          	</td></tr>
-			</table>
-			<table border="0" width="100%" cellpadding="1" cellspacing="1" background="toptitlebg.gif">
-				<tr><td>
-					<table id="MAILBAR" style="display:block;  z-Index:20" bgcolor="#FFFFFF">
-						<tr>
-						  <td><button id="REMAIL" name="REMAIL" class="ui-button ui-corner-all ui-widget" onclick="remail();">Reply</button></td>
-						  <td><button id="RETOALL" name="RETOALL" class="ui-button ui-corner-all ui-widget" onclick="remail_all();">Re-All</button></td>
-						  <td><button id="FORWARD" name="FORWARD" class="ui-button ui-corner-all ui-widget" onclick="forward_mail();">Forward</button></td>
-						  <td><button id="FLAG" name="FLAG" class="ui-button ui-corner-all ui-widget" onclick="flag_mail(true);">Flag</button></td>
-						  <td><button id="UNFLAG" name="UNFLAG" class="ui-button ui-corner-all ui-widget" onclick="flag_mail(false);">Unflag</button></td>
-						  <td><button id="SEEN" name="SEEN" class="ui-button ui-corner-all ui-widget" onclick="seen_mail(true);">Seen</button></td>
-						  <td><button id="UNSEEN" name="UNSEEN" class="ui-button ui-corner-all ui-widget" onclick="seen_mail(false);">Unseen</button></td>
-						  <td><button id="COPYMAIL" name="COPYMAIL" class="ui-button ui-corner-all ui-widget" onclick="show_copy_mail_dir_div();">Copy</button></td>
-						  <td><button id="MOVEMAIL" name="MOVEMAIL" class="ui-button ui-corner-all ui-widget" onclick="show_move_mail_dir_div();">Move</button></td>
-						  <td><button id="DELMAIL" name="DELMAIL" class="ui-button ui-corner-all ui-widget" onclick="delmail();">Delete</button></td>
-						</tr>
-					</table>
-				</td></tr>
-			</table>
-          	<table border="0" width="100%" bordercolorlight="#C0C0C0" cellspacing="0" bordercolordark="#FFFFFF" class="gray">
-              <tr id="fromcol" height="30"> 
-                <td class="gray" bgcolor="#EFEFEF" width="95" align="right"><b>From:</b></td>
-                <td class="gray"  bgcolor="#FFFFCC"><div id="mailfrom"></div></td>
-              </tr>
-              <tr id="tocol" height="30"> 
-                <td class="gray" bgcolor="#EFEFEF" width="95" align="right"><b>To:</b></td>
-                <td class="gray"  bgcolor="#FFFFCC"><div id="mailto"></div></td>
-              </tr>
-              <tr id="cccol" height="30" > 
-                <td class="gray" bgcolor="#EFEFEF" width="95"  align="right"><b>CC:</b></td>
-                <td class="gray"  bgcolor="#FFFFCC"><div id="mailcc"></div></td>
-              </tr>
-              <tr id="timecol" height="30" > 
-                <td class="gray" bgcolor="#EFEFEF" width="95" align="right"><b>Date:</b></td>
-                <td class="gray" bgcolor="#FFFFCC"><div id="maildate"></div></td>
-              </tr>
-              <tr id="subjectcol" height="30" > 
-                <td class="gray" bgcolor="#EFEFEF" width="95" align="right"><b>Subject:</b></td>
-                <td class="gray" bgcolor="#FFFFCC"><div id="mailsubject"></div></td>
-              </tr>
-            </table>
-          </td>
-        </tr>
-        <tr> 
-          <td>
-          	<table border="0" width="100%" height="100%" bordercolorlight="#C0C0C0" cellpadding="0" cellspacing="0" bordercolordark="#FFFFFF" class="gray">
-              <tr bgcolor="#FFFFFF" height="100%"> 
-                <td class="gray" valign="top">
-                	<table width="100%" height="100%" border="0" cellspacing="0" cellpadding="0">
-					  <tr>
-					    <td width="100%" height="100%" id="mailcontentframe"><div id="mailcontent" class="div2"></div></td>
-					  </tr>
-					</table>
-                </td>
-              </tr>
-            </table>
-          </td>
-        </tr>
-      </table>
-     </td>
-  </tr>
-  	<tr>
-    	<td><p align="center">copyright &copy; <a href="http://uplusware.net" target="_blank">uplusware</a> 2022, all right reserved</td>
-    </tr>
-</table>
-</p>
+  </p>
 </body>
 
 </html>

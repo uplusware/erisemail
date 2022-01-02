@@ -1,104 +1,145 @@
 <html>
 
 <head>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-<LINK rel="Bookmark" href="erisemail.ico" >
-<LINK rel="Shortcut Icon" href="erisemail.ico" />
-<link href="/jqueryui/jquery-ui.css" rel="stylesheet">
-<link href="common.css" rel="stylesheet" type="text/css">
-<script type="text/javascript" src="language.js"></script>
-<script type="text/javascript" src="inc.js"></script>
-<script src="/jqueryui/external/jquery/jquery.js"></script>
-<script src="/jqueryui/jquery-ui.js"></script>
-<script type="text/javascript" src="customize.js"></script>
-<title>...:::欢迎访问 eRisemail 邮件系统:::...</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<LINK rel="Bookmark" href="erisemail.ico">
+	<LINK rel="Shortcut Icon" href="erisemail.ico" />
+	<link href="/jqueryui/jquery-ui.css" rel="stylesheet">
+	<link href="common.css" rel="stylesheet" type="text/css">
+	<script type="text/javascript" src="language.js"></script>
+	<script type="text/javascript" src="inc.js"></script>
+	<script src="/jqueryui/external/jquery/jquery.js"></script>
+	<script src="/jqueryui/jquery-ui.js"></script>
+	<script type="text/javascript" src="customize.js"></script>
+	<title>...:::欢迎访问 eRisemail 邮件系统:::...</title>
 </head>
 
 <body onLoad="init(); userinfo();" onUnload="uninit()" bgcolor="#FFFFFF">
 
-<table border="0" bordercolorlight="#C0C0C0" cellpadding="0" cellspacing="0" bordercolordark="#FFFFFF" width="100%" bgcolor="#FFFFFF">
-	<tr valign="top" align="lefr"><td class="title">
-		<table id="CUST_TITLE" border="0" width="100%" bordercolorlight="#C0C0C0" cellpadding="2" cellspacing="0" bordercolordark="#FFFFFF" background="pathbg.gif">
-			<tr  height="25"><td align="left" width="22"><img src="user.gif"></td><td align="center"><font color="#FFFFFF"><b> 个人设置 </b></font></td></tr>
-		</table>
-	</td></tr>
-</table>
+	<table border="0" bordercolorlight="#C0C0C0" cellpadding="0" cellspacing="0" bordercolordark="#FFFFFF" width="100%"
+		bgcolor="#FFFFFF">
+		<tr valign="top" align="lefr">
+			<td class="title">
+				<table id="CUST_TITLE" border="0" width="100%" bordercolorlight="#C0C0C0" cellpadding="2"
+					cellspacing="0" bordercolordark="#FFFFFF" background="pathbg.gif">
+					<tr height="25">
+						<td align="left" width="22"><img src="user.gif"></td>
+						<td align="center">
+							<font color="#FFFFFF"><b> 个人设置 </b></font>
+						</td>
+					</tr>
+				</table>
+			</td>
+		</tr>
+	</table>
 
-<table border="0" bordercolorlight="#C0C0C0" width="100%" cellpadding="0" cellspacing="0" bordercolordark="#FFFFFF" bgcolor="#FFFFFF" class="gray">
-	<tr height="25">
-		<td  class="gray" width="200" align="right" bgcolor="#FFFFCC"><b>别名:</b></td>
-		<td class="gray">
-		<table border="0" cellpadding="0" cellspacing="0"><tr>
-		<td><input type="text" value="" id="ALIAS" name="ALIAS"></td>
-		<td><button id="button" class="ui-button ui-corner-all ui-widget" onClick="alias(document.getElementById('ALIAS').value);">更改</button><div id="content"></div></td>
-		<td><div id="aliasinfo"></div><td>
-		</tr></table>
-		</td>
-	</tr>
-	<tr height="25">
-		<td class="gray" width="200" align="right" bgcolor="#FFFFCC"><b>级别:</b></td>
-		<td class="gray">
-		<table border="0" cellpadding="0" cellspacing="0"><tr>
-		<td><div id="userrole"></div></td>
-		</tr></table>
-		</td>
-	</tr>
-	
-	<tr height="25">
-		<td class="gray" width="200" align="right" bgcolor="#FFFFCC"><b>邮件最大大小(KB):</b></td>
-		<td class="gray">
-		<table border="0" cellpadding="0" cellspacing="0"><tr>
-		<td><div id="mailsize"></div></td>
-		</tr></table>
-		</td>
-	</tr>
-	
-	<tr height="25">
-		<td class="gray" width="200" align="right" bgcolor="#FFFFCC"><b>邮箱容量(KB):</b></td>
-		<td class="gray">
-		<table border="0" cellpadding="0" cellspacing="0"><tr>
-		<td><div id="boxsize"></div></td>
-		</tr></table>
-		</td>
-	</tr>
-	
-	<tr height="25">
-		<td class="gray" width="200" align="right" bgcolor="#FFFFCC"><b>需要审核:</b></td>
-		<td class="gray">
-		<table border="0" cellpadding="0" cellspacing="0"><tr>
-		<td><div id="audit"></div></td>
-		</tr></table>
-		</td>
-	</tr>
-	
-	<tr height="25">
-		<td class="gray" width="200" align="right" bgcolor="#FFFFCC"><b>原密码:</b></td>
-		<td class="gray">
-		<table border="0" cellpadding="0" cellspacing="0"><tr>
-		<td><input type="password" value="" name="OLD_PWD" id="OLD_PWD" onMouseOver="this.focus();this.select()"></td>
-		</tr></table>
-		</td>
-	</tr>
-	<tr height="25">
-		<td class="gray" width="200" align="right" bgcolor="#FFFFCC"><b>新密码:</b></td>
-		<td class="gray">
-		<table border="0" cellpadding="0" cellspacing="0"><tr>
-		<td><input type="password" value="" name="NEW_PWD" id="NEW_PWD" onMouseOver="this.focus();this.select()"></td>
-		</tr></table>
-		</td>
-	</tr>
-	
-	<tr height="25">
-		<td class="gray" width="200" align="right" bgcolor="#FFFFCC"><b>新密码确认:</b></td>
-		<td class="gray">
-		<table border="0" cellpadding="0" cellspacing="0"><tr>
-		<td><input type="password" value="" name="NEW_PWD_VERIFY" id="NEW_PWD_VERIFY" onMouseOver="this.focus();this.select()"></td>
-		<td><button id="button" class="ui-button ui-corner-all ui-widget" onClick="passwd(document.getElementById('OLD_PWD').value, document.getElementById('NEW_PWD').value, document.getElementById('NEW_PWD_VERIFY').value);">更改</button></td>
-		<td><div id="pwdinfo"></div></td>
-		</tr></table>
-		</td>
-	</tr>
-</table>
+	<table border="0" bordercolorlight="#C0C0C0" width="100%" cellpadding="0" cellspacing="0" bordercolordark="#FFFFFF"
+		bgcolor="#FFFFFF" class="gray">
+		<tr height="25">
+			<td class="gray" width="200" align="right" bgcolor="#FFFFCC"><b>别名:</b></td>
+			<td class="gray">
+				<table border="0" cellpadding="0" cellspacing="0">
+					<tr>
+						<td><input type="text" value="" id="ALIAS" name="ALIAS"></td>
+						<td><button id="CHANGE_ALIAS_BUTTON" class="ui-button ui-corner-all ui-widget">更改</button>
+							<div id="content"></div>
+						</td>
+						<td>
+							<div id="aliasinfo"></div>
+						<td>
+					</tr>
+				</table>
+			</td>
+		</tr>
+		<tr height="25">
+			<td class="gray" width="200" align="right" bgcolor="#FFFFCC"><b>级别:</b></td>
+			<td class="gray">
+				<table border="0" cellpadding="0" cellspacing="0">
+					<tr>
+						<td>
+							<div id="userrole"></div>
+						</td>
+					</tr>
+				</table>
+			</td>
+		</tr>
+
+		<tr height="25">
+			<td class="gray" width="200" align="right" bgcolor="#FFFFCC"><b>邮件最大大小(KB):</b></td>
+			<td class="gray">
+				<table border="0" cellpadding="0" cellspacing="0">
+					<tr>
+						<td>
+							<div id="mailsize"></div>
+						</td>
+					</tr>
+				</table>
+			</td>
+		</tr>
+
+		<tr height="25">
+			<td class="gray" width="200" align="right" bgcolor="#FFFFCC"><b>邮箱容量(KB):</b></td>
+			<td class="gray">
+				<table border="0" cellpadding="0" cellspacing="0">
+					<tr>
+						<td>
+							<div id="boxsize"></div>
+						</td>
+					</tr>
+				</table>
+			</td>
+		</tr>
+
+		<tr height="25">
+			<td class="gray" width="200" align="right" bgcolor="#FFFFCC"><b>需要审核:</b></td>
+			<td class="gray">
+				<table border="0" cellpadding="0" cellspacing="0">
+					<tr>
+						<td>
+							<div id="audit"></div>
+						</td>
+					</tr>
+				</table>
+			</td>
+		</tr>
+
+		<tr height="25">
+			<td class="gray" width="200" align="right" bgcolor="#FFFFCC"><b>原密码:</b></td>
+			<td class="gray">
+				<table border="0" cellpadding="0" cellspacing="0">
+					<tr>
+						<td><input type="password" value="" name="OLD_PWD" id="OLD_PWD"></td>
+					</tr>
+				</table>
+			</td>
+		</tr>
+		<tr height="25">
+			<td class="gray" width="200" align="right" bgcolor="#FFFFCC"><b>新密码:</b></td>
+			<td class="gray">
+				<table border="0" cellpadding="0" cellspacing="0">
+					<tr>
+						<td><input type="password" value="" name="NEW_PWD" id="NEW_PWD"></td>
+					</tr>
+				</table>
+			</td>
+		</tr>
+
+		<tr height="25">
+			<td class="gray" width="200" align="right" bgcolor="#FFFFCC"><b>新密码确认:</b></td>
+			<td class="gray">
+				<table border="0" cellpadding="0" cellspacing="0">
+					<tr>
+						<td><input type="password" value="" name="NEW_PWD_VERIFY" id="NEW_PWD_VERIFY"></td>
+						<td><button id="CHANGE_PASSWORD_BUTTON" class="ui-button ui-corner-all ui-widget">更改</button>
+						</td>
+						<td>
+							<div id="pwdinfo"></div>
+						</td>
+					</tr>
+				</table>
+			</td>
+		</tr>
+	</table>
 </body>
 
 </html>
