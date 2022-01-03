@@ -74,7 +74,6 @@ CMailImap::~CMailImap()
 
 int CMailImap::ImapSend(const char* buf, int len)
 {
-	//printf("%s", buf);
 	if(m_ssl)
 		return SSLWrite(m_sockfd, m_ssl, buf, len, CMailBase::m_connection_idle_timeout);
 	else
@@ -456,7 +455,6 @@ BOOL CMailImap::On_Authenticate(char* text)
 		
 		sprintf(cmd, "+ %s\r\n", szEncoded);
 		free(szEncoded);
-		//printf("%s\n", cmd);
 		ImapSend(cmd,strlen(cmd));
 		
 		char szText[4096];
@@ -1585,7 +1583,6 @@ void CMailImap::On_Append(char* text)
 	vector<string> vecDest;
 	ParseCommand(text, vecDest);
 	strTag = vecDest[0];
-	//printf("%s\r\n", text);
 	if((m_status&STATUS_AUTHED) == STATUS_AUTHED)
 	{
 		MailStorage* mailStg;
@@ -1627,14 +1624,12 @@ void CMailImap::On_Append(char* text)
 		unsigned int literal;
 		sscanf(strLiteral.c_str(), "{%u}", &literal);
 
-		//printf("literal: %d\r\n", literal);
 		unsigned long long usermaxsize;
 		if(mailStg->GetUserSize(m_username.c_str(), usermaxsize) == -1)
 		{
 			usermaxsize = 5000*1024;
 		}
 
-		//printf("usermaxsize: %d\r\n", usermaxsize);
 		if(literal > usermaxsize)
 		{
 			sprintf(cmd, "%s NO APPEND Failed: The size of Message is too large.\r\n", strTag.c_str());
@@ -1670,7 +1665,6 @@ void CMailImap::On_Append(char* text)
 		char newuid[1024];
 		sprintf(newuid, "%08x_%08x_%016lx_%08x_%s", time(NULL), getpid(), pthread_self(), random(), m_localhostname.c_str());
 
-		//printf("%s\r\n", newuid);
 		int DirID;
 		if(mailStg->GetDirID(m_username.c_str(), dirName.c_str(), DirID) == -1)
 		{
@@ -1696,8 +1690,6 @@ void CMailImap::On_Append(char* text)
 		{
 			usermaxsize = 5000*1024;
 		}
-
-		//printf("usermaxsize: %d\r\n", usermaxsize);
 		
 		MailLetter* Letter;
 		Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, newuid, usermaxsize /*mailStg, 
@@ -3154,8 +3146,6 @@ void CMailImap::Fetch(const char* szArg, BOOL isUID)
 							
 							BodyStruct(Letter->GetSummary()->m_mime, strStruct, TRUE);
 							
-							//printf("%s\n", strStruct.c_str());
-							
 							if(i > 0 || isUID)
 								ImapSend( " ", 1);
 							
@@ -4367,7 +4357,6 @@ void CMailImap::ParseCommand(const char* text, vector<string>& vDst)
 
 BOOL CMailImap::Parse(char* text, int len)
 {
-	//printf("%s", text);
 	string strNotag;
 	strcut(text, " ", " ", strNotag);
 	

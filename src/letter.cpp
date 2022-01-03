@@ -996,10 +996,6 @@ void LetterSummary::loadXML()
             m_xml->Accept( &xml_printer );
             
             memc_rc = memcached_set(m_memcached, szMD5dst, 35, xml_printer.CStr(), xml_printer.Size(), (time_t)3600, (uint32_t)memc_flags);
-            if(memc_rc != MEMCACHED_SUCCESS)
-            {
-                fprintf(stderr, "memcached_set: %s %d\n", m_xmlpath.c_str(), xml_printer.Size());
-            }
         }
   
 	}

@@ -1,45 +1,36 @@
 function getunseenmail() {
-    var xmlHttp = initxmlhttp();
-    if (!xmlHttp)
-        return;
+    var api_url = "/api/getunseen.xml";
+    $.ajax({
+        url: api_url,
+        success: function (xmldom) {
+            xmldom.documentElement.normalize();
+            var mailnum;
+            var responseNode = xmldom.documentElement.childNodes.item(0);
+            if (responseNode.tagName == "response") {
+                var errno = responseNode.getAttribute("errno")
+                if (errno == "0" || errno == 0) {
+                    var strTmp;
+                    var countList = responseNode.childNodes;
+                    for (var i = 0; i < countList.length; i++) {
+                        if (countList.item(i).tagName == "unseen") {
+                            for (var x = 0; x < document.getElementsByName('UNSEEN').length; x++) {
+                                if (document.getElementsByName('UNSEEN')[x].getAttribute("did") == countList.item(i).getAttribute("did")) {
+                                    mailnum = countList.item(i).getAttribute("num");
+                                    if (mailnum > 0)
+                                        document.getElementsByName('UNSEEN')[x].innerHTML = "(" + mailnum + ")";
+                                    else
+                                        document.getElementsByName('UNSEEN')[x].innerHTML = "";
 
-    var qUrl = "/api/getunseen.xml";
-
-    xmlHttp.onreadystatechange = function () {
-        if (xmlHttp.readyState == 4) {
-            if (xmlHttp.status == 200) {
-                var xmldom = xmlHttp.responseXML;
-                xmldom.documentElement.normalize();
-                var mailnum;
-                var responseNode = xmldom.documentElement.childNodes.item(0);
-                if (responseNode.tagName == "response") {
-                    var errno = responseNode.getAttribute("errno")
-                    if (errno == "0" || errno == 0) {
-                        var strTmp;
-                        var countList = responseNode.childNodes;
-                        for (var i = 0; i < countList.length; i++) {
-                            if (countList.item(i).tagName == "unseen") {
-                                for (var x = 0; x < document.getElementsByName('UNSEEN').length; x++) {
-                                    if (document.getElementsByName('UNSEEN')[x].getAttribute("did") == countList.item(i).getAttribute("did")) {
-                                        mailnum = countList.item(i).getAttribute("num");
-                                        if (mailnum > 0)
-                                            document.getElementsByName('UNSEEN')[x].innerHTML = "(" + mailnum + ")";
-                                        else
-                                            document.getElementsByName('UNSEEN')[x].innerHTML = "";
-
-                                        break;
-                                    }
+                                    break;
                                 }
-
                             }
+
                         }
                     }
                 }
             }
         }
-    }
-    xmlHttp.open("GET", qUrl, true);
-    xmlHttp.send("");
+    });
 }
 
 function ontimer() {
@@ -49,30 +40,20 @@ function ontimer() {
 }
 
 function do_empty_trash() {
-    var xmlHttp = initxmlhttp();
-    if (!xmlHttp)
-        return;
-
-    var qUrl = "/api/emptytrash.xml";
-
-    xmlHttp.onreadystatechange = function () {
-        if (xmlHttp.readyState == 4) {
-            if (xmlHttp.status == 200) {
-                var xmldom = xmlHttp.responseXML;
-                xmldom.documentElement.normalize();
-                var mailnum;
-                var responseNode = xmldom.documentElement.childNodes.item(0);
-                if (responseNode.tagName == "response") {
-                    var errno = responseNode.getAttribute("errno")
-                    if (errno == "0" || errno == 0) {
-                        return true;
-                    }
+    var api_url = "/api/emptytrash.xml";
+    $.ajax({
+        url: api_url,
+        success: function (xmldom) {
+            xmldom.documentElement.normalize();
+            var responseNode = xmldom.documentElement.childNodes.item(0);
+            if (responseNode.tagName == "response") {
+                var errno = responseNode.getAttribute("errno")
+                if (errno == "0" || errno == 0) {
+                    return true;
                 }
             }
         }
-    }
-    xmlHttp.open("GET", qUrl, true);
-    xmlHttp.send("");
+    });
     return true;
 }
 
@@ -242,26 +223,21 @@ function output_dir(tblobj, pid, path, topusage, nodeObj, layer, begtr) {
 }
 
 function load_dirs(pid, gpath, topusage, layer, begtr) {
-    var qUrl = "/api/listdirs.xml?PID=" + pid + "GPATH=" + encodeURIComponent(gpath);
-    var xmlHttp = initxmlhttp();
-    xmlHttp.onreadystatechange = function () {
-        if (xmlHttp.readyState == 4) {
-            if (xmlHttp.status == 200) {
-                var xmldom = xmlHttp.responseXML;
-                xmldom.documentElement.normalize();
-                var responseNode = xmldom.documentElement.childNodes.item(0);
-                if (responseNode.tagName == "response") {
-                    var errno = responseNode.getAttribute("errno")
-                    if (errno == "0" || errno == 0) {
-                        var dirList = responseNode.childNodes;
-                        output_dir($id('DIRTBL'), pid, gpath, topusage, dirList, layer, begtr);
-                    }
+    var api_url = "/api/listdirs.xml?PID=" + pid + "GPATH=" + encodeURIComponent(gpath);
+    $.ajax({
+        url: api_url,
+        success: function (xmldom) {
+            xmldom.documentElement.normalize();
+            var responseNode = xmldom.documentElement.childNodes.item(0);
+            if (responseNode.tagName == "response") {
+                var errno = responseNode.getAttribute("errno")
+                if (errno == "0" || errno == 0) {
+                    var dirList = responseNode.childNodes;
+                    output_dir($id('DIRTBL'), pid, gpath, topusage, dirList, layer, begtr);
                 }
             }
         }
-    }
-    xmlHttp.open("GET", qUrl, true);
-    xmlHttp.send("");
+    });
 }
 
 $(document).ready(function () {
@@ -269,6 +245,6 @@ $(document).ready(function () {
     ontimer();
 });
 
-$(window).on('unload',function(){
+$(window).on('unload', function () {
 
 })

@@ -1,16 +1,12 @@
 function do_delmail(mid) {
-    var qUrl = "/api/delmail.xml?MAILID=" + mid;
-
-    var xmlHttp = initxmlhttp();
-    xmlHttp.onreadystatechange = function () {
-        var strmid = "mailtr" + mid;
-        var trid = $id(strmid);
-
-        if (trid == null)
-            return false;
-
-        if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
-            var xmldom = xmlHttp.responseXML;
+    var strmid = "mailtr" + mid;
+    var trid = $id(strmid);
+    if (trid == null)
+        return false;
+    var api_url = "/api/delmail.xml?MAILID=" + mid;
+	$.ajax({
+		url: api_url,
+		success:function(xmldom) {
             xmldom.documentElement.normalize();
             var responseNode = xmldom.documentElement.childNodes.item(0);
             if (responseNode.tagName == "response") {
@@ -25,46 +21,36 @@ function do_delmail(mid) {
                     trid.cells[6].style.textDecoration = "";
                 }
             }
-
-        } else {
+        },
+        error: function(xmldom) {
             trid.cells[3].style.textDecoration = "line-through";
             trid.cells[4].style.textDecoration = "line-through";
             trid.cells[5].style.textDecoration = "line-through";
             trid.cells[6].style.textDecoration = "line-through";
         }
-
-    }
-    xmlHttp.open("GET", qUrl, true);
-    xmlHttp.send("");
+    });
 }
 
 function ontimer() {
     load_mails(Request.QueryString('DIRID'), $id('PAGE_CUR').value, Request.QueryString('TOP_USAGE'));
-
     setTimeout('ontimer()', 30000);
 }
 
 function do_trashmail(mid) {
-    var qUrl = "/api/trashmail.xml?MAILID=" + mid;
-    var xmlHttp = initxmlhttp();
-    xmlHttp.onreadystatechange = function () {
-        var strmid = "mailtr" + mid;
-        var trid = $id(strmid);
-
-        if (trid == null)
-            return false;
-
-        if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
-            var xmldom = xmlHttp.responseXML;
+    var strmid = "mailtr" + mid;
+    var trid = $id(strmid);
+    if (trid == null)
+        return false;
+    var api_url = "/api/trashmail.xml?MAILID=" + mid;
+	$.ajax({
+		url: api_url,
+		success:function(xmldom) {
             xmldom.documentElement.normalize();
             var responseNode = xmldom.documentElement.childNodes.item(0);
             if (responseNode.tagName == "response") {
                 var errno = responseNode.getAttribute("errno")
                 if (errno == "0" || errno == 0) {
-                    var strmid = "mailtr" + mid;
-                    var trid = $id(strmid);
                     $id('MAILTBL').deleteRow(trid.rowIndex);
-
                     load_mails(Request.QueryString('DIRID'), $id('PAGE_CUR').value, Request.QueryString('TOP_USAGE'));
                 } else {
 
@@ -74,16 +60,14 @@ function do_trashmail(mid) {
                     trid.cells[6].style.textDecoration = "";
                 }
             }
-        } else {
+        },
+        error: function(xmldom) {
             trid.cells[3].style.textDecoration = "line-through";
             trid.cells[4].style.textDecoration = "line-through";
             trid.cells[5].style.textDecoration = "line-through";
             trid.cells[6].style.textDecoration = "line-through";
         }
-
-    }
-    xmlHttp.open("GET", qUrl, true);
-    xmlHttp.send("");
+    });
 }
 
 function delmail(force) {

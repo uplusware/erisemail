@@ -20,7 +20,11 @@ StorageEngine::StorageEngine(const char * host, const char* username, const char
     m_memcached = memcached;
     m_realConn = 0;
 	m_next = 0;
+    pthread_mutex_init(&m_engineMutex, NULL);
+
+    pthread_mutex_lock(&m_engineMutex);
     MailStorage::LibInit();
+    pthread_mutex_unlock(&m_engineMutex);
 	m_engine = new stStorageEngine[m_maxConn];
 	sem_init(&m_engineSem, 0, m_maxConn);
 	for(int i = 0; i < m_maxConn; i++)
@@ -29,8 +33,6 @@ StorageEngine::StorageEngine(const char * host, const char* username, const char
         m_engine[i].inUse = FALSE;
         m_engine[i].isConnected = FALSE;
 	}
-	pthread_mutex_init(&m_engineMutex, NULL);
-    
 }
 
 StorageEngine::~StorageEngine()

@@ -1100,7 +1100,6 @@ int __inline__ code_convert(const char *from_charset, const char *to_charset, co
 
 int __inline__ code_convert_ex(const char *from_charset, const char *to_charset, const char *inbuf, string& strout)   
 {
-	//printf("%s => %s\n", from_charset, to_charset);
 	if(strcasecmp(from_charset, to_charset) == 0)
 	{
 		strout = inbuf;

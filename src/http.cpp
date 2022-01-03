@@ -113,7 +113,6 @@ BOOL CHttp::Parse(char* text, int len)
 {
 	string strtext = text;
 	strtrim(strtext);
-    //printf("%s\n", strtext.c_str());
 	if(strncasecmp(strtext.c_str(),"GET ", 4) == 0)
 	{
 		m_http_method = hmGet;

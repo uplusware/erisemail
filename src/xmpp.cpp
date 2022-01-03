@@ -2825,7 +2825,6 @@ BOOL CXmpp::AuthTag(TiXmlDocument* xmlDoc)
                         {
                             if(strcasecmp(commonName, strMailAddr.c_str()) == 0 || strmatch(commonName, strMailAddr.c_str()))
                             {
-                                //printf("Found CN: %s\n", commonName);
                                 bFound = TRUE;
                                 break;
                             }

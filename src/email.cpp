@@ -224,7 +224,6 @@ int email::output(const char* clientip)
 			strTmp += "\r\n";
 		}
 	}
-	//printf("%s\n", strTmp.c_str());
 	m_buffer.bufcat(strTmp.c_str(), strTmp.length());
 	strTmp = "";
 	

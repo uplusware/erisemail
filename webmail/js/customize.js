@@ -3,26 +3,24 @@ function passwd(oldpwd, newpwd, verifypwd) {
         pwdinfo.innerHTML = LANG_RESOURCE['WRONG_VERIFIED_PASSWORD'];
         return;
     }
-    var qUrl = "/api/passwd.xml?OLD_PWD=" + oldpwd + "&NEW_PWD=" + newpwd;
-    var xmlHttp = initxmlhttp();
-    xmlHttp.onreadystatechange = function () {
-        if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
-            var xmldom = xmlHttp.responseXML;
-            xmldom.documentElement.normalize();
-            var responseNode = xmldom.documentElement.childNodes.item(0);
-            if (responseNode.tagName == "response") {
-                var errno = responseNode.getAttribute("errno")
-                if (errno == "0" || errno == 0) {
-                    alert(LANG_RESOURCE['PASSWORD_CHANGED_NEED_RELOGIN']);
-                    window.parent.logout();
-                } else {
-                    document.getElementById("pwdinfo").innerHTML = "<font color='red'>" + LANG_RESOURCE['PASSWORD_CHANGED_FAILED_NEED_RETRY'] + "</font>";
-                }
-            }
-        }
-    }
-    xmlHttp.open("GET", qUrl, true);
-    xmlHttp.send("");
+    var api_url = "/api/passwd.xml";
+	$.ajax({
+		url: api_url,
+		type: "POST",
+		data: { OLD_PWD: oldpwd, NEW_PWD: newpwd },
+		success:function(xmldom) {
+			xmldom.documentElement.normalize();
+			var responseNode = xmldom.documentElement.childNodes.item(0);
+			if (responseNode.tagName == "response") {
+				var errno = responseNode.getAttribute("errno")
+				if (errno == "0" || errno == 0) {
+					alert(LANG_RESOURCE['PASSWORD_CHANGED_NEED_RELOGIN']);
+					window.parent.logout();
+				} else {
+					document.getElementById("pwdinfo").innerHTML = "<font color='red'>" + LANG_RESOURCE['PASSWORD_CHANGED_FAILED_NEED_RETRY'] + "</font>";
+				}
+			};
+    }});
 }
 
 function alias(stralias) {
@@ -30,12 +28,14 @@ function alias(stralias) {
         aliasinfo.innerHTML = LANG_RESOURCE['EMPTY_ALIAS'];
         return;
     }
-    var qUrl = "/api/alias.xml?ALIAS=" + stralias;
-    var xmlHttp = initxmlhttp();
-    xmlHttp.onreadystatechange = function () {
-        if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
-            var xmldom = xmlHttp.responseXML;
-            xmldom.documentElement.normalize();
+	
+	var api_url = "/api/alias.xml";
+	$.ajax({
+		url: api_url,
+		type: "POST",
+		data: { ALIAS: stralias },
+		success:function(xmldom) {
+			xmldom.documentElement.normalize();
             var responseNode = xmldom.documentElement.childNodes.item(0);
             if (responseNode.tagName == "response") {
                 var errno = responseNode.getAttribute("errno")
@@ -45,19 +45,15 @@ function alias(stralias) {
                     document.getElementById("aliasinfo").innerHTML = "<font color='red'>" + LANG_RESOURCE['CHANGE_ALIAS_FAILED'] + "</font>";
                 }
             }
-        }
-    }
-    xmlHttp.open("GET", qUrl, true);
-    xmlHttp.send("");
+    }});
 }
 
 function userinfo() {
-    var qUrl = "/api/userinfo.xml";
-    var xmlHttp = initxmlhttp();
-    xmlHttp.onreadystatechange = function () {
-        if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
-            var xmldom = xmlHttp.responseXML;
-            xmldom.documentElement.normalize();
+	var api_url = "/api/userinfo.xml";
+	$.ajax({
+		url: api_url,
+		success:function(xmldom) {
+			xmldom.documentElement.normalize();
             var responseNode = xmldom.documentElement.childNodes.item(0);
             if (responseNode.tagName == "response") {
                 var errno = responseNode.getAttribute("errno")
@@ -87,10 +83,7 @@ function userinfo() {
                     }
                 }
             }
-        }
-    }
-    xmlHttp.open("GET", qUrl, true);
-    xmlHttp.send("");
+    }});
 }
 
 function init() {

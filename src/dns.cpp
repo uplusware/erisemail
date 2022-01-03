@@ -299,9 +299,7 @@ int udpdns::query(const char* hostname, unsigned short record_type, vector<DNSQr
         reply_resource_len <<= 8;
         reply_resource_len |= dnsbufptr[aseek];
         aseek++;
-        
-       
-        //printf("TYPE: %d CLASS: %d TTL %d, RDLENGTH: %d", reply_type, reply_class, replay_ttl, reply_resource_len);
+               
         if(reply_type == DNS_RCD_TYPE_MX)
         {
             unsigned short reply_resource_preference = dnsbufptr[aseek];
@@ -342,8 +340,6 @@ int udpdns::query(const char* hostname, unsigned short record_type, vector<DNSQr
             replay_port |= dnsbufptr[aseek];
             aseek++;
             
-            //printf("PRI: %d, WEIGHT: %d, PORT: %d", replay_priority, replay_weight, replay_port);
-            
             string hostname;
             unsigned int hostnamelen = gethostname(dnsbufptr, aseek, hostname);
 
@@ -360,7 +356,6 @@ int udpdns::query(const char* hostname, unsigned short record_type, vector<DNSQr
         {
             aseek += reply_resource_len;
         }
-        //printf("\n");
     }
 #if _MORE_DNS_RESOURCE_    
     for(j = 0; j < ntohs(pAckHeader->nAuthoritativeResource); j++)
@@ -406,9 +401,7 @@ int udpdns::query(const char* hostname, unsigned short record_type, vector<DNSQr
         reply_resource_len <<= 8;
         reply_resource_len |= dnsbufptr[aseek];
         aseek++;
-        
-        //printf("TYPE: %d CLASS: %d TTL %d, RDLENGTH: %d", reply_type, reply_class, replay_ttl, reply_resource_len);
-        
+
         if(reply_type == DNS_RCD_TYPE_NS)
         {
             string hostname;

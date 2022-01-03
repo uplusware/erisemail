@@ -2889,8 +2889,6 @@ public:
 				"</erisemail>";
 		}
 
-		//printf("%s\n", strResp.c_str());
-		
 		m_session->HttpSend(strResp.c_str(), strResp.length());
 	}
 	
@@ -3918,8 +3916,6 @@ public:
 					strResp += "?UPLOADEDFILES=";
 					strResp += strNewUploaded;
 					strResp += "\r\n\r\n";
-
-					//printf("%s\n", strResp.c_str());
 				}
 			}
 			else
@@ -3986,12 +3982,10 @@ public:
 			if(unlink(strFilePath.c_str()) == 0)
 			{
 				strResp += "<erisemail><response errno=\"0\" reason=\"\"></response></erisemail>";
-				//printf("delete file: %s ok\n", strFilePath.c_str());
 			}
 			else
 			{
 				strResp += "<erisemail><response errno=\"1\" reason=\"Delete file error\"></response></erisemail>";
-				//printf("delete file: %s error\n", strFilePath.c_str());
 			}
 		}
 		else
@@ -5143,9 +5137,7 @@ public:
 					fbuffer fbuf;
 					string dispos = "attachment";
 					
-					MailFileData(Letter->GetSummary()->m_mime, strFileName.c_str(), strType, dispos, fbuf, lbuf);
-					
-					//printf("%s %s %s\n", strFileName.c_str(), strType.c_str(), dispos.c_str());
+					MailFileData(Letter->GetSummary()->m_mime, strFileName.c_str(), strType, dispos, fbuf, lbuf);					
 					
 					if((strType == "/") || (strType == ""))
 					{
@@ -5175,7 +5167,6 @@ public:
 					
 					strResp += "\r\n";
 					
-					//printf("%s\n", strResp.c_str());
 					m_session->HttpSend(strResp.c_str(), strResp.length());
 					
 					const char* pbuf = fbuf.c_buffer();
@@ -6259,7 +6250,24 @@ public:
 		m_session->parse_urlencode_value("OLD_PWD", strOldPwd);
 		
 		string username, password;
-		
+		if(check_userauth_token(strauth.c_str(), username) != 0) {
+			strResp = RSP_200_OK_XML;
+			string strHTTPDate;
+			OutHTTPDateString(time(NULL), strHTTPDate);
+			strResp += "Date: ";
+			strResp += strHTTPDate;
+			strResp += "\r\n";
+			
+			strResp +="\r\n";
+			
+			strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+			
+			strResp += "<erisemail>"
+				"<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+				"</erisemail>";
+			m_session->HttpSend(strResp.c_str(), strResp.length());
+			return;
+		}
 		if(m_mailStg && m_mailStg->CheckLogin(username.c_str(), strOldPwd.c_str()) == 0)
 		{
             MailStorage* master_storage;

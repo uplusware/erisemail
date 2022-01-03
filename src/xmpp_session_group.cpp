@@ -89,8 +89,7 @@ BOOL Xmpp_Session_Group::Connect(const char* hostname, unsigned short port, Serv
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_UNSPEC;
     hints.ai_flags = AI_CANONNAME; 
-    
-    //printf("getaddrinfo: %s\n", hostname);
+
     if (getaddrinfo(hostname, NULL, &hints, &servinfo) != 0)
     {
         return FALSE;

@@ -48,7 +48,11 @@ void MailStorage::LibInit()
 {
     if(!m_lib_inited)
     {
-        mysql_library_init(0, NULL, NULL);
+        if(mysql_library_init(0, NULL, NULL) != 0)
+		{
+			 fprintf(stderr, "mysql_library_init error\n");
+			 exit(-1);
+		}
         m_lib_inited = TRUE;
     }
 }
@@ -2033,7 +2037,6 @@ int MailStorage::AddID(const char* username, const char* password, const char* a
 			
 			int defaultLevel = -1;
 
-			//printf("%d\n", level);
 			if(level == -1)
 			{
 				if(GetDefaultLevel(defaultLevel) != 0)
@@ -4170,7 +4173,6 @@ int MailStorage::GetDirParentID(const char* username, const char* dirref, vector
 	}
 	else
 	{
-		//printf("#: %s %s\n", parentdir.c_str(), dirname.c_str());
 		return GetDirID(username, parentdir.c_str(), vparentid);
 	}
 }
@@ -4604,7 +4606,6 @@ int MailStorage::GetDraftsID(const char* username, int &dirid)
 		
 	sprintf(sqlcmd, "SELECT did FROM dirtbl WHERE downer='%s' AND dusage=%d",
 			strSafetyUsername.c_str(), duDrafts);
-	//printf("%s\n",sqlcmd );
 	
 	if(Query(sqlcmd, strlen(sqlcmd)) == 0)
 	{
@@ -4657,7 +4658,6 @@ int MailStorage::GetSentID(const char* username, int &dirid)
 		
 	sprintf(sqlcmd, "SELECT did FROM dirtbl WHERE downer='%s' AND dusage=%d",
 			strSafetyUsername.c_str(), duSent);
-	//printf("%s\n",sqlcmd );
 	
 	if(Query(sqlcmd, strlen(sqlcmd)) == 0)
 	{
@@ -5229,44 +5229,33 @@ int MailStorage::EmptyDir(const char* username, int dirid)
 	MYSQL_ROW row;
 	
 	sprintf(sqlcmd, "UPDATE mailtbl SET mstatus=(mstatus|%d) WHERE mdirid='%d' AND mstatus&%d<>%d", MSG_ATTR_DELETED, dirid, MSG_ATTR_DELETED, MSG_ATTR_DELETED);
-    
 	if(Query(sqlcmd, strlen(sqlcmd)) == 0)
 	{					
-		query_result = mysql_store_result(&m_hMySQL);
+		sprintf(sqlcmd, "SELECT did FROM dirtbl WHERE dparent=%d", dirid);
 		
-		if(query_result)
-		{
-			mysql_free_result(query_result);
-
-			sprintf(sqlcmd, "SELECT did FROM dirtbl WHERE dparent=%d", dirid);
+		if(Query(sqlcmd, strlen(sqlcmd)) == 0)
+		{					
+			query_result = mysql_store_result(&m_hMySQL);
 			
-			if(Query(sqlcmd, strlen(sqlcmd)) == 0)
-			{					
-				query_result = mysql_store_result(&m_hMySQL);
-				
-				if(query_result)
+			if(query_result)
+			{
+				while((row = mysql_fetch_row(query_result)))
 				{
-					while((row = mysql_fetch_row(query_result)))
-					{
-						int pid = atoi(row[0]);
-						EmptyDir(username, pid);
-					}
-					mysql_free_result(query_result);
-					return 0;
+					int pid = atoi(row[0]);
+					EmptyDir(username, pid);
 				}
-				else
-				{
-					return -1;
-				}
+				mysql_free_result(query_result);
+				return 0;
 			}
 			else
 			{
-				
 				return -1;
 			}
 		}
 		else
+		{
 			return -1;
+		}
 	}
 	else
 	{
