@@ -222,7 +222,6 @@ int CMailSmtp::ProtRecv(char* buf, int len)
 
 BOOL CMailSmtp::Parse(char* text, int len)
 {
-	/* printf("%s",text); */
 	BOOL result = TRUE;
 	if((m_status&STATUS_AUTH_STEP1) == STATUS_AUTH_STEP1)
 	{

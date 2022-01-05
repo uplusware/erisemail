@@ -1,8 +1,8 @@
 function load_users(orderby, desc) {
     var api_url = "/api/listusers.xml?ORDER_BY=" + orderby + "&DESC=" + (desc == null ? '' : desc);
-	$.ajax({
-		url: api_url,
-		success:function(xmldom) {
+    $.ajax({
+        url: api_url,
+        success: function (xmldom) {
             xmldom.documentElement.normalize();
             var responseNode = xmldom.documentElement.childNodes.item(0);
             if (responseNode.tagName == "response") {
@@ -106,7 +106,8 @@ function load_users(orderby, desc) {
                     $id("STATUS").style.display = "none";
                 }
             }
-    }});
+        }
+    });
 }
 
 function init() {
@@ -119,7 +120,7 @@ function init() {
 }
 
 function uninit() {
-    
+
 }
 
 function show_mail_detail(url) {
@@ -175,6 +176,6 @@ $(document).ready(function () {
     });
 });
 
-$(window).on('unload',function(){
+$(window).on('unload', function () {
     uninit();
 })

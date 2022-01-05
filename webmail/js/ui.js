@@ -152,25 +152,22 @@
 }
 
 function load_dirs(tblobj, pid, gpath, layer, begtr, checkname) {
-    var strTmp;
-    var qUrl = "/api/listdirs.xml?PID=" + pid + "GPATH=" + encodeURIComponent(gpath);
-    var xmlHttp = initxmlhttp();
-    xmlHttp.open("GET", qUrl, false);
-    xmlHttp.send("");
-    if (xmlHttp.status == 200) {
-        var xmldom = xmlHttp.responseXML;
-        xmldom.documentElement.normalize();
-        var responseNode = xmldom.documentElement.childNodes.item(0);
-        if (responseNode.tagName == "response") {
-            var errno = responseNode.getAttribute("errno")
-            if (errno == "0" || errno == 0) {
-                var dirList = responseNode.childNodes;
-
-                output_dir(tblobj, pid, "", dirList, layer, begtr, checkname);
+    var api_url = "/api/listdirs.xml?PID=" + pid + "GPATH=" + encodeURIComponent(gpath);
+    $.ajax({
+        url: api_url,
+        async: false,
+        success: function (xmldom) {
+            xmldom.documentElement.normalize();
+            var responseNode = xmldom.documentElement.childNodes.item(0);
+            if (responseNode.tagName == "response") {
+                var errno = responseNode.getAttribute("errno")
+                if (errno == "0" || errno == 0) {
+                    var dirList = responseNode.childNodes;
+                    output_dir(tblobj, pid, "", dirList, layer, begtr, checkname);
+                }
             }
         }
-    }
-    return strTmp;
+    });
 }
 
 function show_dirs(divobj, tblobj, x, y, checkname) {

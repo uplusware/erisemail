@@ -313,8 +313,6 @@ int CXmpp::XmppSend(const char* buf, int len)
     else
         ret = Send(m_sockfd, buf, len, CMailBase::m_connection_idle_timeout);
     
-    /* printf("%s", buf); */
-    
     pthread_mutex_unlock(&m_send_lock);
     
     return ret;

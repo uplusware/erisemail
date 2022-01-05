@@ -66,7 +66,6 @@ CMailPop::~CMailPop()
 
 int CMailPop::PopSend(const char* buf, int len)
 {
-	/* printf("%s", buf); */
     if(m_ssl)
         return SSLWrite(m_sockfd, m_ssl, buf, len, CMailBase::m_connection_idle_timeout);
     else

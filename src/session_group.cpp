@@ -79,7 +79,6 @@ BOOL Session_Group::Connect(const char* hostname, unsigned short port, Service_T
     hints.ai_family = AF_UNSPEC;
     hints.ai_flags = AI_CANONNAME; 
     
-    /* printf("getaddrinfo: %s\n", hostname); */
     if (getaddrinfo(hostname, NULL, &hints, &servinfo) != 0)
     {
         return FALSE;

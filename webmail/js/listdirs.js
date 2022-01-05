@@ -1,47 +1,38 @@
 function get_total_mail_num(dirid, tdobj) {
-    var xmlHttp = initxmlhttp();
-    if (!xmlHttp)
-        return;
-    if (!dirid)
-        dirid = "";
-    var qUrl = "/api/getmailnum.xml?DIRID=" + dirid;
+    var api_url = "/api/getmailnum.xml?DIRID=" + (dirid ? dirid : "");
+    $.ajax({
+        url: api_url,
+        beforeSend: function (xmldom) {
+            tdobj.innerHTML = "<img src=\"loading.gif\">";
+        },
+        success: function (xmldom) {
+            xmldom.documentElement.normalize();
+            var mailnum;
+            var responseNode = xmldom.documentElement.childNodes.item(0);
+            if (responseNode.tagName == "response") {
+                var errno = responseNode.getAttribute("errno")
+                if (errno == "0" || errno == 0) {
+                    var countList = responseNode.childNodes;
+                    for (var i = 0; i < countList.length; i++) {
+                        if (countList.item(i).tagName == "count") {
+                            tdobj.innerHTML = countList.item(i).childNodes[0] == null ? "0" : countList.item(i).childNodes[0].nodeValue + " " + LANG_RESOURCE['MAILS'];
 
-    xmlHttp.onreadystatechange = function () {
-        if (xmlHttp.readyState == 4) {
-            if (xmlHttp.status == 200) {
-                var xmldom = xmlHttp.responseXML;
-                xmldom.documentElement.normalize();
-                var mailnum;
-                var responseNode = xmldom.documentElement.childNodes.item(0);
-                if (responseNode.tagName == "response") {
-                    var errno = responseNode.getAttribute("errno")
-                    if (errno == "0" || errno == 0) {
-                        var strTmp;
-                        var countList = responseNode.childNodes;
-                        for (var i = 0; i < countList.length; i++) {
-                            if (countList.item(i).tagName == "count") {
-                                tdobj.innerHTML = countList.item(i).childNodes[0] == null ? "0" : countList.item(i).childNodes[0].nodeValue + " " + LANG_RESOURCE['MAILS'];
-
-                            }
                         }
                     }
                 }
             }
-        } else {
-            tdobj.innerHTML = "<img src=\"loading.gif\">";
         }
-    }
-    xmlHttp.open("GET", qUrl, true);
-    xmlHttp.send("");
+    });
 }
 
 function delete_label(dirid, dirname, tdobj) {
-    var qUrl = "/api/deletelabel.xml";
-    var strPostData = "DIRID=" + encodeURIComponent(dirid);
-    var xmlHttp = initxmlhttp();
-    xmlHttp.onreadystatechange = function () {
-        if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
-            var xmldom = xmlHttp.responseXML;
+    var api_data = "DIRID=" + encodeURIComponent(dirid);
+    var api_url = "/api/deletelabel.xml";
+    $.ajax({
+        url: api_url,
+        type: "POST",
+        data: api_data,
+        success: function (xmldom) {
             xmldom.documentElement.normalize();
             var responseNode = xmldom.documentElement.childNodes.item(0);
             if (responseNode.tagName == "response") {
@@ -57,9 +48,7 @@ function delete_label(dirid, dirname, tdobj) {
                 }
             }
         }
-    }
-    xmlHttp.open("POST", qUrl, true);
-    xmlHttp.send(strPostData);
+    });
 }
 
 function do_create_label() {
@@ -247,39 +236,35 @@ function output_dir(tblobj, pid, path, nodeObj, layer) {
 }
 
 function travel_dirs(pid, gpath, layer) {
-    var qUrl = "/api/traversaldirs.xml?PID=" + pid + "GPATH=" + encodeURIComponent(gpath);
-    var xmlHttp = initxmlhttp();
-    xmlHttp.onreadystatechange = function () {
-        if (xmlHttp.readyState == 4) {
-            if (xmlHttp.status == 200) {
-                var xmldom = xmlHttp.responseXML;
-                xmldom.documentElement.normalize();
-                var responseNode = xmldom.documentElement.childNodes.item(0);
-                if (responseNode.tagName == "response") {
-                    var errno = responseNode.getAttribute("errno")
-                    if (errno == "0" || errno == 0) {
-                        var dirList = responseNode.childNodes;
+    var api_url = "/api/traversaldirs.xml?PID=" + pid + "GPATH=" + encodeURIComponent(gpath);
+    $.ajax({
+        url: api_url,
+        success: function (xmldom) {
+            xmldom.documentElement.normalize();
+            var responseNode = xmldom.documentElement.childNodes.item(0);
+            if (responseNode.tagName == "response") {
+                var errno = responseNode.getAttribute("errno")
+                if (errno == "0" || errno == 0) {
+                    var dirList = responseNode.childNodes;
 
-                        output_dir($id('DIRTBL'), pid, "", dirList, layer);
-                    }
+                    output_dir($id('DIRTBL'), pid, "", dirList, layer);
                 }
             }
         }
-    }
-    xmlHttp.open("GET", qUrl, true);
-    xmlHttp.send("");
+    });
 }
 
 function create_label(dirname, dirid) {
-    if (dirname == '')
+    if (dirname == ''){
         return;
-
-    var qUrl = "/api/createlabel.xml";
-    var strPostData = "NEW_LABEL=" + encodeURIComponent(dirname) + "&DIRID=" + encodeURIComponent(dirid);
-    var xmlHttp = initxmlhttp();
-    xmlHttp.onreadystatechange = function () {
-        if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
-            var xmldom = xmlHttp.responseXML;
+    }
+    var api_data = "NEW_LABEL=" + encodeURIComponent(dirname) + "&DIRID=" + encodeURIComponent(dirid);
+    var api_url = "/api/createlabel.xml";
+    $.ajax({
+        url: api_url,
+        type: "POST",
+        data: api_data,
+        success: function (xmldom) {
             xmldom.documentElement.normalize();
             var responseNode = xmldom.documentElement.childNodes.item(0);
             if (responseNode.tagName == "response") {
@@ -296,9 +281,7 @@ function create_label(dirname, dirid) {
                 }
             }
         }
-    }
-    xmlHttp.open("POST", qUrl, true);
-    xmlHttp.send(strPostData);
+    });
 }
 
 function init() {
@@ -312,11 +295,10 @@ function init() {
 function uninit() { }
 
 function login_username() {
-    var qUrl = "/api/currentusername.xml";
-    var xmlHttp = initxmlhttp();
-    xmlHttp.onreadystatechange = function () {
-        if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
-            var xmldom = xmlHttp.responseXML;
+    var api_url = "/api/currentusername.xml";
+    $.ajax({
+        url: api_url,
+        success: function (xmldom) {
             xmldom.documentElement.normalize();
             var responseNode = xmldom.documentElement.childNodes.item(0);
             if (responseNode.tagName == "response") {
@@ -334,9 +316,7 @@ function login_username() {
                 }
             }
         }
-    }
-    xmlHttp.open("GET", qUrl, true);
-    xmlHttp.send("");
+    });
 }
 
 function create_root_dir() {
@@ -349,6 +329,6 @@ $(document).ready(function () {
     travel_dirs(-1, '', -1);
 });
 
-$(window).on('unload',function(){
+$(window).on('unload', function () {
     uninit();
 })

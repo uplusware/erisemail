@@ -38,37 +38,6 @@ function setcolor(obj, color) {
     obj.bgColor = color;
 }
 
-function initxmlhttp() {
-    var xmlhttp
-
-    try {
-        xmlhttp = new ActiveXObject("Msxml2.XMLHTTP");
-    } catch (e) {
-        try {
-            xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
-        } catch (E) {
-            xmlhttp = false;
-        }
-    }
-
-    if (!xmlhttp && typeof XMLHttpRequest != 'undefined') {
-        try {
-            xmlhttp = new XMLHttpRequest();
-        } catch (e) {
-
-            xmlhttp = false;
-        }
-    }
-    if (!xmlhttp && window.createRequest) {
-        try {
-            xmlhttp = window.createRequest();
-        } catch (e) {
-            xmlhttp = false;
-        }
-    }
-    return xmlhttp;
-}
-
 Request = {
     QueryString: function (item) {
         var svalue = location.search.match(new RegExp("[\?\&]" + item + "=([^\&]*)(\&?)", "i"));

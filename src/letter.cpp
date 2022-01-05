@@ -11,6 +11,7 @@
 #include "util/md5.h"
 #include "letter.h"
 
+#define MAX_MAILBODY_FRAGMENT_SIZER (65535 - 1024)
 #define MEMCACHED_EML 0x00000001
 #define MEMCACHED_XML 0x00000002
 
@@ -547,10 +548,10 @@ int MailLetter::Write(const char* buf, unsigned int len)
 		{
             m_mailbody_fragment += buf;
             
-            while(m_mailbody_fragment.length() > 65535) //must less than 65535, since mysql use TEXT type
+            while(m_mailbody_fragment.length() > MAX_MAILBODY_FRAGMENT_SIZER) //must less than 65535, since mysql use TEXT type
             {
-                string str_block64k = m_mailbody_fragment.substr(0, 65535);
-                m_mailbody_fragment = m_mailbody_fragment.substr(65535);
+                string str_block64k = m_mailbody_fragment.substr(0, MAX_MAILBODY_FRAGMENT_SIZER);
+                m_mailbody_fragment = m_mailbody_fragment.substr(MAX_MAILBODY_FRAGMENT_SIZER);
                 if(m_mailstg->SaveMailBodyToDB(m_emlfile.c_str(), str_block64k.c_str()) < 0)
                     return -1;
             }
@@ -624,10 +625,10 @@ void MailLetter::Close()
             }
         }
 #else
-        while(m_mailbody_fragment.length() > 65535) //must less than 65535, since mysql use TEXT type
+        while(m_mailbody_fragment.length() > (65535 - 4096)) //must less than 65535, since mysql use TEXT type
         {
-            string str_block64k = m_mailbody_fragment.substr(0, 65535);
-            m_mailbody_fragment = m_mailbody_fragment.substr(65535);
+            string str_block64k = m_mailbody_fragment.substr(0, (65535 - 4096));
+            m_mailbody_fragment = m_mailbody_fragment.substr((65535 - 4096));
             if(m_mailstg->SaveMailBodyToDB(m_emlfile.c_str(), str_block64k.c_str()) < 0)
             {
                 m_LetterOk = FALSE;

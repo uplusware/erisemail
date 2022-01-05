@@ -1,9 +1,8 @@
 function logout() {
-    var qUrl = "/api/logout.xml";
-    var xmlHttp = initxmlhttp();
-    xmlHttp.onreadystatechange = function () {
-        if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
-            var xmldom = xmlHttp.responseXML;
+    var api_url = "/api/logout.xml";
+    $.ajax({
+        url: api_url,
+        success: function (xmldom) {
             xmldom.documentElement.normalize();
             var responseNode = xmldom.documentElement.childNodes.item(0);
             if (responseNode.tagName == "response") {
@@ -13,21 +12,20 @@ function logout() {
                 }
             }
         }
-    }
-    xmlHttp.open("GET", qUrl, true);
-    xmlHttp.send("");
+    });
 }
 
 function create_label(dirname, dirid) {
-    if (dirname == '')
+    if (dirname == ''){
         return;
-
-    var qUrl = "/api/createlabel.xml";
-    var strPostData = "NEW_LABEL=" + encodeURIComponent(dirname) + "&DIRID=" + encodeURIComponent(dirid);
-    var xmlHttp = initxmlhttp();
-    xmlHttp.onreadystatechange = function () {
-        if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
-            var xmldom = xmlHttp.responseXML;
+    }
+    var api_data = "NEW_LABEL=" + encodeURIComponent(dirname) + "&DIRID=" + encodeURIComponent(dirid);
+    var api_url = "/api/createlabel.xml";
+    $.ajax({
+        url: api_url,
+        type: "POST",
+        data: api_data,
+        success: function (xmldom) {
             xmldom.documentElement.normalize();
             var responseNode = xmldom.documentElement.childNodes.item(0);
             if (responseNode.tagName == "response") {
@@ -40,17 +38,14 @@ function create_label(dirname, dirid) {
                 }
             }
         }
-    }
-    xmlHttp.open("POST", qUrl, true);
-    xmlHttp.send(strPostData);
+    });
 }
 
 function login_username() {
-    var qUrl = "/api/currentusername.xml";
-    var xmlHttp = initxmlhttp();
-    xmlHttp.onreadystatechange = function () {
-        if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
-            var xmldom = xmlHttp.responseXML;
+    var api_url = "/api/currentusername.xml";
+    $.ajax({
+        url: api_url,
+        success: function (xmldom) {
             xmldom.documentElement.normalize();
             var responseNode = xmldom.documentElement.childNodes.item(0);
             if (responseNode.tagName == "response") {
@@ -68,9 +63,7 @@ function login_username() {
                 }
             }
         }
-    }
-    xmlHttp.open("GET", qUrl, true);
-    xmlHttp.send("");
+    });
 }
 
 function init() {
@@ -252,7 +245,7 @@ function show_popup_view(url) {
 
 $(document).ready(function () {
     init();
-    
+
     $('#NEWMAIL').click(function () {
         newmail();
     });
@@ -307,6 +300,6 @@ $(document).ready(function () {
 
 });
 
-$(window).on('unload',function(){
+$(window).on('unload', function () {
 
 })

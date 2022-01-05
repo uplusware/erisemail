@@ -3,24 +3,26 @@ function passwd(oldpwd, newpwd, verifypwd) {
         pwdinfo.innerHTML = LANG_RESOURCE['WRONG_VERIFIED_PASSWORD'];
         return;
     }
+    var api_data = "OLD_PWD=" + encodeURIComponent(oldpwd) + "&NEW_PWD=" + encodeURIComponent(newpwd);
     var api_url = "/api/passwd.xml";
-	$.ajax({
-		url: api_url,
-		type: "POST",
-		data: { OLD_PWD: oldpwd, NEW_PWD: newpwd },
-		success:function(xmldom) {
-			xmldom.documentElement.normalize();
-			var responseNode = xmldom.documentElement.childNodes.item(0);
-			if (responseNode.tagName == "response") {
-				var errno = responseNode.getAttribute("errno")
-				if (errno == "0" || errno == 0) {
-					alert(LANG_RESOURCE['PASSWORD_CHANGED_NEED_RELOGIN']);
-					window.parent.logout();
-				} else {
-					document.getElementById("pwdinfo").innerHTML = "<font color='red'>" + LANG_RESOURCE['PASSWORD_CHANGED_FAILED_NEED_RETRY'] + "</font>";
-				}
-			};
-    }});
+    $.ajax({
+        url: api_url,
+        type: "POST",
+        data: api_data,
+        success: function (xmldom) {
+            xmldom.documentElement.normalize();
+            var responseNode = xmldom.documentElement.childNodes.item(0);
+            if (responseNode.tagName == "response") {
+                var errno = responseNode.getAttribute("errno")
+                if (errno == "0" || errno == 0) {
+                    alert(LANG_RESOURCE['PASSWORD_CHANGED_NEED_RELOGIN']);
+                    window.parent.logout();
+                } else {
+                    document.getElementById("pwdinfo").innerHTML = "<font color='red'>" + LANG_RESOURCE['PASSWORD_CHANGED_FAILED_NEED_RETRY'] + "</font>";
+                }
+            }
+        }
+    });
 }
 
 function alias(stralias) {
@@ -28,32 +30,33 @@ function alias(stralias) {
         aliasinfo.innerHTML = LANG_RESOURCE['EMPTY_ALIAS'];
         return;
     }
-	
-	var api_url = "/api/alias.xml";
-	$.ajax({
-		url: api_url,
-		type: "POST",
-		data: { ALIAS: stralias },
-		success:function(xmldom) {
-			xmldom.documentElement.normalize();
+    var api_data = "ALIAS=" + encodeURIComponent(stralias);
+    var api_url = "/api/alias.xml";
+    $.ajax({
+        url: api_url,
+        type: "POST",
+        data: api_data,
+        success: function (xmldom) {
+            xmldom.documentElement.normalize();
             var responseNode = xmldom.documentElement.childNodes.item(0);
             if (responseNode.tagName == "response") {
                 var errno = responseNode.getAttribute("errno")
                 if (errno == "0" || errno == 0) {
-                    document.getElementById("aliasinfo").innerHTML = LANG_RESOURCE['CHANGE_ALIAS_OK'];
+                    document.getElementById("aliasinfo").innerHTML = "<font color='green'>" + LANG_RESOURCE['CHANGE_ALIAS_OK'] + "</font>";
                 } else {
                     document.getElementById("aliasinfo").innerHTML = "<font color='red'>" + LANG_RESOURCE['CHANGE_ALIAS_FAILED'] + "</font>";
                 }
             }
-    }});
+        }
+    });
 }
 
 function userinfo() {
-	var api_url = "/api/userinfo.xml";
-	$.ajax({
-		url: api_url,
-		success:function(xmldom) {
-			xmldom.documentElement.normalize();
+    var api_url = "/api/userinfo.xml";
+    $.ajax({
+        url: api_url,
+        success: function (xmldom) {
+            xmldom.documentElement.normalize();
             var responseNode = xmldom.documentElement.childNodes.item(0);
             if (responseNode.tagName == "response") {
                 var errno = responseNode.getAttribute("errno")
@@ -83,7 +86,8 @@ function userinfo() {
                     }
                 }
             }
-    }});
+        }
+    });
 }
 
 function init() {
@@ -95,7 +99,7 @@ function init() {
 }
 
 function uninit() {
-        
+
 }
 
 $(document).ready(function () {
@@ -116,6 +120,6 @@ $(document).ready(function () {
     });
 });
 
-$(window).on('unload',function(){
+$(window).on('unload', function () {
     uninit();
 })

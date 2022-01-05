@@ -193,22 +193,22 @@ function do_delsentmail() {
     isChange = false;
     toggle_onbeforeunload(isChange);
 
-    var qUrl = "/api/delmail.xml?MAILID=" + $id('DRAFTID').value;
-    var xmlHttp = initxmlhttp();
-    xmlHttp.open("GET", qUrl, false);
-    xmlHttp.send("");
-
-    if (xmlHttp.status == 200) {
-        var xmldom = xmlHttp.responseXML;
-        xmldom.documentElement.normalize();
-        var responseNode = xmldom.documentElement.childNodes.item(0);
-        if (responseNode.tagName == "response") {
-            var errno = responseNode.getAttribute("errno")
-            if (errno == "0" || errno == 0) {
-                return true;
+    var api_url = "/api/delmail.xml?MAILID=" + $id('DRAFTID').value;
+    $.ajax({
+        url: api_url,
+        async: false,
+        success: function (xmldom) {
+            xmldom.documentElement.normalize();
+            var responseNode = xmldom.documentElement.childNodes.item(0);
+            if (responseNode.tagName == "response") {
+                var errno = responseNode.getAttribute("errno")
+                if (errno == "0" || errno == 0) {
+                    return true;
+                }
             }
         }
-    }
+    });
+
     return false;
 }
 
@@ -219,22 +219,22 @@ function do_trashmail() {
 
     isChange = false;
     toggle_onbeforeunload(isChange);
-    var qUrl = "/api/trashmail.xml?MAILID=" + $id('DRAFTID').value;
-    var xmlHttp = initxmlhttp();
-    xmlHttp.open("GET", qUrl, false);
-    xmlHttp.send("");
 
-    if (xmlHttp.status == 200) {
-        var xmldom = xmlHttp.responseXML;
-        xmldom.documentElement.normalize();
-        var responseNode = xmldom.documentElement.childNodes.item(0);
-        if (responseNode.tagName == "response") {
-            var errno = responseNode.getAttribute("errno")
-            if (errno == "0" || errno == 0) {
-                return true;
+    var api_url = "/api/trashmail.xml?MAILID=" + $id('DRAFTID').value;
+    $.ajax({
+        url: api_url,
+        async: false,
+        success: function (xmldom) {
+            xmldom.documentElement.normalize();
+            var responseNode = xmldom.documentElement.childNodes.item(0);
+            if (responseNode.tagName == "response") {
+                var errno = responseNode.getAttribute("errno")
+                if (errno == "0" || errno == 0) {
+                    return true;
+                }
             }
         }
-    }
+    });
     return false;
 }
 
@@ -244,16 +244,17 @@ function flag_mail(flag) {
         return;
     }
 
-    if (flag == true)
+    if (flag == true) {
         strFlag = "yes";
-    else
+    }
+    else {
         strFlag = "no";
+    }
 
-    var qUrl = "/api/flagmail.xml?ID=" + Request.QueryString('ID') + "&FLAG=" + strFlag;
-    var xmlHttp = initxmlhttp();
-    xmlHttp.onreadystatechange = function () {
-        if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
-            var xmldom = xmlHttp.responseXML;
+    var api_url = "/api/flagmail.xml?ID=" + Request.QueryString('ID') + "&FLAG=" + strFlag;
+    $.ajax({
+        url: api_url,
+        success: function (xmldom) {
             xmldom.documentElement.normalize();
             var responseNode = xmldom.documentElement.childNodes.item(0);
             if (responseNode.tagName == "response") {
@@ -261,9 +262,7 @@ function flag_mail(flag) {
                 if (errno == "0") { }
             }
         }
-    }
-    xmlHttp.open("GET", qUrl, true);
-    xmlHttp.send("");
+    });
 }
 
 function seen_mail(flag) {
@@ -272,16 +271,17 @@ function seen_mail(flag) {
         return;
     }
 
-    if (flag == true)
+    if (flag == true) {
         strFlag = "yes";
-    else
+    }
+    else {
         strFlag = "no";
+    }
 
-    var qUrl = "/api/seenmail.xml?ID=" + Request.QueryString('ID') + "&SEEN=" + strFlag;
-    var xmlHttp = initxmlhttp();
-    xmlHttp.onreadystatechange = function () {
-        if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
-            var xmldom = xmlHttp.responseXML;
+    var api_url = "/api/seenmail.xml?ID=" + Request.QueryString('ID') + "&SEEN=" + strFlag;
+    $.ajax({
+        url: api_url,
+        success: function (xmldom) {
             xmldom.documentElement.normalize();
             var responseNode = xmldom.documentElement.childNodes.item(0);
             if (responseNode.tagName == "response") {
@@ -289,9 +289,7 @@ function seen_mail(flag) {
                 if (errno == "0" || errno == 0) { }
             }
         }
-    }
-    xmlHttp.open("GET", qUrl, true);
-    xmlHttp.send("");
+    });
 }
 
 function do_savesent() {
@@ -301,63 +299,60 @@ function do_savesent() {
         uploadedfiles += "*"
     }
     $id("CONTENT").value = $id('richeditor').contentWindow.document.body.innerHTML;
-    var strPostData = "TO_ADDRS=" + encodeURIComponent($id('TO_ADDRS').value) + "&";
-    strPostData += "CC_ADDRS=" + encodeURIComponent($id('CC_ADDRS').value) + "&";
-    strPostData += "BCC_ADDRS=" + encodeURIComponent($id('BCC_ADDRS').value) + "&";
-    strPostData += "SUBJECT=" + encodeURIComponent($id('SUBJECT').value) + "&";
-    strPostData += "CONTENT=" + encodeURIComponent($id('CONTENT').value) + "&";
-    strPostData += "ATTACHFILES=" + encodeURIComponent(uploadedfiles);
 
-    var qUrl = "api/savesent.xml";
-
-    var xmlHttp = initxmlhttp();
-    xmlHttp.onreadystatechange = function () {
-        if (xmlHttp.readyState == 4) {
-            sent_status = false;
+    var api_data = "TO_ADDRS=" + encodeURIComponent($id('TO_ADDRS').value) + "&";
+    api_data += "CC_ADDRS=" + encodeURIComponent($id('CC_ADDRS').value) + "&";
+    api_data += "BCC_ADDRS=" + encodeURIComponent($id('BCC_ADDRS').value) + "&";
+    api_data += "SUBJECT=" + encodeURIComponent($id('SUBJECT').value) + "&";
+    api_data += "CONTENT=" + encodeURIComponent($id('CONTENT').value) + "&";
+    api_data += "ATTACHFILES=" + encodeURIComponent(uploadedfiles);
+    var api_url = "api/savesent.xml";
+    $.ajax({
+        url: api_url,
+        type: "POST",
+        data: api_data,
+        contentType: "application/x-www-form-urlencoded",
+        beforeSend: function (xmldom) {
+            sent_status = true;
             toggle_onbeforeunload(sent_status);
-            if (xmlHttp.status == 200) {
-                var xmldom = xmlHttp.responseXML;
-                xmldom.documentElement.normalize();
-                var responseNode = xmldom.documentElement.childNodes.item(0);
-                if (responseNode.tagName == "response") {
-                    var errno = responseNode.getAttribute("errno")
-                    if (errno == "0" || errno == 0) {
-                        do_delsentmail();
 
-                        $id('PROCESSING_TBL').rows[0].cells[0].innerHTML = LANG_RESOURCE['SAVE_MAIL_TO_SENT_FOLDER_OK'];
-                        $("#PROCESSING_DIV").dialog();
+            $id('PROCESSING_TBL').rows[0].cells[0].innerHTML = LANG_RESOURCE['SAVE_MAIL_TO_SENT_FOLDER_ONGOING'] + " - <img src=\"waiting.gif\" />";
+            $("#PROCESSING_DIV").dialog();
+        },
+        success: function (xmldom) {
+            xmldom.documentElement.normalize();
+            var responseNode = xmldom.documentElement.childNodes.item(0);
+            if (responseNode.tagName == "response") {
+                var errno = responseNode.getAttribute("errno")
+                if (errno == "0" || errno == 0) {
+                    do_delsentmail();
 
-                        if (window.opener && window.opener.refresh)
-                            window.opener.refresh();
-                        else if (window.opener && window.opener.childframe1 && window.opener.childframe1.refresh)
-                            window.opener.childframe1.refresh();
+                    $id('PROCESSING_TBL').rows[0].cells[0].innerHTML = LANG_RESOURCE['SAVE_MAIL_TO_SENT_FOLDER_OK'];
+                    $("#PROCESSING_DIV").dialog();
 
-                        isChange = false;
-                        window.onbeforeunload = null;
+                    if (window.opener && window.opener.refresh)
+                        window.opener.refresh();
+                    else if (window.opener && window.opener.childframe1 && window.opener.childframe1.refresh)
+                        window.opener.childframe1.refresh();
 
-                        window.close();
-                    } else {
-                        $id('PROCESSING_TBL').rows[0].cells[0].innerHTML = "<font color='#FF0000'>" + LANG_RESOURCE['SAVE_MAIL_TO_SENT_FOLDER_FAILED'] + "</font>";
-                        $("#PROCESSING_DIV").dialog();
-                    }
+                    isChange = false;
+                    window.onbeforeunload = null;
+
+                    window.close();
+                } else {
+                    $id('PROCESSING_TBL').rows[0].cells[0].innerHTML = "<font color='#FF0000'>" + LANG_RESOURCE['SAVE_MAIL_TO_SENT_FOLDER_FAILED'] + "</font>";
+                    $("#PROCESSING_DIV").dialog();
                 }
-            } else {
-                $id('PROCESSING_TBL').rows[0].cells[0].innerHTML = "<font color='#FF0000'>" + LANG_RESOURCE['SAVE_MAIL_TO_SENT_FOLDER_FAILED'] + "</font>";
-                $("#PROCESSING_DIV").dialog();
             }
-        } else {
+        },
+        error: function (xmldom) {
             sent_status = true;
             toggle_onbeforeunload(sent_status);
 
             $id('PROCESSING_TBL').rows[0].cells[0].innerHTML = LANG_RESOURCE['SAVE_MAIL_TO_SENT_FOLDER_ONGOING'] + " - <img src=\"waiting.gif\" />";
             $("#PROCESSING_DIV").dialog();
         }
-    }
-
-    xmlHttp.open("POST", qUrl, true);
-    xmlHttp.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-    xmlHttp.send(strPostData);
-
+    });
 }
 
 function send_mail() {
@@ -381,51 +376,48 @@ function do_send_mail() {
         uploadedfiles += "*"
     }
     $id("CONTENT").value = $id('richeditor').contentWindow.document.body.innerHTML;
-    var strPostData = "TO_ADDRS=" + encodeURIComponent($id('TO_ADDRS').value) + "&";
-    strPostData += "CC_ADDRS=" + encodeURIComponent($id('CC_ADDRS').value) + "&";
-    strPostData += "BCC_ADDRS=" + encodeURIComponent($id('BCC_ADDRS').value) + "&";
-    strPostData += "SUBJECT=" + encodeURIComponent($id('SUBJECT').value) + "&";
-    strPostData += "CONTENT=" + encodeURIComponent($id('CONTENT').value) + "&";
-    strPostData += "ATTACHFILES=" + encodeURIComponent(uploadedfiles);
-    var qUrl = "api/sendmail.xml";
 
-    var xmlHttp = initxmlhttp();
-    xmlHttp.onreadystatechange = function () {
-        if (xmlHttp.readyState == 4) {
-            sending_status = false;
-            toggle_onbeforeunload(sending_status);
-            if (xmlHttp.status == 200) {
-                var xmldom = xmlHttp.responseXML;
-                xmldom.documentElement.normalize();
-                var responseNode = xmldom.documentElement.childNodes.item(0);
-                if (responseNode.tagName == "response") {
-                    var errno = responseNode.getAttribute("errno")
-                    if (errno == "0") {
-                        isChange = false;
-                        toggle_onbeforeunload(isChange);
-                        $id('PROCESSING_TBL').rows[0].cells[0].innerHTML = LANG_RESOURCE['SEND_MAIL_OK'];
-                        $("#PROCESSING_DIV").dialog();
-
-                        do_savesent();
-                    } else {
-                        $id('PROCESSING_TBL').rows[0].cells[0].innerHTML = "<font color='#FF0000'>" + LANG_RESOURCE['SEND_MAIL_FAILED_FOR_HUGE_SIZE'] + "</font>";
-                        $("#PROCESSING_DIV").dialog();
-                    }
-                }
-            } else {
-                $id('PROCESSING_TBL').rows[0].cells[0].innerHTML = "<font color='#FF0000'>" + LANG_RESOURCE['SEND_MAIL_FAILED'] + "</font>";
-                $("#PROCESSING_DIV").dialog();
-            }
-        } else {
+    var api_data = "TO_ADDRS=" + encodeURIComponent($id('TO_ADDRS').value) + "&";
+    api_data += "CC_ADDRS=" + encodeURIComponent($id('CC_ADDRS').value) + "&";
+    api_data += "BCC_ADDRS=" + encodeURIComponent($id('BCC_ADDRS').value) + "&";
+    api_data += "SUBJECT=" + encodeURIComponent($id('SUBJECT').value) + "&";
+    api_data += "CONTENT=" + encodeURIComponent($id('CONTENT').value) + "&";
+    api_data += "ATTACHFILES=" + encodeURIComponent(uploadedfiles);
+    var api_url = "api/sendmail.xml";
+    $.ajax({
+        url: api_url,
+        type: "POST",
+        data: api_data,
+        contentType: "application/x-www-form-urlencoded",
+        beforeSend: function (xmldom) {
             sending_status = true;
             toggle_onbeforeunload(sending_status);
             $id('PROCESSING_TBL').rows[0].cells[0].innerHTML = LANG_RESOURCE['SEND_MAIL_ONGOING'] + " - <img src=\"waiting.gif\" />";
             $("#PROCESSING_DIV").dialog();
+        },
+        success: function (xmldom) {
+            xmldom.documentElement.normalize();
+            var responseNode = xmldom.documentElement.childNodes.item(0);
+            if (responseNode.tagName == "response") {
+                var errno = responseNode.getAttribute("errno")
+                if (errno == "0") {
+                    isChange = false;
+                    toggle_onbeforeunload(isChange);
+                    $id('PROCESSING_TBL').rows[0].cells[0].innerHTML = LANG_RESOURCE['SEND_MAIL_OK'];
+                    $("#PROCESSING_DIV").dialog();
+
+                    do_savesent();
+                } else {
+                    $id('PROCESSING_TBL').rows[0].cells[0].innerHTML = "<font color='#FF0000'>" + LANG_RESOURCE['SEND_MAIL_FAILED_FOR_HUGE_SIZE'] + "</font>";
+                    $("#PROCESSING_DIV").dialog();
+                }
+            }
+        },
+        error: function (xmldom) {
+            $id('PROCESSING_TBL').rows[0].cells[0].innerHTML = "<font color='#FF0000'>" + LANG_RESOURCE['SEND_MAIL_FAILED'] + "</font>";
+            $("#PROCESSING_DIV").dialog();
         }
-    }
-    xmlHttp.open("POST", qUrl, true);
-    xmlHttp.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-    xmlHttp.send(strPostData);
+    });
 }
 
 function save_draft() {
@@ -441,310 +433,295 @@ function do_savedraft() {
         uploadedfiles += "*"
     }
     $id("CONTENT").value = $id('richeditor').contentWindow.document.body.innerHTML;
-    var strPostData = "DRAFTID=" + $id('DRAFTID').value + "&";
-    strPostData += "TO_ADDRS=" + encodeURIComponent($id('TO_ADDRS').value) + "&";
-    strPostData += "CC_ADDRS=" + encodeURIComponent($id('CC_ADDRS').value) + "&";
-    strPostData += "BCC_ADDRS=" + encodeURIComponent($id('BCC_ADDRS').value) + "&";
-    strPostData += "SUBJECT=" + encodeURIComponent($id('SUBJECT').value) + "&";
-    strPostData += "CONTENT=" + encodeURIComponent($id('CONTENT').value) + "&";
-    strPostData += "ATTACHFILES=" + encodeURIComponent(uploadedfiles);
-    var qUrl = "api/savedraft.xml";
 
-    var xmlHttp = initxmlhttp();
-    xmlHttp.onreadystatechange = function () {
-        if (xmlHttp.readyState == 4) {
-            saving_status = false;
-            toggle_onbeforeunload(saving_status);
-            if (xmlHttp.status == 200) {
-                var xmldom = xmlHttp.responseXML;
-                xmldom.documentElement.normalize();
-                var responseNode = xmldom.documentElement.childNodes.item(0);
-                if (responseNode.tagName == "response") {
-                    var errno = responseNode.getAttribute("errno")
-                    if (errno == "0") {
-                        isChange = false;
-                        toggle_onbeforeunload(isChange);
-
-                        var bodyList = responseNode.childNodes;
-                        for (var i = 0; i < bodyList.length; i++) {
-                            if (bodyList.item(i).tagName == "draftid") {
-                                $id('DRAFTID').value = bodyList.item(i).childNodes[0].nodeValue;
-                            }
-                        }
-
-                        $id('PROCESSING_TBL').rows[0].cells[0].innerHTML = LANG_RESOURCE['SAVE_DRAFT_OK'];
-                        $("#PROCESSING_DIV").dialog();
-
-                    } else {
-
-                        $id('PROCESSING_TBL').rows[0].cells[0].innerHTML = "<font color='#FF0000'>" + LANG_RESOURCE['SAVE_DRAFT_ERROR_FOR_HUGE_SIZE'] + "</font>";
-                        $("#PROCESSING_DIV").dialog();
-
-                    }
-                }
-            } else {
-
-                $id('PROCESSING_TBL').rows[0].cells[0].innerHTML = "<font color='#FF0000'>" + LANG_RESOURCE['SAVE_DRAFT_ERROR'] + "</font>";
-                $("#PROCESSING_DIV").dialog();
-
-            }
-        } else {
+    var api_data = "DRAFTID=" + $id('DRAFTID').value + "&";
+    api_data += "TO_ADDRS=" + encodeURIComponent($id('TO_ADDRS').value) + "&";
+    api_data += "CC_ADDRS=" + encodeURIComponent($id('CC_ADDRS').value) + "&";
+    api_data += "BCC_ADDRS=" + encodeURIComponent($id('BCC_ADDRS').value) + "&";
+    api_data += "SUBJECT=" + encodeURIComponent($id('SUBJECT').value) + "&";
+    api_data += "CONTENT=" + encodeURIComponent($id('CONTENT').value) + "&";
+    api_data += "ATTACHFILES=" + encodeURIComponent(uploadedfiles);
+    var api_url = "api/savedraft.xml";
+    $.ajax({
+        url: api_url,
+        type: "POST",
+        data: api_data,
+        contentType: "application/x-www-form-urlencoded",
+        beforeSend: function (xmldom) {
             saving_status = true;
             toggle_onbeforeunload(saving_status);
             $id('PROCESSING_TBL').rows[0].cells[0].innerHTML = LANG_RESOURCE['SAVE_DRAFT_ONGOING'] + " - <img src=\"waiting.gif\" />";
             $("#PROCESSING_DIV").dialog();
+        },
+        success: function (xmldom) {
+            xmldom.documentElement.normalize();
+            var responseNode = xmldom.documentElement.childNodes.item(0);
+            if (responseNode.tagName == "response") {
+                var errno = responseNode.getAttribute("errno")
+                if (errno == "0") {
+                    isChange = false;
+                    toggle_onbeforeunload(isChange);
+
+                    var bodyList = responseNode.childNodes;
+                    for (var i = 0; i < bodyList.length; i++) {
+                        if (bodyList.item(i).tagName == "draftid") {
+                            $id('DRAFTID').value = bodyList.item(i).childNodes[0].nodeValue;
+                        }
+                    }
+
+                    $id('PROCESSING_TBL').rows[0].cells[0].innerHTML = LANG_RESOURCE['SAVE_DRAFT_OK'];
+                    $("#PROCESSING_DIV").dialog();
+
+                } else {
+
+                    $id('PROCESSING_TBL').rows[0].cells[0].innerHTML = "<font color='#FF0000'>" + LANG_RESOURCE['SAVE_DRAFT_ERROR_FOR_HUGE_SIZE'] + "</font>";
+                    $("#PROCESSING_DIV").dialog();
+
+                }
+            }
+        },
+        error: function (xmldom) {
+            $id('PROCESSING_TBL').rows[0].cells[0].innerHTML = "<font color='#FF0000'>" + LANG_RESOURCE['SAVE_DRAFT_ERROR'] + "</font>";
+            $("#PROCESSING_DIV").dialog();
         }
-    }
-
-    xmlHttp.open("POST", qUrl, true);
-    xmlHttp.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-    xmlHttp.send(strPostData);
-
+    });
 }
 
 function read_mail(strID, strType) {
-    var qUrl = "/api/readmail.xml?EDIT=yes&ID=" + strID;
-    var xmlHttp = initxmlhttp();
-    xmlHttp.onreadystatechange = function () {
-        if (xmlHttp.readyState == 4) {
-            if (xmlHttp.status == 200) {
-                var xmldom = xmlHttp.responseXML;
-                xmldom.documentElement.normalize();
-                var responseNode = xmldom.documentElement.childNodes.item(0);
-                if (responseNode.tagName == "response") {
-                    var errno = responseNode.getAttribute("errno");
+    var api_url = "/api/readmail.xml?EDIT=yes&ID=" + strID;
+    $.ajax({
+        url: api_url,
+        success: function (xmldom) {
+            xmldom.documentElement.normalize();
+            var responseNode = xmldom.documentElement.childNodes.item(0);
+            if (responseNode.tagName == "response") {
+                var errno = responseNode.getAttribute("errno");
 
-                    if (errno == "0") {
-                        var strFrom,
-                            strTo,
-                            strCc,
-                            strSubject,
-                            strTextContent,
-                            strHtmlContent,
-                            strAttach;
-                        strFrom = "";
-                        strTo = "";
-                        strCc = "";
-                        strSubject = "";
-                        strTextContent = "";
-                        strHtmlContent = "";
+                if (errno == "0") {
+                    var strFrom,
+                        strTo,
+                        strCc,
+                        strSubject,
+                        strTextContent,
+                        strHtmlContent,
+                        strAttach;
+                    strFrom = "";
+                    strTo = "";
+                    strCc = "";
+                    strSubject = "";
+                    strTextContent = "";
+                    strHtmlContent = "";
 
-                        var bodyList = responseNode.childNodes;
-                        for (var i = 0; i < bodyList.length; i++) {
-                            if (bodyList.item(i).tagName == "from") {
-                                strFrom = bodyList.item(i).childNodes[0] == null ? "" : bodyList.item(i).childNodes[0].nodeValue;
-                            } else if (bodyList.item(i).tagName == "to") {
-                                strTo = bodyList.item(i).childNodes[0] == null ? "" : bodyList.item(i).childNodes[0].nodeValue;
-                            } else if (bodyList.item(i).tagName == "cc") {
-                                strCc = bodyList.item(i).childNodes[0] == null ? "" : bodyList.item(i).childNodes[0].nodeValue;
-                            } else if (bodyList.item(i).tagName == "date") {
-                                strDate = bodyList.item(i).childNodes[0] == null ? "" : bodyList.item(i).childNodes[0].nodeValue;
-                            } else if (bodyList.item(i).tagName == "subject") {
-                                strSubject = bodyList.item(i).childNodes[0] == null ? "" : bodyList.item(i).childNodes[0].nodeValue;
-                            } else if (bodyList.item(i).tagName == "text_content") {
-                                strTextContent += bodyList.item(i).childNodes[0] == null ? "" : bodyList.item(i).childNodes[0].nodeValue;
-                                strTextContent = TextToHTML(strTextContent);
-                            } else if (bodyList.item(i).tagName == "html_content") {
-                                strHtmlContent += bodyList.item(i).childNodes[0] == null ? "" : bodyList.item(i).childNodes[0].nodeValue;
-                            } else if (bodyList.item(i).tagName == "attach") {
-                                strAttach = bodyList.item(i).childNodes[0] == null ? "" : bodyList.item(i).childNodes[0].nodeValue;
+                    var bodyList = responseNode.childNodes;
+                    for (var i = 0; i < bodyList.length; i++) {
+                        if (bodyList.item(i).tagName == "from") {
+                            strFrom = bodyList.item(i).childNodes[0] == null ? "" : bodyList.item(i).childNodes[0].nodeValue;
+                        } else if (bodyList.item(i).tagName == "to") {
+                            strTo = bodyList.item(i).childNodes[0] == null ? "" : bodyList.item(i).childNodes[0].nodeValue;
+                        } else if (bodyList.item(i).tagName == "cc") {
+                            strCc = bodyList.item(i).childNodes[0] == null ? "" : bodyList.item(i).childNodes[0].nodeValue;
+                        } else if (bodyList.item(i).tagName == "date") {
+                            strDate = bodyList.item(i).childNodes[0] == null ? "" : bodyList.item(i).childNodes[0].nodeValue;
+                        } else if (bodyList.item(i).tagName == "subject") {
+                            strSubject = bodyList.item(i).childNodes[0] == null ? "" : bodyList.item(i).childNodes[0].nodeValue;
+                        } else if (bodyList.item(i).tagName == "text_content") {
+                            strTextContent += bodyList.item(i).childNodes[0] == null ? "" : bodyList.item(i).childNodes[0].nodeValue;
+                            strTextContent = TextToHTML(strTextContent);
+                        } else if (bodyList.item(i).tagName == "html_content") {
+                            strHtmlContent += bodyList.item(i).childNodes[0] == null ? "" : bodyList.item(i).childNodes[0].nodeValue;
+                        } else if (bodyList.item(i).tagName == "attach") {
+                            strAttach = bodyList.item(i).childNodes[0] == null ? "" : bodyList.item(i).childNodes[0].nodeValue;
+                        }
+                    }
+
+                    if (strType == "4") {
+                        $id('DRAFTID').value = strID;
+
+                        $id("TO_ADDRS").value = strTo;
+                        $id("CC_ADDRS").value = strCc;
+                        $id("SUBJECT").value = strSubject;
+                        $id("CONTENT").value = (strHtmlContent != "" ? strHtmlContent : strTextContent);
+                        $id('richeditor').contentWindow.document.body.innerHTML = $id("CONTENT").value;
+                        $id("CONTENT").value = $id('richeditor').contentWindow.document.body.innerHTML;
+                        if (strAttach != "") {
+                            extract_att(strID);
+                        }
+
+                    } else if (strType == "3") {
+                        $id("SUBJECT").value = "Fwd: " + strSubject;
+
+                        $id("CONTENT").value = (strHtmlContent != "" ? strHtmlContent : strTextContent);
+                        $id('richeditor').contentWindow.document.body.innerHTML = $id("CONTENT").value;
+
+                        strReply = "<br><br><br><br><hr>";
+                        strReply += "<table border='0' bgcolor='#EFEFEF' bordercolorlight='#C0C0C0' bordercolordark='#FFFFFF' cellpadding='5' cellspacing='1' width='100%'>";
+                        strReply += "<tr><td bgcolor='#EFEFEF' align='right' width='80'><b>" + LANG_RESOURCE['MAIL_FROM_DESC'] + "</b></td><td bgcolor='#FFFFFF' align='left' width='910'>" + TextToHTML(strFrom) + "</td></tr>";
+                        strReply += "<tr><td bgcolor='#EFEFEF' align='right' width='80'><b>" + LANG_RESOURCE['MAIL_TO_DESC'] + "</b></td><td bgcolor='#FFFFFF' align='left' width='910'>" + TextToHTML(strTo) + "</td></tr>";
+                        if (strCc != "")
+                            strReply += "<tr><td bgcolor='#EFEFEF' align='right' width='80'><b>" + LANG_RESOURCE['MAIL_CC_DESC'] + "</b></td><td bgcolor='#FFFFFF' align='left' width='910'>" + TextToHTML(strCc) + "</td></tr>";
+                        strReply += "<tr><td bgcolor='#EFEFEF' align='right' width='80'><b>" + LANG_RESOURCE['MAIL_DATE_DESC'] + "</b></td><td bgcolor='#FFFFFF' align='left' width='910'>" + TextToHTML(strDate) + "</td></tr>";
+                        strReply += "<tr><td bgcolor='#EFEFEF' align='right' width='80'><b>" + LANG_RESOURCE['MAIL_SUBJECT_DESC'] + "</b></td><td bgcolor='#FFFFFF' align='left' width='910'>" + TextToHTML(strSubject) + "</td></tr>";
+                        strReply += "</table>";
+
+                        strReply += $id('richeditor').contentWindow.document.body.innerHTML;
+
+                        $id("CONTENT").value = strReply;
+
+                        $id('richeditor').contentWindow.document.body.innerHTML = $id("CONTENT").value;
+                        $id("CONTENT").value = $id('richeditor').contentWindow.document.body.innerHTML;
+
+                        if (strAttach != "") {
+                            extract_att(strID);
+                        }
+
+                    } else if (strType == "2") {
+                        var to_addrs = strFrom + "," + strTo;
+                        var to_addrs_arr = to_addrs.split(",");
+                        var to_addrs_result = new Array();
+                        to_addrs = "";
+                        for (var x = 0; x < to_addrs_arr.length; x++) {
+                            var res = retrieve(to_addrs_arr[x]);
+                            if (res != null) {
+                                var same = false;
+                                for (var a = 0; a < to_addrs_result.length; a++) {
+                                    if (res == to_addrs_result[a]) {
+                                        same = true;
+                                        break;
+                                    }
+                                }
+                                if (!same) {
+                                    to_addrs_result.push(res);
+                                    if (to_addrs != "")
+                                        to_addrs += ",";
+                                    to_addrs += res;
+                                }
                             }
                         }
 
-                        if (strType == "4") {
-                            $id('DRAFTID').value = strID;
-
-                            $id("TO_ADDRS").value = strTo;
-                            $id("CC_ADDRS").value = strCc;
-                            $id("SUBJECT").value = strSubject;
-                            $id("CONTENT").value = (strHtmlContent != "" ? strHtmlContent : strTextContent);
-                            $id('richeditor').contentWindow.document.body.innerHTML = $id("CONTENT").value;
-                            $id("CONTENT").value = $id('richeditor').contentWindow.document.body.innerHTML;
-                            if (strAttach != "") {
-                                extract_att(strID);
-                            }
-
-                        } else if (strType == "3") {
-                            $id("SUBJECT").value = "Fwd: " + strSubject;
-
-                            $id("CONTENT").value = (strHtmlContent != "" ? strHtmlContent : strTextContent);
-                            $id('richeditor').contentWindow.document.body.innerHTML = $id("CONTENT").value;
-
-                            strReply = "<br><br><br><br><hr>";
-                            strReply += "<table border='0' bgcolor='#EFEFEF' bordercolorlight='#C0C0C0' bordercolordark='#FFFFFF' cellpadding='5' cellspacing='1' width='100%'>";
-                            strReply += "<tr><td bgcolor='#EFEFEF' align='right' width='80'><b>" + LANG_RESOURCE['MAIL_FROM_DESC'] + "</b></td><td bgcolor='#FFFFFF' align='left' width='910'>" + TextToHTML(strFrom) + "</td></tr>";
-                            strReply += "<tr><td bgcolor='#EFEFEF' align='right' width='80'><b>" + LANG_RESOURCE['MAIL_TO_DESC'] + "</b></td><td bgcolor='#FFFFFF' align='left' width='910'>" + TextToHTML(strTo) + "</td></tr>";
-                            if (strCc != "")
-                                strReply += "<tr><td bgcolor='#EFEFEF' align='right' width='80'><b>" + LANG_RESOURCE['MAIL_CC_DESC'] + "</b></td><td bgcolor='#FFFFFF' align='left' width='910'>" + TextToHTML(strCc) + "</td></tr>";
-                            strReply += "<tr><td bgcolor='#EFEFEF' align='right' width='80'><b>" + LANG_RESOURCE['MAIL_DATE_DESC'] + "</b></td><td bgcolor='#FFFFFF' align='left' width='910'>" + TextToHTML(strDate) + "</td></tr>";
-                            strReply += "<tr><td bgcolor='#EFEFEF' align='right' width='80'><b>" + LANG_RESOURCE['MAIL_SUBJECT_DESC'] + "</b></td><td bgcolor='#FFFFFF' align='left' width='910'>" + TextToHTML(strSubject) + "</td></tr>";
-                            strReply += "</table>";
-
-                            strReply += $id('richeditor').contentWindow.document.body.innerHTML;
-
-                            $id("CONTENT").value = strReply;
-
-                            $id('richeditor').contentWindow.document.body.innerHTML = $id("CONTENT").value;
-                            $id("CONTENT").value = $id('richeditor').contentWindow.document.body.innerHTML;
-
-                            if (strAttach != "") {
-                                extract_att(strID);
-                            }
-
-                        } else if (strType == "2") {
-                            var to_addrs = strFrom + "," + strTo;
-                            var to_addrs_arr = to_addrs.split(",");
-                            var to_addrs_result = new Array();
-                            to_addrs = "";
-                            for (var x = 0; x < to_addrs_arr.length; x++) {
-                                var res = retrieve(to_addrs_arr[x]);
-                                if (res != null) {
-                                    var same = false;
-                                    for (var a = 0; a < to_addrs_result.length; a++) {
-                                        if (res == to_addrs_result[a]) {
-                                            same = true;
-                                            break;
-                                        }
-                                    }
-                                    if (!same) {
-                                        to_addrs_result.push(res);
-                                        if (to_addrs != "")
-                                            to_addrs += ",";
-                                        to_addrs += res;
+                        var cc_addrs = strCc;
+                        var cc_addrs_arr = cc_addrs.split(",");
+                        var cc_addrs_result = new Array();
+                        cc_addrs = "";
+                        for (var x = 0; x < cc_addrs_arr.length; x++) {
+                            var res = retrieve(cc_addrs_arr[x]);
+                            if (res != null) {
+                                var same = false;
+                                for (var a = 0; a < cc_addrs_result.length; a++) {
+                                    if (res == cc_addrs_result[a]) {
+                                        same = true;
+                                        break;
                                     }
                                 }
-                            }
 
-                            var cc_addrs = strCc;
-                            var cc_addrs_arr = cc_addrs.split(",");
-                            var cc_addrs_result = new Array();
-                            cc_addrs = "";
-                            for (var x = 0; x < cc_addrs_arr.length; x++) {
-                                var res = retrieve(cc_addrs_arr[x]);
-                                if (res != null) {
-                                    var same = false;
-                                    for (var a = 0; a < cc_addrs_result.length; a++) {
-                                        if (res == cc_addrs_result[a]) {
-                                            same = true;
-                                            break;
-                                        }
-                                    }
-
-                                    for (var a = 0; a < to_addrs_result.length; a++) {
-                                        if (res == to_addrs_result[a]) {
-                                            same = true;
-                                            break;
-                                        }
-                                    }
-
-                                    if (!same) {
-                                        cc_addrs_result.push(res);
-                                        if (cc_addrs != "")
-                                            cc_addrs += ","
-                                        cc_addrs += res;
+                                for (var a = 0; a < to_addrs_result.length; a++) {
+                                    if (res == to_addrs_result[a]) {
+                                        same = true;
+                                        break;
                                     }
                                 }
+
+                                if (!same) {
+                                    cc_addrs_result.push(res);
+                                    if (cc_addrs != "")
+                                        cc_addrs += ","
+                                    cc_addrs += res;
+                                }
                             }
-
-                            $id("TO_ADDRS").value = to_addrs;
-                            $id("CC_ADDRS").value = cc_addrs;
-
-                            $id("SUBJECT").value = "Re: " + strSubject;
-
-                            $id("CONTENT").value = (strHtmlContent != "" ? strHtmlContent : strTextContent);
-                            $id('richeditor').contentWindow.document.body.innerHTML = $id("CONTENT").value;
-
-                            strReply = "<br><br><br><br><hr>";
-                            strReply += "<table border='0' bgcolor='#EFEFEF' bordercolorlight='#C0C0C0' bordercolordark='#FFFFFF' cellpadding='5' cellspacing='1' width='100%'>";
-                            strReply += "<tr><td bgcolor='#EFEFEF' align='right' width='80'><b>" + LANG_RESOURCE['MAIL_FROM_DESC'] + "</b></td><td bgcolor='#FFFFFF' align='left' width='910'>" + TextToHTML(strFrom) + "</td></tr>";
-                            strReply += "<tr><td bgcolor='#EFEFEF' align='right' width='80'><b>" + LANG_RESOURCE['MAIL_TO_DESC'] + "</b></td><td bgcolor='#FFFFFF' align='left' width='910'>" + TextToHTML(strTo) + "</td></tr>";
-                            if (strCc != "")
-                                strReply += "<tr><td bgcolor='#EFEFEF' align='right' width='80'><b" + LANG_RESOURCE['MAIL_CC_DESC'] + "</b></td><td bgcolor='#FFFFFF' align='left' width='910'>" + TextToHTML(strCc) + "</td></tr>";
-                            strReply += "<tr><td bgcolor='#EFEFEF' align='right' width='80'><b>" + LANG_RESOURCE['MAIL_DATE_DESC'] + "</b></td><td bgcolor='#FFFFFF' align='left' width='910'>" + TextToHTML(strDate) + "</td></tr>";
-                            strReply += "<tr><td bgcolor='#EFEFEF' align='right' width='80'><b>" + LANG_RESOURCE['MAIL_SUBJECT_DESC'] + "</b></td><td bgcolor='#FFFFFF' align='left' width='910'>" + TextToHTML(strSubject) + "</td></tr>";
-                            strReply += "</table>";
-
-                            strReply += $id('richeditor').contentWindow.document.body.innerHTML;
-
-                            $id("CONTENT").value = strReply;
-
-                            $id('richeditor').contentWindow.document.body.innerHTML = $id("CONTENT").value;
-                            $id("CONTENT").value = $id('richeditor').contentWindow.document.body.innerHTML;
-
-                        } else if (strType == "1") {
-                            $id("TO_ADDRS").value = strFrom;
-                            $id("SUBJECT").value = "Re: " + strSubject;
-
-                            $id("CONTENT").value = (strHtmlContent != "" ? strHtmlContent : strTextContent);
-                            $id('richeditor').contentWindow.document.body.innerHTML = $id("CONTENT").value;
-
-                            strReply = "<br><br><br><br><hr>";
-                            strReply += "<table border='0' bgcolor='#EFEFEF' bordercolorlight='#C0C0C0' bordercolordark='#FFFFFF' cellpadding='5' cellspacing='1' width='100%'>";
-                            strReply += "<tr><td bgcolor='#EFEFEF' align='right' width='80'><b>" + LANG_RESOURCE['MAIL_FROM_DESC'] + "</b></td><td bgcolor='#FFFFFF' align='left' width='910'>" + TextToHTML(strFrom) + "</td></tr>";
-                            strReply += "<tr><td bgcolor='#EFEFEF' align='right' width='80'><b>" + LANG_RESOURCE['MAIL_TO_DESC'] + "</b></td><td bgcolor='#FFFFFF' align='left' width='910'>" + TextToHTML(strTo) + "</td></tr>";
-                            if (strCc != "")
-                                strReply += "<tr><td bgcolor='#EFEFEF' align='right' width='80'><b>" + LANG_RESOURCE['MAIL_CC_DESC'] + "</b></td><td bgcolor='#FFFFFF' align='left' width='910'>" + TextToHTML(strCc) + "</td></tr>";
-                            strReply += "<tr><td bgcolor='#EFEFEF' align='right' width='80'><b>" + LANG_RESOURCE['MAIL_DATE_DESC'] + "</b></td><td bgcolor='#FFFFFF' align='left' width='910'>" + TextToHTML(strDate) + "</td></tr>";
-                            strReply += "<tr><td bgcolor='#EFEFEF' align='right' width='80'><b>" + LANG_RESOURCE['MAIL_SUBJECT_DESC'] + "</b></td><td bgcolor='#FFFFFF' align='left' width='910'>" + TextToHTML(strSubject) + "</td></tr>";
-                            strReply += "</table>";
-
-                            strReply += $id('richeditor').contentWindow.document.body.innerHTML;
-
-                            $id("CONTENT").value = strReply;
-
-                            $id('richeditor').contentWindow.document.body.innerHTML = $id("CONTENT").value;
-                            $id("CONTENT").value = $id('richeditor').contentWindow.document.body.innerHTML;
-
                         }
+
+                        $id("TO_ADDRS").value = to_addrs;
+                        $id("CC_ADDRS").value = cc_addrs;
+
+                        $id("SUBJECT").value = "Re: " + strSubject;
+
+                        $id("CONTENT").value = (strHtmlContent != "" ? strHtmlContent : strTextContent);
+                        $id('richeditor').contentWindow.document.body.innerHTML = $id("CONTENT").value;
+
+                        strReply = "<br><br><br><br><hr>";
+                        strReply += "<table border='0' bgcolor='#EFEFEF' bordercolorlight='#C0C0C0' bordercolordark='#FFFFFF' cellpadding='5' cellspacing='1' width='100%'>";
+                        strReply += "<tr><td bgcolor='#EFEFEF' align='right' width='80'><b>" + LANG_RESOURCE['MAIL_FROM_DESC'] + "</b></td><td bgcolor='#FFFFFF' align='left' width='910'>" + TextToHTML(strFrom) + "</td></tr>";
+                        strReply += "<tr><td bgcolor='#EFEFEF' align='right' width='80'><b>" + LANG_RESOURCE['MAIL_TO_DESC'] + "</b></td><td bgcolor='#FFFFFF' align='left' width='910'>" + TextToHTML(strTo) + "</td></tr>";
+                        if (strCc != "")
+                            strReply += "<tr><td bgcolor='#EFEFEF' align='right' width='80'><b" + LANG_RESOURCE['MAIL_CC_DESC'] + "</b></td><td bgcolor='#FFFFFF' align='left' width='910'>" + TextToHTML(strCc) + "</td></tr>";
+                        strReply += "<tr><td bgcolor='#EFEFEF' align='right' width='80'><b>" + LANG_RESOURCE['MAIL_DATE_DESC'] + "</b></td><td bgcolor='#FFFFFF' align='left' width='910'>" + TextToHTML(strDate) + "</td></tr>";
+                        strReply += "<tr><td bgcolor='#EFEFEF' align='right' width='80'><b>" + LANG_RESOURCE['MAIL_SUBJECT_DESC'] + "</b></td><td bgcolor='#FFFFFF' align='left' width='910'>" + TextToHTML(strSubject) + "</td></tr>";
+                        strReply += "</table>";
+
+                        strReply += $id('richeditor').contentWindow.document.body.innerHTML;
+
+                        $id("CONTENT").value = strReply;
+
+                        $id('richeditor').contentWindow.document.body.innerHTML = $id("CONTENT").value;
+                        $id("CONTENT").value = $id('richeditor').contentWindow.document.body.innerHTML;
+
+                    } else if (strType == "1") {
+                        $id("TO_ADDRS").value = strFrom;
+                        $id("SUBJECT").value = "Re: " + strSubject;
+
+                        $id("CONTENT").value = (strHtmlContent != "" ? strHtmlContent : strTextContent);
+                        $id('richeditor').contentWindow.document.body.innerHTML = $id("CONTENT").value;
+
+                        strReply = "<br><br><br><br><hr>";
+                        strReply += "<table border='0' bgcolor='#EFEFEF' bordercolorlight='#C0C0C0' bordercolordark='#FFFFFF' cellpadding='5' cellspacing='1' width='100%'>";
+                        strReply += "<tr><td bgcolor='#EFEFEF' align='right' width='80'><b>" + LANG_RESOURCE['MAIL_FROM_DESC'] + "</b></td><td bgcolor='#FFFFFF' align='left' width='910'>" + TextToHTML(strFrom) + "</td></tr>";
+                        strReply += "<tr><td bgcolor='#EFEFEF' align='right' width='80'><b>" + LANG_RESOURCE['MAIL_TO_DESC'] + "</b></td><td bgcolor='#FFFFFF' align='left' width='910'>" + TextToHTML(strTo) + "</td></tr>";
+                        if (strCc != "")
+                            strReply += "<tr><td bgcolor='#EFEFEF' align='right' width='80'><b>" + LANG_RESOURCE['MAIL_CC_DESC'] + "</b></td><td bgcolor='#FFFFFF' align='left' width='910'>" + TextToHTML(strCc) + "</td></tr>";
+                        strReply += "<tr><td bgcolor='#EFEFEF' align='right' width='80'><b>" + LANG_RESOURCE['MAIL_DATE_DESC'] + "</b></td><td bgcolor='#FFFFFF' align='left' width='910'>" + TextToHTML(strDate) + "</td></tr>";
+                        strReply += "<tr><td bgcolor='#EFEFEF' align='right' width='80'><b>" + LANG_RESOURCE['MAIL_SUBJECT_DESC'] + "</b></td><td bgcolor='#FFFFFF' align='left' width='910'>" + TextToHTML(strSubject) + "</td></tr>";
+                        strReply += "</table>";
+
+                        strReply += $id('richeditor').contentWindow.document.body.innerHTML;
+
+                        $id("CONTENT").value = strReply;
+
+                        $id('richeditor').contentWindow.document.body.innerHTML = $id("CONTENT").value;
+                        $id("CONTENT").value = $id('richeditor').contentWindow.document.body.innerHTML;
+
                     }
                 }
             }
         }
-    }
-    xmlHttp.open("GET", qUrl, true);
-    xmlHttp.send("");
+    });
 }
 
 function extract_att(strID) {
-    var qUrl = "/api/extractattach.xml?ID=" + strID;
-    var xmlHttp = initxmlhttp();
-    xmlHttp.onreadystatechange = function () {
-        if (xmlHttp.readyState == 4) {
-            if (xmlHttp.status == 200) {
-                var xmldom = xmlHttp.responseXML;
-                xmldom.documentElement.normalize();
-                var responseNode = xmldom.documentElement.childNodes.item(0);
-                if (responseNode.tagName == "response") {
-                    var errno = responseNode.getAttribute("errno");
+    var api_url = "/api/extractattach.xml?ID=" + strID;
+    $.ajax({
+        url: api_url,
+        beforeSend: function (xmldom) {
+            $id('attach_flag').innerHTML = "<img src=\"loading.gif\">";
+        },
+        success: function (xmldom) {
+            xmldom.documentElement.normalize();
+            var responseNode = xmldom.documentElement.childNodes.item(0);
+            if (responseNode.tagName == "response") {
+                var errno = responseNode.getAttribute("errno");
 
-                    if (errno == "0") {
-                        var strTmpname,
-                            strFilename;
-                        var attList = responseNode.childNodes;
-                        for (var i = 0; i < attList.length; i++) {
-                            if (attList.item(i).tagName == "attach") {
-                                strTmpname = attList.item(i).getAttribute("tmpname") == null ? "" : attList.item(i).getAttribute("tmpname");
-                                strFilename = attList.item(i).getAttribute("filename") == null ? "" : attList.item(i).getAttribute("filename");
-                                nAttsize = attList.item(i).getAttribute("attsize") == null ? 0 : attList.item(i).getAttribute("attsize");
-                                if (strTmpname != "" && strFilename != "") {
-                                    show_attachs(strTmpname, strFilename, nAttsize);
-                                }
+                if (errno == "0") {
+                    var strTmpname,
+                        strFilename;
+                    var attList = responseNode.childNodes;
+                    for (var i = 0; i < attList.length; i++) {
+                        if (attList.item(i).tagName == "attach") {
+                            strTmpname = attList.item(i).getAttribute("tmpname") == null ? "" : attList.item(i).getAttribute("tmpname");
+                            strFilename = attList.item(i).getAttribute("filename") == null ? "" : attList.item(i).getAttribute("filename");
+                            nAttsize = attList.item(i).getAttribute("attsize") == null ? 0 : attList.item(i).getAttribute("attsize");
+                            if (strTmpname != "" && strFilename != "") {
+                                show_attachs(strTmpname, strFilename, nAttsize);
                             }
                         }
-                        $id('attach_flag').innerHTML = "";
-                    } else {
-                        $id('attach_flag').innerHTML = "<img src=\"alert.gif\">";
                     }
+                    $id('attach_flag').innerHTML = "";
+                } else {
+                    $id('attach_flag').innerHTML = "<img src=\"alert.gif\">";
                 }
-            } else {
-                $id('attach_flag').innerHTML = "<img src=\"alert.gif\">";
             }
-        } else {
-            $id('attach_flag').innerHTML = "<img src=\"loading.gif\">";
+        },
+        error: function (xmldom) {
+            $id('attach_flag').innerHTML = "<img src=\"alert.gif\">";
         }
-    }
-    xmlHttp.open("GET", qUrl, true);
-    xmlHttp.send("");
+    });
 }
 
 function del_attach(selfid, tmpname) {
@@ -755,22 +732,21 @@ function del_attach(selfid, tmpname) {
 }
 
 function del_uploaded(tmpname) {
-    var qUrl = "/api/deluploaded.xml?UPLOADEDFILE=" + tmpname;
-    var xmlHttp = initxmlhttp();
-    xmlHttp.open("GET", qUrl, false);
-    xmlHttp.send("");
-    if (xmlHttp.status == 200) {
-        var xmldom = xmlHttp.responseXML;
-        xmldom.documentElement.normalize();
-        var responseNode = xmldom.documentElement.childNodes.item(0);
-        if (responseNode.tagName == "response") {
-            var errno = responseNode.getAttribute("errno");
-            if (errno == "0") {
-                return true
+    var api_url = "/api/deluploaded.xml?UPLOADEDFILE=" + tmpname;
+    $.ajax({
+        url: api_url,
+        success: function (xmldom) {
+            xmldom.documentElement.normalize();
+            var responseNode = xmldom.documentElement.childNodes.item(0);
+            if (responseNode.tagName == "response") {
+                var errno = responseNode.getAttribute("errno");
+                if (errno == "0") {
+                    return true
+                }
             }
         }
-    }
-    xmlHttp = null;
+    });
+
     return false;
 }
 
@@ -822,77 +798,75 @@ function append_addrs() {
 }
 
 function load_users(who, orderby, desc) {
-    var qUrl = "/api/listusers.xml?ORDER_BY=" + orderby + "&DESC=" + (desc == null ? '' : desc);
-    var xmlHttp = initxmlhttp();
+    var api_url = "/api/listusers.xml?ORDER_BY=" + orderby + "&DESC=" + (desc == null ? '' : desc);
+    $.ajax({
+        url: api_url,
+        async: false,
+        success: function (xmldom) {
+            xmldom.documentElement.normalize();
+            var responseNode = xmldom.documentElement.childNodes.item(0);
+            if (responseNode.tagName == "response") {
+                var errno = responseNode.getAttribute("errno")
+                if (errno == "0") {
+                    var strTmp;
+                    var userList = responseNode.childNodes;
 
-    xmlHttp.open("GET", qUrl, false);
-    xmlHttp.send("");
+                    clear_table_without_header($id('USERTBL'));
 
-    if (xmlHttp.status == 200) {
-        var xmldom = xmlHttp.responseXML;
-        xmldom.documentElement.normalize();
-        var responseNode = xmldom.documentElement.childNodes.item(0);
-        if (responseNode.tagName == "response") {
-            var errno = responseNode.getAttribute("errno")
-            if (errno == "0") {
-                var strTmp;
-                var userList = responseNode.childNodes;
-
-                clear_table_without_header($id('USERTBL'));
-
-                for (var i = 0; i < userList.length; i++) {
-                    if (userList.item(i).tagName == "user") {
-                        var image;
-                        if (userList.item(i).getAttribute("status") == "Active") {
-                            if (userList.item(i).getAttribute("role") == "Administrator")
-                                image = "admin.gif";
-                            else {
+                    for (var i = 0; i < userList.length; i++) {
+                        if (userList.item(i).tagName == "user") {
+                            var image;
+                            if (userList.item(i).getAttribute("status") == "Active") {
+                                if (userList.item(i).getAttribute("role") == "Administrator")
+                                    image = "admin.gif";
+                                else {
+                                    if (userList.item(i).getAttribute("type") == "Group")
+                                        image = "group.gif";
+                                    else
+                                        image = "member.gif";
+                                }
+                            } else {
                                 if (userList.item(i).getAttribute("type") == "Group")
-                                    image = "group.gif";
+                                    image = "inactive_group.gif";
                                 else
-                                    image = "member.gif";
+                                    image = "inactive_member.gif";
                             }
-                        } else {
-                            if (userList.item(i).getAttribute("type") == "Group")
-                                image = "inactive_group.gif";
-                            else
-                                image = "inactive_member.gif";
+
+                            tr = $id('USERTBL').insertRow($id('USERTBL').rows.length);
+
+                            var td0 = tr.insertCell(0);
+                            td0.valign = "middle";
+                            td0.align = "center";
+                            td0.height = "22";
+                            setStyle(td0, "TD.gray");
+                            td0.innerHTML = "<input type=\"checkbox\" name=\"seluser\" id=\"seluser\" value=\"" + userList.item(i).getAttribute("name") + "@" + userList.item(i).getAttribute("domain") + "\">";
+
+                            var td1 = tr.insertCell(1);
+                            td1.valign = "middle";
+                            td1.align = "center";
+                            td1.height = "22";
+                            setStyle(td1, "TD.gray");
+                            td1.innerHTML = "<img src=\"" + image + "\" />";
+
+                            var td2 = tr.insertCell(2);
+                            td2.valign = "middle";
+                            td2.align = "left";
+                            td2.height = "22";
+                            setStyle(td2, "TD.gray");
+                            td2.innerHTML = userList.item(i).getAttribute("name");
+
+                            var td3 = tr.insertCell(3);
+                            td3.valign = "middle";
+                            td3.align = "left";
+                            td3.height = "22";
+                            setStyle(td3, "TD.gray");
+                            td3.innerHTML = userList.item(i).getAttribute("alias");
                         }
-
-                        tr = $id('USERTBL').insertRow($id('USERTBL').rows.length);
-
-                        var td0 = tr.insertCell(0);
-                        td0.valign = "middle";
-                        td0.align = "center";
-                        td0.height = "22";
-                        setStyle(td0, "TD.gray");
-                        td0.innerHTML = "<input type=\"checkbox\" name=\"seluser\" id=\"seluser\" value=\"" + userList.item(i).getAttribute("name") + "@" + userList.item(i).getAttribute("domain") + "\">";
-
-                        var td1 = tr.insertCell(1);
-                        td1.valign = "middle";
-                        td1.align = "center";
-                        td1.height = "22";
-                        setStyle(td1, "TD.gray");
-                        td1.innerHTML = "<img src=\"" + image + "\" />";
-
-                        var td2 = tr.insertCell(2);
-                        td2.valign = "middle";
-                        td2.align = "left";
-                        td2.height = "22";
-                        setStyle(td2, "TD.gray");
-                        td2.innerHTML = userList.item(i).getAttribute("name");
-
-                        var td3 = tr.insertCell(3);
-                        td3.valign = "middle";
-                        td3.align = "left";
-                        td3.height = "22";
-                        setStyle(td3, "TD.gray");
-                        td3.innerHTML = userList.item(i).getAttribute("alias");
                     }
                 }
             }
         }
-    }
+    });
 }
 
 function showbook(who, orderby) {
@@ -926,18 +900,20 @@ function showbook(who, orderby) {
 }
 
 function do_copy_mail(mid, todirs) {
-    var qUrl = "/api/copymail.xml?MAILID=" + mid + "&TODIRS=" + todirs;
-    var xmlHttp = initxmlhttp();
+    var trid = window.opener.$id("mailtr" + mid);
+    if (trid == null)
+        return false;
 
-    xmlHttp.onreadystatechange = function () {
-        var strmid = "mailtr" + mid;
-        var trid = window.opener.$id(strmid);
-
-        if (trid == null)
-            return false;
-
-        if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
-            var xmldom = xmlHttp.responseXML;
+    var api_url = "/api/copymail.xml?MAILID=" + mid + "&TODIRS=" + todirs;
+    $.ajax({
+        url: api_url,
+        type: "POST",
+        data: api_data,
+        beforeSend: function (xmldom) {
+            $id('PROCESSING_TBL').rows[0].cells[0].innerHTML = LANG_RESOURCE['COPY_MAIL_ONGOING'];
+            $("#PROCESSING_DIV").dialog();
+        },
+        success: function (xmldom) {
             xmldom.documentElement.normalize();
             var responseNode = xmldom.documentElement.childNodes.item(0);
             if (responseNode.tagName == "response") {
@@ -951,13 +927,8 @@ function do_copy_mail(mid, todirs) {
                     return false;
                 }
             }
-        } else {
-            $id('PROCESSING_TBL').rows[0].cells[0].innerHTML = LANG_RESOURCE['COPY_MAIL_ONGOING'];
-            $("#PROCESSING_DIV").dialog();
         }
-    }
-    xmlHttp.open("GET", qUrl, true);
-    xmlHttp.send("");
+    });
 
     return true;
 }
@@ -971,18 +942,18 @@ function copy_mail(todir) {
 }
 
 function do_move_mail(mid, todirs) {
-    var qUrl = "/api/movemail.xml?MAILID=" + mid + "&TODIRS=" + todirs;
-    var xmlHttp = initxmlhttp();
+    var trid = window.opener.$id("mailtr" + mid);
+    if (trid == null)
+        return false;
 
-    xmlHttp.onreadystatechange = function () {
-        var strmid = "mailtr" + mid;
-        var trid = window.opener.$id(strmid);
-
-        if (trid == null)
-            return false;
-
-        if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
-            var xmldom = xmlHttp.responseXML;
+    var api_url = "/api/movemail.xml?MAILID=" + mid + "&TODIRS=" + todirs;
+    $.ajax({
+        url: api_url,
+        beforeSend: function (xmldom) {
+            $id('PROCESSING_TBL').rows[0].cells[0].innerHTML = LANG_RESOURCE['MOVE_MAIL_ONGOING'];
+            $("#PROCESSING_DIV").dialog();
+        },
+        success: function (xmldom) {
             xmldom.documentElement.normalize();
             var responseNode = xmldom.documentElement.childNodes.item(0);
             if (responseNode.tagName == "response") {
@@ -994,16 +965,12 @@ function do_move_mail(mid, todirs) {
 
                     if (window.opener.refresh)
                         window.opener.refresh();
-                } else { }
+                } else {
+                    return false;
+                }
             }
-        } else {
-            $id('PROCESSING_TBL').rows[0].cells[0].innerHTML = LANG_RESOURCE['MOVE_MAIL_ONGOING'];
-            $("#PROCESSING_DIV").dialog();
         }
-
-    }
-    xmlHttp.open("GET", qUrl, true);
-    xmlHttp.send("");
+    });
 
     return true;
 }
@@ -1220,6 +1187,6 @@ $(document).ready(function () {
     });
 });
 
-$(window).on('unload',function(){
+$(window).on('unload', function () {
     uninit();
 })

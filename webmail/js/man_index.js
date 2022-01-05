@@ -1,13 +1,14 @@
 function manlogin() {
-    var username = $id("USER_NAME").value;
-    var password = $id("USER_PWD").value
-    var qUrl = "/api/manlogin.xml?USER_NAME=" + username + "&USER_PWD=" + password;
-    var xmlHttp = initxmlhttp();
-    xmlHttp.onreadystatechange = function () {
-
-        if ((xmlHttp.readyState == 4) && (xmlHttp.status == 200)) {
-
-            var xmldom = xmlHttp.responseXML;
+    var api_data = "USER_NAME=" + encodeURIComponent($id("USER_NAME").value) + "&USER_PWD=" + encodeURIComponent($id("USER_PWD").value);
+    var api_url = "/api/manlogin.xml";
+    $.ajax({
+        url: api_url,
+        type: "POST",
+        data: api_data,
+        beforeSend: function (xmldom) {
+            $id("content").innerHTML = "<center><img src=\"waiting.gif\"></center>";
+        },
+        success: function (xmldom) {
             xmldom.documentElement.normalize();
             var responseNode = xmldom.documentElement.childNodes.item(0);
             if (responseNode.tagName == "response") {
@@ -20,9 +21,7 @@ function manlogin() {
                 }
             }
         }
-    }
-    xmlHttp.open("GET", qUrl, true);
-    xmlHttp.send("");
+    });
 }
 
 $(document).ready(function () {
@@ -31,11 +30,11 @@ $(document).ready(function () {
         this.select()
     });
 
-    $("#manlogin_button").click(function(){
+    $("#manlogin_button").click(function () {
         manlogin();
     });
 });
 
-$(window).on('unload',function(){
+$(window).on('unload', function () {
 
 })
