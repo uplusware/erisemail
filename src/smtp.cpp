@@ -1626,7 +1626,8 @@ void CMailSmtp::On_Finish_Data_Handler()
 	{
         Level_Info linfo;
         linfo.attachsizethreshold = 5000*1024;
-        linfo.boxmaxsize = 5000*1024*1024*1024;
+        linfo.boxmaxsize = 5000;
+		linfo.boxmaxsize = linfo.boxmaxsize*1024*1024*1024;
         linfo.enableaudit = eaFalse;
         linfo.ldefault = ldFalse;
         linfo.mailmaxsize = 5000*1024;

@@ -4304,6 +4304,9 @@ int MailStorage::IsDirExist(const char* username, int dirid)
 				return 0;
 			}
 		}
+		else{
+			return -1;
+		}
 	}
 	else
 	{
@@ -5328,11 +5331,13 @@ int MailStorage::GetDirPath(const char * username, int dirid, string& globalpath
 		}
 		else
 		{
-			GetDirPath(username, dirid, globalpath);
+			return GetDirPath(username, dirid, globalpath);
 		}
 	}
 	else
+	{
 		return -1;
+	}
 }
 
 int MailStorage::GetGlobalStorage(unsigned int& commonMailNumber, unsigned int& deletedMailNumber, unsigned int& commonMailSize, unsigned int& deletedMailSize )

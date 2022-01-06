@@ -747,7 +747,7 @@ int run(int argc, char* argv[])
                             if(mailMasterStg)
                                 delete mailMasterStg;
                         }
-#endif _WITH_DIST_
+#endif /*_WITH_DIST_ */
 						printf("Database is ready.\n");
                     }
 				}

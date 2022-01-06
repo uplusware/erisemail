@@ -686,10 +686,6 @@ protected:
 					
 				}
 			}
-			else
-			{
-				return FALSE;
-			}
 		}
 		else
 		{
@@ -700,9 +696,8 @@ protected:
 					return TRUE;
 				}
 			}
-
-			return FALSE;
 		}
+		return FALSE;
 	}
 	
 	void MailInfo(MimeSummary* part, string& strtext, string& strhtml, string& strcalendar, string& strattach, dynamic_mmap & lbuf)
@@ -1933,7 +1928,7 @@ public:
 				
 				char szTmp[32];
 				
-				char* ENABLE_STRING[] = {"false", "true"};
+				const char* ENABLE_STRING[] = {"false", "true"};
 				
 				for(int x = 0; x < litbl.size(); x++)
 				{
@@ -2144,9 +2139,9 @@ public:
 		
 		if(check_adminauth_token(strauth.c_str(), username) == 0 || check_userauth_token(strauth.c_str(), username) == 0)
 		{
-			char* uType[] = {NULL, "Member", "Group", NULL};
-			char* uRole[] = {NULL, "User", "Administrator", NULL};
-			char* uStatus[] = {"Active", "Disable", NULL};
+			const char* uType[] = {NULL, "Member", "Group", NULL};
+			const char* uRole[] = {NULL, "User", "Administrator", NULL};
+			const char* uStatus[] = {"Active", "Disable", NULL};
 			
 			string strorderby;
 			m_session->parse_urlencode_value("ORDER_BY", strorderby);
@@ -2243,9 +2238,9 @@ public:
 		
 		if(check_adminauth_token(strauth.c_str(), username) == 0 || check_userauth_token(strauth.c_str(), username) == 0)
 		{
-			char* uType[] = {NULL, "Member", "Group", NULL};
-			char* uRole[] = {NULL, "User", "Administrator", NULL};
-			char* uStatus[] = {"Active", "Disable", NULL};
+			const char* uType[] = {NULL, "Member", "Group", NULL};
+			const char* uRole[] = {NULL, "User", "Administrator", NULL};
+			const char* uStatus[] = {"Active", "Disable", NULL};
 			
 			vector <User_Info> listtbl;
 			if(m_mailStg && m_mailStg->ListGroup(listtbl) == 0)
@@ -2323,9 +2318,9 @@ public:
 		
 		if(check_adminauth_token(strauth.c_str(), username) == 0 || check_userauth_token(strauth.c_str(), username) == 0)
 		{
-			char* uType[] = {NULL, "Member", "Group", NULL};
-			char* uRole[] = {NULL, "User", "Administrator", NULL};
-			char* uStatus[] = {"Active", "Disable", NULL};
+			const char* uType[] = {NULL, "Member", "Group", NULL};
+			const char* uRole[] = {NULL, "User", "Administrator", NULL};
+			const char* uStatus[] = {"Active", "Disable", NULL};
 			
 			vector <User_Info> listtbl;
 			if(m_mailStg && m_mailStg->ListMember(listtbl) == 0)
@@ -2405,9 +2400,9 @@ public:
 		
 		if(check_adminauth_token(strauth.c_str(), username) == 0 || check_userauth_token(strauth.c_str(), username) == 0)
 		{
-			char* uType[] = {NULL, "Member", "Group", NULL};
-			char* uRole[] = {NULL, "User", "Administrator", NULL};
-			char* uStatus[] = {"Active", "Disable", NULL};
+			const char* uType[] = {NULL, "Member", "Group", NULL};
+			const char* uRole[] = {NULL, "User", "Administrator", NULL};
+			const char* uStatus[] = {"Active", "Disable", NULL};
 			
 			vector <User_Info> listtbl;
 			if(m_mailStg && m_mailStg->ListMemberOfGroup(strgroup.c_str(), listtbl) == 0)
@@ -3692,7 +3687,8 @@ public:
 					{
 						Level_Info linfo;
 						linfo.attachsizethreshold = 5000*1024;
-						linfo.boxmaxsize = 5000*1024*1024*1024;
+						linfo.boxmaxsize = 5000;
+						linfo.boxmaxsize = linfo.boxmaxsize*1024*1024*1024;
 						linfo.enableaudit = eaFalse;
 						linfo.ldefault = ldFalse;
 						linfo.mailmaxsize = 5000*1024;

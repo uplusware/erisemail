@@ -801,7 +801,7 @@ void CMailPop::On_Retr_Handler(char* text)
 			else
 			{		
 				string badmail = "From: ";
-				badmail += "postmaster<postermaster@";
+				badmail += "post_master<post_master@";
 				badmail += CMailBase::m_email_domain;
 				badmail += ">\r\n";
 				badmail += "Subject: NOTE: Unable to read this destroyed mail\r\n"

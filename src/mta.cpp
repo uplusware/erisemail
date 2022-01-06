@@ -202,7 +202,7 @@ BOOL MailTransferAgent::ReturnMail(MailStorage* mailStg, memcached_st * memcache
 	srandom(time(NULL));
 	sprintf(szBoundary, "%03d_%04X_%08X.%08X", nBoundary, random()%0xFFFF, time(NULL));
 	char szMailFrom[64];
-	sprintf(szMailFrom, "postmaster@%s", CMailBase::m_email_domain.c_str());
+	sprintf(szMailFrom, "post_master@%s", CMailBase::m_email_domain.c_str());
 
 	string strRcptTo = mail_from;
 
@@ -291,7 +291,7 @@ BOOL MailTransferAgent::ReturnMail(MailStorage* mailStg, memcached_st * memcache
 	
 	strtmp += sztmp;
 	
-	sprintf(sztmp, "From: \"postmaster\" <postmaster@%s>\r\n", CMailBase::m_email_domain.c_str());	
+	sprintf(sztmp, "From: \"post_master\" <post_master@%s>\r\n", CMailBase::m_email_domain.c_str());	
 	strtmp += sztmp;
 	
 	sprintf(sztmp, "To: \"%s@%s\"\r\nSubject: System Return Mail\r\n", rcpttoid.c_str(), rcpttodomain.c_str());
