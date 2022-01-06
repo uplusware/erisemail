@@ -285,7 +285,7 @@ BOOL MailTransferAgent::ReturnMail(MailStorage* mailStg, memcached_st * memcache
 	string emlfile;
 	mailStg->GetMailIndex(mid, emlfile, mtExtern);
 
-	char sztmp[1024];
+	char sztmp[4096];
 
 	sprintf(sztmp, "Message-ID: <%08x_%08x_%016lx_%08x@%s>\r\n", time(NULL), getpid(), pthread_self(), random(), CMailBase::m_email_domain.c_str());
 	

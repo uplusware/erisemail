@@ -179,7 +179,8 @@ function forward_mail() {
 }
 
 function do_flag_mail(flag, mid) {
-    if (!$id("flag" + mid)) {
+    var fid = "flag" + mid;
+    if (!$id(fid)) {
         return;
     }
 
@@ -224,7 +225,8 @@ function flag_mail(flag) {
 }
 
 function do_seen_mail(flag, mid) {
-    if (!$id("seen" + mid)) {
+    var seenid = "seen" + mid
+    if (!$id(seenid)) {
         return;
     }
 

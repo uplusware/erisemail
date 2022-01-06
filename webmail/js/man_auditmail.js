@@ -297,7 +297,7 @@ function load_unaudied_mails(npage) {
                             tr.setAttribute("time", mailList.item(i).getAttribute("time"));
                             tr.setAttribute("sort", mailList.item(i).getAttribute("sort"));
                             tr.setAttribute("uniqid", mailList.item(i).getAttribute("uniqid"));
-                            var gotourl = "man_readmail.html?ID=" + mailList.item(i).getAttribute("id");
+                            var gotourl = "man_reviewmail.html?ID=" + mailList.item(i).getAttribute("id");
 
                             tr.onmouseover = function () {
                                 this.setAttribute("imagesrc", this.style.backgroundImage);

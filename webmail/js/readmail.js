@@ -38,14 +38,7 @@ function forward_mail() {
 }
 
 function flag_mail(flag) {
-    if (flag == true) {
-        strFlag = "yes";
-    }
-    else {
-        strFlag = "no";
-    }
-
-    var api_url = "/api/flagmail.xml?ID=" + Request.QueryString('ID') + "&FLAG=" + strFlag;
+    var api_url = "/api/flagmail.xml?ID=" + Request.QueryString('ID') + "&FLAG=" + (flag == true ? "yes" : "no");
     $.ajax({
         url: api_url,
         success: function (xmldom) {
@@ -62,14 +55,7 @@ function flag_mail(flag) {
 }
 
 function seen_mail(flag) {
-    if (flag == true) {
-        strFlag = "yes";
-    }
-    else {
-        strFlag = "no";
-    }
-
-    var api_url = "/api/seenmail.xml?ID=" + Request.QueryString('ID') + "&SEEN=" + strFlag;
+    var api_url = "/api/seenmail.xml?ID=" + Request.QueryString('ID') + "&SEEN=" + (flag == true ? "yes" : "no");
     $.ajax({
         url: api_url,
         success: function (xmldom) {

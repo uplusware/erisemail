@@ -3,6 +3,9 @@ LANG_DESC = "简体中文"
 LANG_RESOURCE = {
 	"LANG_RESOURCE_EXAMPLE": "这是一个例子",
 	/* begin */
+	"uploaderror1": "文件太大",
+	"uploaderror2": "上传文件出错，请检查文件大小和属性",
+	"uploaderror3": "附件大小为0",
 	"NOT_CHOOSE_ATTACH": "请选择要上传的附件",
 	"LOGIN_FAILED": "认证失败",
 	"MAILBOX_INBOX": "收件箱",

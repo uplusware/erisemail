@@ -314,30 +314,6 @@ void memory_cache::load(const char* szdir)
 		}
 		closedir(dp);
 	}
-
-	string strLanguagePath = m_dirpath;
-	strLanguagePath += "/language.xml";
-	TiXmlDocument* pXmlDoc = new TiXmlDocument();
-	pXmlDoc->LoadFile(strLanguagePath.c_str());
-
-	if(pXmlDoc && pXmlDoc->RootElement())
-	{
-		TiXmlNode * pText = pXmlDoc->RootElement()->FirstChild("text");
-
-		while(pText)
-		{
-			if(pText && pText->ToElement())
-			{
-				string strName = pText->ToElement()->Attribute("name");
-				string strValue = pText->ToElement()->Attribute("value");				
-				m_language.insert(map<string, string>::value_type(strName, strValue));
-			}
-			pText = pText->NextSibling("text");
-		}
-	}
-
-	delete pXmlDoc;
-	
 }
 
 void memory_cache::unload()
@@ -348,7 +324,5 @@ void memory_cache::unload()
 		free(iter->second.pbuf);
 	}
 	m_htdoc.clear();
-    
-	m_language.clear();
 }
 

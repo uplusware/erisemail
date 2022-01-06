@@ -28,8 +28,8 @@ $(document).ready(function () {
         window.parent.childframe.location.href = 'man_levels.html';
     });
 
-    $('#man_mails').click(function () {
-        window.parent.childframe.location.href = 'man_mails.html';
+    $('#man_auditmail').click(function () {
+        window.parent.childframe.location.href = 'man_auditmail.html';
     });
 
     $('#man_users').click(function () {

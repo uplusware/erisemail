@@ -3,6 +3,9 @@ LANG_DESC = "USA English"
 LANG_RESOURCE = {
 	"LANG_RESOURCE_EXAMPLE": "This is a example",
 	/* begin */
+	"uploaderror1": "File is too large",
+	"uploaderror2": "Upload file failed",
+	"uploaderror3": "The size of attachment is 0",
 	"NOT_CHOOSE_ATTACH": "Please choose a destination file",
 	"LOGIN_FAILED": "Login failed",
 	"MAILBOX_INBOX": "Inbox",

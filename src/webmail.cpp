@@ -230,6 +230,18 @@ void Webmail::Response()
         pDoc->Response();
         delete pDoc;
     }
+    else if(strQueryPage == "api/reviewmail.xml")
+    {
+        ApiReviewMail* pDoc = new ApiReviewMail(m_session);
+        pDoc->Response();
+        delete pDoc;
+    }
+    else if(strQueryPage == "api/reviewattachment.cgi")
+    {
+        ApiReviewAttachment* pDoc = new ApiReviewAttachment(m_session);
+        pDoc->Response();
+        delete pDoc;
+    }
     else if(strQueryPage == "api/sendmail.xml")
     {
         ApiSendMail* pDoc = new ApiSendMail(m_session);

@@ -1984,7 +1984,7 @@ int MailStorage::CheckRequiredDir(const char* username)
 
 int MailStorage::AddID(const char* username, const char* password, const char* alias, const char* host, UserType type, UserRole role, unsigned int size, int level, int status)
 {
-	if(strcasecmp(username, "postmaster") != 0)
+	if(strcasecmp(username, "postmaster") != 0 && strcasecmp(username, "post_master") != 0)
 	{
         for(int x = 0; x < strlen(username); x++)
         {
@@ -2840,7 +2840,6 @@ int MailStorage::LimitListUnauditedExternMailByDir(const char* username, vector<
 	listtbl.clear();
 	char sqlcmd[1024];
 	sprintf(sqlcmd, "SELECT mbody,muniqid,mid,mtime,mstatus,mfrom,mto,mtx,mdirid FROM extmailtbl WHERE mstatus&%d<>%d AND mstatus&%d=%d ORDER BY mtime limit %d, %d", MSG_ATTR_DELETED, MSG_ATTR_DELETED, MSG_ATTR_UNAUDITED, MSG_ATTR_UNAUDITED, beg, rows);
-	
 	if(Query(sqlcmd, strlen(sqlcmd)) == 0)
 	{
 		MYSQL_RES *query_result;
@@ -3736,13 +3735,13 @@ int MailStorage::GetMailOwner(int mid, string & owner)
 		return -1;
 }
 
-int MailStorage::GetMailFromAndTo(int mid, string & from, string &to)
+int MailStorage::GetMailFromAndTo(int mid, string & from, string &to, unsigned int mtx)
 {
 	char sqlcmd[1024];
 	
 	MYSQL_RES *query_result;
 	MYSQL_ROW row;
-	sprintf(sqlcmd, "SELECT mfrom, mto FROM mailtbl WHERE mid='%d'", mid);
+	sprintf(sqlcmd, "SELECT mfrom, mto FROM %s WHERE mid='%d'", mtx == mtExtern ? "extmailtbl" : "mailtbl", mid);
 	
 	if(Query(sqlcmd, strlen(sqlcmd)) == 0)
 	{					
@@ -3754,7 +3753,7 @@ int MailStorage::GetMailFromAndTo(int mid, string & from, string &to)
 			if(row)
 			{
 				from = row[0];
-				to = row[0];
+				to = row[1];
 				mysql_free_result(query_result);
 				return 0;
 			}
@@ -4866,10 +4865,10 @@ int MailStorage::SetDirStatus(const char* username, const char* dirref,unsigned 
 		return -1;
 }
 
-int MailStorage::GetMailStatus(int mid, unsigned int& status)
+int MailStorage::GetMailStatus(int mid, unsigned int& status, unsigned int mtx)
 {
 	char sqlcmd[1024];
-	sprintf(sqlcmd, "SELECT mstatus FROM mailtbl WHERE mid=%d", mid);
+	sprintf(sqlcmd, "SELECT mstatus FROM %s WHERE mid=%d", mtx == mtExtern ? "extmailtbl" : "mailtbl", mid);
 	
 	if(Query(sqlcmd, strlen(sqlcmd)) == 0)
 	{
@@ -4938,13 +4937,13 @@ int MailStorage::GetMailUID(int mid, string uid)
 	}
 }
 
-int MailStorage::SetMailStatus(const char* username, int mid, unsigned int status)
+int MailStorage::SetMailStatus(const char* username, int mid, unsigned int status, unsigned int mtx)
 {
 	char sqlcmd[1024];
 	string owner = "";
 	if(IsAdmin(username) == 0 || (GetMailOwner(mid, owner) == 0 && strcasecmp(owner.c_str(), username) == 0))
 	{
-		sprintf(sqlcmd, "UPDATE mailtbl SET mstatus=%d WHERE mid=%d", status, mid);
+		sprintf(sqlcmd, "UPDATE %s SET mstatus=%d WHERE mid=%d", mtx == mtExtern ? "extmailtbl" : "mailtbl", status, mid);
 		if(Query(sqlcmd, strlen(sqlcmd)) == 0)
 		{
 			return 0;

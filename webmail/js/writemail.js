@@ -244,14 +244,7 @@ function flag_mail(flag) {
         return;
     }
 
-    if (flag == true) {
-        strFlag = "yes";
-    }
-    else {
-        strFlag = "no";
-    }
-
-    var api_url = "/api/flagmail.xml?ID=" + Request.QueryString('ID') + "&FLAG=" + strFlag;
+    var api_url = "/api/flagmail.xml?ID=" + Request.QueryString('ID') + "&FLAG=" + (flag == true ? "yes" : "no");
     $.ajax({
         url: api_url,
         success: function (xmldom) {
@@ -259,7 +252,9 @@ function flag_mail(flag) {
             var responseNode = xmldom.documentElement.childNodes.item(0);
             if (responseNode.tagName == "response") {
                 var errno = responseNode.getAttribute("errno")
-                if (errno == "0") { }
+                if (errno == "0") {
+                    window.opener.update_mail_flag(Request.QueryString('ID'), flag);
+                }
             }
         }
     });
@@ -271,14 +266,7 @@ function seen_mail(flag) {
         return;
     }
 
-    if (flag == true) {
-        strFlag = "yes";
-    }
-    else {
-        strFlag = "no";
-    }
-
-    var api_url = "/api/seenmail.xml?ID=" + Request.QueryString('ID') + "&SEEN=" + strFlag;
+    var api_url = "/api/seenmail.xml?ID=" + Request.QueryString('ID') + "&SEEN=" + (flag == true ? "yes" : "no");
     $.ajax({
         url: api_url,
         success: function (xmldom) {
@@ -286,7 +274,9 @@ function seen_mail(flag) {
             var responseNode = xmldom.documentElement.childNodes.item(0);
             if (responseNode.tagName == "response") {
                 var errno = responseNode.getAttribute("errno")
-                if (errno == "0" || errno == 0) { }
+                if (errno == "0" || errno == 0) {
+                    window.opener.update_mail_seen(Request.QueryString('ID'), flag);
+                }
             }
         }
     });
@@ -907,8 +897,6 @@ function do_copy_mail(mid, todirs) {
     var api_url = "/api/copymail.xml?MAILID=" + mid + "&TODIRS=" + todirs;
     $.ajax({
         url: api_url,
-        type: "POST",
-        data: api_data,
         beforeSend: function (xmldom) {
             $id('PROCESSING_TBL').rows[0].cells[0].innerHTML = LANG_RESOURCE['COPY_MAIL_ONGOING'];
             $("#PROCESSING_DIV").dialog();

@@ -11,8 +11,8 @@ function TableFormat(arrText) {
     return strTbl;
 }
 
-function read_mail(strID) {
-    var api_url = "/api/readmail.xml?ID=" + strID;
+function review_mail(strID) {
+    var api_url = "/api/reviewmail.xml?ID=" + strID;
     $.ajax({
         url: api_url,
         beforeSend: function (xmldom) {
@@ -148,7 +148,7 @@ function read_mail(strID) {
                             filename = detail[0];
                             filetype = detail[1];
 
-                            var imgsrc = "/api/attachment.cgi?ID=" + strID + "&FILENAME=" + encodeURIComponent(filename);
+                            var imgsrc = "/api/reviewattachment.cgi?ID=" + strID + "&FILENAME=" + encodeURIComponent(filename);
 
                             if (filetype == "image" || filetype == "Image") {
                                 strPreview += "<table border=\"0\" cellpadding=\"1\" cellspacing=\"1\"><tr><td width='16'><img src=\"attach.gif\"></td><td align='left'><a href='" + imgsrc + "' target='_blank' >" + TextToHTML(filename) + "</a></td></tr><tr><td colspan='2'><a href='" + imgsrc + "' target='_blank' ><img src='" + imgsrc + "' border='0' width=\"100\" onload='DrawImage(this)'></a></td></tr></table>"
@@ -164,7 +164,7 @@ function read_mail(strID) {
                     $id("maildate").innerHTML = "<input class=\"text3\" size=\"100\" type=\"text\" value=\"" + TextToHTML(strDate) + "\" readonly>";
                     $id("mailsubject").innerHTML = "<input class=\"text3\" size=\"100\" type=\"text\" value=\"" + (strSubject == "" ? LANG_RESOURCE['NO_SUBJECT'] : TextToHTML(strSubject)) + "\" readonly>";
 
-                    var strrpl = "/api/attachment.cgi?ID=";
+                    var strrpl = "/api/reviewattachment.cgi?ID=";
                     strrpl += strID;
                     strrpl += "&CONTENTID=";
 
@@ -177,18 +177,28 @@ function read_mail(strID) {
                         $id("mailcontent").innerHTML = strCalendarContent + (strPreview != "" ? ("<p></p><hr><b>" + att_count + LANG_RESOURCE['ATTACHMENT_NUM'] + "</b>" + strPreview) : "");
                     }
                 } else {
+                    $id("mailfrom").innerHTML = "<table border=\"0\"><tr><td><img src=\"alert.gif\"></td><td>" + LANG_RESOURCE['LOADING_FAILED'] + "</td></tr></table>";
+                    $id("mailto").innerHTML = "<table border=\"0\"><tr><td><img src=\"alert.gif\"></td><td>" + LANG_RESOURCE['LOADING_FAILED'] + "</td></tr></table>";
+                    $id("mailcc").innerHTML = "<table border=\"0\"><tr><td><img src=\"alert.gif\"></td><td>" + LANG_RESOURCE['LOADING_FAILED'] + "</td></tr></table>";
+                    $id("maildate").innerHTML = "<table border=\"0\"><tr><td><img src=\"alert.gif\"></td><td>" + LANG_RESOURCE['LOADING_FAILED'] + "</td></tr></table>";
+                    $id("mailsubject").innerHTML = "<table border=\"0\"><tr><td><img src=\"alert.gif\"></td><td>" + LANG_RESOURCE['LOADING_FAILED'] + "</td></tr></table>";
                     $id("mailcontent").innerHTML = "<table border=\"0\"><tr><td><img src=\"alert.gif\"></td><td>" + LANG_RESOURCE['LOADING_FAILED'] + "</td></tr></table>";
                 }
             }
         },
         error: function () {
+            $id("mailfrom").innerHTML = "<table border=\"0\"><tr><td><img src=\"alert.gif\"></td><td>" + LANG_RESOURCE['LOADING_FAILED'] + "</td></tr></table>";
+            $id("mailto").innerHTML = "<table border=\"0\"><tr><td><img src=\"alert.gif\"></td><td>" + LANG_RESOURCE['LOADING_FAILED'] + "</td></tr></table>";
+            $id("mailcc").innerHTML = "<table border=\"0\"><tr><td><img src=\"alert.gif\"></td><td>" + LANG_RESOURCE['LOADING_FAILED'] + "</td></tr></table>";
+            $id("maildate").innerHTML = "<table border=\"0\"><tr><td><img src=\"alert.gif\"></td><td>" + LANG_RESOURCE['LOADING_FAILED'] + "</td></tr></table>";
+            $id("mailsubject").innerHTML = "<table border=\"0\"><tr><td><img src=\"alert.gif\"></td><td>" + LANG_RESOURCE['LOADING_FAILED'] + "</td></tr></table>";
             $id("mailcontent").innerHTML = "<table border=\"0\"><tr><td><img src=\"alert.gif\"></td><td>" + LANG_RESOURCE['LOADING_FAILED'] + "</td></tr></table>";
         }
     });
 }
 
 function init() {
-    read_mail(Request.QueryString('ID'));
+    review_mail(Request.QueryString('ID'));
 }
 
 function pass_mail() {

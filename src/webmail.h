@@ -979,16 +979,21 @@ public:
 		
 		//Check Admin IPs
 		BOOL access_result = FALSE;
-		for(int x = 0; x < CMailBase::m_webadmin_list.size(); x++)
+		if(CMailBase::m_webadmin_list.size() == 0)
 		{
-			if(strmatch(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
+			access_result = TRUE;
+		}
+		else
+		{
+			for(int x = 0; x < CMailBase::m_webadmin_list.size(); x++)
 			{
-				access_result = TRUE;
-				break;
+				if(strmatch(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
+				{
+					access_result = TRUE;
+					break;
+				}
 			}
 		}
-		if(CMailBase::m_webadmin_list.size() == 0)
-			access_result = TRUE;
 		if(!access_result)
 		{
 			strResp = RSP_404_NOT_FOUND;
@@ -1065,16 +1070,21 @@ public:
 		
 		//Check Admin IPs
 		BOOL access_result = FALSE;
-		for(int x = 0; x < CMailBase::m_webadmin_list.size(); x++)
+		if(CMailBase::m_webadmin_list.size() == 0)
 		{
-			if(strmatch(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
+			access_result = TRUE;
+		}
+		else
+		{
+			for(int x = 0; x < CMailBase::m_webadmin_list.size(); x++)
 			{
-				access_result = TRUE;
-				break;
+				if(strmatch(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
+				{
+					access_result = TRUE;
+					break;
+				}
 			}
 		}
-		if(CMailBase::m_webadmin_list.size() == 0)
-			access_result = TRUE;
 		if(!access_result)
 		{
 			strResp = RSP_404_NOT_FOUND;
@@ -1152,16 +1162,21 @@ public:
 		
 		//Check Admin IPs
 		BOOL access_result = FALSE;
-		for(int x = 0; x < CMailBase::m_webadmin_list.size(); x++)
+		if(CMailBase::m_webadmin_list.size() == 0)
 		{
-			if(strmatch(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
+			access_result = TRUE;
+		}
+		else
+		{
+			for(int x = 0; x < CMailBase::m_webadmin_list.size(); x++)
 			{
-				access_result = TRUE;
-				break;
+				if(strmatch(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
+				{
+					access_result = TRUE;
+					break;
+				}
 			}
 		}
-		if(CMailBase::m_webadmin_list.size() == 0)
-			access_result = TRUE;
 		if(!access_result)
 		{
 			strResp = RSP_404_NOT_FOUND;
@@ -1255,16 +1270,21 @@ public:
 		
 		//Check Admin IPs
 		BOOL access_result = FALSE;
-		for(int x = 0; x < CMailBase::m_webadmin_list.size(); x++)
+		if(CMailBase::m_webadmin_list.size() == 0)
 		{
-			if(strmatch(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
+			access_result = TRUE;
+		}
+		else
+		{
+			for(int x = 0; x < CMailBase::m_webadmin_list.size(); x++)
 			{
-				access_result = TRUE;
-				break;
+				if(strmatch(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
+				{
+					access_result = TRUE;
+					break;
+				}
 			}
 		}
-		if(CMailBase::m_webadmin_list.size() == 0)
-			access_result = TRUE;
 		if(!access_result)
 		{
 			strResp = RSP_404_NOT_FOUND;
@@ -1353,16 +1373,21 @@ public:
 		
 		//Check Admin IPs
 		BOOL access_result = FALSE;
-		for(int x = 0; x < CMailBase::m_webadmin_list.size(); x++)
+		if(CMailBase::m_webadmin_list.size() == 0)
 		{
-			if(strmatch(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
+			access_result = TRUE;
+		}
+		else
+		{
+			for(int x = 0; x < CMailBase::m_webadmin_list.size(); x++)
 			{
-				access_result = TRUE;
-				break;
+				if(strmatch(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
+				{
+					access_result = TRUE;
+					break;
+				}
 			}
 		}
-		if(CMailBase::m_webadmin_list.size() == 0)
-			access_result = TRUE;
 		if(!access_result)
 		{
 			strResp = RSP_404_NOT_FOUND;
@@ -1438,16 +1463,21 @@ public:
 		
 		//Check Admin IPs
 		BOOL access_result = FALSE;
-		for(int x = 0; x < CMailBase::m_webadmin_list.size(); x++)
+		if(CMailBase::m_webadmin_list.size() == 0)
 		{
-			if(strmatch(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
+			access_result = TRUE;
+		}
+		else
+		{
+			for(int x = 0; x < CMailBase::m_webadmin_list.size(); x++)
 			{
-				access_result = TRUE;
-				break;
+				if(strmatch(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
+				{
+					access_result = TRUE;
+					break;
+				}
 			}
 		}
-		if(CMailBase::m_webadmin_list.size() == 0)
-			access_result = TRUE;
 		if(!access_result)
 		{
 			strResp = RSP_404_NOT_FOUND;
@@ -1555,16 +1585,21 @@ public:
 		
 		//Check Admin IPs
 		BOOL access_result = FALSE;
-		for(int x = 0; x < CMailBase::m_webadmin_list.size(); x++)
+		if(CMailBase::m_webadmin_list.size() == 0)
 		{
-			if(strmatch(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
+			access_result = TRUE;
+		}
+		else
+		{
+			for(int x = 0; x < CMailBase::m_webadmin_list.size(); x++)
 			{
-				access_result = TRUE;
-				break;
+				if(strmatch(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
+				{
+					access_result = TRUE;
+					break;
+				}
 			}
 		}
-		if(CMailBase::m_webadmin_list.size() == 0)
-			access_result = TRUE;
 		if(!access_result)
 		{
 			strResp = RSP_404_NOT_FOUND;
@@ -1642,16 +1677,21 @@ public:
 		
 		//Check Admin IPs
 		BOOL access_result = FALSE;
-		for(int x = 0; x < CMailBase::m_webadmin_list.size(); x++)
+		if(CMailBase::m_webadmin_list.size() == 0)
 		{
-			if(strmatch(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
+			access_result = TRUE;
+		}
+		else
+		{
+			for(int x = 0; x < CMailBase::m_webadmin_list.size(); x++)
 			{
-				access_result = TRUE;
-				break;
+				if(strmatch(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
+				{
+					access_result = TRUE;
+					break;
+				}
 			}
 		}
-		if(CMailBase::m_webadmin_list.size() == 0)
-			access_result = TRUE;
 		if(!access_result)
 		{
 			strResp = RSP_404_NOT_FOUND;
@@ -1728,16 +1768,21 @@ public:
 		
 		//Check Admin IPs
 		BOOL access_result = FALSE;
-		for(int x = 0; x < CMailBase::m_webadmin_list.size(); x++)
+		if(CMailBase::m_webadmin_list.size() == 0)
 		{
-			if(strmatch(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
+			access_result = TRUE;
+		}
+		else
+		{
+			for(int x = 0; x < CMailBase::m_webadmin_list.size(); x++)
 			{
-				access_result = TRUE;
-				break;
+				if(strmatch(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
+				{
+					access_result = TRUE;
+					break;
+				}
 			}
 		}
-		if(CMailBase::m_webadmin_list.size() == 0)
-			access_result = TRUE;
 		if(!access_result)
 		{
 			strResp = RSP_404_NOT_FOUND;
@@ -1841,16 +1886,21 @@ public:
 		
 		//Check Admin IPs
 		BOOL access_result = FALSE;
-		for(int x = 0; x < CMailBase::m_webadmin_list.size(); x++)
+		if(CMailBase::m_webadmin_list.size() == 0)
 		{
-			if(strmatch(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
+			access_result = TRUE;
+		}
+		else
+		{
+			for(int x = 0; x < CMailBase::m_webadmin_list.size(); x++)
 			{
-				access_result = TRUE;
-				break;
+				if(strmatch(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
+				{
+					access_result = TRUE;
+					break;
+				}
 			}
 		}
-		if(CMailBase::m_webadmin_list.size() == 0)
-			access_result = TRUE;
 		if(!access_result)
 		{
 			strResp = RSP_404_NOT_FOUND;
@@ -1967,16 +2017,21 @@ public:
 		
 		//Check Admin IPs
 		BOOL access_result = FALSE;
-		for(int x = 0; x < CMailBase::m_webadmin_list.size(); x++)
+		if(CMailBase::m_webadmin_list.size() == 0)
 		{
-			if(strmatch(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
+			access_result = TRUE;
+		}
+		else
+		{
+			for(int x = 0; x < CMailBase::m_webadmin_list.size(); x++)
 			{
-				access_result = TRUE;
-				break;
+				if(strmatch(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
+				{
+					access_result = TRUE;
+					break;
+				}
 			}
 		}
-		if(CMailBase::m_webadmin_list.size() == 0)
-			access_result = TRUE;
 		if(!access_result)
 		{
 			strResp = RSP_404_NOT_FOUND;
@@ -2908,16 +2963,21 @@ public:
 		
 		//Check Admin IPs
 		BOOL access_result = FALSE;
-		for(int x = 0; x < CMailBase::m_webadmin_list.size(); x++)
+		if(CMailBase::m_webadmin_list.size() == 0)
 		{
-			if(strmatch(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
+			access_result = TRUE;
+		}
+		else
+		{
+			for(int x = 0; x < CMailBase::m_webadmin_list.size(); x++)
 			{
-				access_result = TRUE;
-				break;
+				if(strmatch(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
+				{
+					access_result = TRUE;
+					break;
+				}
 			}
 		}
-		if(CMailBase::m_webadmin_list.size() == 0)
-			access_result = TRUE;
 		if(!access_result)
 		{
 			strResp = RSP_404_NOT_FOUND;
@@ -2979,13 +3039,17 @@ public:
 				for(int x = 0; x < listtbl.size(); x++)
 				{
 					string emlfile;
-					m_mailStg->GetMailIndex(listtbl[x].mid, emlfile);
+					m_mailStg->GetMailIndex(listtbl[x].mid, emlfile, mtExtern);
+					
+					if(emlfile == ""){
+						continue;
+					}
 					
 					MailLetter * Letter = NULL;
 					Letter = new MailLetter(m_mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_session->GetMemCached(), emlfile.c_str());
 					if(Letter && Letter->GetSize() > 0)
 					{
-                        string strSubject;
+						string strSubject;
                         string strSender;
                         string strFromAddr;
 						if(Letter->GetSummary()->m_header)
@@ -3162,33 +3226,10 @@ public:
 		if(check_userauth_token(strauth.c_str(), username) == 0)
 		{
 			BOOL isPass = TRUE;
-			if(check_adminauth_token(strauth.c_str(), username) == 0)
-			{
-				string mailowner;
-				if( m_mailStg->GetMailOwner(nMailID, mailowner) == 0)
-				{
-					if(strcasecmp(mailowner.c_str(), username.c_str()) != 0 )
-					{
-						isPass = FALSE;
-					}
-				}
-				else
-				{
-					int maildir = -1;
-					unsigned int mailstatus;
-					if(m_mailStg && m_mailStg->GetMailDir(nMailID, maildir) != 0 || maildir != -1 || m_mailStg->GetMailStatus(nMailID, mailstatus) == -1 || mailstatus & MSG_ATTR_UNAUDITED != MSG_ATTR_UNAUDITED)
-					{
-						isPass = FALSE;
-					}
-				}
-			}
-			else
-			{
-				string mailowner;
-				if( m_mailStg->GetMailOwner(nMailID, mailowner) == -1 || strcasecmp(mailowner.c_str(), username.c_str()) != 0 )
-				{					
-					isPass = FALSE;
-				}
+			string mailowner;
+			if( m_mailStg->GetMailOwner(nMailID, mailowner) == -1 || strcasecmp(mailowner.c_str(), username.c_str()) != 0 )
+			{					
+				isPass = FALSE;
 			}
 			
 			if(!isPass)
@@ -3207,7 +3248,7 @@ public:
 				strResp += "<erisemail>"
 					"<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
 					"</erisemail>";
-				
+				m_session->HttpSend(strResp.c_str(), strResp.length());
 				return;
 			}
 			
@@ -3225,7 +3266,7 @@ public:
 
 			string emlfile;
 			m_mailStg->GetMailIndex(nMailID, emlfile);
-					
+			
 			MailLetter * Letter;
 			Letter = new MailLetter(m_mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_session->GetMemCached(), emlfile.c_str());
 			if(Letter->GetSize() > 0)
@@ -3790,9 +3831,7 @@ public:
 					strResp += "\r\n";
 					
 					strResp += "\r\n";
-					strResp += "<html><body><script language=\"JavaScript\">alert(\"";
-					strResp += m_session->m_cache->m_language["uploaderror2"];
-					strResp +="\");window.location=\"";
+					strResp += "<html><head><script type=\"text/javascript\" src=\"language.js\"></script></head><body><script language=\"JavaScript\">alert(\"LANG_RESOURCE['uploaderror2']\");window.location=\"";
 					strResp += strSelfName;
 					strResp += "\";</script></body></html>";
 					
@@ -3814,9 +3853,7 @@ public:
 					strResp += "\r\n";
 					
 					strResp += "\r\n";
-					strResp += "<html><body><script language=\"JavaScript\">alert(\"";
-					strResp += m_session->m_cache->m_language["uploaderror1"];
-					strResp +="\");window.location=\"";
+					strResp += "<html><head><script type=\"text/javascript\" src=\"language.js\"></script></head><body><script language=\"JavaScript\">alert(\"LANG_RESOURCE['uploaderror1']\");window.location=\"";
 					strResp += strSelfName;
 					strResp += "\";</script></body></html>";
 					m_session->HttpSend(strResp.c_str(), strResp.length());
@@ -3928,9 +3965,7 @@ public:
 				strResp += "\r\n";
 				
 				strResp += "\r\n";
-				strResp += "<html><body><script language=\"JavaScript\">alert(\"";
-				strResp += m_session->m_cache->m_language["uploaderror2"];
-				strResp +="\");history.go(-1);";
+				strResp += "<html><head><script type=\"text/javascript\" src=\"language.js\"></script></head><body><script language=\"JavaScript\">alert(\"LANG_RESOURCE['uploaderror2']\");history.go(-1);";
 				strResp += "</script></body></html>";
 				m_session->HttpSend(strResp.c_str(), strResp.length());
 				return;
@@ -4458,16 +4493,21 @@ public:
 		
 		//Check Admin IPs
 		BOOL access_result = FALSE;
-		for(int x = 0; x < CMailBase::m_webadmin_list.size(); x++)
+		if(CMailBase::m_webadmin_list.size() == 0)
 		{
-			if(strmatch(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
+			access_result = TRUE;
+		}
+		else
+		{
+			for(int x = 0; x < CMailBase::m_webadmin_list.size(); x++)
 			{
-				access_result = TRUE;
-				break;
+				if(strmatch(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
+				{
+					access_result = TRUE;
+					break;
+				}
 			}
 		}
-		if(CMailBase::m_webadmin_list.size() == 0)
-			access_result = TRUE;
 		if(!access_result)
 		{
 			strResp = RSP_404_NOT_FOUND;
@@ -4488,7 +4528,7 @@ public:
 		{
 			char szTmp[128];
 			unsigned int mstatus;
-			if(m_mailStg && m_mailStg->GetMailStatus(nMailID, mstatus) == 0 && m_mailStg->SetMailStatus(username.c_str(), nMailID, mstatus&(~MSG_ATTR_UNAUDITED)) == 0)
+			if(m_mailStg && m_mailStg->GetMailStatus(nMailID, mstatus, mtExtern) == 0 && m_mailStg->SetMailStatus(username.c_str(), nMailID, mstatus&(~MSG_ATTR_UNAUDITED), mtExtern) == 0)
 			{
 				strResp = RSP_200_OK_XML;
 				string strHTTPDate;
@@ -4553,21 +4593,26 @@ public:
 		
 		//Check Admin IPs
 		BOOL access_result = FALSE;
-		for(int x = 0; x < CMailBase::m_webadmin_list.size(); x++)
+		if(CMailBase::m_webadmin_list.size() == 0)
 		{
-			if(strmatch(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
+			access_result = TRUE;
+		}
+		else
+		{
+			for(int x = 0; x < CMailBase::m_webadmin_list.size(); x++)
 			{
-				access_result = TRUE;
-				break;
+				if(strmatch(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
+				{
+					access_result = TRUE;
+					break;
+				}
 			}
 		}
-		if(CMailBase::m_webadmin_list.size() == 0)
-			access_result = TRUE;
+
 		if(!access_result)
 		{
 			strResp = RSP_404_NOT_FOUND;
 			m_session->HttpSend(strResp.c_str(), strResp.length());
-			
 			return;
 		}
 		
@@ -4582,7 +4627,7 @@ public:
 		if(check_adminauth_token(strauth.c_str(), username) == 0)
 		{
 			string strFrom, strTo;
-			if(m_mailStg && m_mailStg->GetMailFromAndTo(nMailID, strFrom, strTo) == 0)
+			if(m_mailStg && m_mailStg->GetMailFromAndTo(nMailID, strFrom, strTo, mtExtern) == 0)
 			{
 				if(strFrom != "")
 				{
@@ -4633,20 +4678,20 @@ public:
 						usermaxsize = 5000*1024;
 					}
 					
-					m_mailStg->GetMailStatus(nMailID, mstatus);
+					m_mailStg->GetMailStatus(nMailID, mstatus, mtExtern);
 					
-					string postmaster = "postermaster@";
-					postmaster += CMailBase::m_email_domain;
+					string post_auditor = "post_auditor@";
+					post_auditor += CMailBase::m_email_domain;
 					
 					MailLetter* oldLetter, *newLetter;
 					string emlfile;
-					m_mailStg->GetMailIndex(nMailID, emlfile);
+					m_mailStg->GetMailIndex(nMailID, emlfile, mtExtern);
 					
 					oldLetter = new MailLetter(m_mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_session->GetMemCached(), emlfile.c_str());
 					newLetter = new MailLetter(m_mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_session->GetMemCached(), newuid, usermaxsize);
 
 					Letter_Info letter_info;
-					letter_info.mail_from = postmaster.c_str();
+					letter_info.mail_from = post_auditor.c_str();
 					letter_info.mail_to = strFrom.c_str();
                     letter_info.host = strHost.c_str();
 					letter_info.mail_type = isLocal ? mtLocal : mtExtern;
@@ -4657,48 +4702,94 @@ public:
 					letter_info.user_maxsize = usermaxsize;
 					letter_info.mail_id = -1;
 					
-					string strLine;
-					BOOL findSubject = FALSE;
-					while(oldLetter->Line(strLine) == 0)
+					string strtmp = "";
+					int nBoundary = 0;
+					char szBoundary[64];
+					srandom(time(NULL));
+					sprintf(szBoundary, "%03d_%04X_%08X.%08X", nBoundary, random()%0xFFFF, time(NULL));
+
+					char sztmp[4096];
+
+					sprintf(sztmp, "Message-ID: <%08x_%08x_%016lx_%08x@%s>\r\n", time(NULL), getpid(), pthread_self(), random(), CMailBase::m_email_domain.c_str());
+					
+					strtmp += sztmp;
+					
+					sprintf(sztmp, "From: \"post_auditor\" <post_auditor@%s>\r\n", CMailBase::m_email_domain.c_str());	
+					strtmp += sztmp;
+					
+					sprintf(sztmp, "To: \"%s@%s\"\r\nSubject: Auditor Rejected Mail\r\n", strUserID.c_str(), CMailBase::m_email_domain.c_str());
+					strtmp += sztmp;
+
+					string strTime;
+					OutTimeString(time(NULL), strTime);
+
+					strtmp += "Date: ";
+					strtmp += strTime;
+					strtmp += "\r\n";
+					strtmp += "MIME-Version: 1.0\r\n"
+								"Content-Type: multipart/mixed;\r\n"
+								"	boundary=\"----=_NextPart_";
+
+					strtmp += szBoundary;
+					strtmp += "\"\r\n\r\n"
+								"This is a multi-part message in MIME format.\r\n"
+								"------=_NextPart_";
+					strtmp += szBoundary;
+
+					strtmp += "\r\n"
+							"Content-Type: text/plain;";
+							
+					strtmp +=" charset=\"" + CMailBase::m_encoding + "\";\r\n";
+					
+					strtmp += "Content-Transfer-Encoding: 7bit\r\n\r\n"
+							"This message is generated by eRisemail system.\r\n"
+							"Sorry to have to inform you that the message rejected.\r\n"
+							"\r\n";
+							
+					sprintf(sztmp, "Send to \"%s\" failed\r\nCause: Rejected by post_auditor\r\n", strTo.c_str());
+					strtmp += sztmp;
+
+					strtmp +="------=_NextPart_";
+					strtmp += szBoundary;
+					strtmp += "\r\n"
+							"Content-Type: message/rfc822;\r\n";
+
+					sprintf(sztmp, " name=\"%s.eml\"\r\n", newuid);
+					strtmp += sztmp;
+					
+					strtmp +="Content-Transfer-Encoding: 7bit\r\nContent-Disposition: inline;\r\n";
+					sprintf(sztmp, " filename=\"%s.eml\";\r\n\r\n", newuid);
+					strtmp += sztmp;
+
+					newLetter->Write(strtmp.c_str(), strtmp.length());
+
+					if(oldLetter)
 					{
-						strtrim(strLine, "\r\n");
-						if( !findSubject && strncasecmp(strLine.c_str(), "subject:", sizeof("subject:") - 1) == 0)
+						if(oldLetter->GetSize() > 0)
 						{
-							string strSubject;
-							strcut(strLine.c_str(), ":", NULL, strSubject);
-							strtrim(strSubject);
-							
-							string strDecodedSubject;
-							DecodeMIMEString(strSubject.c_str(), strDecodedSubject);
-							
-							strSubject = "[";
-							strSubject += m_session->m_cache->m_language["reject"];
-							strSubject += "] - ";
-							strSubject += strDecodedSubject;
-							
-							int nTmplen = BASE64_ENCODE_OUTPUT_MAX_LEN(strSubject.length()) + 1;
-							char * szTmpbuf = (char*)malloc(nTmplen);
-							CBase64::Encode((char*)strSubject.c_str(), strSubject.length(), szTmpbuf, &nTmplen);
-							
-							string strEncodedMsg;
-							strEncodedMsg = "=?";
-							strEncodedMsg += CMailBase::m_encoding;
-							strEncodedMsg += "?B?";
-							strEncodedMsg += szTmpbuf;
-							strEncodedMsg += "?=";
-							
-							free(szTmpbuf);
-							
-							strLine = "Subject: ";
-							strLine += strEncodedMsg;
-							findSubject = TRUE;
+							char read_buf[4096];
+							int read_count = 0;
+							while((read_count = oldLetter->Read(read_buf, 4096)) >= 0)
+							{
+								if(read_count > 0)
+								{                    
+									if(newLetter->Write(read_buf, read_count))
+										break;
+								}
+							}
 						}
-						strLine += "\r\n";
-						newLetter->Write(strLine.c_str(), strLine.length());
+						oldLetter->Close();
 					}
 					
-					newLetter->SetOK();	
+					strtmp = "\r\n";
+					strtmp += "------=_NextPart_";
+					strtmp += szBoundary;
+					strtmp += "--\r\n";
+
+					newLetter->Write(strtmp.c_str(), strtmp.length());
+					newLetter->SetOK();
 					newLetter->Close();
+
 					
 					m_mailStg->InsertMailIndex(letter_info.mail_from.c_str(), letter_info.mail_to.c_str(), letter_info.host.c_str(), letter_info.mail_time,
 						letter_info.mail_type, letter_info.mail_uniqueid.c_str(), letter_info.mail_dirid, letter_info.mail_status,
@@ -4707,7 +4798,7 @@ public:
 					delete oldLetter;
 					delete newLetter;
 					
-					m_mailStg->DelMail(username.c_str(), nMailID);
+					m_mailStg->DelMail(username.c_str(), nMailID, mtExtern);
 					
 					strResp = RSP_200_OK_XML;
 					string strHTTPDate;
@@ -4724,7 +4815,18 @@ public:
 				}
 				else
 				{
-					m_mailStg->DelMail(username.c_str(), nMailID);
+					m_mailStg->DelMail(username.c_str(), nMailID, mtExtern);
+					strResp = RSP_200_OK_XML;
+					string strHTTPDate;
+					OutHTTPDateString(time(NULL), strHTTPDate);
+					strResp += "Date: ";
+					strResp += strHTTPDate;
+					strResp += "\r\n";
+					
+					strResp +="\r\n";
+					strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+					
+					strResp += "<erisemail><response errno=\"0\" reason=\"\"></response></erisemail>";
 				}
 			}
 			else
@@ -4758,6 +4860,357 @@ public:
 				"</erisemail>";
 		}
 		m_session->HttpSend(strResp.c_str(), strResp.length());
+	}
+	
+};
+
+class ApiReviewMail : public doc, public storage
+{
+public:
+	ApiReviewMail(CHttp* session)  : doc(session), storage(session->GetStorageEngine())
+	{}
+	
+	virtual ~ApiReviewMail() {}
+	
+	virtual void Response()
+	{
+		string strResp;
+		string strauth;
+		m_session->parse_cookie_value("AUTH_TOKEN", strauth);
+		
+		string strID;
+		m_session->parse_urlencode_value("ID", strID);
+		string strEdit;
+		m_session->parse_urlencode_value("EDIT", strEdit);
+		
+		unsigned int nMailID = atoi(strID.c_str());
+		string username, password;
+
+		if(check_adminauth_token(strauth.c_str(), username) == 0)
+		{
+			BOOL isPass = TRUE;
+			int maildir = -1;
+			unsigned int mailstatus;
+			if(m_mailStg && m_mailStg->GetMailStatus(nMailID, mailstatus, mtExtern) == -1 || mailstatus & MSG_ATTR_UNAUDITED != MSG_ATTR_UNAUDITED)
+			{
+				isPass = FALSE;
+			}
+			
+			if(!isPass)
+			{
+				strResp = RSP_200_OK_XML;
+				string strHTTPDate;
+				OutHTTPDateString(time(NULL), strHTTPDate);
+				strResp += "Date: ";
+				strResp += strHTTPDate;
+				strResp += "\r\n";
+				
+				strResp +="\r\n";
+				
+				strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+				
+				strResp += "<erisemail>"
+					"<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+					"</erisemail>";
+				m_session->HttpSend(strResp.c_str(), strResp.length());
+				return;
+			}
+			
+			strResp = RSP_200_OK_XML;
+			string strHTTPDate;
+			OutHTTPDateString(time(NULL), strHTTPDate);
+			strResp += "Date: ";
+			strResp += strHTTPDate;
+			strResp += "\r\n";
+			
+			strResp +="\r\n";
+			char szTmp[128];
+			strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+			strResp +="<erisemail><response errno=\"0\" reason=\"\">";
+
+			string emlfile;
+			m_mailStg->GetMailIndex(nMailID, emlfile, mtExtern);
+			
+			MailLetter * Letter;
+			Letter = new MailLetter(m_mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_session->GetMemCached(), emlfile.c_str());
+			if(Letter->GetSize() > 0)
+			{	
+				int llen = 0;
+				dynamic_mmap& lbuf = Letter->Body(llen);
+				
+                if(Letter->GetSummary()->m_header)
+                {
+                    string strFrom = Letter->GetSummary()->m_header->GetFrom() == NULL ? "" : Letter->GetSummary()->m_header->GetFrom()->m_strfiled;
+                    to_safty_xmlstring(strFrom);
+                    strResp += "<from>";
+                    strResp += strFrom;
+                    strResp += "</from>";
+                    
+                    string strTo = Letter->GetSummary()->m_header->GetTo() == NULL ? "" : Letter->GetSummary()->m_header->GetTo()->m_strfiled;
+                    to_safty_xmlstring(strTo);
+                    strResp += "<to>";
+                    strResp += strTo;
+                    strResp += "</to>";
+                    
+                    string strCC = Letter->GetSummary()->m_header->GetCc() == NULL ? "" : Letter->GetSummary()->m_header->GetCc()->m_strfiled;
+                    to_safty_xmlstring(strCC);
+                    strResp += "<cc>";
+                    strResp += strCC;
+                    strResp += "</cc>";
+                    
+                    string strBCC = Letter->GetSummary()->m_header->GetBcc() == NULL ? "" : Letter->GetSummary()->m_header->GetBcc()->m_strfiled;
+                    to_safty_xmlstring(strBCC);
+                    strResp += "<bcc>";
+                    strResp += strBCC;
+                    strResp += "</bcc>";
+                    
+                    string strDate = Letter->GetSummary()->m_header->GetDate();
+                    to_safty_xmlstring(strDate);
+                    strResp += "<date>";
+                    strResp += strDate;
+                    strResp += "</date>";
+                    
+                    string strSubject = Letter->GetSummary()->m_header->GetDecodedSubject();
+                    to_safty_xmlstring(strSubject);
+                    strResp += "<subject>";
+                    strResp += strSubject;
+                    strResp += "</subject>";
+				}
+				string strTextBody = "";
+				string strHTMLBody = "";
+				string strCalendar = "";
+				string strAttach = "";
+				MailInfo(Letter->GetSummary()->m_mime, strTextBody, strHTMLBody, strCalendar, strAttach, lbuf);				
+				
+				to_safty_xmlstring(strTextBody);
+				strResp += "<text_content>";
+				strResp += strTextBody;
+				strResp += "</text_content>";
+				
+				to_safty_xmlstring(strHTMLBody);
+				strResp += "<html_content>";
+				strResp += strHTMLBody;				
+				strResp += "</html_content>";
+
+				to_safty_xmlstring(strCalendar);
+				strResp += "<calendar_content>";
+				strResp += strCalendar;				
+				strResp += "</calendar_content>";
+				
+				to_safty_xmlstring(strAttach);
+				strResp += "<attach>";
+				strResp += strAttach;
+				strResp += "</attach>";
+				
+				int nID = atoi(strID.c_str());
+				unsigned int status;
+				m_mailStg->GetMailStatus(nID, status);
+				status |= MSG_ATTR_SEEN;
+				m_mailStg->SetMailStatus(username.c_str(),nID, status);
+			}
+			if(Letter)
+				delete Letter;
+			
+			strResp += "</response></erisemail>";
+			
+			
+		}
+		else
+		{
+			strResp = RSP_200_OK_XML;
+			string strHTTPDate;
+			OutHTTPDateString(time(NULL), strHTTPDate);
+			strResp += "Date: ";
+			strResp += strHTTPDate;
+			strResp += "\r\n";
+			
+			strResp +="\r\n";
+			
+			strResp += "<?xml version='1.0' encoding='" + CMailBase::m_encoding + "'?>";
+			
+			strResp += "<erisemail>"
+				"<response errno=\"1\" reason=\"Authenticate Failed\"></response>"
+				"</erisemail>";
+		}
+		m_session->HttpSend(strResp.c_str(), strResp.length());
+	}
+	
+};
+
+class ApiReviewAttachment : public doc, public storage
+{
+public:
+	ApiReviewAttachment(CHttp* session)  : doc(session), storage(session->GetStorageEngine())
+	{}
+	
+	virtual ~ApiReviewAttachment() {}
+	
+	virtual void Response()
+	{
+		string strResp;
+		string strauth;
+		m_session->parse_cookie_value("AUTH_TOKEN", strauth);
+		
+		string strID;
+		string strFileName;
+		string strContentID;
+		m_session->parse_urlencode_value("ID", strID);
+		m_session->parse_urlencode_value("FILENAME", strFileName);
+		m_session->parse_urlencode_value("CONTENTID", strContentID);
+		
+		string strSrc = strFileName;
+		code_convert_ex("UTF-8", CMailBase::m_encoding.c_str(), strSrc.c_str(), strFileName);		
+		unsigned int nMailID = atoi(strID.c_str());
+		string username, password;
+        
+		if(check_adminauth_token(strauth.c_str(), username) == 0)
+		{
+			char szTmp[128];
+			
+			MailLetter * Letter;
+			
+			string emlfile;
+			m_mailStg->GetMailIndex(nMailID, emlfile, mtExtern);
+					
+			Letter = new MailLetter(m_mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_session->GetMemCached(), emlfile.c_str());
+			if(Letter->GetSize() > 0)
+			{	
+				int llen = 0;
+				dynamic_mmap& lbuf = Letter->Body(llen);
+				
+				strResp = RSP_200_OK_NO_CACHE;
+				
+				string strHTTPDate;
+				OutHTTPDateString(time(NULL), strHTTPDate);
+				strResp += "Date: ";
+				strResp += strHTTPDate;
+				strResp += "\r\n";
+				
+				
+				string strType = "";
+				if(strFileName != "")
+				{					
+					fbuffer fbuf;
+					string dispos = "attachment";
+					
+					MailFileData(Letter->GetSummary()->m_mime, strFileName.c_str(), strType, dispos, fbuf, lbuf);					
+					
+					if((strType == "/") || (strType == ""))
+					{
+						strResp += "Content-Type: */*\r\n";
+					}
+					else
+					{
+						strResp += "Content-Type: ";
+						strResp += strType;
+						strResp += ";\r\n name=\"";
+						strResp += strFileName;
+						strResp += "\"";
+						strResp += "\r\n";
+					}
+					
+					strResp += "Content-Disposition: ";
+					strResp += dispos;
+					strResp += "; filename=\"";
+					strResp += strFileName;
+					strResp += "\";\r\n";
+					
+					char szLen[64];
+					sprintf(szLen, "%u", fbuf.length());
+					strResp += "Content-Length: ";
+					strResp += szLen;
+					strResp += "\r\n";
+					
+					strResp += "\r\n";
+					
+					m_session->HttpSend(strResp.c_str(), strResp.length());
+					
+					const char* pbuf = fbuf.c_buffer();
+					unsigned int lbuf = fbuf.length();
+					
+					unsigned int nsend = 0;
+					while(1)
+					{
+						if(nsend >= lbuf)
+						{
+							break;
+						}
+						else
+						{
+							m_session->HttpSend(pbuf + nsend, (lbuf - nsend) > 1448 ? 1448 : (lbuf - nsend));
+							nsend += (lbuf - nsend) > 1448 ? 1448 : (lbuf - nsend);
+						}
+					}
+					
+				}
+				else if(strContentID != "")
+				{
+					fbuffer fbuf;
+					string dispos = "attachment";
+					MailFileDataEx(Letter->GetSummary()->m_mime, strContentID.c_str(), strType, dispos, fbuf, lbuf);
+					
+					if((strType == "/") || (strType == ""))
+					{
+						strResp += "Content-Type: */*\r\n";
+					}
+					else
+					{
+						strResp += "Content-Type: ";
+						strResp += strType;
+						strResp += ";\r\n name=\"";
+						strResp += strFileName;
+						strResp += "\"";
+						strResp += "\r\n";
+					}
+					
+					strResp += "Content-Disposition: ";
+					strResp += dispos;
+					strResp += "; filename=\"";
+					strResp += strFileName;
+					strResp += "\";\r\n";
+					
+					char szLen[64];
+					sprintf(szLen, "%u", fbuf.length());
+					strResp += "Content-Length: ";
+					strResp += szLen;
+					strResp += "\r\n";
+					
+					strResp += "\r\n";
+					
+					m_session->HttpSend(strResp.c_str(), strResp.length());
+					
+					const char* pbuf = fbuf.c_buffer();
+					unsigned int lbuf = fbuf.length();
+					
+					unsigned int nsend = 0;
+					while(1)
+					{
+						if(nsend >= lbuf)
+						{
+							break;
+						}
+						else
+						{
+							m_session->HttpSend(pbuf + nsend, (lbuf - nsend) > 1448 ? 1448 : (lbuf - nsend));
+							nsend += (lbuf - nsend) > 1448 ? 1448 : (lbuf - nsend);
+						}
+					}
+					
+				}
+				else
+				{
+					strResp = RSP_404_NOT_FOUND;
+					m_session->HttpSend(strResp.c_str(), strResp.length());
+				}
+			}
+			if(Letter)
+				delete Letter;	
+		}
+		else
+		{
+			strResp = RSP_404_NOT_FOUND;
+			m_session->HttpSend(strResp.c_str(), strResp.length());
+		}
 	}
 	
 };
@@ -5016,16 +5469,21 @@ public:
 		
 		//Check Admin IPs
 		BOOL access_result = FALSE;
-		for(int x = 0; x < CMailBase::m_webadmin_list.size(); x++)
+		if(CMailBase::m_webadmin_list.size() == 0)
 		{
-			if(strmatch(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
+			access_result = TRUE;
+		}
+		else
+		{
+			for(int x = 0; x < CMailBase::m_webadmin_list.size(); x++)
 			{
-				access_result = TRUE;
-				break;
+				if(strmatch(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
+				{
+					access_result = TRUE;
+					break;
+				}
 			}
 		}
-		if(CMailBase::m_webadmin_list.size() == 0)
-			access_result = TRUE;
 		if(!access_result)
 		{
 			strResp = RSP_404_NOT_FOUND;
@@ -5486,7 +5944,7 @@ public:
 		unsigned int nMailID = atoi(strID.c_str());
 		string username, password;
         
-		if(check_userauth_token(strauth.c_str(), username) == 0)
+		if(check_userauth_token(strauth.c_str(), username) == 0 || check_adminauth_token(strauth.c_str(), username) == 0)
 		{
 			char szTmp[128];
 			
@@ -6094,19 +6552,24 @@ public:
 	virtual void Response()
 	{
 		string strResp;
-		string strXML;
+		
 		//Check Admin IPs
 		BOOL access_result = FALSE;
-		for(int x = 0; x < CMailBase::m_webadmin_list.size(); x++)
+		if(CMailBase::m_webadmin_list.size() == 0)
 		{
-			if(strmatch(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
+			access_result = TRUE;
+		}
+		else
+		{
+			for(int x = 0; x < CMailBase::m_webadmin_list.size(); x++)
 			{
-				access_result = TRUE;
-				break;
+				if(strmatch(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
+				{
+					access_result = TRUE;
+					break;
+				}
 			}
 		}
-		if(CMailBase::m_webadmin_list.size() == 0)
-			access_result = TRUE;
 		if(!access_result)
 		{
 			strResp = RSP_404_NOT_FOUND;
@@ -6115,7 +6578,7 @@ public:
 			return;
 		}
 		
-		
+		string strXML;
 		string username, password;
 		if((m_session->parse_urlencode_value("USER_NAME", username) == -1) || (m_session->parse_urlencode_value("USER_PWD", password) == -1))
 		{
@@ -6842,16 +7305,21 @@ public:
 		
 		//Check Admin IPs
 		BOOL access_result = FALSE;
-		for(int x = 0; x < CMailBase::m_webadmin_list.size(); x++)
+		if(CMailBase::m_webadmin_list.size() == 0)
 		{
-			if(strmatch(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
+			access_result = TRUE;
+		}
+		else
+		{
+			for(int x = 0; x < CMailBase::m_webadmin_list.size(); x++)
 			{
-				access_result = TRUE;
-				break;
+				if(strmatch(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
+				{
+					access_result = TRUE;
+					break;
+				}
 			}
 		}
-		if(CMailBase::m_webadmin_list.size() == 0)
-			access_result = TRUE;
 		if(!access_result)
 		{
 			strResp = RSP_404_NOT_FOUND;
@@ -7052,16 +7520,21 @@ public:
 		
 		//Check Admin IPs
 		BOOL access_result = FALSE;
-		for(int x = 0; x < CMailBase::m_webadmin_list.size(); x++)
+		if(CMailBase::m_webadmin_list.size() == 0)
 		{
-			if(strmatch(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
+			access_result = TRUE;
+		}
+		else
+		{
+			for(int x = 0; x < CMailBase::m_webadmin_list.size(); x++)
 			{
-				access_result = TRUE;
-				break;
+				if(strmatch(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
+				{
+					access_result = TRUE;
+					break;
+				}
 			}
 		}
-		if(CMailBase::m_webadmin_list.size() == 0)
-			access_result = TRUE;
 		if(!access_result)
 		{
 			strResp = RSP_404_NOT_FOUND;
@@ -7262,16 +7735,21 @@ public:
 		
 		//Check Admin IPs
 		BOOL access_result = FALSE;
-		for(int x = 0; x < CMailBase::m_webadmin_list.size(); x++)
+		if(CMailBase::m_webadmin_list.size() == 0)
 		{
-			if(strmatch(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
+			access_result = TRUE;
+		}
+		else
+		{
+			for(int x = 0; x < CMailBase::m_webadmin_list.size(); x++)
 			{
-				access_result = TRUE;
-				break;
+				if(strmatch(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
+				{
+					access_result = TRUE;
+					break;
+				}
 			}
 		}
-		if(CMailBase::m_webadmin_list.size() == 0)
-			access_result = TRUE;
 		if(!access_result)
 		{
 			strResp = RSP_404_NOT_FOUND;
@@ -7376,16 +7854,21 @@ public:
 		
 		//Check Admin IPs
 		BOOL access_result = FALSE;
-		for(int x = 0; x < CMailBase::m_webadmin_list.size(); x++)
+		if(CMailBase::m_webadmin_list.size() == 0)
 		{
-			if(strmatch(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
+			access_result = TRUE;
+		}
+		else
+		{
+			for(int x = 0; x < CMailBase::m_webadmin_list.size(); x++)
 			{
-				access_result = TRUE;
-				break;
+				if(strmatch(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
+				{
+					access_result = TRUE;
+					break;
+				}
 			}
 		}
-		if(CMailBase::m_webadmin_list.size() == 0)
-			access_result = TRUE;
 		if(!access_result)
 		{
 			strResp = RSP_404_NOT_FOUND;
@@ -7491,16 +7974,21 @@ public:
 		
 		//Check Admin IPs
 		BOOL access_result = FALSE;
-		for(int x = 0; x < CMailBase::m_webadmin_list.size(); x++)
+		if(CMailBase::m_webadmin_list.size() == 0)
 		{
-			if(strmatch(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
+			access_result = TRUE;
+		}
+		else
+		{
+			for(int x = 0; x < CMailBase::m_webadmin_list.size(); x++)
 			{
-				access_result = TRUE;
-				break;
+				if(strmatch(CMailBase::m_webadmin_list[x].c_str(), m_session->m_clientip.c_str()) == TRUE)
+				{
+					access_result = TRUE;
+					break;
+				}
 			}
 		}
-		if(CMailBase::m_webadmin_list.size() == 0)
-			access_result = TRUE;
 		if(!access_result)
 		{
 			strResp = RSP_404_NOT_FOUND;

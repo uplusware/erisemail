@@ -37,8 +37,6 @@ public:
 
 	map<string, filedata> m_htdoc;
 	map<string, string> m_type_table;
-
-	map<string, string> m_language;
 	
 	void load(const char* dirpath);
 	void unload();

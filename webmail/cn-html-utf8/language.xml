@@ -1,7 +1,0 @@
-<?xml version='1.0' encoding='utf-8'?>
-<language>
-	<text name="reject" value="未通过审核"/>
-    <text name="uploaderror1" value="文件太大"/>
-	<text name="uploaderror2" value="上传文件出错，请检查文件大小和属性"/>
-	<text name="uploaderror3" value="附件大小为0"/>
-</language>

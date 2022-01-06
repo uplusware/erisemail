@@ -286,10 +286,10 @@ public:
 	int SetDirStatus(const char* username, const char* dirref, unsigned int status);
 	int GetDirStatus(const char* username, const char* dirref, unsigned int& status);
 
-	int SetMailStatus(const char* username, int mid, unsigned int status);
-	int GetMailStatus(int mid, unsigned int& status);
+	int SetMailStatus(const char* username, int mid, unsigned int status, unsigned int mtx = mtLocal);
+	int GetMailStatus(int mid, unsigned int& status, unsigned int mtx = mtLocal);
 
-	int GetMailFromAndTo(int mid, string & from, string &to);
+	int GetMailFromAndTo(int mid, string & from, string &to, unsigned int mtx = mtLocal);
 	
 	int GetDirID(const char* username, const char* dirref, int & dirid);
 	int GetDirID(const char* username, const char* dirref, vector<int>& vdirid);
