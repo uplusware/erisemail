@@ -575,7 +575,7 @@ BOOL CMailImap::On_Authenticate(char* text)
                     if(!e)
                         break;
                     ASN1_STRING *d = X509_NAME_ENTRY_get_data(e);
-                    char *commonName = (char*)ASN1_STRING_data(d);
+                    const char *commonName = (const char*)ASN1_STRING_get0_data(d);
                     
                     if(strMailAddr == "")
                     {
