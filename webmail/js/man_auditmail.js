@@ -309,18 +309,18 @@ function load_unaudied_mails(npage) {
 
                             var td0 = tr.insertCell(0);
 
-                            td0.valign = "middle";
-                            td0.align = "center";
-                            td0.height = "22";
-                            td0.width = "22";
+                            td0.style.verticalAlign = "middle";
+                            td0.style.textAlign = "center";
+                            td0.style.height = "22px";
+                            td0.style.width = "22px";
                             setStyle(td0, "TD.gray");
                             td0.innerHTML = "<input type=\"checkbox\" name=\"sel\" onclick='check_selall()' value=\"" + mailList.item(i).getAttribute("id") + "\">"
 
                             var td1 = tr.insertCell(1);
-                            td1.valign = "middle";
-                            td1.align = "center";
-                            td1.height = "22";
-                            td1.width = "22";
+                            td1.style.verticalAlign = "middle";
+                            td1.style.textAlign = "center";
+                            td1.style.height = "22px";
+                            td1.style.width = "22px";
                             setStyle(td1, "TD.gray");
                             td1.setAttribute("selflink", gotourl);
 
@@ -341,10 +341,10 @@ function load_unaudied_mails(npage) {
                             }
 
                             var td2 = tr.insertCell(2);
-                            td2.valign = "middle";
-                            td2.align = "center";
-                            td2.height = "22";
-                            td2.width = "120";
+                            td2.style.verticalAlign = "middle";
+                            td2.style.textAlign = "center";
+                            td2.style.height = "22px";
+                            td2.style.width = "120px";;
                             setStyle(td2, "TD.gray");
                             td2.setAttribute("selflink", gotourl);
 
@@ -365,8 +365,8 @@ function load_unaudied_mails(npage) {
                             }
 
                             var td3 = tr.insertCell(3);
-                            td3.valign = "middle";
-                            td3.height = "22";
+                            td3.style.verticalAlign = "middle";
+                            td3.style.height = "22px";
                             setStyle(td3, "TD.gray");
                             td3.setAttribute("selflink", gotourl);
                             td3.innerHTML = TextToHTML(strSubject);
@@ -386,10 +386,10 @@ function load_unaudied_mails(npage) {
                             }
 
                             var td4 = tr.insertCell(4);
-                            td4.valign = "middle";
-                            td4.align = "right";
-                            td4.height = "22";
-                            td4.width = "80";
+                            td4.style.verticalAlign = "middle";
+                            td4.style.textAlign = "right";
+                            td4.style.height = "22px";
+                            td4.style.width = "80";
                             setStyle(td4, "TD.gray");
                             td4.setAttribute("selflink", gotourl);
                             td4.innerHTML = Math.round(mailList.item(i).getAttribute("size") / 1024 * 100) / 100 + "KB";
@@ -408,10 +408,10 @@ function load_unaudied_mails(npage) {
                             }
 
                             var td5 = tr.insertCell(5);
-                            td5.valign = "middle";
-                            td5.align = "center";
-                            td5.height = "22";
-                            td5.width = "150";
+                            td5.style.verticalAlign = "middle";
+                            td5.style.textAlign = "center";
+                            td5.style.height = "22px";
+                            td5.style.width = "150";
                             setStyle(td5, "TD.gray");
                             td5.setAttribute("selflink", gotourl);
                             td5.innerHTML = mailList.item(i).getAttribute("time");
@@ -431,10 +431,10 @@ function load_unaudied_mails(npage) {
                             }
 
                             var td6 = tr.insertCell(6);
-                            td6.valign = "middle";
-                            td6.align = "center";
-                            td6.height = "22";
-                            td6.width = "30";
+                            td6.style.verticalAlign = "middle";
+                            td6.style.textAlign = "center";
+                            td6.style.height = "22px";
+                            td6.style.width = "30";
                             setStyle(td6, "TD.gray");
                             td6.setAttribute("mid", mailList.item(i).getAttribute("id"));
                             td6.innerHTML = "<img src=\"pass.gif\" alt=\"" + LANG_RESOURCE['PASS_DESC'] + "\">";
@@ -459,10 +459,10 @@ function load_unaudied_mails(npage) {
                             }
 
                             var td7 = tr.insertCell(7);
-                            td7.valign = "middle";
-                            td7.align = "center";
-                            td7.height = "22";
-                            td7.width = "30";
+                            td7.style.verticalAlign = "middle";
+                            td7.style.textAlign = "center";
+                            td7.style.height = "22px";
+                            td7.style.width = "30";
                             setStyle(td7, "TD.gray");
                             td7.setAttribute("mid", mailList.item(i).getAttribute("id"));
                             td7.innerHTML = "<img src=\"reject.gif\" alt=\"" + LANG_RESOURCE['REJECTED_DESC'] + "\">";

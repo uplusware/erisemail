@@ -33,24 +33,24 @@ function list_cluster() {
                             }
 
                             var td0 = tr.insertCell(0);
-                            td0.valign = "middle";
-                            td0.align = "center";
-                            td0.height = "22";
-                            td0.width = "22";
+                            td0.style.verticalAlign = "middle";
+                            td0.style.textAlign = "center";
+                            td0.style.height = "22px";
+                            td0.style.width = "22px";
                             setStyle(td0, "TD.gray");
                             td0.innerHTML = "<img src=\"man_node.png\">";
 
                             var td1 = tr.insertCell(1);
-                            td1.valign = "middle";
-                            td1.align = "left";
-                            td1.height = "22";
+                            td1.style.verticalAlign = "middle";
+                            td1.style.textAlign = "left";
+                            td1.style.height = "22px";
                             setStyle(td1, "TD.gray");
                             td1.innerHTML = "<a target=\"_blank\" href=\"http://" + logList.item(i).getAttribute("host") + ":8080\">" + logList.item(i).getAttribute("host") + "</a>";
 
                             var td2 = tr.insertCell(2);
-                            td2.valign = "middle";
-                            td2.align = "left";
-                            td2.height = "22";
+                            td2.style.verticalAlign = "middle";
+                            td2.style.textAlign = "left";
+                            td2.style.height = "22px";
                             setStyle(td2, "TD.gray");
                             td2.innerHTML = logList.item(i).getAttribute("desc");
 

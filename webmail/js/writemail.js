@@ -825,30 +825,30 @@ function load_users(who, orderby, desc) {
                             tr = $id('USERTBL').insertRow($id('USERTBL').rows.length);
 
                             var td0 = tr.insertCell(0);
-                            td0.valign = "middle";
-                            td0.align = "center";
-                            td0.height = "22";
+                            td0.style.verticalAlign = "middle";
+                            td0.style.textAlign = "center";
+                            td0.style.height = "22px";
                             setStyle(td0, "TD.gray");
                             td0.innerHTML = "<input type=\"checkbox\" name=\"seluser\" id=\"seluser\" value=\"" + userList.item(i).getAttribute("name") + "@" + userList.item(i).getAttribute("domain") + "\">";
 
                             var td1 = tr.insertCell(1);
-                            td1.valign = "middle";
-                            td1.align = "center";
-                            td1.height = "22";
+                            td1.style.verticalAlign = "middle";
+                            td1.style.textAlign = "center";
+                            td1.style.height = "22px";
                             setStyle(td1, "TD.gray");
                             td1.innerHTML = "<img src=\"" + image + "\" />";
 
                             var td2 = tr.insertCell(2);
-                            td2.valign = "middle";
-                            td2.align = "left";
-                            td2.height = "22";
+                            td2.style.verticalAlign = "middle";
+                            td2.style.textAlign = "left";
+                            td2.style.height = "22px";
                             setStyle(td2, "TD.gray");
                             td2.innerHTML = userList.item(i).getAttribute("name");
 
                             var td3 = tr.insertCell(3);
-                            td3.valign = "middle";
-                            td3.align = "left";
-                            td3.height = "22";
+                            td3.style.verticalAlign = "middle";
+                            td3.style.textAlign = "left";
+                            td3.style.height = "22px";
                             setStyle(td3, "TD.gray");
                             td3.innerHTML = userList.item(i).getAttribute("alias");
                         }

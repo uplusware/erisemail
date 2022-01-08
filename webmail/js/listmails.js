@@ -627,17 +627,17 @@ function load_mails(dirid, npage, strUsage) {
 
                             var td0 = tr.insertCell(0);
 
-                            td0.valign = "middle";
-                            td0.align = "center";
-                            td0.height = "26";
-                            td0.width = "22";
+                            td0.style.verticalAlign = "middle";
+                            td0.style.textAlign = "center";
+                            td0.style.height = "26px";
+                            td0.style.width = "22px";
                             td0.innerHTML = "<input type=\"checkbox\" name=\"sel\" onclick='check_selall()' value=\"" + mailList.item(i).getAttribute("id") + "\">";
 
                             var td1 = tr.insertCell(1);
-                            td1.valign = "middle";
-                            td1.align = "center";
-                            td1.height = "26";
-                            td1.width = "22";
+                            td1.style.verticalAlign = "middle";
+                            td1.style.textAlign = "center";
+                            td1.style.height = "26px";
+                            td1.style.width = "22px";
                             td1.setAttribute("mid", mailList.item(i).getAttribute("id"));
                             td1.setAttribute("flag", mailList.item(i).getAttribute("flaged"));
                             td1.innerHTML = flaged;
@@ -661,10 +661,10 @@ function load_mails(dirid, npage, strUsage) {
                             }
 
                             var td2 = tr.insertCell(2);
-                            td2.valign = "middle";
-                            td2.align = "center";
-                            td2.height = "26";
-                            td2.width = "22";
+                            td2.style.verticalAlign = "middle";
+                            td2.style.textAlign = "center";
+                            td2.style.height = "26px";
+                            td2.style.width = "22px";
                             td2.setAttribute("selflink", gotourl);
                             td2.innerHTML = seen;
                             td2.onclick = function () {
@@ -685,10 +685,10 @@ function load_mails(dirid, npage, strUsage) {
                             }
 
                             var td3 = tr.insertCell(3);
-                            td3.valign = "middle";
-                            td3.align = "center";
-                            td3.height = "26";
-                            td3.width = "22";
+                            td3.style.verticalAlign = "middle";
+                            td3.style.textAlign = "center";
+                            td3.style.height = "26px";
+                            td3.style.width = "22px";
                             td3.setAttribute("selflink", gotourl);
 
                             td3.innerHTML = (parseInt(mailList.item(i).getAttribute("attachcount")) > 0) ? "<img src=\"attach.gif\">" : "<img src=\"pad.gif\">"
@@ -711,10 +711,10 @@ function load_mails(dirid, npage, strUsage) {
                             }
 
                             var td4 = tr.insertCell(4);
-                            td4.valign = "middle";
-                            td4.align = "left";
-                            td4.height = "26";
-                            td4.width = "120";
+                            td4.style.verticalAlign = "middle";
+                            td4.style.textAlign = "left";
+                            td4.style.height = "26px";
+                            td4.style.width = "120px";
                             td4.setAttribute("selflink", gotourl);
 
                             td4.innerHTML = TextToHTML(mailList.item(i).getAttribute("sender"));
@@ -737,8 +737,8 @@ function load_mails(dirid, npage, strUsage) {
                             }
 
                             var td5 = tr.insertCell(5);
-                            td5.valign = "middle";
-                            td5.height = "26";
+                            td5.style.verticalAlign = "middle";
+                            td5.style.height = "26px";
                             td5.setAttribute("selflink", gotourl);
                             td5.innerHTML = TextToHTML(strSubject);
                             td5.onclick = function () {
@@ -759,10 +759,10 @@ function load_mails(dirid, npage, strUsage) {
                             }
 
                             var td6 = tr.insertCell(6);
-                            td6.valign = "middle";
-                            td6.align = "right";
-                            td6.height = "26";
-                            td6.width = "80";
+                            td6.style.verticalAlign = "middle";
+                            td6.style.textAlign = "right";
+                            td6.style.height = "26px";
+                            td6.style.width = "80px";
                             td6.setAttribute("selflink", gotourl);
                             td6.innerHTML = Math.round(mailList.item(i).getAttribute("size") / 1024 * 100) / 100 + "KB";
                             td6.onclick = function () {
@@ -783,10 +783,10 @@ function load_mails(dirid, npage, strUsage) {
                             }
 
                             var td7 = tr.insertCell(7);
-                            td7.valign = "middle";
-                            td7.align = "center";
-                            td7.height = "26";
-                            td7.width = "150";
+                            td7.style.verticalAlign = "middle";
+                            td7.style.textAlign = "center";
+                            td7.style.height = "26px";
+                            td7.style.width = "150px";
                             td7.setAttribute("selflink", gotourl);
                             td7.innerHTML = mailList.item(i).getAttribute("time");
 

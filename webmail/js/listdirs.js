@@ -107,7 +107,7 @@ function output_dir(tblobj, pid, path, nodeObj, layer) {
             tr.style.backgroundColor = colorString;
 
             var td0 = tr.insertCell(0);
-            td0.width = "300";
+            td0.style.width = "300px";
             var childnull = "";
             for (var y = 0; y < layer + 1; y++) {
                 childnull += "<img src=\"childnull.gif\">";

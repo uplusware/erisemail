@@ -130,34 +130,34 @@ function list_members_in_group(obj, groupname) {
                             var newtr = newtbl.insertRow(newtbl.rows.length);
 
                             var td0 = newtr.insertCell(0);
-                            td0.valign = "middle";
-                            td0.align = "center";
-                            td0.height = "25";
-                            td0.width = "22";
+                            td0.style.verticalAlign = "middle";
+                            td0.style.textAlign = "center";
+                            td0.style.height = "25px";
+                            td0.style.width = "22px";
                             setStyle(td0, "TD.gray");
                             td0.innerHTML = "<img src=\"" + image + "\" />";
 
                             var td1 = newtr.insertCell(1);
-                            td1.valign = "middle";
-                            td1.align = "center";
-                            td1.height = "25";
-                            td1.width = "200";
+                            td1.style.verticalAlign = "middle";
+                            td1.style.textAlign = "center";
+                            td1.style.height = "25px";
+                            td1.style.width = "200px";
                             setStyle(td1, "TD.gray");
                             td1.innerHTML = userList.item(i).getAttribute("name");
 
                             var td2 = newtr.insertCell(2);
-                            td2.valign = "middle";
-                            td2.align = "center";
-                            td2.height = "25";
-                            td2.width = "580";
+                            td2.style.verticalAlign = "middle";
+                            td2.style.textAlign = "center";
+                            td2.style.height = "25px";
+                            td2.style.width = "580px";
                             setStyle(td2, "TD.gray");
                             td2.innerHTML = userList.item(i).getAttribute("alias");
 
                             var td3 = newtr.insertCell(3);
-                            td3.valign = "middle";
-                            td3.align = "center";
-                            td3.height = "25";
-                            td3.width = "22";
+                            td3.style.verticalAlign = "middle";
+                            td3.style.textAlign = "center";
+                            td3.style.height = "25px";
+                            td3.style.width = "22px";
                             setStyle(td3, "TD.gray");
                             td3.innerHTML = "<img src=\"delete.gif\">";
                             td3.setAttribute("name", userList.item(i).getAttribute("name"));
@@ -228,14 +228,14 @@ function load_groups() {
                             var newtd2 = newtr.insertCell(2);
                             var newtd3 = newtr.insertCell(3);
 
-                            newtd0.valign = "middle";
-                            newtd0.align = "center";
-                            newtd0.height = "25";
-                            newtd0.width = "22";
+                            newtd0.style.verticalAlign = "middle";
+                            newtd0.style.textAlign = "center";
+                            newtd0.style.height = "25px";
+                            newtd0.style.width = "22px";
                             newtd0.innerHTML = "<img src=\"group.gif\" />";
 
-                            newtd1.valign = "middle";
-                            newtd1.align = "left";
+                            newtd1.style.verticalAlign = "middle";
+                            newtd1.style.textAlign = "left";
                             newtd1.setAttribute("groupname", userList.item(i).getAttribute("name"));
                             newtd1.innerHTML = "<font color=\"#FFFFFF\">" + userList.item(i).getAttribute("name") + " - " + userList.item(i).getAttribute("alias") + "</font>";
 
@@ -265,9 +265,9 @@ function load_groups() {
                                 this.style.cursor = "default";
                             }
 
-                            newtd2.valign = "middle";
-                            newtd2.align = "center";
-                            newtd2.width = "100";
+                            newtd2.style.verticalAlign = "middle";
+                            newtd2.style.textAlign = "center";
+                            newtd2.style.width = "100px";
                             newtd2.setAttribute("groupname", userList.item(i).getAttribute("name"));
                             newtd2.innerHTML = "<table><tr><td><img src=\"member.gif\"></td><td><font color='#FFFFFF'>" + LANG_RESOURCE['APPEND_ID_TO_GROUP_DESC'] + "</font></td></tr></table>";
 
@@ -342,30 +342,30 @@ function load_members() {
                             tr = $id('USERTBL').insertRow($id('USERTBL').rows.length);
 
                             var td0 = tr.insertCell(0);
-                            td0.valign = "middle";
-                            td0.align = "center";
-                            td0.height = "25";
+                            td0.style.verticalAlign = "middle";
+                            td0.style.textAlign = "center";
+                            td0.style.height = "25px";
                             setStyle(td0, "TD.gray");
                             td0.innerHTML = "<input type=\"checkbox\" name=\"seluser\" id=\"seluser\" value=\"" + userList.item(i).getAttribute("name") + "\">";
 
                             var td1 = tr.insertCell(1);
-                            td1.valign = "middle";
-                            td1.align = "center";
-                            td1.height = "25";
+                            td1.style.verticalAlign = "middle";
+                            td1.style.textAlign = "center";
+                            td1.style.height = "25px";
                             setStyle(td1, "TD.gray");
                             td1.innerHTML = "<img src=\"" + image + "\" />";
 
                             var td2 = tr.insertCell(2);
-                            td2.valign = "middle";
-                            td2.align = "center";
-                            td2.height = "25";
+                            td2.style.verticalAlign = "middle";
+                            td2.style.textAlign = "center";
+                            td2.style.height = "25px";
                             setStyle(td2, "TD.gray");
                             td2.innerHTML = userList.item(i).getAttribute("name");
 
                             var td3 = tr.insertCell(3);
-                            td3.valign = "middle";
-                            td3.align = "center";
-                            td3.height = "25";
+                            td3.style.verticalAlign = "middle";
+                            td3.style.textAlign = "center";
+                            td3.style.height = "25px";
                             setStyle(td3, "TD.gray");
                             td3.innerHTML = userList.item(i).getAttribute("alias");
                         }

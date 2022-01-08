@@ -74,9 +74,9 @@ function load_levels() {
                             }
 
                             var td0 = tr.insertCell(0);
-                            td0.valign = "middle";
-                            td0.align = "center";
-                            td0.height = "25";
+                            td0.style.verticalAlign = "middle";
+                            td0.style.textAlign = "center";
+                            td0.style.height = "25px";
                             setStyle(td0, "TD.gray");
                             td0.innerHTML = image1;
 
@@ -102,54 +102,54 @@ function load_levels() {
                             }
 
                             var td1 = tr.insertCell(1);
-                            td1.valign = "middle";
-                            td1.align = "left";
-                            td1.height = "25";
+                            td1.style.verticalAlign = "middle";
+                            td1.style.textAlign = "left";
+                            td1.style.height = "25px";
                             setStyle(td1, "TD.gray");
                             td1.innerHTML = levelList.item(i).getAttribute("name");
 
                             var td2 = tr.insertCell(2);
-                            td2.valign = "middle";
-                            td2.align = "left";
-                            td2.width = "100";
-                            td2.height = "25";
+                            td2.style.verticalAlign = "middle";
+                            td2.style.textAlign = "left";
+                            td2.style.width = "100px";
+                            td2.style.height = "25px";
                             setStyle(td2, "TD.gray");
                             td2.innerHTML = Math.round(levelList.item(i).getAttribute("mailmaxsize") / 1024 * 100) / 100 + "KB";
 
                             var td3 = tr.insertCell(3);
-                            td3.valign = "middle";
-                            td3.align = "center";
-                            td3.width = "100";
-                            td3.height = "25";
+                            td3.style.verticalAlign = "middle";
+                            td3.style.textAlign = "center";
+                            td3.style.width = "100px";
+                            td3.style.height = "25px";
                             setStyle(td3, "TD.gray");
                             td3.innerHTML = Math.round(levelList.item(i).getAttribute("boxmaxsize") / 1024) + "KB";
 
                             var td4 = tr.insertCell(4);
-                            td4.valign = "middle";
-                            td4.align = "center";
-                            td4.height = "25";
-                            td3.width = "100";
+                            td4.style.verticalAlign = "middle";
+                            td4.style.textAlign = "center";
+                            td4.style.height = "25px";
+                            td3.style.width = "100px";
                             setStyle(td4, "TD.gray");
                             td4.innerHTML = image2;
 
                             var td5 = tr.insertCell(5);
-                            td5.valign = "middle";
-                            td5.align = "center";
-                            td5.height = "25";
+                            td5.style.verticalAlign = "middle";
+                            td5.style.textAlign = "center";
+                            td5.style.height = "25px";
                             setStyle(td5, "TD.gray");
                             td5.innerHTML = Math.round(levelList.item(i).getAttribute("mailsizethreshold") / 1024 * 100) / 100 + "KB";
 
                             var td6 = tr.insertCell(6);
-                            td6.valign = "middle";
-                            td6.align = "center";
-                            td6.height = "25";
+                            td6.style.verticalAlign = "middle";
+                            td6.style.textAlign = "center";
+                            td6.style.height = "25px";
                             setStyle(td6, "TD.gray");
                             td6.innerHTML = Math.round(levelList.item(i).getAttribute("attachsizethreshold") / 1024 * 100) / 100 + "KB";
 
                             var td7 = tr.insertCell(7);
-                            td7.valign = "middle";
-                            td7.align = "center";
-                            td7.height = "25";
+                            td7.style.verticalAlign = "middle";
+                            td7.style.textAlign = "center";
+                            td7.style.height = "25px";
                             setStyle(td7, "TD.gray");
                             td7.innerHTML = "<img src=\"edit.gif\">";
 
@@ -174,9 +174,9 @@ function load_levels() {
                             }
 
                             var td8 = tr.insertCell(8);
-                            td8.valign = "middle";
-                            td8.align = "center";
-                            td8.height = "25";
+                            td8.style.verticalAlign = "middle";
+                            td8.style.textAlign = "center";
+                            td8.style.height = "25px";
                             setStyle(td8, "TD.gray");
                             td8.innerHTML = "<img src=\"delete.gif\">";
 
