@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION=1.6.13
+VERSION=1.7
 ENCODING=utf8
 OS=centos8
 
