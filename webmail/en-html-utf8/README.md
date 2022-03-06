@@ -1,2 +1,2 @@
 # Other language supporting:
-  Please translate language.js and all html files to the target language.
+  Please translate ___language.js___ and all ___*.html___ files to the target language.
