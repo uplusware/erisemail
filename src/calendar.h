@@ -1,6 +1,6 @@
 /*
-	Copyright (c) openheap, uplusware
-	uplusware@gmail.com
+        Copyright (c) openheap, uplusware
+        uplusware@gmail.com
 */
 #ifndef _CALENDER_H_
 #define _CALENDER_H_
@@ -45,105 +45,87 @@ END:VCALENDAR
 
 */
 
+typedef enum { eNull = 0, eCal, eTimeZone, eStandard, eEvent } ePhase;
 
-typedef enum
-{
-	eNull = 0,
-	eCal,
-	eTimeZone,
-	eStandard,
-	eEvent
-} ePhase;
+typedef struct {
+  string rsvp;
+  string name;
+  string partstat;
+  string role;
+  string mailto;
+} vAttendee;
 
+typedef struct {
+  int offsetfr;
+  int offsetto;
+  string tzname;
+  time_t dtstart;
+} vStandard;
 
-typedef struct 
-{
-	string rsvp;
-	string name;
-	string partstat;
-	string role;
-	string mailto;
-}vAttendee;
+typedef struct {
+  string tid;
+  string xlic_location;
+  vector<vStandard> standards;
+} vTimeZone;
 
-typedef struct
-{
-	int offsetfr;
-	int offsetto;
-	string tzname;
-	time_t dtstart;
-}vStandard;
+typedef struct {
+  time_t dt;
+  string tid;
+} vDateTime;
 
-typedef struct
-{
-	string tid;
-	string xlic_location;
-	vector<vStandard> standards;
-}vTimeZone;
+typedef struct {
+  time_t created;
+  time_t modified;
+  time_t stamp;
+  string uid;
+  string summary;
+  vAttendee orgnizer;
+  vector<vAttendee> attendees;
+  vDateTime start;
+  vDateTime end;
+  string location;
+  string description;
+  string transp;
+  unsigned int sequence;
+} vEvent;
 
-typedef struct
-{
-	time_t dt;
-	string tid;
-}vDateTime;
+typedef struct {
+  string prod;
+  string version;
+  string method;
+  vector<vTimeZone> time_zones;
+  vector<vEvent> events;
+  string text; /* Origitial text*/
+} vCalendar;
 
-typedef struct
-{
-	time_t created;
-	time_t modified;
-	time_t stamp;
-	string uid;
-	string summary;
-	vAttendee orgnizer;
-	vector<vAttendee> attendees;
-	vDateTime start;
-	vDateTime end;
-	string location;
-	string description;
-	string transp;
-	unsigned int sequence;
-}vEvent;
+class Calendar {
+ public:
+  Calendar(const char* owner);
+  virtual ~Calendar();
 
+  void parse(const char* text);
 
-typedef struct 
-{
-	string prod;
-	string version;
-	string method;
-	vector<vTimeZone> time_zones;
-	vector<vEvent> events;
-	string text; 	/* Origitial text*/
-}vCalendar;
+  void save();
+  void flush();
+  void load(const char* path);
 
-class Calendar
-{
-public:
-	Calendar(const char* owner);
-	virtual ~Calendar();
+  vector<vCalendar> m_details;
 
-	void parse(const char* text);
+  string m_strJSON;
 
-	void save();
-	void flush();
-	void load(const char* path);
-	
-	vector<vCalendar> m_details;
+ private:
+  void _parse_();
+  FILE* m_file;
+  ePhase m_phase;
+  string m_owner;
+  string calbuf;
 
-	string m_strJSON;
+  vCalendar _calendar;
+  vTimeZone _time_zone;
+  vEvent _event;
+  vAttendee _attendee;
+  vStandard _standard;
 
-private:
-	void _parse_();
-	FILE* m_file;
-	ePhase m_phase;
-	string m_owner;
-	string calbuf;
-	
-	vCalendar _calendar;
-	vTimeZone _time_zone;
-	vEvent _event;
-	vAttendee  _attendee;
-	vStandard _standard;
-
-	string _text;
+  string _text;
 };
 #endif /* _CALENDER_H_ */
-

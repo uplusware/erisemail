@@ -1,1533 +1,1368 @@
 /*
-	Copyright (c) openheap, uplusware
-	uplusware@gmail.com
+        Copyright (c) openheap, uplusware
+        uplusware@gmail.com
 */
-#include "util/general.h"
 #include "pop.h"
-#include <sys/types.h>          /* See NOTES */
-#include <sys/socket.h>
-#include <netinet/in.h>
 #include <arpa/inet.h>
-#include <unistd.h>
 #include <fcntl.h>
-#include "util/md5.h"
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <sys/types.h> /* See NOTES */
+#include <unistd.h>
 #include "service.h"
+#include "util/general.h"
+#include "util/md5.h"
 
-static char CHAR_TBL[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890=/";
+static char CHAR_TBL[] =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890=/";
 
-CMailPop::CMailPop(int sockfd, SSL * ssl, SSL_CTX * ssl_ctx, const char* clientip,
-    StorageEngine* storage_engine, memcached_st * memcached, BOOL isSSL)
-{		
-	m_status = STATUS_ORIGINAL;
-	m_sockfd = sockfd;
-	m_clientip = clientip;
+CMailPop::CMailPop(int sockfd,
+                   SSL* ssl,
+                   SSL_CTX* ssl_ctx,
+                   const char* clientip,
+                   StorageEngine* storage_engine,
+                   memcached_st* memcached,
+                   BOOL isSSL) {
+  m_status = STATUS_ORIGINAL;
+  m_sockfd = sockfd;
+  m_clientip = clientip;
 
-    m_bSTARTTLS = FALSE;
+  m_bSTARTTLS = FALSE;
 
-	m_lsockfd = NULL;
-	m_lssl = NULL;
-	
-	m_storageEngine = storage_engine;
-	m_memcached = memcached;
-	
-    m_ssl = ssl;
-    m_ssl_ctx = ssl_ctx;
+  m_lsockfd = NULL;
+  m_lssl = NULL;
 
-	m_isSSL = isSSL;
-	if(m_isSSL && m_ssl)
-	{	
-		int flags = fcntl(m_sockfd, F_GETFL, 0); 
-		fcntl(m_sockfd, F_SETFL, flags | O_NONBLOCK); 
-        
-		m_lssl = new linessl(m_sockfd, m_ssl);
-		
-	}
-	else
-	{
-		int flags = fcntl(m_sockfd, F_GETFL, 0); 
-		fcntl(m_sockfd, F_SETFL, flags | O_NONBLOCK); 
-		m_lsockfd = new linesock(m_sockfd);
-	}
+  m_storageEngine = storage_engine;
+  m_memcached = memcached;
 
-	On_Service_Ready_Handler();
+  m_ssl = ssl;
+  m_ssl_ctx = ssl_ctx;
+
+  m_isSSL = isSSL;
+  if (m_isSSL && m_ssl) {
+    int flags = fcntl(m_sockfd, F_GETFL, 0);
+    fcntl(m_sockfd, F_SETFL, flags | O_NONBLOCK);
+
+    m_lssl = new linessl(m_sockfd, m_ssl);
+
+  } else {
+    int flags = fcntl(m_sockfd, F_GETFL, 0);
+    fcntl(m_sockfd, F_SETFL, flags | O_NONBLOCK);
+    m_lsockfd = new linesock(m_sockfd);
+  }
+
+  On_Service_Ready_Handler();
 }
 
-CMailPop::~CMailPop()
-{
-	
-    if(m_bSTARTTLS)
-	    close_ssl(m_ssl, m_ssl_ctx);
-	if(m_lsockfd)
-		delete m_lsockfd;
+CMailPop::~CMailPop() {
+  if (m_bSTARTTLS)
+    close_ssl(m_ssl, m_ssl_ctx);
+  if (m_lsockfd)
+    delete m_lsockfd;
 
-	if(m_lssl)
-		delete m_lssl;
+  if (m_lssl)
+    delete m_lssl;
 }
 
-int CMailPop::PopSend(const char* buf, int len)
-{
-    if(m_ssl)
-        return SSLWrite(m_sockfd, m_ssl, buf, len, CMailBase::m_connection_idle_timeout);
-    else
-        return Send(m_sockfd, buf, len, CMailBase::m_connection_idle_timeout);	
+int CMailPop::PopSend(const char* buf, int len) {
+  if (m_ssl)
+    return SSLWrite(m_sockfd, m_ssl, buf, len,
+                    CMailBase::m_connection_idle_timeout);
+  else
+    return Send(m_sockfd, buf, len, CMailBase::m_connection_idle_timeout);
 }
 
-int CMailPop::ProtRecv(char* buf, int len)
-{
-    if(m_ssl)
-        return m_lssl->lrecv(buf, len, CMailBase::m_connection_idle_timeout);
-    else
-        return m_lsockfd->lrecv(buf, len, CMailBase::m_connection_idle_timeout);
+int CMailPop::ProtRecv(char* buf, int len) {
+  if (m_ssl)
+    return m_lssl->lrecv(buf, len, CMailBase::m_connection_idle_timeout);
+  else
+    return m_lsockfd->lrecv(buf, len, CMailBase::m_connection_idle_timeout);
 }
 
-void CMailPop::On_Service_Ready_Handler()
-{
-	char cmd[1024];
-	srandom(time(NULL));
-	sprintf(cmd,"<%lu%lu%lu.%lu@%s>", time(NULL), getpid(), pthread_self(), random(), m_localhostname.c_str());
-	
-	m_strDigest = cmd;
-	sprintf(cmd,"+OK %s POP3 service is ready by eRisemail-%s powered by Uplusware %s\r\n", m_localhostname.c_str(), m_sw_version.c_str(), m_strDigest.c_str());
-	
-	PopSend(cmd, strlen(cmd));
+void CMailPop::On_Service_Ready_Handler() {
+  char cmd[1024];
+  srandom(time(NULL));
+  sprintf(cmd, "<%lu%lu%lu.%lu@%s>", time(NULL), getpid(), pthread_self(),
+          random(), m_localhostname.c_str());
+
+  m_strDigest = cmd;
+  sprintf(cmd,
+          "+OK %s POP3 service is ready by eRisemail-%s powered by Uplusware "
+          "%s\r\n",
+          m_localhostname.c_str(), m_sw_version.c_str(), m_strDigest.c_str());
+
+  PopSend(cmd, strlen(cmd));
 }
 
-
-void CMailPop::On_Service_Error_Handler()
-{
-	char cmd[256];
-	sprintf(cmd,"-ERR eRiseMail Sever POP3 server has some error\r\n");
-	PopSend(cmd,strlen(cmd));
+void CMailPop::On_Service_Error_Handler() {
+  char cmd[256];
+  sprintf(cmd, "-ERR eRiseMail Sever POP3 server has some error\r\n");
+  PopSend(cmd, strlen(cmd));
 }
 
-void CMailPop::On_Unrecognized_Command_Handler()
-{
-	char cmd[256];
-	sprintf(cmd,"-ERR unrecognized command line\r\n");
-	PopSend(cmd,strlen(cmd));
+void CMailPop::On_Unrecognized_Command_Handler() {
+  char cmd[256];
+  sprintf(cmd, "-ERR unrecognized command line\r\n");
+  PopSend(cmd, strlen(cmd));
 }
 
-
-void CMailPop::On_Capa_Handler(char* text)
-{
-	char cmd[128];
-	sprintf(cmd,"+OK Capability list follows\r\n");
-	PopSend(cmd, strlen(cmd));
-	sprintf(cmd,"UIDL\r\n");
-	PopSend(cmd, strlen(cmd));
-    sprintf(cmd,"APOP\r\n");
-	PopSend(cmd, strlen(cmd));
-	sprintf(cmd,"USER\r\n");
-	PopSend(cmd, strlen(cmd));
-	sprintf(cmd,"TOP\r\n");
-	PopSend(cmd, strlen(cmd));
-	sprintf(cmd,"STLS\r\n");
-	PopSend(cmd, strlen(cmd));
-#ifdef _WITH_GSSAPI_     
-    sprintf(cmd,"SASL PLAIN CRAM-MD5 DIGEST-MD5%s GSSAPI\r\n", m_ca_verify_client ? " EXTERNAL" : "");
+void CMailPop::On_Capa_Handler(char* text) {
+  char cmd[128];
+  sprintf(cmd, "+OK Capability list follows\r\n");
+  PopSend(cmd, strlen(cmd));
+  sprintf(cmd, "UIDL\r\n");
+  PopSend(cmd, strlen(cmd));
+  sprintf(cmd, "APOP\r\n");
+  PopSend(cmd, strlen(cmd));
+  sprintf(cmd, "USER\r\n");
+  PopSend(cmd, strlen(cmd));
+  sprintf(cmd, "TOP\r\n");
+  PopSend(cmd, strlen(cmd));
+  sprintf(cmd, "STLS\r\n");
+  PopSend(cmd, strlen(cmd));
+#ifdef _WITH_GSSAPI_
+  sprintf(cmd, "SASL PLAIN CRAM-MD5 DIGEST-MD5%s GSSAPI\r\n",
+          m_ca_verify_client ? " EXTERNAL" : "");
 #else
-    sprintf(cmd,"SASL PLAIN CRAM-MD5 DIGEST-MD5%s\r\n", m_ca_verify_client ? " EXTERNAL" : "");
-#endif /* _WITH_GSSAPI_ */    
-	PopSend(cmd, strlen(cmd));
-    
-	sprintf(cmd,".\r\n");
-	PopSend(cmd, strlen(cmd));
+  sprintf(cmd, "SASL PLAIN CRAM-MD5 DIGEST-MD5%s\r\n",
+          m_ca_verify_client ? " EXTERNAL" : "");
+#endif /* _WITH_GSSAPI_ */
+  PopSend(cmd, strlen(cmd));
+
+  sprintf(cmd, ".\r\n");
+  PopSend(cmd, strlen(cmd));
 }
-				
-void CMailPop::On_Apop_Handler(char* text)
-{
-	MailStorage* mailStg;
-	StorageEngineInstance stgengine_instance(m_storageEngine, &mailStg);
-	if(!mailStg)
-	{
-		printf("%s::%s Get Storage Engine Failed!\n", __FILE__, __FUNCTION__);
-		return;
-	}
-	char cmd[256];
-	string strArg;
-	strcut(text, " ", "\r\n", strArg);
-	strcut(strArg.c_str(), NULL, " ", m_username);
-	strcut(strArg.c_str(), " ", NULL, m_strToken);
-    
+
+void CMailPop::On_Apop_Handler(char* text) {
+  MailStorage* mailStg;
+  StorageEngineInstance stgengine_instance(m_storageEngine, &mailStg);
+  if (!mailStg) {
+    printf("%s::%s Get Storage Engine Failed!\n", __FILE__, __FUNCTION__);
+    return;
+  }
+  char cmd[256];
+  string strArg;
+  strcut(text, " ", "\r\n", strArg);
+  strcut(strArg.c_str(), NULL, " ", m_username);
+  strcut(strArg.c_str(), " ", NULL, m_strToken);
+
+  strtrim(m_username);
+  strtrim(m_strToken);
+
+  string strpwd;
+  if (mailStg->GetPassword(m_username.c_str(), strpwd) == 0) {
+    string strMD5src = m_strDigest;
+    strMD5src += strpwd;
+
+    ietf::MD5_CTX_OBJ context;
+    context.MD5Update((unsigned char*)strMD5src.c_str(), strMD5src.length());
+    unsigned char digest[16];
+    context.MD5Final(digest);
+    char szMD5dst[33];
+    memset(szMD5dst, 0, 33);
+    sprintf(szMD5dst,
+            "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
+            digest[0], digest[1], digest[2], digest[3], digest[4], digest[5],
+            digest[6], digest[7], digest[8], digest[9], digest[10], digest[11],
+            digest[12], digest[13], digest[14], digest[15]);
+
+    if (strcasecmp(szMD5dst, m_strToken.c_str()) == 0) {
+      string recv_user;
+      recv_user = m_username;
+      m_mailTbl.clear();
+      mailStg->ListMailByDir(recv_user.c_str(), m_mailTbl, "INBOX");
+      m_lettersCount = m_mailTbl.size();
+      m_lettersTotalSize = 0;
+      for (int x = 0; x < m_lettersCount; x++) {
+        MailLetter* Letter;
+
+        string emlfile;
+        mailStg->GetMailIndex(m_mailTbl[x].mid, emlfile);
+
+        Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(),
+                                CMailBase::m_encoding.c_str(), m_memcached,
+                                emlfile.c_str());
+        m_lettersTotalSize += Letter->GetSize();
+        delete Letter;
+      }
+
+      sprintf(cmd, "+OK %u message<s> [%u byte(s)]\r\n", m_lettersCount,
+              m_lettersTotalSize);
+      PopSend(cmd, strlen(cmd));
+      m_status = m_status | STATUS_AUTHED;
+    } else {
+      push_reject_list(MDA_SERVICE_NAME, m_clientip.c_str());
+
+      sprintf(cmd, "-ERR Unable to log on.\r\n");
+      PopSend(cmd, strlen(cmd));
+    }
+  } else {
+    push_reject_list(MDA_SERVICE_NAME, m_clientip.c_str());
+
+    sprintf(cmd, "-ERR Unable to log on.\r\n");
+    PopSend(cmd, strlen(cmd));
+  }
+}
+
+void CMailPop::On_Stat_Handler(char* text) {
+  if ((m_status & STATUS_AUTHED) == STATUS_AUTHED) {
+    MailStorage* mailStg;
+    StorageEngineInstance stgengine_instance(m_storageEngine, &mailStg);
+    if (!mailStg) {
+      printf("%s::%s Get Storage Engine Failed!\n", __FILE__, __FUNCTION__);
+      return;
+    }
+    string recv_user;
+    recv_user = m_username;
+    char cmd[256];
+    m_mailTbl.clear();
+    mailStg->ListMailByDir(recv_user.c_str(), m_mailTbl, "INBOX");
+    m_lettersCount = m_mailTbl.size();
+    m_lettersTotalSize = 0;
+    for (int x = 0; x < m_lettersCount; x++) {
+      MailLetter* Letter;
+
+      string emlfile;
+      mailStg->GetMailIndex(m_mailTbl[x].mid, emlfile);
+
+      Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(),
+                              CMailBase::m_encoding.c_str(), m_memcached,
+                              emlfile.c_str());
+      m_lettersTotalSize += Letter->GetSize();
+      delete Letter;
+    }
+    sprintf(cmd, "+OK %u message(s) [%u byte(s)]\r\n", m_lettersCount,
+            m_lettersTotalSize);
+    PopSend(cmd, strlen(cmd));
+  } else {
+    On_Not_Valid_State_Handler();
+  }
+}
+
+void CMailPop::On_Not_Valid_State_Handler() {
+  char cmd[256];
+  sprintf(cmd, "-ERR Command not valid in this state\r\n");
+  PopSend(cmd, strlen(cmd));
+}
+
+BOOL CMailPop::On_Supose_Username_Handler(char* text) {
+  strcut(text, " ", "\r\n", m_username);
+  strtrim(m_username);
+
+  if (m_authType == POP_AUTH_USER) {
+    m_status = m_status & (~STATUS_AUTH_STEP1);
+
+    char cmd[256];
+    sprintf(cmd, "+OK core mail\r\n");
+    PopSend(cmd, strlen(cmd));
+  } else if (m_authType == POP_AUTH_DIGEST_MD5) {
+    string strEncoded;
+    strcut(text, NULL, "\r\n", strEncoded);
+
+    int outlen = BASE64_DECODE_OUTPUT_MAX_LEN(
+        strEncoded.length());  // strEncoded.length()*4+1;
+    char* tmp = (char*)malloc(outlen);
+    memset(tmp, 0, outlen);
+    CBase64::Decode((char*)strEncoded.c_str(), strEncoded.length(), tmp,
+                    &outlen);
+
+    string strRealm, strNonce, strCNonce, strDigestUri, strQop, strNc;
+
+    string strRight;
+    strcut(tmp, "username=\"", "\"", m_username);
     strtrim(m_username);
+    strcut(tmp, "realm=\"", "\"", strRealm);
+    strtrim(strRealm);
+    strcut(tmp, "response=", "\n", strRight);
+    strcut(strRight.c_str(), NULL, ",", m_strToken);
     strtrim(m_strToken);
-    
-	string strpwd;
-	if(mailStg->GetPassword(m_username.c_str(), strpwd) == 0)
-	{
-		string strMD5src = m_strDigest;
-		strMD5src += strpwd;
+    strcut(tmp, "nonce=\"", "\"", strNonce);
+    strtrim(strNonce);
+    strcut(tmp, "cnonce=\"", "\"", strCNonce);
+    strtrim(strCNonce);
+    strcut(tmp, "digest-uri=\"", "\"", strDigestUri);
+    strtrim(strDigestUri);
+    strcut(tmp, "qop=", "\n", strRight);
+    strcut(strRight.c_str(), NULL, ",", strQop);
+    strtrim(strQop);
+    strcut(tmp, "nc=", "\n", strRight);
+    strcut(strRight.c_str(), NULL, ",", strNc);
+    strtrim(strNc);
+    free(tmp);
 
-		ietf::MD5_CTX_OBJ context;
-		context.MD5Update ((unsigned char*)strMD5src.c_str(), strMD5src.length());
-		unsigned char digest[16];
-		context.MD5Final (digest);
-		char szMD5dst[33];
-		memset(szMD5dst, 0, 33);
-		sprintf(szMD5dst,
-			"%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
-			digest[0], digest[1], digest[2], digest[3], digest[4], digest[5], digest[6], digest[7],
-			digest[8], digest[9], digest[10], digest[11], digest[12], digest[13], digest[14], digest[15]);
-		
-		if(strcasecmp(szMD5dst, m_strToken.c_str()) == 0)
-		{
-			string recv_user;
-			recv_user = m_username;
-			m_mailTbl.clear();
-			mailStg->ListMailByDir(recv_user.c_str(), m_mailTbl, "INBOX");
-			m_lettersCount = m_mailTbl.size();
-			m_lettersTotalSize = 0;
-			for(int x = 0; x< m_lettersCount; x++)
-			{
-				MailLetter* Letter;
-							
-							
-				string emlfile;
-				mailStg->GetMailIndex(m_mailTbl[x].mid, emlfile);
-							
-				Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
-				m_lettersTotalSize += Letter->GetSize();
-				delete Letter;
-			}
-		
-			sprintf(cmd,"+OK %u message<s> [%u byte(s)]\r\n", m_lettersCount, m_lettersTotalSize);
-			PopSend(cmd,strlen(cmd));
-			m_status = m_status|STATUS_AUTHED;
-		}
-		else
-		{
-			push_reject_list(MDA_SERVICE_NAME, m_clientip.c_str());
-			
-			sprintf(cmd,"-ERR Unable to log on.\r\n");
-			PopSend(cmd,strlen(cmd));
-		}
-	}
-	else
-	{
-		push_reject_list(MDA_SERVICE_NAME, m_clientip.c_str());
-		
-		sprintf(cmd,"-ERR Unable to log on.\r\n");
-		PopSend(cmd,strlen(cmd));
-	}
-	
-}
-
-void CMailPop::On_Stat_Handler(char* text)
-{
-	if((m_status&STATUS_AUTHED) == STATUS_AUTHED)
-	{
-		MailStorage* mailStg;
-		StorageEngineInstance stgengine_instance(m_storageEngine, &mailStg);
-		if(!mailStg)
-		{
-			printf("%s::%s Get Storage Engine Failed!\n", __FILE__, __FUNCTION__);
-			return;
-		}
-		string recv_user;
-		recv_user = m_username;
-		char cmd[256];
-		m_mailTbl.clear();
-		mailStg->ListMailByDir(recv_user.c_str(), m_mailTbl, "INBOX");
-		m_lettersCount = m_mailTbl.size();
-		m_lettersTotalSize = 0;
-		for(int x = 0; x< m_lettersCount; x++)
-		{
-			MailLetter* Letter;
-
-			string emlfile;
-			mailStg->GetMailIndex(m_mailTbl[x].mid, emlfile);
-
-			Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
-			m_lettersTotalSize += Letter->GetSize();
-			delete Letter;
-		}
-		sprintf(cmd,"+OK %u message(s) [%u byte(s)]\r\n",m_lettersCount,m_lettersTotalSize);
-		PopSend(cmd,strlen(cmd));
-	}
-	else
-	{
-		On_Not_Valid_State_Handler();
-	}
-}
-
-void CMailPop::On_Not_Valid_State_Handler()
-{
-	char cmd[256];
-	sprintf(cmd,"-ERR Command not valid in this state\r\n");
-	PopSend(cmd,strlen(cmd));
-}
-
-BOOL CMailPop::On_Supose_Username_Handler(char* text)
-{
-    strcut(text, " ", "\r\n", m_username);
-    strtrim(m_username);
-        
-    if(m_authType == POP_AUTH_USER)
-    {
-        m_status = m_status&(~STATUS_AUTH_STEP1);
-        
-        char cmd[256];
-        sprintf(cmd,"+OK core mail\r\n");
-        PopSend(cmd,strlen(cmd));
+    string strpwd;
+    MailStorage* mailStg;
+    StorageEngineInstance stgengine_instance(m_storageEngine, &mailStg);
+    if (!mailStg) {
+      printf("%s::%s Get Storage Engine Failed!\n", __FILE__, __FUNCTION__);
+      return FALSE;
     }
-    else if(m_authType == POP_AUTH_DIGEST_MD5)
-	{
-		string strEncoded;
-		strcut(text, NULL, "\r\n",strEncoded);
-		
-		int outlen = BASE64_DECODE_OUTPUT_MAX_LEN(strEncoded.length());//strEncoded.length()*4+1;
-		char* tmp = (char*)malloc(outlen);
-		memset(tmp, 0, outlen);
-		CBase64::Decode((char*)strEncoded.c_str(), strEncoded.length(), tmp, &outlen);
-		
-		string strRealm, strNonce, strCNonce, strDigestUri, strQop, strNc;
 
-		string strRight;
-		strcut(tmp, "username=\"", "\"", m_username);
-        strtrim(m_username);
-		strcut(tmp, "realm=\"", "\"", strRealm);
-        strtrim(strRealm);
-		strcut(tmp, "response=", "\n", strRight);
-		strcut(strRight.c_str(), NULL, ",", m_strToken);
-		strtrim(m_strToken);
-		strcut(tmp, "nonce=\"", "\"", strNonce);
-		strtrim(strNonce);
-		strcut(tmp, "cnonce=\"", "\"", strCNonce);
-        strtrim(strCNonce);
-		strcut(tmp, "digest-uri=\"", "\"", strDigestUri);
-        strtrim(strDigestUri);
-		strcut(tmp, "qop=", "\n", strRight);
-		strcut(strRight.c_str(), NULL, ",", strQop);
-        strtrim(strQop);
-		strcut(tmp, "nc=", "\n", strRight);
-		strcut(strRight.c_str(), NULL, ",", strNc);
-        strtrim(strNc);
-		free(tmp);
+    mailStg->GetPassword(m_username.c_str(), strpwd);
 
-		string strpwd;
-		MailStorage* mailStg;
-		StorageEngineInstance stgengine_instance(m_storageEngine, &mailStg);
-		if(!mailStg)
-		{
-			printf("%s::%s Get Storage Engine Failed!\n", __FILE__, __FUNCTION__);
-			return FALSE;
-		}
-		
-		mailStg->GetPassword(m_username.c_str(), strpwd);
-		
-		
-		unsigned char digest1[16];
-		string strMD5src1;
-		strMD5src1 = m_username + ":" + strRealm + ":" + strpwd;
-		ietf::MD5_CTX_OBJ md5;
-		md5.MD5Update((unsigned char*)strMD5src1.c_str(), strMD5src1.length());
-		md5.MD5Final(digest1);
+    unsigned char digest1[16];
+    string strMD5src1;
+    strMD5src1 = m_username + ":" + strRealm + ":" + strpwd;
+    ietf::MD5_CTX_OBJ md5;
+    md5.MD5Update((unsigned char*)strMD5src1.c_str(), strMD5src1.length());
+    md5.MD5Final(digest1);
 
-		unsigned char digest2[16];
-		string strMD5src2_0 = ":";
-		strMD5src2_0 += strNonce + ":" + strCNonce;
-		
-		char* szMD5src2_1 = (char*)malloc(16 + strMD5src2_0.length() + 1);
-		memcpy(szMD5src2_1, digest1, 16);
-		memcpy(&szMD5src2_1[16], strMD5src2_0.c_str(), strMD5src2_0.length() + 1);
+    unsigned char digest2[16];
+    string strMD5src2_0 = ":";
+    strMD5src2_0 += strNonce + ":" + strCNonce;
 
-		md5.MD5Update((unsigned char*)szMD5src2_1, 16 + strMD5src2_0.length());
-		md5.MD5Final(digest2);
-		char szMD5Dst2[33];
-		memset(szMD5Dst2, 0, 33);
-		sprintf(szMD5Dst2,
-				"%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
-				digest2[0], digest2[1], digest2[2], digest2[3], digest2[4], digest2[5], digest2[6], digest2[7],
-				digest2[8], digest2[9], digest2[10], digest2[11], digest2[12], digest2[13], digest2[14], digest2[15]);
+    char* szMD5src2_1 = (char*)malloc(16 + strMD5src2_0.length() + 1);
+    memcpy(szMD5src2_1, digest1, 16);
+    memcpy(&szMD5src2_1[16], strMD5src2_0.c_str(), strMD5src2_0.length() + 1);
 
-		////////////////////////////////////////////////////////////////////////////////////////////////////
-		//Client
-		unsigned char digest3_1[16];
-		string strMD5src3_1 = "AUTHENTICATE:";
-		strMD5src3_1 += strDigestUri;
-		if((strQop == "auth-int") || (strQop == "auth-conf"))
-			strMD5src3_1 += ":00000000000000000000000000000000";
-		
-		md5.MD5Update((unsigned char*)strMD5src3_1.c_str(), strMD5src3_1.length());
-		md5.MD5Final(digest3_1);
-		char szMD5Dst3_1[33];
-		memset(szMD5Dst3_1, 0, 33);
-		sprintf(szMD5Dst3_1,
-				"%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
-				digest3_1[0], digest3_1[1], digest3_1[2], digest3_1[3], digest3_1[4], digest3_1[5], digest3_1[6], digest3_1[7],
-				digest3_1[8], digest3_1[9], digest3_1[10], digest3_1[11], digest3_1[12], digest3_1[13], digest3_1[14], digest3_1[15]);
+    md5.MD5Update((unsigned char*)szMD5src2_1, 16 + strMD5src2_0.length());
+    md5.MD5Final(digest2);
+    char szMD5Dst2[33];
+    memset(szMD5Dst2, 0, 33);
+    sprintf(szMD5Dst2,
+            "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
+            digest2[0], digest2[1], digest2[2], digest2[3], digest2[4],
+            digest2[5], digest2[6], digest2[7], digest2[8], digest2[9],
+            digest2[10], digest2[11], digest2[12], digest2[13], digest2[14],
+            digest2[15]);
 
-		unsigned char digest4_1[16];
-		string strMD5src4_1;
-		strMD5src4_1 = szMD5Dst2;
-		strMD5src4_1 += ":";
-		strMD5src4_1 += strNonce;
-		strMD5src4_1 += ":";
-		strMD5src4_1 += strNc;
-		strMD5src4_1 += ":";
-		strMD5src4_1 += strCNonce;
-		strMD5src4_1 += ":";
-		strMD5src4_1 += strQop;
-		strMD5src4_1 += ":";
-		strMD5src4_1 += szMD5Dst3_1;
-		
-		md5.MD5Update((unsigned char*)strMD5src4_1.c_str(), strMD5src4_1.length());
-		md5.MD5Final(digest4_1);
-		
-		char szMD5Dst4_1[33];
-		memset(szMD5Dst4_1, 0, 33);
-		sprintf(szMD5Dst4_1,
-				"%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
-				digest4_1[0], digest4_1[1], digest4_1[2], digest4_1[3], digest4_1[4], digest4_1[5], digest4_1[6], digest4_1[7],
-				digest4_1[8], digest4_1[9], digest4_1[10], digest4_1[11], digest4_1[12], digest4_1[13], digest4_1[14], digest4_1[15]);
-		m_strTokenVerify = szMD5Dst4_1;
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Client
+    unsigned char digest3_1[16];
+    string strMD5src3_1 = "AUTHENTICATE:";
+    strMD5src3_1 += strDigestUri;
+    if ((strQop == "auth-int") || (strQop == "auth-conf"))
+      strMD5src3_1 += ":00000000000000000000000000000000";
 
-		if(m_strTokenVerify == m_strToken)
-		{
-			////////////////////////////////////////////////////////////////////////////////////
-			// server
-			unsigned char digest3_2[16];
-			//at server site, no need "AUTHENTICATE"
-			string strMD5src3_2 = ":";
-			strMD5src3_2 += strDigestUri;
-			if((strQop == "auth-int") || (strQop == "auth-conf"))
-				strMD5src3_2 += ":00000000000000000000000000000000";
-			
-			md5.MD5Update((unsigned char*)strMD5src3_2.c_str(), strMD5src3_2.length());
-			md5.MD5Final(digest3_2);
-			char szMD5Dst3_2[33];
-			memset(szMD5Dst3_2, 0, 33);
-			sprintf(szMD5Dst3_2,
-					"%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
-					digest3_2[0], digest3_2[1], digest3_2[2], digest3_2[3], digest3_2[4], digest3_2[5], digest3_2[6], digest3_2[7],
-					digest3_2[8], digest3_2[9], digest3_2[10], digest3_2[11], digest3_2[12], digest3_2[13], digest3_2[14], digest3_2[15]);
+    md5.MD5Update((unsigned char*)strMD5src3_1.c_str(), strMD5src3_1.length());
+    md5.MD5Final(digest3_1);
+    char szMD5Dst3_1[33];
+    memset(szMD5Dst3_1, 0, 33);
+    sprintf(szMD5Dst3_1,
+            "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
+            digest3_1[0], digest3_1[1], digest3_1[2], digest3_1[3],
+            digest3_1[4], digest3_1[5], digest3_1[6], digest3_1[7],
+            digest3_1[8], digest3_1[9], digest3_1[10], digest3_1[11],
+            digest3_1[12], digest3_1[13], digest3_1[14], digest3_1[15]);
 
-			unsigned char digest4_2[16];
-			string strMD5src4_2;
-			strMD5src4_2 = szMD5Dst2;
-			strMD5src4_2 += ":";
-			strMD5src4_2 += strNonce;
-			strMD5src4_2 += ":";
-			strMD5src4_2 += strNc;
-			strMD5src4_2 += ":";
-			strMD5src4_2 += strCNonce;
-			strMD5src4_2 += ":";
-			strMD5src4_2 += strQop;
-			strMD5src4_2 += ":";
-			strMD5src4_2 += szMD5Dst3_2;
-			
-			md5.MD5Update((unsigned char*)strMD5src4_2.c_str(), strMD5src4_2.length());
-			md5.MD5Final(digest4_2);
-			
-			char szMD5Dst4_2[33];
-			memset(szMD5Dst4_2, 0, 33);
-			sprintf(szMD5Dst4_2,
-					"%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
-					digest4_2[0], digest4_2[1], digest4_2[2], digest4_2[3], digest4_2[4], digest4_2[5], digest4_2[6], digest4_2[7],
-					digest4_2[8], digest4_2[9], digest4_2[10], digest4_2[11], digest4_2[12], digest4_2[13], digest4_2[14], digest4_2[15]);
-			
-			char cmd[512];
-			sprintf(cmd, "rspauth=%s", szMD5Dst4_2);
-			outlen = BASE64_ENCODE_OUTPUT_MAX_LEN(strlen(cmd));//strlen(cmd)*4+1;
-			tmp = (char*)malloc(outlen);
-			memset(tmp, 0, outlen);
-			CBase64::Encode((char*)cmd, strlen(cmd), tmp, &outlen);
+    unsigned char digest4_1[16];
+    string strMD5src4_1;
+    strMD5src4_1 = szMD5Dst2;
+    strMD5src4_1 += ":";
+    strMD5src4_1 += strNonce;
+    strMD5src4_1 += ":";
+    strMD5src4_1 += strNc;
+    strMD5src4_1 += ":";
+    strMD5src4_1 += strCNonce;
+    strMD5src4_1 += ":";
+    strMD5src4_1 += strQop;
+    strMD5src4_1 += ":";
+    strMD5src4_1 += szMD5Dst3_1;
 
-			sprintf(cmd,"+OK ");
-			PopSend(cmd, strlen(cmd));
-			PopSend(tmp, outlen);
-			PopSend((char*)"\r\n", 2);
+    md5.MD5Update((unsigned char*)strMD5src4_1.c_str(), strMD5src4_1.length());
+    md5.MD5Final(digest4_1);
 
-			free(tmp);
-		}
-		m_status = m_status&(~STATUS_AUTH_STEP1);
-		m_status = m_status|STATUS_AUTH_STEP2;
-		
-	}
-	return TRUE;
-}
+    char szMD5Dst4_1[33];
+    memset(szMD5Dst4_1, 0, 33);
+    sprintf(szMD5Dst4_1,
+            "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
+            digest4_1[0], digest4_1[1], digest4_1[2], digest4_1[3],
+            digest4_1[4], digest4_1[5], digest4_1[6], digest4_1[7],
+            digest4_1[8], digest4_1[9], digest4_1[10], digest4_1[11],
+            digest4_1[12], digest4_1[13], digest4_1[14], digest4_1[15]);
+    m_strTokenVerify = szMD5Dst4_1;
 
-BOOL CMailPop::On_Supose_Password_Handler(char* text)
-{
-    strcut(text, " ", "\r\n", m_password);
-    strtrim(m_password);
-    
-    if(m_authType == POP_AUTH_USER)
-	{
-        m_status = m_status&(~STATUS_AUTH_STEP2);
-        return On_Supose_Checking_Handler();
+    if (m_strTokenVerify == m_strToken) {
+      ////////////////////////////////////////////////////////////////////////////////////
+      // server
+      unsigned char digest3_2[16];
+      // at server site, no need "AUTHENTICATE"
+      string strMD5src3_2 = ":";
+      strMD5src3_2 += strDigestUri;
+      if ((strQop == "auth-int") || (strQop == "auth-conf"))
+        strMD5src3_2 += ":00000000000000000000000000000000";
+
+      md5.MD5Update((unsigned char*)strMD5src3_2.c_str(),
+                    strMD5src3_2.length());
+      md5.MD5Final(digest3_2);
+      char szMD5Dst3_2[33];
+      memset(szMD5Dst3_2, 0, 33);
+      sprintf(
+          szMD5Dst3_2,
+          "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
+          digest3_2[0], digest3_2[1], digest3_2[2], digest3_2[3], digest3_2[4],
+          digest3_2[5], digest3_2[6], digest3_2[7], digest3_2[8], digest3_2[9],
+          digest3_2[10], digest3_2[11], digest3_2[12], digest3_2[13],
+          digest3_2[14], digest3_2[15]);
+
+      unsigned char digest4_2[16];
+      string strMD5src4_2;
+      strMD5src4_2 = szMD5Dst2;
+      strMD5src4_2 += ":";
+      strMD5src4_2 += strNonce;
+      strMD5src4_2 += ":";
+      strMD5src4_2 += strNc;
+      strMD5src4_2 += ":";
+      strMD5src4_2 += strCNonce;
+      strMD5src4_2 += ":";
+      strMD5src4_2 += strQop;
+      strMD5src4_2 += ":";
+      strMD5src4_2 += szMD5Dst3_2;
+
+      md5.MD5Update((unsigned char*)strMD5src4_2.c_str(),
+                    strMD5src4_2.length());
+      md5.MD5Final(digest4_2);
+
+      char szMD5Dst4_2[33];
+      memset(szMD5Dst4_2, 0, 33);
+      sprintf(
+          szMD5Dst4_2,
+          "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
+          digest4_2[0], digest4_2[1], digest4_2[2], digest4_2[3], digest4_2[4],
+          digest4_2[5], digest4_2[6], digest4_2[7], digest4_2[8], digest4_2[9],
+          digest4_2[10], digest4_2[11], digest4_2[12], digest4_2[13],
+          digest4_2[14], digest4_2[15]);
+
+      char cmd[512];
+      sprintf(cmd, "rspauth=%s", szMD5Dst4_2);
+      outlen = BASE64_ENCODE_OUTPUT_MAX_LEN(strlen(cmd));  // strlen(cmd)*4+1;
+      tmp = (char*)malloc(outlen);
+      memset(tmp, 0, outlen);
+      CBase64::Encode((char*)cmd, strlen(cmd), tmp, &outlen);
+
+      sprintf(cmd, "+OK ");
+      PopSend(cmd, strlen(cmd));
+      PopSend(tmp, outlen);
+      PopSend((char*)"\r\n", 2);
+
+      free(tmp);
     }
-/*    
-    else if(m_authType == POP_AUTH_DIGEST_MD5)
-	{
-		
-	}
-*/
-	else if(m_authType == POP_AUTH_CRAM_MD5)
-	{
-		string strEncoded;
-		strcut(text, NULL, "\r\n",strEncoded);
-		strtrim(strEncoded);
-		int outlen = BASE64_DECODE_OUTPUT_MAX_LEN(strEncoded.length());//strEncoded.length()*4+1;
-		char* tmp = (char*)malloc(outlen);
-		memset(tmp, 0, outlen);
-		CBase64::Decode((char*)strEncoded.c_str(), strEncoded.length(), tmp, &outlen);
-		strcut(tmp, NULL, " ", m_username);
-		strcut(tmp, " ", NULL, m_strToken);
-		free(tmp);
-	}
-	m_status = m_status&(~STATUS_AUTH_STEP2);
-
-	return On_Supose_Checking_Handler();
+    m_status = m_status & (~STATUS_AUTH_STEP1);
+    m_status = m_status | STATUS_AUTH_STEP2;
+  }
+  return TRUE;
 }
 
-BOOL CMailPop::On_Supose_Checking_Handler()
-{	
-	char cmd[256];
-	MailStorage* mailStg;
-	StorageEngineInstance stgengine_instance(m_storageEngine, &mailStg);
-	if(!mailStg)
-	{
-		printf("%s::%s Get Storage Engine Failed!\n", __FILE__, __FUNCTION__);
-		return FALSE;
-	}
-    if(m_authType == POP_AUTH_USER)
-	{
-        if(mailStg->CheckLogin(m_username.c_str(),m_password.c_str()) == 0)
-        {
-            string recv_user;
-            recv_user = m_username;
+BOOL CMailPop::On_Supose_Password_Handler(char* text) {
+  strcut(text, " ", "\r\n", m_password);
+  strtrim(m_password);
 
-            m_mailTbl.clear();
-            mailStg->ListMailByDir(recv_user.c_str(), m_mailTbl, "INBOX");
-            m_lettersCount = m_mailTbl.size();
-            m_lettersTotalSize = 0;
-            for(int x = 0; x< m_lettersCount; x++)
-            {
-                MailLetter* Letter;
-                string emlfile;
-                mailStg->GetMailIndex(m_mailTbl[x].mid, emlfile);
-                
-                Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
-                m_lettersTotalSize += Letter->GetSize();
-                delete Letter;
-            }
-            sprintf(cmd,"+OK %u message<s> [%u byte(s)]\r\n",m_lettersCount,m_lettersTotalSize);
-            PopSend(cmd,strlen(cmd));
-            m_status = m_status|STATUS_AUTHED;
-            return TRUE;
+  if (m_authType == POP_AUTH_USER) {
+    m_status = m_status & (~STATUS_AUTH_STEP2);
+    return On_Supose_Checking_Handler();
+  }
+  /*
+      else if(m_authType == POP_AUTH_DIGEST_MD5)
+          {
+
+          }
+  */
+  else if (m_authType == POP_AUTH_CRAM_MD5) {
+    string strEncoded;
+    strcut(text, NULL, "\r\n", strEncoded);
+    strtrim(strEncoded);
+    int outlen = BASE64_DECODE_OUTPUT_MAX_LEN(
+        strEncoded.length());  // strEncoded.length()*4+1;
+    char* tmp = (char*)malloc(outlen);
+    memset(tmp, 0, outlen);
+    CBase64::Decode((char*)strEncoded.c_str(), strEncoded.length(), tmp,
+                    &outlen);
+    strcut(tmp, NULL, " ", m_username);
+    strcut(tmp, " ", NULL, m_strToken);
+    free(tmp);
+  }
+  m_status = m_status & (~STATUS_AUTH_STEP2);
+
+  return On_Supose_Checking_Handler();
+}
+
+BOOL CMailPop::On_Supose_Checking_Handler() {
+  char cmd[256];
+  MailStorage* mailStg;
+  StorageEngineInstance stgengine_instance(m_storageEngine, &mailStg);
+  if (!mailStg) {
+    printf("%s::%s Get Storage Engine Failed!\n", __FILE__, __FUNCTION__);
+    return FALSE;
+  }
+  if (m_authType == POP_AUTH_USER) {
+    if (mailStg->CheckLogin(m_username.c_str(), m_password.c_str()) == 0) {
+      string recv_user;
+      recv_user = m_username;
+
+      m_mailTbl.clear();
+      mailStg->ListMailByDir(recv_user.c_str(), m_mailTbl, "INBOX");
+      m_lettersCount = m_mailTbl.size();
+      m_lettersTotalSize = 0;
+      for (int x = 0; x < m_lettersCount; x++) {
+        MailLetter* Letter;
+        string emlfile;
+        mailStg->GetMailIndex(m_mailTbl[x].mid, emlfile);
+
+        Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(),
+                                CMailBase::m_encoding.c_str(), m_memcached,
+                                emlfile.c_str());
+        m_lettersTotalSize += Letter->GetSize();
+        delete Letter;
+      }
+      sprintf(cmd, "+OK %u message<s> [%u byte(s)]\r\n", m_lettersCount,
+              m_lettersTotalSize);
+      PopSend(cmd, strlen(cmd));
+      m_status = m_status | STATUS_AUTHED;
+      return TRUE;
+    } else {
+      push_reject_list(MDA_SERVICE_NAME, m_clientip.c_str());
+
+      sprintf(cmd, "-ERR Unable to log on.\r\n");
+      PopSend(cmd, strlen(cmd));
+      return FALSE;
+    }
+  } else if (m_authType == POP_AUTH_CRAM_MD5) {
+    string strpwd;
+    if (mailStg->GetPassword(m_username.c_str(), strpwd) == 0) {
+      unsigned char digest[16];
+      ietf::HMAC_MD5((unsigned char*)m_strDigest.c_str(), m_strDigest.length(),
+                     (unsigned char*)strpwd.c_str(), strpwd.length(), digest);
+      char szMD5dst[33];
+      memset(szMD5dst, 0, 33);
+      sprintf(
+          szMD5dst,
+          "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
+          digest[0], digest[1], digest[2], digest[3], digest[4], digest[5],
+          digest[6], digest[7], digest[8], digest[9], digest[10], digest[11],
+          digest[12], digest[13], digest[14], digest[15]);
+
+      if (strcasecmp(szMD5dst, m_strToken.c_str()) == 0) {
+        sprintf(cmd, "+OK Authentication successful.\r\n");
+        PopSend(cmd, strlen(cmd));
+        m_status = m_status | STATUS_AUTHED;
+        return TRUE;
+      } else {
+        push_reject_list(MDA_SERVICE_NAME, m_clientip.c_str());
+        sprintf(cmd, "-ERR Authentication Failed.\r\n");
+        PopSend(cmd, strlen(cmd));
+        return FALSE;
+      }
+    } else {
+      push_reject_list(MDA_SERVICE_NAME, m_clientip.c_str());
+      sprintf(cmd, "-ERR Authentication Failed.\r\n");
+      PopSend(cmd, strlen(cmd));
+      return FALSE;
+    }
+  } else if (m_authType == POP_AUTH_DIGEST_MD5) {
+    if (m_strToken == m_strTokenVerify) {
+      sprintf(cmd, "+OK Authentication successful.\r\n");
+      PopSend(cmd, strlen(cmd));
+      m_status = m_status | STATUS_AUTHED;
+      return TRUE;
+    } else {
+      push_reject_list(MDA_SERVICE_NAME, m_clientip.c_str());
+      char cmd[128];
+      sprintf(cmd, "-ERR Authentication Failed.\r\n");
+      PopSend(cmd, strlen(cmd));
+      return FALSE;
+    }
+  } else {
+    push_reject_list(MDA_SERVICE_NAME, m_clientip.c_str());
+    return FALSE;
+  }
+}
+
+void CMailPop::On_List_Handler(char* text) {
+  if ((m_status & STATUS_AUTHED) == STATUS_AUTHED) {
+    MailStorage* mailStg;
+    StorageEngineInstance stgengine_instance(m_storageEngine, &mailStg);
+    if (!mailStg) {
+      printf("%s::%s Get Storage Engine Failed!\n", __FILE__, __FUNCTION__);
+      return;
+    }
+    char cmd[256];
+    string strIndex;
+    strcut(text, " ", "\r\n", strIndex);
+    strtrim(strIndex);
+    if (strcmp(strIndex.c_str(), "") == 0) {
+      sprintf(cmd, "+OK %u message<s> [%u byte(s)]\r\n", m_lettersCount,
+              m_lettersTotalSize);
+      PopSend(cmd, strlen(cmd));
+
+      vector<Mail_Info> mitbl;
+      mailStg->ListMailByDir(m_username.c_str(), mitbl, "INBOX");
+      int vlen = mitbl.size();
+      for (int i = 0; i < vlen; i++) {
+        MailLetter* Letter;
+        string emlfile;
+        mailStg->GetMailIndex(m_mailTbl[i].mid, emlfile);
+
+        Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(),
+                                CMailBase::m_encoding.c_str(), m_memcached,
+                                emlfile.c_str());
+        sprintf(cmd, "%d %u\r\n", i + 1, Letter->GetSize());
+        delete Letter;
+        PopSend(cmd, strlen(cmd));
+      }
+      sprintf(cmd, ".\r\n");
+      PopSend(cmd, strlen(cmd));
+    } else {
+      int index = atoi(strIndex.c_str());
+      if ((m_lettersCount < (unsigned int)index) || (index <= 0)) {
+        sprintf(cmd, "-ERR no such message\r\n");
+      } else {
+        MailLetter* Letter;
+        string emlfile;
+        mailStg->GetMailIndex(m_mailTbl[index - 1].mid, emlfile);
+
+        Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(),
+                                CMailBase::m_encoding.c_str(), m_memcached,
+                                emlfile.c_str());
+        sprintf(cmd, "+OK %d %u\r\n", index, Letter->GetSize());
+        delete Letter;
+      }
+      PopSend(cmd, strlen(cmd));
+    }
+  } else {
+    On_Not_Valid_State_Handler();
+  }
+}
+
+void CMailPop::On_Uidl_Handler(char* text) {
+  if ((m_status & STATUS_AUTHED) == STATUS_AUTHED) {
+    MailStorage* mailStg;
+    StorageEngineInstance stgengine_instance(m_storageEngine, &mailStg);
+    if (!mailStg) {
+      printf("%s::%s Get Storage Engine Failed!\n", __FILE__, __FUNCTION__);
+      return;
+    }
+    char cmd[256];
+    string strIndex;
+    strcut(text, " ", "\r\n", strIndex);
+    strtrim(strIndex);
+    if (strcmp(strIndex.c_str(), "") == 0) {
+      sprintf(cmd, "+OK\r\n");
+      PopSend(cmd, strlen(cmd));
+      vector<Mail_Info> mitbl;
+      mailStg->ListMailByDir(m_username.c_str(), mitbl, "INBOX");
+      int vlen = mitbl.size();
+      for (int i = 0; i < vlen; i++) {
+        sprintf(cmd, "%d %s\r\n", i + 1, mitbl[i].uniqid);
+        PopSend(cmd, strlen(cmd));
+      }
+      sprintf(cmd, ".\r\n");
+      PopSend(cmd, strlen(cmd));
+    } else {
+      int index = atoi(strIndex.c_str());
+      if ((m_lettersCount < (unsigned int)index) || (index <= 0)) {
+        sprintf(cmd, "-ERR no such message\r\n");
+      } else {
+        sprintf(cmd, "+OK %d %s\r\n", index, m_mailTbl[index - 1].uniqid);
+      }
+      PopSend(cmd, strlen(cmd));
+    }
+  } else {
+    On_Not_Valid_State_Handler();
+  }
+}
+
+void CMailPop::On_Rset_Handler(char* text) {
+  char cmd[256];
+  for (int x = 0; x < m_lettersCount; x++) {
+    m_mailTbl[x].reserve = 0;
+  }
+  sprintf(cmd, "+OK Reset all.\r\n");
+  PopSend(cmd, strlen(cmd));
+}
+
+void CMailPop::On_Delete_Handler(char* text) {
+  if ((m_status & STATUS_AUTHED) == STATUS_AUTHED) {
+    char cmd[256];
+
+    string strIndex;
+    strcut(text, " ", "\r\n", strIndex);
+    strtrim(strIndex);
+    int index = atoi(strIndex.c_str());
+    if ((m_lettersCount < (unsigned int)index) || (index <= 0)) {
+      sprintf(cmd, "-ERR no such message\r\n");
+    } else {
+      if (m_mailTbl[index - 1].reserve == 0) {
+        sprintf(cmd, "+OK message %d deleted\r\n", index);
+        m_mailTbl[index - 1].reserve = 1;
+      } else {
+        sprintf(cmd, "-ERR message %d already deleted\r\n", index);
+      }
+    }
+    PopSend(cmd, strlen(cmd));
+  } else {
+    On_Not_Valid_State_Handler();
+  }
+}
+
+void CMailPop::On_Retr_Handler(char* text) {
+  if ((m_status & STATUS_AUTHED) == STATUS_AUTHED) {
+    MailStorage* mailStg;
+    StorageEngineInstance stgengine_instance(m_storageEngine, &mailStg);
+    if (!mailStg) {
+      printf("%s::%s Get Storage Engine Failed!\n", __FILE__, __FUNCTION__);
+      return;
+    }
+    char cmd[256];
+    string strIndex;
+    strcut(text, " ", "\r\n", strIndex);
+    strtrim(strIndex);
+    int index = atoi(strIndex.c_str());
+    if ((m_lettersCount < (unsigned int)index) || (index <= 0)) {
+      sprintf(cmd, "-ERR no such message\r\n");
+      PopSend(cmd, strlen(cmd));
+    } else {
+      MailLetter* Letter;
+
+      string emlfile;
+      mailStg->GetMailIndex(m_mailTbl[index - 1].mid, emlfile);
+
+      Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(),
+                              CMailBase::m_encoding.c_str(), m_memcached,
+                              emlfile.c_str());
+      if (Letter->GetSize() > 0) {
+        sprintf(cmd, "+OK %u byte(s)\r\n", Letter->GetSize());
+        PopSend(cmd, strlen(cmd));
+
+        char read_buf[4096];
+        int read_count = 0;
+        while ((read_count = Letter->Read(read_buf, 4096)) >= 0) {
+          if (read_count > 0) {
+            if (PopSend(read_buf, read_count) < 0)
+              break;
+          }
         }
-        else
-        {
-            push_reject_list(MDA_SERVICE_NAME, m_clientip.c_str());
-            
-            sprintf(cmd,"-ERR Unable to log on.\r\n");
-            PopSend(cmd,strlen(cmd));
-            return FALSE;
+
+        PopSend("\r\n.\r\n", sizeof("\r\n.\r\n") - 1);
+      } else {
+        string badmail = "From: ";
+        badmail += "post_master<post_master@";
+        badmail += CMailBase::m_email_domain;
+        badmail += ">\r\n";
+        badmail +=
+            "Subject: NOTE: Unable to read this destroyed mail\r\n"
+            "Content-Type: text/plain; charset=ISO-8859-1\r\n"
+            "Content-Transfer-Encoding: 7bit\r\n\r\n"
+            "NOTE: This is a mail from ";
+        badmail += CMailBase::m_email_domain;
+        badmail +=
+            ".\r\nThis mail have been destroyed for some reason. Unable to "
+            "read this destroyed mail.";
+
+        sprintf(cmd, "+OK %u byte(s)\r\n", badmail.length());
+        PopSend(cmd, strlen(cmd));
+        PopSend(badmail.c_str(), badmail.length());
+        PopSend("\r\n.\r\n", sizeof("\r\n.\r\n") - 1);
+      }
+
+      delete Letter;
+    }
+  } else {
+    On_Not_Valid_State_Handler();
+  }
+}
+
+void CMailPop::On_Top_Handler(char* text) {
+  if ((m_status & STATUS_AUTHED) == STATUS_AUTHED) {
+    MailStorage* mailStg;
+    StorageEngineInstance stgengine_instance(m_storageEngine, &mailStg);
+    if (!mailStg) {
+      printf("%s::%s Get Storage Engine Failed!\n", __FILE__, __FUNCTION__);
+      return;
+    }
+    char cmd[256];
+    string strtmp;
+    strcut(text, " ", "\r\n", strtmp);
+
+    string strIndex, strLineNum;
+    strcut(strtmp.c_str(), NULL, " ", strIndex);
+    strcut(strtmp.c_str(), " ", NULL, strLineNum);
+    strtrim(strIndex);
+    int index = atoi(strIndex.c_str());
+    int lineNum = atoi(strLineNum.c_str());
+
+    if ((m_lettersCount < (unsigned int)index) || (index <= 0)) {
+      sprintf(cmd, "-ERR no such message\r\n");
+      PopSend(cmd, strlen(cmd));
+    } else {
+      MailLetter* Letter;
+
+      string emlfile;
+      mailStg->GetMailIndex(m_mailTbl[index - 1].mid, emlfile);
+
+      Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(),
+                              CMailBase::m_encoding.c_str(), m_memcached,
+                              emlfile.c_str());
+      sprintf(cmd, "+OK %u byte(s)\r\n", Letter->GetSize());
+
+      PopSend(cmd, strlen(cmd));
+      if (Letter->GetSize() > 0) {
+        for (int i = 0; i < lineNum; i++) {
+          string str_line;
+          if (Letter->Line(str_line) < 0)
+            break;
+          str_line += "\r\n";
+          if (PopSend(str_line.c_str(), str_line.length()) < 0)
+            break;
         }
+      }
+      delete Letter;
+      PopSend("\r\n.\r\n", sizeof("\r\n.\r\n") - 1);
     }
-    else if(m_authType == POP_AUTH_CRAM_MD5)
-	{
-		string strpwd;
-		if(mailStg->GetPassword(m_username.c_str(), strpwd) == 0)
-		{
-			unsigned char digest[16];
-			ietf::HMAC_MD5((unsigned char*)m_strDigest.c_str(), m_strDigest.length(), (unsigned char*)strpwd.c_str(), strpwd.length(), digest);
-			char szMD5dst[33];
-			memset(szMD5dst, 0, 33);
-			sprintf(szMD5dst,
-				"%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
-				digest[0], digest[1], digest[2], digest[3], digest[4], digest[5], digest[6], digest[7],
-				digest[8], digest[9], digest[10], digest[11], digest[12], digest[13], digest[14], digest[15]);
-			
-			if(strcasecmp(szMD5dst, m_strToken.c_str()) == 0)
-			{
-				sprintf(cmd,"+OK Authentication successful.\r\n");
-				PopSend(cmd,strlen(cmd));
-				m_status = m_status|STATUS_AUTHED;
-				return TRUE;
-			}
-			else
-			{
-				push_reject_list(MDA_SERVICE_NAME, m_clientip.c_str());
-				sprintf(cmd,"-ERR Authentication Failed.\r\n");
-				PopSend(cmd,strlen(cmd));
-				return FALSE;
-			}
-		}
-		else
-		{
-			push_reject_list(MDA_SERVICE_NAME, m_clientip.c_str());
-			sprintf(cmd,"-ERR Authentication Failed.\r\n");
-			PopSend(cmd,strlen(cmd));
-			return FALSE;
-		}
-	}
-	else if(m_authType == POP_AUTH_DIGEST_MD5)
-	{
-		if(m_strToken == m_strTokenVerify)
-		{
-			sprintf(cmd,"+OK Authentication successful.\r\n");
-			PopSend(cmd,strlen(cmd));
-			m_status = m_status|STATUS_AUTHED;
-			return TRUE;
-		}
-		else
-		{
-			push_reject_list(MDA_SERVICE_NAME, m_clientip.c_str());
-			char cmd[128];
-			sprintf(cmd,"-ERR Authentication Failed.\r\n");
-			PopSend(cmd,strlen(cmd));
-			return FALSE;
-		}
-	}
-	else
-	{
-		push_reject_list(MDA_SERVICE_NAME, m_clientip.c_str());
-		return FALSE;
-	}
-
+  } else {
+    On_Not_Valid_State_Handler();
+  }
 }
 
-void CMailPop::On_List_Handler(char* text)
-{
-	
-	if((m_status&STATUS_AUTHED) == STATUS_AUTHED)
-	{
-		MailStorage* mailStg;
-		StorageEngineInstance stgengine_instance(m_storageEngine, &mailStg);
-		if(!mailStg)
-		{
-			printf("%s::%s Get Storage Engine Failed!\n", __FILE__, __FUNCTION__);
-			return;
-		}
-		char cmd[256];
-		string strIndex;
-		strcut(text, " ", "\r\n", strIndex);
-        strtrim(strIndex);
-		if(strcmp(strIndex.c_str(),"") == 0)
-		{
-			sprintf(cmd,"+OK %u message<s> [%u byte(s)]\r\n",m_lettersCount,m_lettersTotalSize);
-			PopSend(cmd,strlen(cmd));
-
-			vector<Mail_Info> mitbl;
-			mailStg->ListMailByDir(m_username.c_str(), mitbl, "INBOX");
-			int vlen = mitbl.size();
-			for(int i = 0; i < vlen; i++)
-			{
-				MailLetter* Letter;
-				string emlfile;
-				mailStg->GetMailIndex(m_mailTbl[i].mid, emlfile);
-			
-				Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
-				sprintf(cmd, "%d %u\r\n", i + 1, Letter->GetSize());
-				delete Letter;
-				PopSend(cmd,strlen(cmd));
-			}
-			sprintf(cmd, ".\r\n");
-			PopSend(cmd,strlen(cmd));
-		}
-		else
-		{
-			int index = atoi(strIndex.c_str());
-			if((m_lettersCount < (unsigned int)index)||(index <= 0))
-			{
-				sprintf(cmd,"-ERR no such message\r\n");
-			}
-			else
-			{
-				MailLetter* Letter;
-				string emlfile;
-				mailStg->GetMailIndex(m_mailTbl[index - 1].mid, emlfile);
-			
-				Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
-				sprintf(cmd,"+OK %d %u\r\n",index, Letter->GetSize());
-				delete Letter;
-			}
-			PopSend(cmd,strlen(cmd));
-		}
-	}
-	else
-	{
-		On_Not_Valid_State_Handler();
-	}
+void CMailPop::On_Quit_Handler() {
+  MailStorage* mailStg;
+  StorageEngineInstance stgengine_instance(m_storageEngine, &mailStg);
+  if (!mailStg) {
+    printf("%s::%s Get Storage Engine Failed!\n", __FILE__, __FUNCTION__);
+    return;
+  }
+  for (unsigned int i = 0; i < m_lettersCount; i++) {
+    if (m_mailTbl[i].reserve == 1) {
+      mailStg->DelMail(m_username.c_str(), m_mailTbl[i].mid);
+    }
+  }
+  char cmd[256];
+  sprintf(cmd, "+OK eRiseMail Server POP3 server.\r\n");
+  PopSend(cmd, strlen(cmd));
 }
 
-void CMailPop::On_Uidl_Handler(char* text)
-{
-	
-	if((m_status&STATUS_AUTHED) == STATUS_AUTHED)
-	{
-		MailStorage* mailStg;
-		StorageEngineInstance stgengine_instance(m_storageEngine, &mailStg);
-		if(!mailStg)
-		{
-			printf("%s::%s Get Storage Engine Failed!\n", __FILE__, __FUNCTION__);
-			return;
-		}
-		char cmd[256];
-		string strIndex;
-		strcut(text, " ", "\r\n", strIndex);
-        strtrim(strIndex);
-		if(strcmp(strIndex.c_str(),"") == 0)
-		{
-			sprintf(cmd, "+OK\r\n");
-			PopSend(cmd,strlen(cmd));
-			vector<Mail_Info> mitbl;
-			mailStg->ListMailByDir(m_username.c_str(), mitbl, "INBOX");
-			int vlen = mitbl.size();
-			for(int i = 0; i < vlen; i++)
-			{
-				sprintf(cmd, "%d %s\r\n", i + 1, mitbl[i].uniqid);
-				PopSend(cmd,strlen(cmd));
-			}
-			sprintf(cmd, ".\r\n");
-			PopSend(cmd,strlen(cmd));
-		}
-		else
-		{
-			int index = atoi(strIndex.c_str());
-			if((m_lettersCount < (unsigned int)index)||(index <= 0))
-			{
-				sprintf(cmd,"-ERR no such message\r\n");
-			}
-			else
-			{
-				
-				sprintf(cmd,"+OK %d %s\r\n",index, m_mailTbl[index-1].uniqid);
-			}
-			PopSend(cmd,strlen(cmd));
-		}
-	}
-	else
-	{
-		On_Not_Valid_State_Handler();
-	}
+void CMailPop::On_STLS_Handler() {
+  char cmd[256];
+  if (!m_enablepop3tls) {
+    sprintf(cmd, "-ERR TLS si disabled\r\n");
+    PopSend(cmd, strlen(cmd));
+    return;
+  }
+  if (m_bSTARTTLS == TRUE) {
+    sprintf(cmd, "-ERR Command not permitted when TLS active\r\n");
+    PopSend(cmd, strlen(cmd));
+    return;
+  } else {
+    sprintf(cmd, "+OK Begin TLS negotiation\r\n");
+    PopSend(cmd, strlen(cmd));
+  }
+
+  if (!create_ssl(m_sockfd, m_ca_crt_root.c_str(), m_ca_crt_server.c_str(),
+                  m_ca_password.c_str(), m_ca_key_server.c_str(),
+                  m_ca_verify_client, &m_ssl, &m_ssl_ctx,
+                  CMailBase::m_connection_idle_timeout)) {
+    throw new string(ERR_error_string(ERR_get_error(), NULL));
+  }
+
+  m_lssl = new linessl(m_sockfd, m_ssl);
+  m_bSTARTTLS = TRUE;
 }
 
-void CMailPop::On_Rset_Handler(char* text)
-{
-	char cmd[256];
-	for(int x =0; x< m_lettersCount; x++)
-	{
-		m_mailTbl[x].reserve = 0;
-	}
-	sprintf(cmd,"+OK Reset all.\r\n");
-	PopSend(cmd,strlen(cmd));
-}
+void CMailPop::On_Auth_Handler(char* text) {
+  char cmd[256];
+  if (strncasecmp(&text[5], "PLAIN", 5) == 0) {
+    m_authType = POP_AUTH_PLAIN;
+    string strEnoded;
+    strcut(&text[11], NULL, "\r\n", strEnoded);
+    int outlen = BASE64_DECODE_OUTPUT_MAX_LEN(
+        strEnoded.length());  // strEnoded.length()*4+1;
+    char* tmp1 = (char*)malloc(outlen);
+    memset(tmp1, 0, outlen);
 
-void CMailPop::On_Delete_Handler(char* text)
-{
-	if((m_status&STATUS_AUTHED) == STATUS_AUTHED)
-	{
-		char cmd[256];
-		
-		string strIndex;
-		strcut(text, " ", "\r\n", strIndex);
-        strtrim(strIndex);
-		int index = atoi(strIndex.c_str());
-		if((m_lettersCount < (unsigned int)index)||(index <= 0))
-		{
-			sprintf(cmd,"-ERR no such message\r\n");
-		}
-		else
-		{
-			if(m_mailTbl[index-1].reserve == 0)
-			{
-				sprintf(cmd,"+OK message %d deleted\r\n",index);
-				m_mailTbl[index-1].reserve = 1;
-			}
-			else
-			{
-				sprintf(cmd,"-ERR message %d already deleted\r\n",index);
-			}
-		}
-		PopSend(cmd,strlen(cmd));
-	}
-	else
-	{
-		On_Not_Valid_State_Handler();
-	}
-}
-
-void CMailPop::On_Retr_Handler(char* text)
-{
-	
-	if((m_status&STATUS_AUTHED) == STATUS_AUTHED)
-	{
-		MailStorage* mailStg;
-		StorageEngineInstance stgengine_instance(m_storageEngine, &mailStg);
-		if(!mailStg)
-		{
-			printf("%s::%s Get Storage Engine Failed!\n", __FILE__, __FUNCTION__);
-			return;
-		}
-		char cmd[256];
-		string strIndex;
-		strcut(text, " ", "\r\n", strIndex);
-        strtrim(strIndex);
-		int index = atoi(strIndex.c_str());
-		if((m_lettersCount < (unsigned int)index)||(index <=0))
-		{
-			sprintf(cmd,"-ERR no such message\r\n");
-			PopSend(cmd,strlen(cmd));
-		}
-		else
-		{
-			MailLetter* Letter;
-			
-			string emlfile;
-			mailStg->GetMailIndex(m_mailTbl[index - 1].mid, emlfile);
-				
-			Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
-			if(Letter->GetSize() > 0)
-			{
-				sprintf(cmd,"+OK %u byte(s)\r\n",Letter->GetSize());
-				PopSend(cmd,strlen(cmd));
-				
-                char read_buf[4096];
-                int read_count = 0;
-                while((read_count = Letter->Read(read_buf, 4096)) >= 0)
-                {
-                    if(read_count > 0)
-                    {
-                        if(PopSend(read_buf, read_count) < 0)
-							break;
-                    }
-                }
-                
-				PopSend("\r\n.\r\n", sizeof("\r\n.\r\n") - 1);
-			}
-			else
-			{		
-				string badmail = "From: ";
-				badmail += "post_master<post_master@";
-				badmail += CMailBase::m_email_domain;
-				badmail += ">\r\n";
-				badmail += "Subject: NOTE: Unable to read this destroyed mail\r\n"
-					"Content-Type: text/plain; charset=ISO-8859-1\r\n"
-					"Content-Transfer-Encoding: 7bit\r\n\r\n"
-					"NOTE: This is a mail from ";
-				badmail += CMailBase::m_email_domain;
-				badmail += ".\r\nThis mail have been destroyed for some reason. Unable to read this destroyed mail.";
-
-				sprintf(cmd, "+OK %u byte(s)\r\n",badmail.length());
-				PopSend(cmd, strlen(cmd));
-				PopSend(badmail.c_str(), badmail.length());
-				PopSend("\r\n.\r\n", sizeof("\r\n.\r\n") - 1);
-			}
-			
-			delete Letter;
-						
-		}
-	}
-	else
-	{
-		On_Not_Valid_State_Handler();
-	}
-}
-
-void CMailPop::On_Top_Handler(char* text)
-{	
-	if((m_status&STATUS_AUTHED) == STATUS_AUTHED)
-	{
-		MailStorage* mailStg;
-		StorageEngineInstance stgengine_instance(m_storageEngine, &mailStg);
-		if(!mailStg)
-		{
-			printf("%s::%s Get Storage Engine Failed!\n", __FILE__, __FUNCTION__);
-			return;
-		}
-		char cmd[256];
-		string strtmp;
-		strcut(text, " ", "\r\n", strtmp);
-		
-		string strIndex, strLineNum;
-		strcut(strtmp.c_str(), NULL, " ", strIndex);
-		strcut(strtmp.c_str(), " ", NULL, strLineNum);
-		strtrim(strIndex);
-		int index = atoi(strIndex.c_str());
-		int lineNum = atoi(strLineNum.c_str());
-		
-		if((m_lettersCount < (unsigned int)index)||(index <=0))
-		{
-			sprintf(cmd,"-ERR no such message\r\n");
-			PopSend(cmd,strlen(cmd));
-		}
-		else
-		{
-			MailLetter* Letter;
-
-			string emlfile;
-			mailStg->GetMailIndex(m_mailTbl[index - 1].mid, emlfile);
-			
-			Letter = new MailLetter(mailStg, CMailBase::m_private_path.c_str(), CMailBase::m_encoding.c_str(), m_memcached, emlfile.c_str());
-			sprintf(cmd,"+OK %u byte(s)\r\n",Letter->GetSize());
-			
-			PopSend(cmd,strlen(cmd));
-			if(Letter->GetSize() > 0)
-			{
-				for(int i = 0; i < lineNum; i++)
-				{
-                    string str_line;
-                    if(Letter->Line(str_line) < 0)
-                        break;
-                    str_line += "\r\n";
-                    if(PopSend(str_line.c_str(), str_line.length()) < 0)
-						break;
-				}
-			}
-			delete Letter;
-			PopSend("\r\n.\r\n", sizeof("\r\n.\r\n") - 1);
-		}
-	}
-	else
-	{
-		On_Not_Valid_State_Handler();
-	}
-}
-
-void CMailPop::On_Quit_Handler()
-{
-
-	MailStorage* mailStg;
-	StorageEngineInstance stgengine_instance(m_storageEngine, &mailStg);
-	if(!mailStg)
-	{
-		printf("%s::%s Get Storage Engine Failed!\n", __FILE__, __FUNCTION__);
-		return;
-	}
-	for(unsigned int i = 0; i < m_lettersCount; i++)
-	{
-		if(m_mailTbl[i].reserve == 1)
-		{
-			mailStg->DelMail(m_username.c_str(), m_mailTbl[i].mid);
-		}
-	}
-	char cmd[256];
-	sprintf(cmd,"+OK eRiseMail Server POP3 server.\r\n");
-	PopSend(cmd,strlen(cmd));
-}
-
-void CMailPop::On_STLS_Handler()
-{
-	char cmd[256];
-	if(!m_enablepop3tls)
-	{
-		sprintf(cmd,"-ERR TLS si disabled\r\n");
-		PopSend(cmd,strlen(cmd));
-		return;
-	}
-	if(m_bSTARTTLS == TRUE)
-	{
-		sprintf(cmd,"-ERR Command not permitted when TLS active\r\n");
-		PopSend(cmd,strlen(cmd));
-		return;
-	}
-	else
-	{
-		sprintf(cmd,"+OK Begin TLS negotiation\r\n");
-		PopSend(cmd,strlen(cmd));
-	}   
-	
-	if(!create_ssl(m_sockfd, m_ca_crt_root.c_str(), m_ca_crt_server.c_str(), m_ca_password.c_str(), m_ca_key_server.c_str(),
-        m_ca_verify_client, &m_ssl, &m_ssl_ctx, CMailBase::m_connection_idle_timeout))
-    {
-        throw new string(ERR_error_string(ERR_get_error(), NULL));
+    CBase64::Decode((char*)strEnoded.c_str(), strEnoded.length(), tmp1,
+                    &outlen);
+    char tmp2[65], tmp3[65];
+    memset(tmp2, 0, 65);
+    memset(tmp3, 0, 65);
+    int x = 0, y = 0;
+    for (x = 1; x < (outlen < 65 ? outlen : 65); x++) {
+      if (tmp1[x] == '\0') {
+        break;
+      } else {
+        tmp2[y] = tmp1[x];
+        y++;
+      }
+    }
+    y = 0;
+    for (x = x + 1; x < (outlen < 130 ? outlen : 130); x++) {
+      if (tmp1[x] == '\0') {
+        break;
+      } else {
+        tmp3[y] = tmp1[x];
+        y++;
+      }
     }
 
-	m_lssl = new linessl(m_sockfd, m_ssl);
-    m_bSTARTTLS = TRUE;
-}
+    m_username = tmp2;
+    m_password = tmp3;
+    free(tmp1);
 
-void CMailPop::On_Auth_Handler(char* text)
-{	
-	char cmd[256];
-	if(strncasecmp(&text[5],"PLAIN",5) == 0)
-	{
-		m_authType = POP_AUTH_PLAIN;
-		string strEnoded;
-		strcut(&text[11], NULL, "\r\n",strEnoded);	
-		int outlen = BASE64_DECODE_OUTPUT_MAX_LEN(strEnoded.length());//strEnoded.length()*4+1;
-		char* tmp1 = (char*)malloc(outlen);
-		memset(tmp1, 0, outlen);
-		
-		CBase64::Decode((char*)strEnoded.c_str(), strEnoded.length(), tmp1, &outlen);
-		char tmp2[65], tmp3[65];
-		memset(tmp2, 0, 65);
-		memset(tmp3, 0, 65);
-		int x = 0, y = 0;
-		for(x = 1; x < (outlen < 65 ? outlen : 65); x++)
-		{
-			if(tmp1[x] == '\0')
-			{
-				break;
-			}
-			else
-			{
-				tmp2[y] = tmp1[x];
-				y++;
-			}
-		}
-		y = 0;
-		for(x = x + 1; x < (outlen < 130 ? outlen : 130); x++)
-		{
-			if(tmp1[x] == '\0')
-			{
-				break;
-			}
-			else
-			{
-				tmp3[y] = tmp1[x];
-				y++;
-			}
-		}
-		
-		m_username = tmp2;
-		m_password = tmp3;
-		free(tmp1);
+    MailStorage* mailStg;
+    StorageEngineInstance stgengine_instance(m_storageEngine, &mailStg);
+    if (!mailStg) {
+      printf("%s::%s Get Storage Engine Failed!\n", __FILE__, __FUNCTION__);
+      return;
+    }
 
-		MailStorage* mailStg;
-		StorageEngineInstance stgengine_instance(m_storageEngine, &mailStg);
-		if(!mailStg)
-		{
-			printf("%s::%s Get Storage Engine Failed!\n", __FILE__, __FUNCTION__);
-			return;
-		}
-		
-		if(mailStg->CheckLogin((char*)m_username.c_str(), (char*)m_password.c_str())== 0)
-		{
-			m_status = m_status|STATUS_AUTHED;
-			sprintf(cmd, "+OK Authentication successful\r\n");
-		}
-		else
-		{
-			push_reject_list(MDA_SERVICE_NAME, m_clientip.c_str());
-			sprintf(cmd, "-ERR Error: authentication failed\r\n");
-		}
-		
-		PopSend(cmd,strlen(cmd));
-	}
-	else if(strncasecmp(&text[5],"DIGEST-MD5", 10) == 0)
-	{
-		m_authType = POP_AUTH_DIGEST_MD5;
-		
-		string strChallenge;
-		char cmd[512];
-		char nonce[15];
-		
-		sprintf(nonce, "%c%c%c%08x%c%c%c",
-			CHAR_TBL[random()%(sizeof(CHAR_TBL)-1)],
-			CHAR_TBL[random()%(sizeof(CHAR_TBL)-1)],
-			CHAR_TBL[random()%(sizeof(CHAR_TBL)-1)],
-			(unsigned int)time(NULL),
-			CHAR_TBL[random()%(sizeof(CHAR_TBL)-1)],
-			CHAR_TBL[random()%(sizeof(CHAR_TBL)-1)],
-			CHAR_TBL[random()%(sizeof(CHAR_TBL)-1)]);
-		sprintf(cmd, "realm=\"%s\",nonce=\"%s\",qop=\"auth\",charset=utf-8,algorithm=md5-sess\n", m_localhostname.c_str(), nonce);
-		int outlen  = BASE64_ENCODE_OUTPUT_MAX_LEN(strlen(cmd));//strlen(cmd) *4 + 1;
-		char* szEncoded = (char*)malloc(outlen);
-		memset(szEncoded, 0, outlen);
-		CBase64::Encode(cmd, strlen(cmd), szEncoded, &outlen);
-		sprintf(cmd, "+OK ");
-		PopSend(cmd,strlen(cmd));
-		PopSend(szEncoded, outlen);
-		PopSend((char*)"\r\n", 2);
+    if (mailStg->CheckLogin((char*)m_username.c_str(),
+                            (char*)m_password.c_str()) == 0) {
+      m_status = m_status | STATUS_AUTHED;
+      sprintf(cmd, "+OK Authentication successful\r\n");
+    } else {
+      push_reject_list(MDA_SERVICE_NAME, m_clientip.c_str());
+      sprintf(cmd, "-ERR Error: authentication failed\r\n");
+    }
 
-		free(szEncoded);
-		m_status = m_status|STATUS_AUTH_STEP1;
+    PopSend(cmd, strlen(cmd));
+  } else if (strncasecmp(&text[5], "DIGEST-MD5", 10) == 0) {
+    m_authType = POP_AUTH_DIGEST_MD5;
 
-	}
-	else if(strncasecmp(&text[5],"CRAM-MD5", 8) == 0)
-	{
-		m_authType = POP_AUTH_CRAM_MD5;
-		
-		char cmd[512];
-		
-		sprintf(cmd,"<%u%u.%u@%s>", random()%10000, getpid(), (unsigned int)time(NULL), m_localhostname.c_str());
-		m_strDigest = cmd;
-		int outlen  = BASE64_ENCODE_OUTPUT_MAX_LEN(strlen(cmd));//strlen(cmd) *4 + 1;
-		char* szEncoded = (char*)malloc(outlen);
-		memset(szEncoded, 0, outlen);
-		CBase64::Encode(cmd, strlen(cmd), szEncoded, &outlen);
-		
-		sprintf(cmd, "+OK %s\r\n", szEncoded);
-		free(szEncoded);
-		
-		PopSend(cmd,strlen(cmd));
-		m_status = m_status|STATUS_AUTH_STEP2;
-	}
-    else if(strncasecmp(&text[5],"EXTERNAL", 8) == 0)
-    {
-        if(m_ssl)
-        {
-            m_authType = POP_AUTH_EXTERNAL;
-            
-            string strEncodedUsername;
-            strcut(&text[14], NULL, "\r\n",strEncodedUsername);	
-            
-            if(strEncodedUsername == "")
-            {
-                sprintf(cmd,"-ERR User Logged Failed\r\n");
-                PopSend(cmd, strlen(cmd));
-                return;
-            }
-            
-            string strMailAddr = "";
-            string strAuthName = "";
-            
-            if(strEncodedUsername != "=")
-            {
-                int len_encode = BASE64_DECODE_OUTPUT_MAX_LEN(strEncodedUsername.length());
-                char* tmp_decode = (char*)malloc(len_encode + 1);
-                memset(tmp_decode, 0, len_encode + 1);
-                
-                int outlen_decode = len_encode;
-                CBase64::Decode((char*)strEncodedUsername.c_str(), strEncodedUsername.length(), tmp_decode, &outlen_decode);
-                
-                strAuthName = tmp_decode;
-                
-                free(tmp_decode);
-                
-                strMailAddr = strAuthName;
-                strMailAddr += "@";
-                strMailAddr += CMailBase::m_email_domain;
-                
-                printf("[%s]\n", strMailAddr.c_str());
-            }
-        
-            X509* client_cert;
-            client_cert = SSL_get_peer_certificate(m_ssl);
-            if (client_cert != NULL)
-            {
-                X509_NAME * owner = X509_get_subject_name(client_cert);
-                const char * owner_buf = X509_NAME_oneline(owner, 0, 0);
-                if(strMailAddr == "" && X509_NAME_entry_count(owner) != 1)
-                    {
-                        X509_free (client_cert);
-                        sprintf(cmd,"-ERR User Logged Failed\r\n");
-                        PopSend(cmd, strlen(cmd));
-                        return;
-                    }
-                const char* commonName;
-                
-                BOOL bFound = FALSE;
-                int lastpos = -1;
-                X509_NAME_ENTRY *e;
-                for (;;)
-                {
-                    lastpos = X509_NAME_get_index_by_NID(owner, NID_commonName, lastpos);
-                    if (lastpos == -1)
-                        break;
-                    e = X509_NAME_get_entry(owner, lastpos);
-                    if(!e)
-                        break;
-                    ASN1_STRING *d = X509_NAME_ENTRY_get_data(e);
-                    const char *commonName = (const char*)ASN1_STRING_get0_data(d);
-                    
-                    if(strMailAddr == "")
-                    {
-                        if(strstr(commonName, "@") != NULL)
-                            strcut(commonName, NULL, "@", strAuthName);
-                        else
-                            strAuthName = commonName;
-                        bFound = TRUE;
-                        break;
-                    }
-                    else
-                    {
-                        
-                        if(strcasecmp(commonName, strMailAddr.c_str()) == 0 || strmatch(commonName, strMailAddr.c_str()))
-                        {
-                            
-                            bFound = TRUE;
-                            break;
-                        }
-                    }
-                }
-    
-                
-                X509_free (client_cert);
-                
-                if(bFound)
-                {
-                    m_username = strAuthName;
-                    
-                    sprintf(cmd,"+OK EXTERNAL authentication successful\r\n");
-                    PopSend(cmd, strlen(cmd));
-                    m_status = m_status|STATUS_AUTHED;
-                }
-                else
-                {
-                    sprintf(cmd,"-ERR User Logged Failed\r\n");
-                    PopSend(cmd, strlen(cmd));
-             
-                }
-            }
+    string strChallenge;
+    char cmd[512];
+    char nonce[15];
+
+    sprintf(
+        nonce, "%c%c%c%08x%c%c%c", CHAR_TBL[random() % (sizeof(CHAR_TBL) - 1)],
+        CHAR_TBL[random() % (sizeof(CHAR_TBL) - 1)],
+        CHAR_TBL[random() % (sizeof(CHAR_TBL) - 1)], (unsigned int)time(NULL),
+        CHAR_TBL[random() % (sizeof(CHAR_TBL) - 1)],
+        CHAR_TBL[random() % (sizeof(CHAR_TBL) - 1)],
+        CHAR_TBL[random() % (sizeof(CHAR_TBL) - 1)]);
+    sprintf(cmd,
+            "realm=\"%s\",nonce=\"%s\",qop=\"auth\",charset=utf-8,algorithm="
+            "md5-sess\n",
+            m_localhostname.c_str(), nonce);
+    int outlen =
+        BASE64_ENCODE_OUTPUT_MAX_LEN(strlen(cmd));  // strlen(cmd) *4 + 1;
+    char* szEncoded = (char*)malloc(outlen);
+    memset(szEncoded, 0, outlen);
+    CBase64::Encode(cmd, strlen(cmd), szEncoded, &outlen);
+    sprintf(cmd, "+OK ");
+    PopSend(cmd, strlen(cmd));
+    PopSend(szEncoded, outlen);
+    PopSend((char*)"\r\n", 2);
+
+    free(szEncoded);
+    m_status = m_status | STATUS_AUTH_STEP1;
+
+  } else if (strncasecmp(&text[5], "CRAM-MD5", 8) == 0) {
+    m_authType = POP_AUTH_CRAM_MD5;
+
+    char cmd[512];
+
+    sprintf(cmd, "<%u%u.%u@%s>", random() % 10000, getpid(),
+            (unsigned int)time(NULL), m_localhostname.c_str());
+    m_strDigest = cmd;
+    int outlen =
+        BASE64_ENCODE_OUTPUT_MAX_LEN(strlen(cmd));  // strlen(cmd) *4 + 1;
+    char* szEncoded = (char*)malloc(outlen);
+    memset(szEncoded, 0, outlen);
+    CBase64::Encode(cmd, strlen(cmd), szEncoded, &outlen);
+
+    sprintf(cmd, "+OK %s\r\n", szEncoded);
+    free(szEncoded);
+
+    PopSend(cmd, strlen(cmd));
+    m_status = m_status | STATUS_AUTH_STEP2;
+  } else if (strncasecmp(&text[5], "EXTERNAL", 8) == 0) {
+    if (m_ssl) {
+      m_authType = POP_AUTH_EXTERNAL;
+
+      string strEncodedUsername;
+      strcut(&text[14], NULL, "\r\n", strEncodedUsername);
+
+      if (strEncodedUsername == "") {
+        sprintf(cmd, "-ERR User Logged Failed\r\n");
+        PopSend(cmd, strlen(cmd));
+        return;
+      }
+
+      string strMailAddr = "";
+      string strAuthName = "";
+
+      if (strEncodedUsername != "=") {
+        int len_encode =
+            BASE64_DECODE_OUTPUT_MAX_LEN(strEncodedUsername.length());
+        char* tmp_decode = (char*)malloc(len_encode + 1);
+        memset(tmp_decode, 0, len_encode + 1);
+
+        int outlen_decode = len_encode;
+        CBase64::Decode((char*)strEncodedUsername.c_str(),
+                        strEncodedUsername.length(), tmp_decode,
+                        &outlen_decode);
+
+        strAuthName = tmp_decode;
+
+        free(tmp_decode);
+
+        strMailAddr = strAuthName;
+        strMailAddr += "@";
+        strMailAddr += CMailBase::m_email_domain;
+
+        printf("[%s]\n", strMailAddr.c_str());
+      }
+
+      X509* client_cert;
+      client_cert = SSL_get_peer_certificate(m_ssl);
+      if (client_cert != NULL) {
+        X509_NAME* owner = X509_get_subject_name(client_cert);
+        const char* owner_buf = X509_NAME_oneline(owner, 0, 0);
+        if (strMailAddr == "" && X509_NAME_entry_count(owner) != 1) {
+          X509_free(client_cert);
+          sprintf(cmd, "-ERR User Logged Failed\r\n");
+          PopSend(cmd, strlen(cmd));
+          return;
+        }
+        const char* commonName;
+
+        BOOL bFound = FALSE;
+        int lastpos = -1;
+        X509_NAME_ENTRY* e;
+        for (;;) {
+          lastpos = X509_NAME_get_index_by_NID(owner, NID_commonName, lastpos);
+          if (lastpos == -1)
+            break;
+          e = X509_NAME_get_entry(owner, lastpos);
+          if (!e)
+            break;
+          ASN1_STRING* d = X509_NAME_ENTRY_get_data(e);
+          const char* commonName = (const char*)ASN1_STRING_get0_data(d);
+
+          if (strMailAddr == "") {
+            if (strstr(commonName, "@") != NULL)
+              strcut(commonName, NULL, "@", strAuthName);
             else
-            {
-                sprintf(cmd,"-ERR User Logged Failed\r\n");
-                PopSend(cmd, strlen(cmd));
+              strAuthName = commonName;
+            bFound = TRUE;
+            break;
+          } else {
+            if (strcasecmp(commonName, strMailAddr.c_str()) == 0 ||
+                strmatch(commonName, strMailAddr.c_str())) {
+              bFound = TRUE;
+              break;
             }
+          }
         }
-        else
-        {
-            sprintf(cmd,"-ERR User Logged Failed\r\n");
-            PopSend(cmd, strlen(cmd));
+
+        X509_free(client_cert);
+
+        if (bFound) {
+          m_username = strAuthName;
+
+          sprintf(cmd, "+OK EXTERNAL authentication successful\r\n");
+          PopSend(cmd, strlen(cmd));
+          m_status = m_status | STATUS_AUTHED;
+        } else {
+          sprintf(cmd, "-ERR User Logged Failed\r\n");
+          PopSend(cmd, strlen(cmd));
         }
+      } else {
+        sprintf(cmd, "-ERR User Logged Failed\r\n");
+        PopSend(cmd, strlen(cmd));
+      }
+    } else {
+      sprintf(cmd, "-ERR User Logged Failed\r\n");
+      PopSend(cmd, strlen(cmd));
     }
-#ifdef _WITH_GSSAPI_ 
-    else if(strncasecmp(&text[5],"GSSAPI", 6) == 0)
-    {
-        m_authType = POP_AUTH_GSSAPI;
-        PopSend("+OK\r\n", sizeof("+OK\r\n") - 1);
-        
-        OM_uint32 maj_stat, min_stat;
-        
-        gss_cred_id_t server_creds = GSS_C_NO_CREDENTIAL;
-        
-        gss_name_t server_name = GSS_C_NO_NAME;
-              
-        gss_buffer_desc buf_desc;
-        string str_buf_desc = CMailBase::m_krb5_pop3_service_name;
-        str_buf_desc += "@";
-        str_buf_desc += CMailBase::m_krb5_hostname.c_str();
-        
-        buf_desc.length = str_buf_desc.length() + 1;
-        buf_desc.value =  malloc(buf_desc.length);
-        strcpy((char*)buf_desc.value, str_buf_desc.c_str());
-  
-        maj_stat = gss_import_name (&min_stat, &buf_desc,
-			      GSS_C_NT_HOSTBASED_SERVICE, &server_name);
-        if (GSS_ERROR (maj_stat))
-        {
-            display_status ("gss_import_name", maj_stat, min_stat);
-            sprintf(cmd,"-ERR User Logged Failed\r\n");
-			PopSend(cmd, strlen(cmd));
-            return;
-        }
-        free(buf_desc.value);
-        
-        gss_OID_set oid_set = GSS_C_NO_OID_SET;
-        maj_stat = gss_acquire_cred (&min_stat, server_name, GSS_C_INDEFINITE,
-			       oid_set, GSS_C_ACCEPT,
-			       &server_creds, NULL, NULL);
-        if (GSS_ERROR (maj_stat))
-        {
-            display_status ("gss_acquire_cred", maj_stat, min_stat);
-            maj_stat = gss_release_oid_set(&min_stat, &oid_set);
-            sprintf(cmd,"-ERR User Logged Failed\r\n");
-			PopSend(cmd, strlen(cmd));
-            return;
-        }
-        gss_release_name (&min_stat, &server_name);
-        
-        maj_stat = gss_release_oid_set(&min_stat, &oid_set);
-        
-        if (GSS_ERROR (maj_stat))
-        {
-            display_status ("gss_release_oid_set", maj_stat, min_stat);
-            sprintf(cmd,"-ERR User Logged Failed\r\n");
-			PopSend(cmd, strlen(cmd));
-            return;
-        }
-        
-        gss_ctx_id_t context_hdl = GSS_C_NO_CONTEXT;
-        gss_name_t client_name = GSS_C_NO_NAME;
-        gss_OID mech_type;
-        gss_buffer_desc input_token = GSS_C_EMPTY_BUFFER;
-        gss_buffer_desc output_token = GSS_C_EMPTY_BUFFER;
-        OM_uint32 ret_flags;
-        OM_uint32 time_rec;
-        gss_cred_id_t delegated_cred_handle;
-        do {
-            string str_line = "";
-            char recv_buf[4096];
-            while(str_line.find("\n") == std::string::npos)
-            {
-                int result = ProtRecv(recv_buf, 4095);
-                if(result <= 0)
-                    return;
-                recv_buf[result] = '\0';
-                str_line += recv_buf;
-            }
-            strtrim(str_line);
-            
-            int len_encode = BASE64_DECODE_OUTPUT_MAX_LEN(str_line.length());
-            char* tmp_decode = (char*)malloc(len_encode);
-            memset(tmp_decode, 0, len_encode);
-            
-            int outlen_decode = len_encode;
-            CBase64::Decode((char*)str_line.c_str(), str_line.length(), tmp_decode, &outlen_decode);
-            input_token.length = outlen_decode;
-            input_token.value = tmp_decode;
-            
-            maj_stat = gss_accept_sec_context(&min_stat,
-                                            &context_hdl,
-                                            server_creds,
-                                            &input_token,
-                                            GSS_C_NO_CHANNEL_BINDINGS,
-                                            &client_name,
-                                            &mech_type,
-                                            &output_token,
-                                            &ret_flags,
-                                            &time_rec,
-                                            &delegated_cred_handle);
-            free(tmp_decode);
-            
-            if (GSS_ERROR(maj_stat))
-            {
-                display_status ("gss_accept_sec_context", maj_stat, min_stat);
-                
-                sprintf(cmd,"-ERR User Logged Failed\r\n");
-                PopSend(cmd, strlen(cmd));
-                return;
-            }
-                  
-            if (output_token.length != 0)
-            {
-                int len_decode = BASE64_ENCODE_OUTPUT_MAX_LEN(output_token.length + 2);
-                char* tmp_encode = (char*)malloc(len_decode + 2);
-                memset(tmp_encode, 0, len_decode);
-                tmp_encode[0] = '+';
-                tmp_encode[1] = ' ';
-                int outlen_encode = len_decode;
-                CBase64::Encode((char*)output_token.value, output_token.length, tmp_encode + 2, &outlen_encode);
-        
-                PopSend(tmp_encode, outlen_encode + 2);
-                PopSend("\r\n", 2);
-                gss_release_buffer(&min_stat, &output_token);
-                free(tmp_encode);
-            }
-            
-            if(maj_stat != GSS_S_COMPLETE)
-            {
-                if (context_hdl != GSS_C_NO_CONTEXT)
-                    gss_delete_sec_context(&min_stat, &context_hdl, GSS_C_NO_BUFFER);
-            }
-        } while (maj_stat & GSS_S_CONTINUE_NEEDED);
-        string str_line = "";
-        char recv_buf[4096];
-        while(str_line.find("\n") == std::string::npos)
-        {
-            int result = ProtRecv(recv_buf, 4095);
-            if(result <= 0)
-                return;
-            recv_buf[result] = '\0';
-            str_line += recv_buf;
-        }
-        
-        char sec_data[4];
-        sec_data[0] = GSS_SEC_LAYER_NONE; //No security layer
-        sec_data[1] = 0;
-        sec_data[2] = 0;
-        sec_data[3] = 0;
-        gss_buffer_desc input_message_buffer1 = GSS_C_EMPTY_BUFFER, output_message_buffer1 = GSS_C_EMPTY_BUFFER;
-        input_message_buffer1.length = 4;
-        input_message_buffer1.value = sec_data;
-        int conf_state;
-        maj_stat = gss_wrap (&min_stat, context_hdl, 0, GSS_C_QOP_DEFAULT, &input_message_buffer1, &conf_state, &output_message_buffer1);
-        if (GSS_ERROR(maj_stat))
-        {
-            if (context_hdl != GSS_C_NO_CONTEXT)
-                gss_delete_sec_context(&min_stat, &context_hdl, GSS_C_NO_BUFFER);
-            sprintf(cmd,"-ERR User Logged Failed\r\n");
-            PopSend(cmd, strlen(cmd));
-            return;
-        }
-        
-        int len_decode = BASE64_ENCODE_OUTPUT_MAX_LEN(output_message_buffer1.length + 2);
+  }
+#ifdef _WITH_GSSAPI_
+  else if (strncasecmp(&text[5], "GSSAPI", 6) == 0) {
+    m_authType = POP_AUTH_GSSAPI;
+    PopSend("+OK\r\n", sizeof("+OK\r\n") - 1);
+
+    OM_uint32 maj_stat, min_stat;
+
+    gss_cred_id_t server_creds = GSS_C_NO_CREDENTIAL;
+
+    gss_name_t server_name = GSS_C_NO_NAME;
+
+    gss_buffer_desc buf_desc;
+    string str_buf_desc = CMailBase::m_krb5_pop3_service_name;
+    str_buf_desc += "@";
+    str_buf_desc += CMailBase::m_krb5_hostname.c_str();
+
+    buf_desc.length = str_buf_desc.length() + 1;
+    buf_desc.value = malloc(buf_desc.length);
+    strcpy((char*)buf_desc.value, str_buf_desc.c_str());
+
+    maj_stat = gss_import_name(&min_stat, &buf_desc, GSS_C_NT_HOSTBASED_SERVICE,
+                               &server_name);
+    if (GSS_ERROR(maj_stat)) {
+      display_status("gss_import_name", maj_stat, min_stat);
+      sprintf(cmd, "-ERR User Logged Failed\r\n");
+      PopSend(cmd, strlen(cmd));
+      return;
+    }
+    free(buf_desc.value);
+
+    gss_OID_set oid_set = GSS_C_NO_OID_SET;
+    maj_stat =
+        gss_acquire_cred(&min_stat, server_name, GSS_C_INDEFINITE, oid_set,
+                         GSS_C_ACCEPT, &server_creds, NULL, NULL);
+    if (GSS_ERROR(maj_stat)) {
+      display_status("gss_acquire_cred", maj_stat, min_stat);
+      maj_stat = gss_release_oid_set(&min_stat, &oid_set);
+      sprintf(cmd, "-ERR User Logged Failed\r\n");
+      PopSend(cmd, strlen(cmd));
+      return;
+    }
+    gss_release_name(&min_stat, &server_name);
+
+    maj_stat = gss_release_oid_set(&min_stat, &oid_set);
+
+    if (GSS_ERROR(maj_stat)) {
+      display_status("gss_release_oid_set", maj_stat, min_stat);
+      sprintf(cmd, "-ERR User Logged Failed\r\n");
+      PopSend(cmd, strlen(cmd));
+      return;
+    }
+
+    gss_ctx_id_t context_hdl = GSS_C_NO_CONTEXT;
+    gss_name_t client_name = GSS_C_NO_NAME;
+    gss_OID mech_type;
+    gss_buffer_desc input_token = GSS_C_EMPTY_BUFFER;
+    gss_buffer_desc output_token = GSS_C_EMPTY_BUFFER;
+    OM_uint32 ret_flags;
+    OM_uint32 time_rec;
+    gss_cred_id_t delegated_cred_handle;
+    do {
+      string str_line = "";
+      char recv_buf[4096];
+      while (str_line.find("\n") == std::string::npos) {
+        int result = ProtRecv(recv_buf, 4095);
+        if (result <= 0)
+          return;
+        recv_buf[result] = '\0';
+        str_line += recv_buf;
+      }
+      strtrim(str_line);
+
+      int len_encode = BASE64_DECODE_OUTPUT_MAX_LEN(str_line.length());
+      char* tmp_decode = (char*)malloc(len_encode);
+      memset(tmp_decode, 0, len_encode);
+
+      int outlen_decode = len_encode;
+      CBase64::Decode((char*)str_line.c_str(), str_line.length(), tmp_decode,
+                      &outlen_decode);
+      input_token.length = outlen_decode;
+      input_token.value = tmp_decode;
+
+      maj_stat = gss_accept_sec_context(
+          &min_stat, &context_hdl, server_creds, &input_token,
+          GSS_C_NO_CHANNEL_BINDINGS, &client_name, &mech_type, &output_token,
+          &ret_flags, &time_rec, &delegated_cred_handle);
+      free(tmp_decode);
+
+      if (GSS_ERROR(maj_stat)) {
+        display_status("gss_accept_sec_context", maj_stat, min_stat);
+
+        sprintf(cmd, "-ERR User Logged Failed\r\n");
+        PopSend(cmd, strlen(cmd));
+        return;
+      }
+
+      if (output_token.length != 0) {
+        int len_decode = BASE64_ENCODE_OUTPUT_MAX_LEN(output_token.length + 2);
         char* tmp_encode = (char*)malloc(len_decode + 2);
         memset(tmp_encode, 0, len_decode);
         tmp_encode[0] = '+';
         tmp_encode[1] = ' ';
         int outlen_encode = len_decode;
-        CBase64::Encode((char*)output_message_buffer1.value, output_message_buffer1.length, tmp_encode + 2, &outlen_encode);
+        CBase64::Encode((char*)output_token.value, output_token.length,
+                        tmp_encode + 2, &outlen_encode);
 
         PopSend(tmp_encode, outlen_encode + 2);
         PopSend("\r\n", 2);
-        gss_release_buffer(&min_stat, &output_message_buffer1);
+        gss_release_buffer(&min_stat, &output_token);
         free(tmp_encode);
-        
-        str_line = "";
-        while(str_line.find("\n") == std::string::npos)
-        {
-            int result = ProtRecv(recv_buf, 4095);
-            if(result <= 0)
-                return;
-            recv_buf[result] = '\0';
-            str_line += recv_buf;
-        }
-        
-        int len_encode = BASE64_DECODE_OUTPUT_MAX_LEN(str_line.length());
-        char* tmp_decode = (char*)malloc(len_encode);
-        memset(tmp_decode, 0, len_encode);
+      }
 
-        gss_buffer_desc input_message_buffer2 = GSS_C_EMPTY_BUFFER, output_message_buffer2 = GSS_C_EMPTY_BUFFER;
-        gss_qop_t qop_state;
-        int outlen_decode = len_encode;
-        CBase64::Decode((char*)str_line.c_str(), str_line.length(), tmp_decode, &outlen_decode);
-        input_message_buffer2.length = outlen_decode;
-        input_message_buffer2.value = tmp_decode;
-        
-        maj_stat = gss_unwrap (&min_stat, context_hdl, &input_message_buffer2, &output_message_buffer2, &conf_state, &qop_state);
-        if (GSS_ERROR(maj_stat))
-        {
-            if (context_hdl != GSS_C_NO_CONTEXT)
-                gss_delete_sec_context(&min_stat, &context_hdl, GSS_C_NO_BUFFER);
-            
-            sprintf(cmd,"-ERR User Logged Failed\r\n");
-            PopSend(cmd, strlen(cmd));
-            return;
-        }
-        memcpy(sec_data, output_message_buffer2.value, 4);
-        OM_uint32 max_limit_size = sec_data[1] << 16;
-        max_limit_size += sec_data[2] << 8;
-        max_limit_size += sec_data[3];
-        
-        string credential_owner;
-        char* ptr_tmp = (char*)output_message_buffer2.value;
-        for(int x = 4; x < output_message_buffer2.length; x++)
-        {
-            credential_owner.push_back(ptr_tmp[x]);
-        }
-        credential_owner.push_back('\0');
-        
-        free(tmp_decode);
-        gss_release_buffer(&min_stat, &output_message_buffer2);
-        
-        string str_client_principal, str_client_name,str_client_realm;
-        acquire_name_string(client_name, str_client_principal);
-        
-        strcut(str_client_principal.c_str(), NULL, "@", str_client_name);
-        strcut(str_client_principal.c_str(), "@", NULL, str_client_realm);
-        
-        if(str_client_realm != CMailBase::m_krb5_realm)
-        {
-            if (context_hdl != GSS_C_NO_CONTEXT)
-                gss_delete_sec_context(&min_stat, &context_hdl, GSS_C_NO_BUFFER);
-            
-            sprintf(cmd,"-ERR User Logged Failed\r\n");
-            PopSend(cmd, strlen(cmd));
-            return;
-        }
-        
-        m_username = str_client_name;
-        
+      if (maj_stat != GSS_S_COMPLETE) {
         if (context_hdl != GSS_C_NO_CONTEXT)
-            gss_delete_sec_context(&min_stat, &context_hdl, GSS_C_NO_BUFFER);
-        
-        MailStorage* mailStg;
-        StorageEngineInstance stgengine_instance(m_storageEngine, &mailStg);
-        if(!mailStg)
-        {
-            printf("%s::%s Get Storage Engine Failed!\n", __FILE__, __FUNCTION__);
-            return;
-        }
-        if(mailStg->VerifyUser(m_username.c_str()) != 0)
-        {
-            sprintf(cmd,"-ERR User Logged Failed\r\n");
-            PopSend(cmd, strlen(cmd));
-            return;
-        }
-        sprintf(cmd,"+OK GSSAPI authentication successful\r\n");
-        PopSend(cmd, strlen(cmd));
-        
-        m_status = m_status|STATUS_AUTHED;
+          gss_delete_sec_context(&min_stat, &context_hdl, GSS_C_NO_BUFFER);
+      }
+    } while (maj_stat & GSS_S_CONTINUE_NEEDED);
+    string str_line = "";
+    char recv_buf[4096];
+    while (str_line.find("\n") == std::string::npos) {
+      int result = ProtRecv(recv_buf, 4095);
+      if (result <= 0)
+        return;
+      recv_buf[result] = '\0';
+      str_line += recv_buf;
     }
+
+    char sec_data[4];
+    sec_data[0] = GSS_SEC_LAYER_NONE;  // No security layer
+    sec_data[1] = 0;
+    sec_data[2] = 0;
+    sec_data[3] = 0;
+    gss_buffer_desc input_message_buffer1 = GSS_C_EMPTY_BUFFER,
+                    output_message_buffer1 = GSS_C_EMPTY_BUFFER;
+    input_message_buffer1.length = 4;
+    input_message_buffer1.value = sec_data;
+    int conf_state;
+    maj_stat =
+        gss_wrap(&min_stat, context_hdl, 0, GSS_C_QOP_DEFAULT,
+                 &input_message_buffer1, &conf_state, &output_message_buffer1);
+    if (GSS_ERROR(maj_stat)) {
+      if (context_hdl != GSS_C_NO_CONTEXT)
+        gss_delete_sec_context(&min_stat, &context_hdl, GSS_C_NO_BUFFER);
+      sprintf(cmd, "-ERR User Logged Failed\r\n");
+      PopSend(cmd, strlen(cmd));
+      return;
+    }
+
+    int len_decode =
+        BASE64_ENCODE_OUTPUT_MAX_LEN(output_message_buffer1.length + 2);
+    char* tmp_encode = (char*)malloc(len_decode + 2);
+    memset(tmp_encode, 0, len_decode);
+    tmp_encode[0] = '+';
+    tmp_encode[1] = ' ';
+    int outlen_encode = len_decode;
+    CBase64::Encode((char*)output_message_buffer1.value,
+                    output_message_buffer1.length, tmp_encode + 2,
+                    &outlen_encode);
+
+    PopSend(tmp_encode, outlen_encode + 2);
+    PopSend("\r\n", 2);
+    gss_release_buffer(&min_stat, &output_message_buffer1);
+    free(tmp_encode);
+
+    str_line = "";
+    while (str_line.find("\n") == std::string::npos) {
+      int result = ProtRecv(recv_buf, 4095);
+      if (result <= 0)
+        return;
+      recv_buf[result] = '\0';
+      str_line += recv_buf;
+    }
+
+    int len_encode = BASE64_DECODE_OUTPUT_MAX_LEN(str_line.length());
+    char* tmp_decode = (char*)malloc(len_encode);
+    memset(tmp_decode, 0, len_encode);
+
+    gss_buffer_desc input_message_buffer2 = GSS_C_EMPTY_BUFFER,
+                    output_message_buffer2 = GSS_C_EMPTY_BUFFER;
+    gss_qop_t qop_state;
+    int outlen_decode = len_encode;
+    CBase64::Decode((char*)str_line.c_str(), str_line.length(), tmp_decode,
+                    &outlen_decode);
+    input_message_buffer2.length = outlen_decode;
+    input_message_buffer2.value = tmp_decode;
+
+    maj_stat = gss_unwrap(&min_stat, context_hdl, &input_message_buffer2,
+                          &output_message_buffer2, &conf_state, &qop_state);
+    if (GSS_ERROR(maj_stat)) {
+      if (context_hdl != GSS_C_NO_CONTEXT)
+        gss_delete_sec_context(&min_stat, &context_hdl, GSS_C_NO_BUFFER);
+
+      sprintf(cmd, "-ERR User Logged Failed\r\n");
+      PopSend(cmd, strlen(cmd));
+      return;
+    }
+    memcpy(sec_data, output_message_buffer2.value, 4);
+    OM_uint32 max_limit_size = sec_data[1] << 16;
+    max_limit_size += sec_data[2] << 8;
+    max_limit_size += sec_data[3];
+
+    string credential_owner;
+    char* ptr_tmp = (char*)output_message_buffer2.value;
+    for (int x = 4; x < output_message_buffer2.length; x++) {
+      credential_owner.push_back(ptr_tmp[x]);
+    }
+    credential_owner.push_back('\0');
+
+    free(tmp_decode);
+    gss_release_buffer(&min_stat, &output_message_buffer2);
+
+    string str_client_principal, str_client_name, str_client_realm;
+    acquire_name_string(client_name, str_client_principal);
+
+    strcut(str_client_principal.c_str(), NULL, "@", str_client_name);
+    strcut(str_client_principal.c_str(), "@", NULL, str_client_realm);
+
+    if (str_client_realm != CMailBase::m_krb5_realm) {
+      if (context_hdl != GSS_C_NO_CONTEXT)
+        gss_delete_sec_context(&min_stat, &context_hdl, GSS_C_NO_BUFFER);
+
+      sprintf(cmd, "-ERR User Logged Failed\r\n");
+      PopSend(cmd, strlen(cmd));
+      return;
+    }
+
+    m_username = str_client_name;
+
+    if (context_hdl != GSS_C_NO_CONTEXT)
+      gss_delete_sec_context(&min_stat, &context_hdl, GSS_C_NO_BUFFER);
+
+    MailStorage* mailStg;
+    StorageEngineInstance stgengine_instance(m_storageEngine, &mailStg);
+    if (!mailStg) {
+      printf("%s::%s Get Storage Engine Failed!\n", __FILE__, __FUNCTION__);
+      return;
+    }
+    if (mailStg->VerifyUser(m_username.c_str()) != 0) {
+      sprintf(cmd, "-ERR User Logged Failed\r\n");
+      PopSend(cmd, strlen(cmd));
+      return;
+    }
+    sprintf(cmd, "+OK GSSAPI authentication successful\r\n");
+    PopSend(cmd, strlen(cmd));
+
+    m_status = m_status | STATUS_AUTHED;
+  }
 #endif /* _WITH_GSSAPI_ */
-	else
-	{	
-		sprintf(cmd, "-ERR Unrecognized Authentication type\r\n");
-		PopSend(cmd,strlen(cmd));
-	}
-	
+  else {
+    sprintf(cmd, "-ERR Unrecognized Authentication type\r\n");
+    PopSend(cmd, strlen(cmd));
+  }
 }
 
-BOOL CMailPop::Parse(char* text, int len)
-{
-	BOOL result = TRUE;
-	if((m_status&STATUS_AUTH_STEP1) == STATUS_AUTH_STEP1)
-	{
-		On_Supose_Username_Handler(text);	
-	}
-	else if( (m_status&STATUS_AUTH_STEP2) == STATUS_AUTH_STEP2)
-	{
-		On_Supose_Password_Handler(text);
-	}
-	else
-	{
-		unsigned int len = strlen(text);
-		if(len < 4)
-		{
-			On_Unrecognized_Command_Handler();
-		}
-		else
-		{
-			if(strncasecmp(text,"USER",4) == 0)
-			{
-                m_authType = POP_AUTH_USER;
-				return On_Supose_Username_Handler(text);
-			}
-			else if(strncasecmp(text,"PASS",4) == 0)
-			{
-				result = On_Supose_Password_Handler(text);				
-			}
-            else if(strncasecmp(text, "AUTH", 4) == 0)
-			{
-				On_Auth_Handler(text);	
-			}
-			else if(strncasecmp(text, "APOP", 4) == 0)
-			{
-				On_Apop_Handler(text);	
-			}
-			else if(strncasecmp(text, "CAPA", 4) == 0)
-			{
-				On_Capa_Handler(text);
-			}
-			else if(strncasecmp(text, "TOP", 3) == 0)
-			{
-				On_Top_Handler(text);
-			}
-			else if(strncasecmp(text,"STAT",4) == 0)
-			{
-				On_Stat_Handler(text);
-			}
-			else if(strncasecmp(text,"LIST",4) == 0)
-			{
-				On_List_Handler(text);
-			}
-			else if(strncasecmp(text,"RETR",4) == 0)
-			{
-				On_Retr_Handler(text);
-			}
-			else if(strncasecmp(text,"RSET",4) == 0)
-			{
-				On_Rset_Handler(text);
-			}
-			else if(strncasecmp(text,"UIDL",4) == 0)
-			{
-				On_Uidl_Handler(text);
-			}
-			else if(strncasecmp(text,"DELE",4) == 0)
-			{
-				On_Delete_Handler(text);
-			}
-			else if(strncasecmp(text,"QUIT",4) == 0)
-			{
-				On_Quit_Handler();
-				result = FALSE;
-			}
-			else if(strncasecmp(text,"STLS",4) == 0)
-			{
-				On_STLS_Handler();
-			}
-			else
-			{
-				On_Unrecognized_Command_Handler();
-			}
-		}
-	}
-	return result;
+BOOL CMailPop::Parse(char* text, int len) {
+  BOOL result = TRUE;
+  if ((m_status & STATUS_AUTH_STEP1) == STATUS_AUTH_STEP1) {
+    On_Supose_Username_Handler(text);
+  } else if ((m_status & STATUS_AUTH_STEP2) == STATUS_AUTH_STEP2) {
+    On_Supose_Password_Handler(text);
+  } else {
+    unsigned int len = strlen(text);
+    if (len < 4) {
+      On_Unrecognized_Command_Handler();
+    } else {
+      if (strncasecmp(text, "USER", 4) == 0) {
+        m_authType = POP_AUTH_USER;
+        return On_Supose_Username_Handler(text);
+      } else if (strncasecmp(text, "PASS", 4) == 0) {
+        result = On_Supose_Password_Handler(text);
+      } else if (strncasecmp(text, "AUTH", 4) == 0) {
+        On_Auth_Handler(text);
+      } else if (strncasecmp(text, "APOP", 4) == 0) {
+        On_Apop_Handler(text);
+      } else if (strncasecmp(text, "CAPA", 4) == 0) {
+        On_Capa_Handler(text);
+      } else if (strncasecmp(text, "TOP", 3) == 0) {
+        On_Top_Handler(text);
+      } else if (strncasecmp(text, "STAT", 4) == 0) {
+        On_Stat_Handler(text);
+      } else if (strncasecmp(text, "LIST", 4) == 0) {
+        On_List_Handler(text);
+      } else if (strncasecmp(text, "RETR", 4) == 0) {
+        On_Retr_Handler(text);
+      } else if (strncasecmp(text, "RSET", 4) == 0) {
+        On_Rset_Handler(text);
+      } else if (strncasecmp(text, "UIDL", 4) == 0) {
+        On_Uidl_Handler(text);
+      } else if (strncasecmp(text, "DELE", 4) == 0) {
+        On_Delete_Handler(text);
+      } else if (strncasecmp(text, "QUIT", 4) == 0) {
+        On_Quit_Handler();
+        result = FALSE;
+      } else if (strncasecmp(text, "STLS", 4) == 0) {
+        On_STLS_Handler();
+      } else {
+        On_Unrecognized_Command_Handler();
+      }
+    }
+  }
+  return result;
 }
-
